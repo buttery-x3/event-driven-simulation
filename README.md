@@ -161,3 +161,11 @@ The aim is narrower: make a few fast mechanical objects interact with known geom
 Early research and prototype planning.
 
 The first implementation target is a minimal Plinko simulation that proves the event-driven loop before the project commits to a larger architecture or technology stack.
+
+## Development
+
+Install dependencies with `npm install`, start the browser prototype with `npm run dev`, and run
+the authoritative local quality gate with `npm run check`.
+
+See [the repository quality workflow](docs/workflow.md) for the focused development commands and
+the simulation-renderer boundary used by the scaffold.
