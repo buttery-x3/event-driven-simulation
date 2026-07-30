@@ -1,0 +1,82 @@
+{
+	"contractVersion": 1,
+	"input": {
+		"scene": {
+			"id": "canonical-synthetic-scene",
+			"fixedCircles": [
+				{
+					"id": "canonical-peg",
+					"centre": [1, 0],
+					"radius": 0.25
+				}
+			]
+		},
+		"initialBodies": [
+			{
+				"id": "canonical-ball",
+				"position": [0, 2],
+				"velocity": [1, 0],
+				"radius": 0.2
+			}
+		],
+		"settings": {
+			"gravity": [0, -2],
+			"restitution": 0.5,
+			"maximumEvents": 1,
+			"maximumSimulationTime": 2,
+			"tolerances": {
+				"contactDistance": 1e-9,
+				"eventTime": 1e-9
+			}
+		}
+	},
+	"status": {
+		"type": "complete"
+	},
+	"trajectories": [
+		{
+			"bodyId": "canonical-ball",
+			"segments": [
+				{
+					"bodyId": "canonical-ball",
+					"startTime": 0,
+					"endTime": 1,
+					"startPosition": [0, 2],
+					"startVelocity": [1, 0],
+					"acceleration": [0, -2]
+				},
+				{
+					"bodyId": "canonical-ball",
+					"startTime": 1,
+					"endTime": 2,
+					"startPosition": [1, 1],
+					"startVelocity": [1, 1],
+					"acceleration": [0, -2]
+				}
+			]
+		}
+	],
+	"events": [
+		{
+			"type": "contact",
+			"time": 1,
+			"bodyId": "canonical-ball",
+			"colliderId": "canonical-peg",
+			"position": [1, 1],
+			"normal": [0, 1]
+		}
+	],
+	"diagnostics": {
+		"iterations": 1,
+		"simulatedUntilTime": 2,
+		"entries": [
+			{
+				"severity": "info",
+				"code": "SYNTHETIC_CONTACT_GENERATED",
+				"message": "Generated the canonical synthetic trajectory and representative contact.",
+				"time": 1,
+				"bodyId": "canonical-ball"
+			}
+		]
+	}
+}

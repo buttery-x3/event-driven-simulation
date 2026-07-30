@@ -30,3 +30,6 @@ The simulation contracts live under `src/lib/simulation` and contain only serial
 renderer-independent data. Three.js integration lives under `src/lib/rendering`; it consumes those
 plain inputs and owns only presentation resources. See `docs/architecture.md` for the contract
 responsibilities and dependency boundary.
+
+Saved run naming, validation and the process for turning a reproducible failure into a regression
+case are documented in `docs/regression-fixtures.md`.

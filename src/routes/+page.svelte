@@ -1,15 +1,16 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import canonicalFixtureJson from '../../fixtures/runs/canonical-synthetic-contact.json?raw';
 	import { mountScene, type MountedPlaybackScene } from '$lib/rendering/mount-scene';
 	import {
 		getPlaybackFrame,
 		PlaybackClock,
 		toRendererPlaybackInput
 	} from '$lib/rendering/playback';
-	import { prototypeSimulationInput } from '$lib/simulation/prototype-input';
-	import { generateSyntheticRun } from '$lib/simulation/synthetic-run';
+	import { parseSimulationRunFixture } from '$lib/simulation/run-fixture';
 
-	const playback = toRendererPlaybackInput(generateSyntheticRun(prototypeSimulationInput));
+	const fixtureName = 'canonical-synthetic-contact.json';
+	const playback = toRendererPlaybackInput(parseSimulationRunFixture(canonicalFixtureJson));
 	const clock = new PlaybackClock(playback.playableUntilTime);
 	let sceneHost = $state<HTMLDivElement>();
 	let sceneController: MountedPlaybackScene | undefined;
@@ -79,7 +80,7 @@
 
 <main>
 	<section class="intro">
-		<p class="eyebrow">Completed run replay</p>
+		<p class="eyebrow">Saved run replay</p>
 		<h1>Motion, one recorded segment at a time.</h1>
 		<p class="summary">
 			Three.js presents a precomputed trajectory. Playback changes presentation time only; physical
@@ -128,6 +129,10 @@
 			</div>
 
 			<dl class="debug" aria-label="Playback diagnostics">
+				<div>
+					<dt>Fixture</dt>
+					<dd>{fixtureName}</dd>
+				</div>
 				<div>
 					<dt>Run</dt>
 					<dd>{playback.status.type}</dd>
@@ -324,7 +329,7 @@
 
 	.debug {
 		display: grid;
-		grid-template-columns: repeat(4, minmax(0, 1fr));
+		grid-template-columns: repeat(5, minmax(0, 1fr));
 		gap: 0.7rem;
 		margin: 1rem 0 0;
 		padding-top: 0.9rem;

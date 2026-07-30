@@ -47,6 +47,19 @@ The contracts intentionally use ordinary objects, arrays, strings, numbers and `
 them JSON-serialisable and leaves the calculation implementation replaceable by a future worker or
 Rust/Wasm module without adding either transport today.
 
+## Saved run boundary
+
+Saved run fixtures live under the repository-level `fixtures/` directory so headless tests and the
+browser renderer consume the same files. `src/lib/simulation/run-fixture.ts` is the runtime boundary
+from unknown JSON data to `SimulationRunRecord`. It validates the complete public shape and returns
+typed `RunFixtureError` failures for malformed JSON, unsupported contract versions and incompatible
+fields.
+
+Loading a fixture establishes only that it matches the saved-run contract. It does not promote the
+run status or make an incomplete run eligible for ordinary playback. The renderer still converts
+the record through `toRendererPlaybackInput` and applies `assertPlaybackEligible`, preserving the
+same status validation used for freshly generated runs.
+
 ## Headless synthetic run
 
 `src/lib/simulation/synthetic-run.ts` is the first producer of a completed run record. It generates
@@ -78,3 +91,7 @@ Three.js consumes these evaluated poses and maps simulation `(x, y)` coordinates
 `(x, y, 0)` coordinates. Fixed collider dimensions still come directly from the public scene
 contract. The renderer owns only camera, lighting, materials and decorative backdrop resources;
 none of them feed back into simulation data.
+
+The browser prototype loads `fixtures/runs/canonical-synthetic-contact.json` through the saved-run
+boundary and replays it through this same renderer contract. The fixture is therefore neither
+regenerated in the route nor duplicated into a presentation-specific format.
