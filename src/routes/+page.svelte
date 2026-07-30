@@ -1,48 +1,154 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { mountScene } from '$lib/rendering/mount-scene';
+	import { mountScene, type MountedPlaybackScene } from '$lib/rendering/mount-scene';
+	import {
+		getPlaybackFrame,
+		PlaybackClock,
+		toRendererPlaybackInput
+	} from '$lib/rendering/playback';
 	import { prototypeSimulationInput } from '$lib/simulation/prototype-input';
+	import { generateSyntheticRun } from '$lib/simulation/synthetic-run';
 
+	const playback = toRendererPlaybackInput(generateSyntheticRun(prototypeSimulationInput));
+	const clock = new PlaybackClock(playback.playableUntilTime);
 	let sceneHost = $state<HTMLDivElement>();
+	let sceneController: MountedPlaybackScene | undefined;
+	let frame = $state(getPlaybackFrame(playback, 0));
+	let playing = $state(false);
+	let body = $derived(frame.bodies[0]);
+
+	function syncPlayback(): void {
+		frame = sceneController?.setTime(clock.time) ?? getPlaybackFrame(playback, clock.time);
+		playing = clock.playing;
+	}
+
+	function togglePlayback(): void {
+		if (clock.playing) {
+			clock.pause();
+		} else {
+			clock.play();
+		}
+
+		syncPlayback();
+	}
+
+	function restartPlayback(): void {
+		clock.restart();
+		syncPlayback();
+	}
+
+	function seekPlayback(event: Event): void {
+		clock.seek(Number((event.currentTarget as HTMLInputElement).value));
+		syncPlayback();
+	}
 
 	onMount(() => {
 		if (!sceneHost) return;
 
-		return mountScene(sceneHost, prototypeSimulationInput);
+		sceneController = mountScene(sceneHost, playback);
+		clock.play();
+		syncPlayback();
+		let previousTimestamp: number | null = null;
+		let animationFrame = 0;
+
+		const animate = (timestamp: number) => {
+			const elapsedSeconds =
+				previousTimestamp === null ? 0 : (timestamp - previousTimestamp) / 1_000;
+			previousTimestamp = timestamp;
+			clock.advance(elapsedSeconds);
+			syncPlayback();
+			animationFrame = requestAnimationFrame(animate);
+		};
+
+		animationFrame = requestAnimationFrame(animate);
+
+		return () => {
+			cancelAnimationFrame(animationFrame);
+			sceneController?.destroy();
+		};
 	});
 </script>
 
 <svelte:head>
-	<title>Event-Driven Simulation</title>
+	<title>Trajectory Replay | Event-Driven Simulation</title>
 	<meta
 		name="description"
-		content="A browser prototype for exploring event-driven mechanical simulation."
+		content="A Three.js replay of a completed event-driven simulation trajectory."
 	/>
 </svelte:head>
 
 <main>
 	<section class="intro">
-		<p class="eyebrow">Browser prototype</p>
-		<h1>Motion, one physical event at a time.</h1>
+		<p class="eyebrow">Completed run replay</p>
+		<h1>Motion, one recorded segment at a time.</h1>
 		<p class="summary">
-			A minimal Three.js view over a serialisable simulation snapshot. The renderer visualises
-			state; it never owns it.
+			Three.js presents a precomputed trajectory. Playback changes presentation time only; physical
+			motion and events remain exactly as recorded by the headless simulation.
 		</p>
 
-		<div class="contract">
+		<div class="contract" aria-label="Data flow">
 			<span>simulation</span>
 			<span class="arrow" aria-hidden="true">→</span>
-			<span>snapshot</span>
+			<span>completed run</span>
 			<span class="arrow" aria-hidden="true">→</span>
 			<span>renderer</span>
 		</div>
 	</section>
 
-	<section class="viewport" aria-label="Three-dimensional simulation preview">
-		<div class="scene" bind:this={sceneHost} role="img" aria-label="A ball above three pegs"></div>
-		<div class="status">
-			<span class="pulse"></span>
-			Prototype ready
+	<section class="replay" aria-label="Trajectory playback">
+		<div class="viewport">
+			<div
+				class="scene"
+				bind:this={sceneHost}
+				role="img"
+				aria-label="A ball replaying a completed trajectory past fixed pegs"
+			></div>
+			<div class="status">
+				<span class:playing class="pulse"></span>
+				{playing ? 'Playing' : frame.time >= playback.playableUntilTime ? 'Complete' : 'Paused'}
+			</div>
+		</div>
+
+		<div class="playback-panel">
+			<div class="controls">
+				<button type="button" onclick={togglePlayback}>{playing ? 'Pause' : 'Play'}</button>
+				<button class="secondary" type="button" onclick={restartPlayback}>Restart</button>
+				<label>
+					<span class="sr-only">Seek through completed trajectory</span>
+					<input
+						type="range"
+						min="0"
+						max={playback.playableUntilTime}
+						step="0.001"
+						value={frame.time}
+						oninput={seekPlayback}
+					/>
+				</label>
+				<output>{frame.time.toFixed(3)}s / {playback.playableUntilTime.toFixed(3)}s</output>
+			</div>
+
+			<dl class="debug" aria-label="Playback diagnostics">
+				<div>
+					<dt>Run</dt>
+					<dd>{playback.status.type}</dd>
+				</div>
+				<div>
+					<dt>Body</dt>
+					<dd>{body?.bodyId ?? 'none'}</dd>
+				</div>
+				<div>
+					<dt>Segment</dt>
+					<dd>{body?.segmentIndex === null ? 'none' : (body?.segmentIndex ?? -1) + 1}</dd>
+				</div>
+				<div>
+					<dt>Latest event</dt>
+					<dd>
+						{frame.mostRecentEvent
+							? `${frame.mostRecentEvent.type} @ ${frame.mostRecentEvent.time.toFixed(3)}s`
+							: 'none yet'}
+					</dd>
+				</div>
+			</dl>
 		</div>
 	</section>
 </main>
@@ -74,7 +180,7 @@
 	}
 
 	h1 {
-		max-width: 9ch;
+		max-width: 10ch;
 		margin: 0;
 		font-size: clamp(3rem, 7vw, 6rem);
 		font-weight: 650;
@@ -83,7 +189,7 @@
 	}
 
 	.summary {
-		max-width: 33rem;
+		max-width: 35rem;
 		margin: 1.8rem 0 2rem;
 		color: #a9b8cf;
 		font-size: clamp(1rem, 1.8vw, 1.18rem);
@@ -113,10 +219,15 @@
 		color: #53657e;
 	}
 
+	.replay {
+		display: grid;
+		gap: 0.9rem;
+	}
+
 	.viewport {
 		position: relative;
 		overflow: hidden;
-		min-height: min(72vh, 720px);
+		min-height: min(62vh, 620px);
 		border: 1px solid #26334a;
 		border-radius: 1.5rem;
 		background: #0b1220;
@@ -156,8 +267,98 @@
 		width: 0.45rem;
 		height: 0.45rem;
 		border-radius: 50%;
+		background: #778399;
+		box-shadow: 0 0 0.8rem #778399;
+	}
+
+	.pulse.playing {
 		background: #61e294;
 		box-shadow: 0 0 0.8rem #61e294;
+	}
+
+	.playback-panel {
+		padding: 1rem;
+		border: 1px solid #26334a;
+		border-radius: 1rem;
+		background: #0d1524;
+	}
+
+	.controls {
+		display: grid;
+		grid-template-columns: auto auto minmax(110px, 1fr) auto;
+		gap: 0.7rem;
+		align-items: center;
+	}
+
+	button {
+		min-width: 5.2rem;
+		padding: 0.62rem 0.85rem;
+		border: 1px solid #70d6ff;
+		border-radius: 0.55rem;
+		color: #08111f;
+		background: #70d6ff;
+		font-weight: 700;
+		cursor: pointer;
+	}
+
+	button.secondary {
+		color: #d9e5f7;
+		background: transparent;
+	}
+
+	label,
+	input {
+		width: 100%;
+	}
+
+	output,
+	.debug {
+		font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+		font-size: 0.72rem;
+	}
+
+	output {
+		color: #a9b8cf;
+		white-space: nowrap;
+	}
+
+	.debug {
+		display: grid;
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+		gap: 0.7rem;
+		margin: 1rem 0 0;
+		padding-top: 0.9rem;
+		border-top: 1px solid #26334a;
+	}
+
+	.debug div {
+		min-width: 0;
+	}
+
+	dt {
+		margin-bottom: 0.3rem;
+		color: #718096;
+		text-transform: uppercase;
+	}
+
+	dd {
+		overflow: hidden;
+		margin: 0;
+		color: #d9e5f7;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
 	}
 
 	@media (max-width: 820px) {
@@ -172,7 +373,21 @@
 		}
 
 		.viewport {
-			min-height: 520px;
+			min-height: 500px;
+		}
+	}
+
+	@media (max-width: 560px) {
+		.controls {
+			grid-template-columns: 1fr 1fr;
+		}
+
+		.controls label {
+			grid-column: 1 / -1;
+		}
+
+		.debug {
+			grid-template-columns: 1fr 1fr;
 		}
 	}
 </style>

@@ -60,3 +60,21 @@ simulation times. It imports only the plain simulation contracts and is exercise
 environment, so it does not depend on Svelte, Three.js, a renderer or browser globals. This
 synthetic path proves the precompute-and-replay boundary without claiming to solve real collisions;
 physical event search remains a later simulation concern.
+
+## Renderer playback
+
+`src/lib/rendering/playback.ts` converts a completed `SimulationRunRecord` into the narrower
+`RendererPlaybackInput` contract and rejects non-complete runs from ordinary playback with the run
+status and reason in the diagnostic. Its presentation clock owns only playback time: play, pause,
+restart and seek cannot change the run record.
+
+At each presentation time, the playback evaluator clamps to the recorded duration, selects the
+motion segment whose recorded interval contains that time and evaluates the segment's declared
+position function. When adjacent segments share a boundary, the later segment is selected at the
+exact transition time. Missing recorded intervals produce no body pose rather than invented or
+integrated renderer motion.
+
+Three.js consumes these evaluated poses and maps simulation `(x, y)` coordinates to presentation
+`(x, y, 0)` coordinates. Fixed collider dimensions still come directly from the public scene
+contract. The renderer owns only camera, lighting, materials and decorative backdrop resources;
+none of them feed back into simulation data.

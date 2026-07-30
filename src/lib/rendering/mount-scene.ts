@@ -1,5 +1,7 @@
 import * as THREE from 'three';
-import { getRenderableCircles, type PhysicalSceneSource } from './render-scene-data';
+import type { EntityId, RendererPlaybackInput } from '$lib/simulation/contracts';
+import { assertPlaybackEligible, getPlaybackFrame, type PlaybackFrame } from './playback';
+import { getRenderableCircles } from './render-scene-data';
 
 // These values control only camera framing and the decorative backdrop. They are not simulation
 // geometry and cannot affect physical results.
@@ -17,7 +19,14 @@ const presentationSettings = {
 	}
 } as const;
 
-export function mountScene(host: HTMLElement, input: PhysicalSceneSource): () => void {
+export interface MountedPlaybackScene {
+	setTime(time: number): PlaybackFrame;
+	destroy(): void;
+}
+
+export function mountScene(host: HTMLElement, input: RendererPlaybackInput): MountedPlaybackScene {
+	assertPlaybackEligible(input);
+
 	const scene = new THREE.Scene();
 	scene.background = new THREE.Color(0x0b1220);
 	scene.fog = new THREE.Fog(0x0b1220, 7, 14);
@@ -67,6 +76,7 @@ export function mountScene(host: HTMLElement, input: PhysicalSceneSource): () =>
 		metalness: 0.18
 	});
 	const bodyGeometries: THREE.SphereGeometry[] = [];
+	const dynamicBodyMeshes = new Map<EntityId, THREE.Mesh>();
 
 	for (const circle of getRenderableCircles(input)) {
 		const geometry = new THREE.SphereGeometry(circle.radius, 40, 24);
@@ -77,6 +87,10 @@ export function mountScene(host: HTMLElement, input: PhysicalSceneSource): () =>
 		mesh.receiveShadow = true;
 		bodyGeometries.push(geometry);
 		scene.add(mesh);
+
+		if (circle.role === 'dynamic-body') {
+			dynamicBodyMeshes.set(circle.id, mesh);
+		}
 	}
 
 	const render = () => {
@@ -90,16 +104,33 @@ export function mountScene(host: HTMLElement, input: PhysicalSceneSource): () =>
 
 	const resizeObserver = new ResizeObserver(render);
 	resizeObserver.observe(host);
-	render();
 
-	return () => {
-		resizeObserver.disconnect();
-		bodyGeometries.forEach((geometry) => geometry.dispose());
-		ballMaterial.dispose();
-		pegMaterial.dispose();
-		boardGeometry.dispose();
-		boardMaterial.dispose();
-		renderer.dispose();
-		renderer.domElement.remove();
+	return {
+		setTime(time) {
+			const frame = getPlaybackFrame(input, time);
+
+			for (const body of frame.bodies) {
+				const mesh = dynamicBodyMeshes.get(body.bodyId);
+				if (!mesh) continue;
+
+				mesh.visible = body.position !== null;
+				if (body.position) {
+					mesh.position.set(body.position[0], body.position[1], 0);
+				}
+			}
+
+			render();
+			return frame;
+		},
+		destroy() {
+			resizeObserver.disconnect();
+			bodyGeometries.forEach((geometry) => geometry.dispose());
+			ballMaterial.dispose();
+			pegMaterial.dispose();
+			boardGeometry.dispose();
+			boardMaterial.dispose();
+			renderer.dispose();
+			renderer.domElement.remove();
+		}
 	};
 }
