@@ -26,6 +26,7 @@ focused command:
 | `npm run build`           | Create a production build.                        |
 | `npm run preview`         | Preview the most recent production build locally. |
 
-The simulation contract lives under `src/lib/simulation` and contains only serialisable,
-renderer-independent data. Three.js integration lives under `src/lib/rendering`; it consumes a
-simulation snapshot and owns only presentation resources.
+The simulation contracts live under `src/lib/simulation` and contain only serialisable,
+renderer-independent data. Three.js integration lives under `src/lib/rendering`; it consumes those
+plain inputs and owns only presentation resources. See `docs/architecture.md` for the contract
+responsibilities and dependency boundary.

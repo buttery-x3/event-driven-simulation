@@ -1,14 +1,14 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { mountScene } from '$lib/rendering/mount-scene';
-	import { createInitialSnapshot } from '$lib/simulation/snapshot';
+	import { prototypeSimulationInput } from '$lib/simulation/prototype-input';
 
 	let sceneHost = $state<HTMLDivElement>();
 
 	onMount(() => {
 		if (!sceneHost) return;
 
-		return mountScene(sceneHost, createInitialSnapshot());
+		return mountScene(sceneHost, prototypeSimulationInput);
 	});
 </script>
 

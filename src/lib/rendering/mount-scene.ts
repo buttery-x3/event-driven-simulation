@@ -1,7 +1,7 @@
 import * as THREE from 'three';
-import type { SimulationSnapshot } from '$lib/simulation/snapshot';
+import type { SimulationInput } from '$lib/simulation/contracts';
 
-export function mountScene(host: HTMLElement, snapshot: SimulationSnapshot): () => void {
+export function mountScene(host: HTMLElement, input: SimulationInput): () => void {
 	const scene = new THREE.Scene();
 	scene.background = new THREE.Color(0x0b1220);
 	scene.fog = new THREE.Fog(0x0b1220, 7, 14);
@@ -47,10 +47,20 @@ export function mountScene(host: HTMLElement, snapshot: SimulationSnapshot): () 
 	});
 	const bodyGeometries: THREE.SphereGeometry[] = [];
 
-	for (const body of snapshot.bodies) {
+	for (const body of input.initialBodies) {
 		const geometry = new THREE.SphereGeometry(body.radius, 40, 24);
-		const mesh = new THREE.Mesh(geometry, body.motion === 'dynamic' ? ballMaterial : pegMaterial);
-		mesh.position.set(body.position.x, body.position.y, body.position.z);
+		const mesh = new THREE.Mesh(geometry, ballMaterial);
+		mesh.position.set(body.position[0], body.position[1], 0);
+		mesh.castShadow = true;
+		mesh.receiveShadow = true;
+		bodyGeometries.push(geometry);
+		scene.add(mesh);
+	}
+
+	for (const circle of input.scene.fixedCircles) {
+		const geometry = new THREE.SphereGeometry(circle.radius, 40, 24);
+		const mesh = new THREE.Mesh(geometry, pegMaterial);
+		mesh.position.set(circle.centre[0], circle.centre[1], 0);
 		mesh.castShadow = true;
 		mesh.receiveShadow = true;
 		bodyGeometries.push(geometry);
