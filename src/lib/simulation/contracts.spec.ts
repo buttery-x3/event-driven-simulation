@@ -24,9 +24,9 @@ const trajectories = [
 				bodyId: 'ball',
 				startTime: 0,
 				endTime: 0.5,
-				startPosition: [0, 2.7],
-				startVelocity: [0, 0],
-				acceleration: [0, -9.81]
+				startPosition: prototypeSimulationInput.initialBodies[0].position,
+				startVelocity: prototypeSimulationInput.initialBodies[0].velocity,
+				acceleration: prototypeSimulationInput.settings.gravity
 			}
 		]
 	}
@@ -57,6 +57,9 @@ describe('simulation and replay contracts', () => {
 		const restored = JSON.parse(JSON.stringify(run)) as SimulationRunRecord;
 
 		expect(restored).toEqual(run);
+		expect(restored.input.initialBodies).toEqual(prototypeSimulationInput.initialBodies);
+		expect(restored.input.scene).toEqual(prototypeSimulationInput.scene);
+		expect(restored.input.settings).toEqual(prototypeSimulationInput.settings);
 		expect(restored.status.type).toBe('complete');
 		expect(restored.trajectories).toEqual(trajectories);
 		expect(restored.events).toEqual(events);
@@ -80,6 +83,7 @@ describe('simulation and replay contracts', () => {
 		const playback = {
 			contractVersion: 1,
 			scene: prototypeSimulationInput.scene,
+			initialBodies: prototypeSimulationInput.initialBodies,
 			status: {
 				type: 'unresolved',
 				reason: 'Playback contains only the validated trajectory prefix.'
@@ -93,6 +97,9 @@ describe('simulation and replay contracts', () => {
 		const restored = JSON.parse(JSON.stringify(playback)) as RendererPlaybackInput;
 
 		expect(restored).toEqual(playback);
+		expect(restored.initialBodies[0]?.radius).toBe(
+			prototypeSimulationInput.initialBodies[0].radius
+		);
 		expect(restored.status.type).toBe('unresolved');
 		expect(restored.playableUntilTime).toBe(0.5);
 	});

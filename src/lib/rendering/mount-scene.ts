@@ -1,14 +1,35 @@
 import * as THREE from 'three';
-import type { SimulationInput } from '$lib/simulation/contracts';
+import { getRenderableCircles, type PhysicalSceneSource } from './render-scene-data';
 
-export function mountScene(host: HTMLElement, input: SimulationInput): () => void {
+// These values control only camera framing and the decorative backdrop. They are not simulation
+// geometry and cannot affect physical results.
+const presentationSettings = {
+	camera: {
+		fieldOfView: 42,
+		near: 0.1,
+		far: 100,
+		position: [0, 2, 8.5] as const,
+		lookAt: [0, 1.25, 0] as const
+	},
+	backdrop: {
+		size: [5.4, 4.8, 0.3] as const,
+		position: [0, 1.15, -0.42] as const
+	}
+} as const;
+
+export function mountScene(host: HTMLElement, input: PhysicalSceneSource): () => void {
 	const scene = new THREE.Scene();
 	scene.background = new THREE.Color(0x0b1220);
 	scene.fog = new THREE.Fog(0x0b1220, 7, 14);
 
-	const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
-	camera.position.set(0, 2, 8.5);
-	camera.lookAt(0, 1.25, 0);
+	const camera = new THREE.PerspectiveCamera(
+		presentationSettings.camera.fieldOfView,
+		1,
+		presentationSettings.camera.near,
+		presentationSettings.camera.far
+	);
+	camera.position.set(...presentationSettings.camera.position);
+	camera.lookAt(...presentationSettings.camera.lookAt);
 
 	const renderer = new THREE.WebGLRenderer({ antialias: true });
 	renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -24,14 +45,14 @@ export function mountScene(host: HTMLElement, input: SimulationInput): () => voi
 	keyLight.castShadow = true;
 	scene.add(keyLight);
 
-	const boardGeometry = new THREE.BoxGeometry(5.4, 4.8, 0.3);
+	const boardGeometry = new THREE.BoxGeometry(...presentationSettings.backdrop.size);
 	const boardMaterial = new THREE.MeshStandardMaterial({
 		color: 0x162238,
 		roughness: 0.68,
 		metalness: 0.08
 	});
 	const board = new THREE.Mesh(boardGeometry, boardMaterial);
-	board.position.set(0, 1.15, -0.42);
+	board.position.set(...presentationSettings.backdrop.position);
 	board.receiveShadow = true;
 	scene.add(board);
 
@@ -47,19 +68,10 @@ export function mountScene(host: HTMLElement, input: SimulationInput): () => voi
 	});
 	const bodyGeometries: THREE.SphereGeometry[] = [];
 
-	for (const body of input.initialBodies) {
-		const geometry = new THREE.SphereGeometry(body.radius, 40, 24);
-		const mesh = new THREE.Mesh(geometry, ballMaterial);
-		mesh.position.set(body.position[0], body.position[1], 0);
-		mesh.castShadow = true;
-		mesh.receiveShadow = true;
-		bodyGeometries.push(geometry);
-		scene.add(mesh);
-	}
-
-	for (const circle of input.scene.fixedCircles) {
+	for (const circle of getRenderableCircles(input)) {
 		const geometry = new THREE.SphereGeometry(circle.radius, 40, 24);
-		const mesh = new THREE.Mesh(geometry, pegMaterial);
+		const material = circle.role === 'dynamic-body' ? ballMaterial : pegMaterial;
+		const mesh = new THREE.Mesh(geometry, material);
 		mesh.position.set(circle.centre[0], circle.centre[1], 0);
 		mesh.castShadow = true;
 		mesh.receiveShadow = true;

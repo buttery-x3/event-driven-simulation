@@ -28,8 +28,15 @@ rendering is not a source of physical truth.
   requiring frame-by-frame simulation during playback.
 - `SimulationRunRecord` preserves the input, valid trajectory prefix, physical events, terminal
   status and diagnostics needed for saved runs and regression fixtures.
-- `RendererPlaybackInput` contains only plain data needed to present a run. It retains the run
-  status so incomplete output cannot silently masquerade as a complete result.
+- `RendererPlaybackInput` contains only plain data needed to present a run. It carries the same
+  scene and initial body definitions as simulation input, so physical dimensions have one source
+  of truth, and it retains the run status so incomplete output cannot silently masquerade as a
+  complete result.
+
+The renderer derives dynamic-body and fixed-collider radii and positions from these contracts. Its
+camera and decorative backdrop values are grouped separately as presentation settings because they
+cannot affect physical results. If the backdrop later becomes collision geometry, its dimensions
+must move into `SceneDefinition` rather than remaining renderer-owned.
 
 Run statuses are discriminated values: `complete`, `unresolved`, `iteration-limited` and `invalid`.
 Expected calculation failures therefore remain data, with a reason and diagnostics, rather than

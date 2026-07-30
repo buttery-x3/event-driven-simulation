@@ -96,6 +96,7 @@ export interface SimulationRunRecord {
 export interface RendererPlaybackInput {
 	readonly contractVersion: 1;
 	readonly scene: SceneDefinition;
+	readonly initialBodies: readonly InitialBodyState[];
 	readonly status: RunStatus;
 	readonly playableUntilTime: number;
 	readonly trajectories: readonly BodyTrajectory[];
