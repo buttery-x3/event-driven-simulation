@@ -90,7 +90,7 @@ During development:
 
 Before requesting human review:
 
-* run the repository quality gate.
+* run the repository quality gate with `npm run check`.
 
 Behavioural changes should include appropriate tests.
 

@@ -4,4 +4,3 @@ build
 .output
 package-lock.json
 AGENTS.md
-README.md

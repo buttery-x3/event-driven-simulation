@@ -10,6 +10,13 @@ Run it before completing an issue. The command executes formatting verification,
 checking, unit tests and a production build in sequence. The commands are joined so that a failure
 in any stage stops the gate and produces a non-zero exit code.
 
+Formatting covers tracked source, configuration, documentation and JSON fixtures; generated output
+and the npm-generated lockfile are excluded. ESLint checks the JavaScript, TypeScript and Svelte
+source tree and enforces the simulation-renderer dependency direction described in
+`docs/architecture.md`. Vitest runs in Node so headless simulation and fixture tests do not acquire
+browser globals accidentally. The final Vite build verifies the browser entry point and production
+bundle.
+
 Install dependencies once with `npm install`. During implementation, use the smallest relevant
 focused command:
 
@@ -25,6 +32,10 @@ focused command:
 | `npm run test:watch`      | Run unit tests in watch mode.                     |
 | `npm run build`           | Create a production build.                        |
 | `npm run preview`         | Preview the most recent production build locally. |
+
+Vitest accepts a path after `--` for a focused run. For example, use
+`npm run test -- src/lib/simulation/run-fixture.spec.ts` while changing saved-run validation, then
+return to `npm run check` before review.
 
 The simulation contracts live under `src/lib/simulation` and contain only serialisable,
 renderer-independent data. Three.js integration lives under `src/lib/rendering`; it consumes those

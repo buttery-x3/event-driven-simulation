@@ -95,3 +95,15 @@ none of them feed back into simulation data.
 The browser prototype loads `fixtures/runs/canonical-synthetic-contact.json` through the saved-run
 boundary and replays it through this same renderer contract. The fixture is therefore neither
 regenerated in the route nor duplicated into a presentation-specific format.
+
+## Enforced dependency direction
+
+ESLint makes the architectural boundary executable. Production files under
+`src/lib/simulation/` cannot import Svelte, Three.js or rendering modules and cannot reference
+browser, worker or network globals. Production files under `src/lib/rendering/` may import the
+plain simulation contracts but not simulation producers or fixture loaders. Co-located tests may
+cross the boundary deliberately to prove end-to-end fixture replay, while the production modules
+remain independently reusable.
+
+The Milestone 1 architecture and scope audit is recorded in
+[`docs/milestone-1-verification.md`](milestone-1-verification.md).

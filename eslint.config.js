@@ -30,5 +30,77 @@ export default defineConfig(
 				parser: ts.parser
 			}
 		}
+	},
+	{
+		files: ['src/lib/simulation/**/*.{js,ts}'],
+		ignores: ['src/lib/simulation/**/*.{spec,test}.{js,ts}'],
+		rules: {
+			'no-restricted-globals': [
+				'error',
+				...[
+					'cancelAnimationFrame',
+					'document',
+					'Document',
+					'fetch',
+					'HTMLElement',
+					'requestAnimationFrame',
+					'ResizeObserver',
+					'WebSocket',
+					'window',
+					'Window',
+					'Worker',
+					'XMLHttpRequest'
+				].map((name) => ({
+					name,
+					message: 'Simulation code must remain independent of browser and transport APIs.'
+				}))
+			],
+			'no-restricted-imports': [
+				'error',
+				{
+					paths: [
+						{
+							name: 'svelte',
+							message: 'Simulation code must not depend on Svelte.'
+						},
+						{
+							name: 'three',
+							message: 'Simulation code must not depend on Three.js.'
+						}
+					],
+					patterns: [
+						{
+							group: ['svelte/*', 'three/*'],
+							message: 'Simulation code must not depend on UI or rendering modules.'
+						},
+						{
+							regex: '^(?:\\$lib/|(?:\\.\\./)+)rendering(?:/|$)',
+							message: 'Simulation code must not depend on rendering modules.'
+						}
+					]
+				}
+			]
+		}
+	},
+	{
+		files: ['src/lib/rendering/**/*.{js,ts}'],
+		ignores: ['src/lib/rendering/**/*.{spec,test}.{js,ts}'],
+		rules: {
+			'no-restricted-imports': [
+				'error',
+				{
+					patterns: [
+						{
+							regex: '^\\$lib/simulation/(?!contracts$)',
+							message: 'Rendering may consume simulation contracts, not simulation implementations.'
+						},
+						{
+							regex: '^(?:\\.\\./)+simulation/(?!contracts(?:\\.ts)?$)',
+							message: 'Rendering may consume simulation contracts, not simulation implementations.'
+						}
+					]
+				}
+			]
+		}
 	}
 );
