@@ -88,7 +88,7 @@ During development:
 
 * run only tests relevant to the modified area where practical.
 
-Before completing an issue:
+Before requesting human review:
 
 * run the repository quality gate.
 
@@ -111,21 +111,38 @@ During implementation:
 * reference the active Linear issue in branch and commit names;
 * push each commit so remote state remains current and recoverable.
 
-Completed work must not remain only on an issue branch.
+Completed implementation must remain on the issue branch until the repository owner reviews and approves it.
 
-Before completing an issue:
+Before requesting human review:
 
 1. run all relevant focused tests;
 2. run the full repository quality gate;
 3. confirm the issue acceptance criteria are satisfied;
-4. integrate the completed issue branch into `main`;
-5. push the updated `main` branch;
-6. delete the completed local and remote issue branch where appropriate;
-7. only then mark the Linear issue complete.
+4. push the completed issue branch;
+5. mark the Linear issue as `In Review`;
+6. present the completed work, test results and any relevant review notes to the user;
+7. explicitly request approval to integrate the issue branch into `main`, or request direction on further changes.
+
+While an issue is in review:
+
+* do not merge or fast-forward the issue branch into `main`;
+* do not delete the local or remote issue branch;
+* do not mark the Linear issue complete;
+* apply requested changes on the same issue branch unless the user directs otherwise;
+* rerun relevant checks and return the issue to the user for review after further changes.
+
+After the repository owner explicitly approves the completed work:
+
+1. confirm the issue branch is current with `origin/main`;
+2. if `main` has advanced, rebase the issue branch onto the current `origin/main` and rerun the required checks;
+3. fast-forward the completed issue branch into `main`;
+4. push the updated `main` branch;
+5. delete the completed local and remote issue branch where appropriate;
+6. mark the Linear issue complete.
+
+Human approval is required for each issue before integration into `main` and before marking the corresponding Linear issue complete. Approval of a plan, specification or earlier issue does not count as approval of the current implementation.
 
 Prefer a fast-forward integration into `main`.
-
-If `main` has advanced, rebase the issue branch onto the current `origin/main`, rerun the required checks, and then fast-forward `main`.
 
 Never force-push `main`.
 
@@ -142,7 +159,7 @@ Do not create a pull request unless:
 * the change warrants a deliberate review before integration;
 * or the agent cannot safely integrate the branch directly.
 
-The absence of a pull request does not remove the requirement to integrate completed work into `main`.
+Human review and approval are still required before integration even when no pull request is used.
 
 ## Interruption Protocol
 
