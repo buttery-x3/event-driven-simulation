@@ -52,6 +52,8 @@ Agents should avoid:
 * unnecessary dependencies;
 * large unrelated refactors.
 
+Agents should prefer finishing one Linear issue completely before beginning another. If work uncovers a separate concern, document it as a follow-up rather than expanding the current issue unless the dependency is unavoidable and approved per the interruption protocol below.
+
 ---
 
 ## Testing
