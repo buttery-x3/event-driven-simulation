@@ -46,3 +46,17 @@ being represented by missing fields, booleans or exceptions.
 The contracts intentionally use ordinary objects, arrays, strings, numbers and `null`. This keeps
 them JSON-serialisable and leaves the calculation implementation replaceable by a future worker or
 Rust/Wasm module without adding either transport today.
+
+## Headless synthetic run
+
+`src/lib/simulation/synthetic-run.ts` is the first producer of a completed run record. It generates
+two continuous constant-acceleration segments separated by a representative contact, using only
+the supplied scene, body state and simulation settings. The contact time is the midpoint of the
+configured maximum simulation time; its position and normal come from the generated path and first
+fixed circle, and the outgoing velocity uses the configured restitution.
+
+The same module evaluates individual motion segments and complete body trajectories at requested
+simulation times. It imports only the plain simulation contracts and is exercised in Vitest's Node
+environment, so it does not depend on Svelte, Three.js, a renderer or browser globals. This
+synthetic path proves the precompute-and-replay boundary without claiming to solve real collisions;
+physical event search remains a later simulation concern.
