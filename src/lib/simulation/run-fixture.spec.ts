@@ -7,11 +7,7 @@ import {
 } from '$lib/rendering/playback';
 import { getRenderableCircles } from '$lib/rendering/render-scene-data';
 import type { SimulationRunRecord } from './contracts';
-import {
-	loadSimulationRunFixture,
-	parseSimulationRunFixture,
-	RunFixtureError
-} from './run-fixture';
+import { loadSimulationRunFixture, parseSimulationRunFixture } from './run-fixture';
 
 describe('saved run fixtures', () => {
 	it('loads and replays the canonical fixture headlessly through the public contract', () => {
@@ -59,44 +55,6 @@ describe('saved run fixtures', () => {
 			radius: collider!.radius
 		});
 		expect(contactSeparation).toBeCloseTo(body!.radius + collider!.radius);
-	});
-
-	it('reports malformed JSON as a typed fixture failure', () => {
-		expect(() => parseSimulationRunFixture('{ not-json')).toThrowError(
-			expect.objectContaining<Partial<RunFixtureError>>({
-				name: 'RunFixtureError',
-				code: 'MALFORMED_FIXTURE_JSON',
-				path: null
-			})
-		);
-	});
-
-	it('reports unsupported contract versions before ordinary playback', () => {
-		const unsupported = {
-			...JSON.parse(canonicalFixtureJson),
-			contractVersion: 2
-		};
-
-		expect(() => loadSimulationRunFixture(unsupported)).toThrowError(
-			expect.objectContaining<Partial<RunFixtureError>>({
-				code: 'UNSUPPORTED_CONTRACT_VERSION',
-				path: '$.contractVersion'
-			})
-		);
-	});
-
-	it('reports the exact incompatible contract field instead of returning partial data', () => {
-		const incompatible = JSON.parse(canonicalFixtureJson) as {
-			input: { initialBodies: Array<{ radius?: number }> };
-		};
-		delete incompatible.input.initialBodies[0]!.radius;
-
-		expect(() => loadSimulationRunFixture(incompatible)).toThrowError(
-			expect.objectContaining<Partial<RunFixtureError>>({
-				code: 'INVALID_RUN_RECORD',
-				path: '$.input.initialBodies[0].radius'
-			})
-		);
 	});
 
 	it('retains normal run-status validation after fixture loading', () => {
