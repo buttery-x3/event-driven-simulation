@@ -39,7 +39,7 @@ Use these terms consistently in component names, labels, tests and accessible de
 | Term                     | Meaning                                                                                                                                                         | UI usage                                                                           |
 | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
 | **Run**                  | A parsed, contract-valid `SimulationRunRecord`, including its input, trajectories, events, terminal status and diagnostics.                                     | “Current run”, “Run status”                                                        |
-| **Source**               | Workbench metadata identifying where the run was loaded from. It is not part of contract v2.                                                                    | `Repository fixture · canonical-synthetic-contact.json` or `Local file · run.json` |
+| **Source**               | Workbench metadata identifying where the run was loaded from. It is not part of contract v3.                                                                    | `Repository fixture · canonical-synthetic-contact.json` or `Local file · run.json` |
 | **Simulation time**      | Domain time recorded in trajectory segments, events and diagnostics, measured from run `t = 0`.                                                                 | Event and diagnostic timestamps                                                    |
 | **Simulated until**      | `run.diagnostics.simulatedUntilTime`: the end of the calculation’s recorded or validated horizon. It does not imply success.                                    | Run inspector                                                                      |
 | **Playable until**       | The greatest simulation time the presentation may seek to for the current inspection mode. For the current complete-run adapter it equals `simulatedUntilTime`. | Playback controls and run inspector                                                |
@@ -47,7 +47,7 @@ Use these terms consistently in component names, labels, tests and accessible de
 | **Calculation status**   | `run.status`: `complete`, `unresolved`, `iteration-limited` or `invalid`.                                                                                       | Persistent status badge and run inspector                                          |
 | **Transport state**      | Presentation-only state: `playing`, `paused` or `ended`.                                                                                                        | Viewport/controls; never labelled as run status                                    |
 | **Recorded prefix**      | Trajectories and events retained up to a failed calculation’s validated horizon.                                                                                | “Recorded prefix inspection” for unresolved or iteration-limited runs              |
-| **Calculation duration** | Wall-clock time spent calculating a run. This is not simulation time and is not present in contract v2.                                                         | Metrics panel only when a future schema records it                                 |
+| **Calculation duration** | Wall-clock time spent calculating a run. This is not simulation time and is not present in contract v3.                                                         | Metrics panel only when a future schema records it                                 |
 
 Prefer **replay** in user-facing transport copy because the workbench presents already calculated
 data. Use **playback** for the underlying presentation subsystem where that is already established.
@@ -149,11 +149,11 @@ The current source label is never replaced by the name of a rejected candidate. 
 attempt, feedback may say `Could not load candidate.json`, while the source continues to say
 `Repository fixture · canonical-synthetic-contact.json`.
 
-Success feedback is short and non-sticky, for example `Loaded run.json · contract v2`. Rejection
+Success feedback is short and non-sticky, for example `Loaded run.json · contract v3`. Rejection
 feedback contains the typed error code, message and validation path when present:
 
 ```text
-UNSUPPORTED_CONTRACT_VERSION · expected version 2 · $.contractVersion
+UNSUPPORTED_CONTRACT_VERSION · expected version 3 · $.contractVersion
 ```
 
 The detailed run diagnostics console contains diagnostics from the current run only. Candidate file

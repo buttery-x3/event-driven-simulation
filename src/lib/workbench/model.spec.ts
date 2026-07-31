@@ -29,7 +29,7 @@ describe('workbench run presentation model', () => {
 
 		expect(getRunCounts(run)).toEqual({
 			bodies: 1,
-			colliders: 1,
+			colliders: 66,
 			trajectories: 1,
 			segments: 2,
 			events: 1,

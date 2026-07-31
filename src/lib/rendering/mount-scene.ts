@@ -5,19 +5,18 @@ import { assertRecordedInspectionEligible, getPlaybackFrame, type PlaybackFrame 
 import { toRenderSceneViewModel } from './render-scene-data';
 import { createSceneObjectResources } from './scene-object-resources';
 
-// These values control only camera framing and the decorative backdrop. They are not simulation
-// geometry and cannot affect physical results.
+// These values control only camera framing and presentation depth. They cannot affect physical
+// results; board width, height and centre still come from the physical scene view model.
 const presentationSettings = {
 	camera: {
 		fieldOfView: 42,
 		near: 0.1,
 		far: 100,
-		position: [0, 2, 8.5] as const,
-		lookAt: [0, 1.25, 0] as const
+		padding: 0.65
 	},
 	backdrop: {
-		size: [5.4, 4.8, 0.3] as const,
-		position: [0, 1.15, -0.42] as const
+		padding: 0.18,
+		z: -0.3
 	}
 } as const;
 
@@ -31,7 +30,8 @@ export function mountScene(host: HTMLElement, input: RendererPlaybackInput): Mou
 
 	const scene = new THREE.Scene();
 	scene.background = new THREE.Color(0x0b1220);
-	scene.fog = new THREE.Fog(0x0b1220, 7, 14);
+	scene.fog = new THREE.Fog(0x0b1220, 9, 22);
+	const viewModel = toRenderSceneViewModel(input);
 
 	const camera = new THREE.PerspectiveCamera(
 		presentationSettings.camera.fieldOfView,
@@ -39,8 +39,6 @@ export function mountScene(host: HTMLElement, input: RendererPlaybackInput): Mou
 		presentationSettings.camera.near,
 		presentationSettings.camera.far
 	);
-	camera.position.set(...presentationSettings.camera.position);
-	camera.lookAt(...presentationSettings.camera.lookAt);
 
 	const renderer = new THREE.WebGLRenderer({ antialias: true });
 	renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -56,24 +54,40 @@ export function mountScene(host: HTMLElement, input: RendererPlaybackInput): Mou
 	keyLight.castShadow = true;
 	scene.add(keyLight);
 
-	const boardGeometry = new THREE.BoxGeometry(...presentationSettings.backdrop.size);
+	const boardGeometry = new THREE.BoxGeometry(
+		viewModel.board.size[0] + presentationSettings.backdrop.padding,
+		viewModel.board.size[1] + presentationSettings.backdrop.padding,
+		viewModel.board.size[2]
+	);
 	const boardMaterial = new THREE.MeshStandardMaterial({
 		color: 0x162238,
 		roughness: 0.68,
 		metalness: 0.08
 	});
 	const board = new THREE.Mesh(boardGeometry, boardMaterial);
-	board.position.set(...presentationSettings.backdrop.position);
+	board.position.set(
+		viewModel.board.centre[0],
+		viewModel.board.centre[1],
+		presentationSettings.backdrop.z
+	);
 	board.receiveShadow = true;
 	scene.add(board);
 
-	const sceneObjectResources = createSceneObjectResources(toRenderSceneViewModel(input));
+	const sceneObjectResources = createSceneObjectResources(viewModel);
 	scene.add(...sceneObjectResources.meshes);
 
 	const render = () => {
 		const width = Math.max(host.clientWidth, 1);
 		const height = Math.max(host.clientHeight, 1);
 		camera.aspect = width / height;
+		const framedWidth = viewModel.board.size[0] + presentationSettings.camera.padding;
+		const framedHeight = viewModel.board.size[1] + presentationSettings.camera.padding;
+		const requiredVerticalSpan = Math.max(framedHeight, framedWidth / camera.aspect);
+		const cameraDistance =
+			requiredVerticalSpan /
+			(2 * Math.tan(THREE.MathUtils.degToRad(presentationSettings.camera.fieldOfView / 2)));
+		camera.position.set(viewModel.board.centre[0], viewModel.board.centre[1], cameraDistance);
+		camera.lookAt(viewModel.board.centre[0], viewModel.board.centre[1], 0);
 		camera.updateProjectionMatrix();
 		renderer.setSize(width, height, false);
 		renderer.render(scene, camera);

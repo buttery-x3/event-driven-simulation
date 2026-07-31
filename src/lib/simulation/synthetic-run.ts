@@ -6,11 +6,30 @@ import type {
 	Vec2
 } from './contracts';
 import { evaluateMotionSegmentPosition, evaluateMotionSegmentVelocity } from './trajectory';
+import { isStaticCircleCollider, validateSceneDefinition } from './scene-validation';
 import { dotVec2, normaliseVec2 } from './vector';
 
 export function generateSyntheticRun(input: SimulationInput): SimulationRunRecord {
+	const sceneValidation = validateSceneDefinition(input.scene, '$.scene');
+	if (!sceneValidation.valid) {
+		return stoppedRun(
+			input,
+			{
+				type: 'invalid',
+				reason: 'The synthetic run scene did not pass validation.'
+			},
+			sceneValidation.diagnostics.map((diagnostic) => ({
+				severity: 'error' as const,
+				code: diagnostic.code,
+				message: `${diagnostic.path}: ${diagnostic.message}`,
+				time: null,
+				bodyId: null
+			}))
+		);
+	}
+
 	const body = input.initialDynamicBodies[0];
-	const collider = input.scene.staticColliders[0];
+	const collider = input.scene.staticColliders.find(isStaticCircleCollider);
 
 	if (input.initialDynamicBodies.length !== 1 || !body) {
 		return stoppedRun(input, { type: 'invalid', reason: 'A synthetic run requires one body.' });
@@ -79,7 +98,7 @@ export function generateSyntheticRun(input: SimulationInput): SimulationRunRecor
 	};
 
 	return {
-		contractVersion: 2,
+		contractVersion: 3,
 		input,
 		status: { type: 'complete' },
 		trajectories: [{ bodyId: body.id, segments: [firstSegment, secondSegment] }],
@@ -109,9 +128,21 @@ export function generateSyntheticRun(input: SimulationInput): SimulationRunRecor
 	};
 }
 
-function stoppedRun(input: SimulationInput, status: Exclude<RunStatus, { type: 'complete' }>) {
+function stoppedRun(
+	input: SimulationInput,
+	status: Exclude<RunStatus, { type: 'complete' }>,
+	entries = [
+		{
+			severity: status.type === 'invalid' ? ('error' as const) : ('warning' as const),
+			code: status.type === 'invalid' ? 'SYNTHETIC_INPUT_INVALID' : 'SYNTHETIC_EVENT_LIMIT_REACHED',
+			message: status.reason,
+			time: null,
+			bodyId: null
+		}
+	]
+) {
 	return {
-		contractVersion: 2,
+		contractVersion: 3,
 		input,
 		status,
 		trajectories: [],
@@ -119,16 +150,7 @@ function stoppedRun(input: SimulationInput, status: Exclude<RunStatus, { type: '
 		diagnostics: {
 			iterations: 0,
 			simulatedUntilTime: 0,
-			entries: [
-				{
-					severity: status.type === 'invalid' ? ('error' as const) : ('warning' as const),
-					code:
-						status.type === 'invalid' ? 'SYNTHETIC_INPUT_INVALID' : 'SYNTHETIC_EVENT_LIMIT_REACHED',
-					message: status.reason,
-					time: null,
-					bodyId: null
-				}
-			]
+			entries
 		}
 	} satisfies SimulationRunRecord;
 }

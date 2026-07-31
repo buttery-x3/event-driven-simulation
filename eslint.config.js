@@ -118,7 +118,7 @@ export default defineConfig(
 							message: 'Application routes must use the rendering/playback public entry point.'
 						},
 						{
-							regex: '^\\$lib/simulation/run-fixture-(?:error|json|v2|version)(?:\\.ts)?$',
+							regex: '^\\$lib/simulation/run-fixture-(?:error|json|v3|version)(?:\\.ts)?$',
 							message: 'Application routes must use the simulation/run-fixture public entry point.'
 						}
 					]

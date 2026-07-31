@@ -30,9 +30,10 @@ modules.
 
 Physical shape, motion authority and renderer representation are separate concepts:
 
-- **Physical shape** is the two-dimensional geometry used by simulation. The current
-  `CirclePhysicalShape` contains only a radius; a static collider supplies its centre and a dynamic
-  body supplies its initial position separately.
+- **Physical shape** is the two-dimensional geometry used by simulation. `CirclePhysicalShape`
+  contains a radius; a static circle supplies its centre and a dynamic body supplies its initial
+  position separately. `LineSegmentPhysicalShape` contains its two endpoints and represents the
+  zero-thickness walls, guides and exit floors.
 - **Motion authority** identifies who determines an entity's pose. `static` entities remain at
   their configured pose, `dynamic` entities are solved and recorded by simulation, and `prescribed`
   is reserved for future mechanically controlled motion such as roulette. Milestone 1 implements
@@ -40,10 +41,15 @@ Physical shape, motion authority and renderer representation are separate concep
 - **Renderer representation** is a renderer-owned view model. It chooses Three.js geometry,
   material, depth and visual orientation without changing collision data.
 
-`StaticCircleCollider` and `InitialDynamicCircleBodyState` are explicit physical records. Each
-carries a stable entity ID, a motion-authority discriminant and a circle shape discriminant, so
-their meaning does not depend only on which array contains them. The same IDs continue through
-contact events, body trajectories, playback poses and renderer mesh registration.
+`StaticCircleCollider`, `StaticLineSegmentCollider` and `InitialDynamicCircleBodyState` are explicit
+physical records. Each carries a stable entity ID, motion authority and shape discriminant, so its
+meaning does not depend only on which array contains it. Axis-aligned termination regions provide a
+physical completion or escape condition without pretending to be colliders. The same entity IDs
+continue through contact events, body trajectories, playback poses and renderer mesh registration.
+
+The canonical board coordinate system, construction and named launch catalogue are documented in
+[`simulation.md`](simulation.md). Scene validation is headless and returns typed, path-specific
+diagnostics for unsupported geometry, duplicate IDs, malformed coordinates and invalid dimensions.
 
 ## Contract responsibilities
 
@@ -68,9 +74,9 @@ Run statuses are discriminated values: `complete`, `unresolved`, `iteration-limi
 Expected calculation failures therefore remain data, with a reason and diagnostics, rather than
 being represented by missing fields, booleans or exceptions.
 
-`contractVersion` is `2` after FLAME-22 made physical shape and motion authority explicit in saved
-records. Version 1 fixtures are rejected rather than silently interpreted as version 2; the
-prototype has no external version 1 compatibility requirement. The contracts intentionally use
+`contractVersion` is `3` after FLAME-26 added board coordinates, line-segment boundaries and
+termination regions. Earlier fixtures are rejected rather than silently interpreted as version 3;
+the prototype has no external compatibility requirement. The contracts intentionally use
 ordinary objects, arrays, strings, numbers and `null`. This keeps them JSON-serialisable and leaves
 the calculation implementation replaceable by a future worker or Rust/Wasm module without adding
 either transport today.
@@ -80,7 +86,7 @@ either transport today.
 Saved run fixtures live under the repository-level `fixtures/` directory so headless tests and the
 browser renderer consume the same files. `src/lib/simulation/run-fixture.ts` is the narrow runtime
 entry point from unknown JSON data to `SimulationRunRecord`. JSON parsing, typed fixture errors,
-contract-version recognition and version 2 structural validation live in separate implementation
+contract-version recognition and version 3 structural validation live in separate implementation
 modules behind that entry point. Version dispatch is intentionally explicit rather than a general
 schema registry.
 
@@ -121,10 +127,11 @@ exact transition time. Missing recorded intervals produce no body pose rather th
 integrated renderer motion.
 
 `toRenderSceneViewModel` adapts physical records to a small renderer-side discriminated union.
-Dynamic circular bodies become spheres. Static circular Plinko colliders become cylinders whose
-depth and orientation exist only in that renderer view model. Adding a renderer representation
-therefore changes the adapter and Three.js geometry factory, not the playback clock or canonical
-trajectory evaluator.
+Dynamic circular bodies become spheres. Static circular Plinko colliders become cylinders.
+Line-segment boundaries become boxes whose visible thickness is presentation-only. Axis-aligned
+termination regions become translucent planes, while physical board bounds determine the backdrop
+size and camera framing. Adding a renderer representation therefore changes the adapter and
+Three.js geometry factory, not the playback clock or canonical trajectory evaluator.
 
 Three.js consumes evaluated poses and maps simulation `(x, y)` coordinates to presentation
 `(x, y, 0)` coordinates. `mount-scene.ts` remains the browser lifecycle orchestrator, while scene

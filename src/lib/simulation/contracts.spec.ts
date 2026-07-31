@@ -46,7 +46,7 @@ const events = [
 describe('simulation and replay contracts', () => {
 	it('round-trips a representative run record as plain JSON data', () => {
 		const run = {
-			contractVersion: 2,
+			contractVersion: 3,
 			input: prototypeSimulationInput,
 			status: { type: 'complete' },
 			trajectories,
@@ -83,7 +83,7 @@ describe('simulation and replay contracts', () => {
 
 	it('keeps renderer playback input serialisable and explicit about incomplete runs', () => {
 		const playback = {
-			contractVersion: 2,
+			contractVersion: 3,
 			scene: prototypeSimulationInput.scene,
 			initialDynamicBodies: prototypeSimulationInput.initialDynamicBodies,
 			status: {

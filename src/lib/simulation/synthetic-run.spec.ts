@@ -5,12 +5,28 @@ import { generateSyntheticRun } from './synthetic-run';
 const input = {
 	scene: {
 		id: 'synthetic-test-scene',
+		coordinateSystem: {
+			origin: 'centre-bottom',
+			horizontalAxis: 'right',
+			verticalAxis: 'up',
+			lengthUnit: 'metre'
+		},
+		bounds: { width: 3, height: 3 },
 		staticColliders: [
 			{
 				id: 'test-peg',
 				motionAuthority: 'static',
 				physicalShape: { type: 'circle', radius: 0.25 },
 				centre: [1, 0.55]
+			}
+		],
+		terminationRegions: [
+			{
+				id: 'test-exit',
+				type: 'axis-aligned-box',
+				purpose: 'complete',
+				minimum: [-0.5, -0.2],
+				maximum: [0.5, 0]
 			}
 		]
 	},
@@ -79,5 +95,29 @@ describe('synthetic headless run', () => {
 		expect('window' in globalThis).toBe(false);
 		expect('document' in globalThis).toBe(false);
 		expect(generateSyntheticRun(input).status.type).toBe('complete');
+	});
+
+	it('rejects malformed scene data before generating trajectories', () => {
+		const malformed = {
+			...input,
+			scene: {
+				...input.scene,
+				bounds: { ...input.scene.bounds, width: 0 }
+			}
+		} as SimulationInput;
+
+		const run = generateSyntheticRun(malformed);
+
+		expect(run.status).toEqual({
+			type: 'invalid',
+			reason: 'The synthetic run scene did not pass validation.'
+		});
+		expect(run.trajectories).toEqual([]);
+		expect(run.diagnostics.entries).toEqual([
+			expect.objectContaining({
+				code: 'INVALID_DIMENSION',
+				message: '$.scene.bounds.width: Physical dimension must be a positive finite number.'
+			})
+		]);
 	});
 });

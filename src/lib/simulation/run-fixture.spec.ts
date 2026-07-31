@@ -6,8 +6,10 @@ import {
 	toRendererPlaybackInput
 } from '$lib/rendering/playback';
 import { toRenderSceneViewModel } from '$lib/rendering/render-scene-data';
+import { canonicalPlinkoBoard } from './canonical-board';
 import type { SimulationRunRecord } from './contracts';
 import { loadSimulationRunFixture, parseSimulationRunFixture } from './run-fixture';
+import { defaultCanonicalPlinkoScenario } from './scenario-catalogue';
 
 describe('saved run fixtures', () => {
 	it('loads and replays the canonical fixture headlessly through the public contract', () => {
@@ -15,18 +17,24 @@ describe('saved run fixtures', () => {
 		const playback = toRendererPlaybackInput(run);
 
 		expect('window' in globalThis).toBe(false);
-		expect(run.input.scene.id).toBe('canonical-synthetic-scene');
+		expect(run.input.scene.id).toBe('canonical-plinko-board');
+		expect(run.input.scene).toEqual(canonicalPlinkoBoard);
+		expect(run.input.initialDynamicBodies).toEqual(
+			defaultCanonicalPlinkoScenario.input.initialDynamicBodies
+		);
+		expect(run.input.settings).toEqual(defaultCanonicalPlinkoScenario.input.settings);
 		expect(run.status).toEqual({ type: 'complete' });
 		expect(run.events).toHaveLength(1);
 		expect(run.diagnostics.entries[0]?.code).toBe('SYNTHETIC_CONTACT_GENERATED');
-		expect(getPlaybackFrame(playback, 1)).toMatchObject({
-			time: 1,
-			bodies: [{ bodyId: 'canonical-ball', position: [1, 1], segmentIndex: 1 }],
-			mostRecentEvent: { type: 'contact', colliderId: 'canonical-peg' }
+		const contactTime = run.events[0]!.time;
+		expect(getPlaybackFrame(playback, contactTime)).toMatchObject({
+			time: contactTime,
+			bodies: [{ bodyId: 'ball-primary', position: [0, 5.97], segmentIndex: 1 }],
+			mostRecentEvent: { type: 'contact', colliderId: 'peg-row-01-column-04' }
 		});
-		expect(getPlaybackFrame(playback, 2)).toMatchObject({
-			time: 2,
-			bodies: [{ position: [2, 1], segmentIndex: 1 }]
+		expect(getPlaybackFrame(playback, run.diagnostics.simulatedUntilTime)).toMatchObject({
+			time: run.diagnostics.simulatedUntilTime,
+			bodies: [{ segmentIndex: 1 }]
 		});
 	});
 
@@ -35,14 +43,16 @@ describe('saved run fixtures', () => {
 		const playback = toRendererPlaybackInput(run);
 		const contact = run.events[0];
 		const body = run.input.initialDynamicBodies[0];
-		const collider = run.input.scene.staticColliders[0];
+		const collider = run.input.scene.staticColliders.find(({ id }) => id === contact!.colliderId);
 		const frameBody = getPlaybackFrame(playback, contact!.time).bodies[0];
 		const renderedObjects = toRenderSceneViewModel(playback).objects;
 		const renderedBody = renderedObjects.find(({ id }) => id === body!.id);
 		const renderedCollider = renderedObjects.find(({ id }) => id === collider!.id);
+		expect(collider?.physicalShape.type).toBe('circle');
+		if (!collider || collider.physicalShape.type !== 'circle' || !('centre' in collider)) return;
 		const contactSeparation = Math.hypot(
-			contact!.position[0] - collider!.centre[0],
-			contact!.position[1] - collider!.centre[1]
+			contact!.position[0] - collider.centre[0],
+			contact!.position[1] - collider.centre[1]
 		);
 
 		expect(frameBody?.position).toEqual(contact!.position);
@@ -53,11 +63,11 @@ describe('saved run fixtures', () => {
 		});
 		expect(renderedCollider).toMatchObject({
 			representation: 'cylinder',
-			centre: collider!.centre,
-			radius: collider!.physicalShape.radius
+			centre: collider.centre,
+			radius: collider.physicalShape.radius
 		});
 		expect(contactSeparation).toBeCloseTo(
-			body!.physicalShape.radius + collider!.physicalShape.radius
+			body!.physicalShape.radius + collider.physicalShape.radius
 		);
 	});
 

@@ -30,7 +30,7 @@ test('presents a calculated run as a diagnostic workbench and seeks exact events
 	await expect(replay).toBeVisible();
 	await expect(
 		replay.getByRole('img', {
-			name: 'A ball replaying recorded trajectory data past fixed pegs'
+			name: 'A canonical Plinko board replaying recorded ball trajectory data'
 		})
 	).toBeVisible();
 	await expect(replay.locator('canvas')).toBeVisible();
@@ -43,11 +43,11 @@ test('presents a calculated run as a diagnostic workbench and seeks exact events
 	await expect(controls.getByRole('button', { name: 'Pause' })).toBeVisible();
 	await expect(replay.getByText('playing', { exact: true })).toBeVisible();
 
-	const event = page.getByRole('button', { name: 'Event 1, contact at 1 s' });
+	const event = page.getByRole('button', { name: /^Event 1, contact at / });
 	await event.click();
 
 	await expect(event).toHaveAttribute('aria-current', 'true');
-	await expect(controls.locator('output')).toHaveText('1.000 s / 2.000 s');
+	await expect(controls.locator('output')).toHaveText('0.364 s / 1.776 s');
 	await expect(controls.getByRole('button', { name: 'Play' })).toBeVisible();
 });
 
@@ -65,7 +65,7 @@ test('loads a local saved run and retains it after typed validation failures', a
 		page.getByLabel('Current run source').getByText('Local file · local-run.json', { exact: true })
 	).toBeVisible();
 	await expect(
-		page.getByText('Loaded local-run.json · contract v2', { exact: true })
+		page.getByText('Loaded local-run.json · contract v3', { exact: true })
 	).toBeVisible();
 
 	await expectRejectedCandidate(page, {
@@ -80,7 +80,7 @@ test('loads a local saved run and retains it after typed validation failures', a
 	});
 	await expectRejectedCandidate(page, {
 		name: 'invalid-record.json',
-		content: JSON.stringify({ contractVersion: 2 }),
+		content: JSON.stringify({ contractVersion: 3 }),
 		code: 'INVALID_RUN_RECORD'
 	});
 
@@ -120,8 +120,8 @@ test('keeps a failed calculation distinct while exposing its recorded prefix', a
 		controls.getByRole('slider', { name: 'Seek recorded simulation time' })
 	).toBeEnabled();
 
-	await page.getByRole('button', { name: 'Event 1, contact at 1 s' }).click();
-	await expect(controls.locator('output')).toHaveText('1.000 s / 2.000 s');
+	await page.getByRole('button', { name: /^Event 1, contact at / }).click();
+	await expect(controls.locator('output')).toHaveText('0.364 s / 1.776 s');
 });
 
 async function expectRejectedCandidate(

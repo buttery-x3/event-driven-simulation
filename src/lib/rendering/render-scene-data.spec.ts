@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { RendererPlaybackInput, SimulationInput } from '$lib/simulation/contracts';
+import { canonicalPlinkoBoard } from '$lib/simulation/canonical-board';
 import { prototypeSimulationInput } from '$lib/simulation/prototype-input';
+import { defaultCanonicalPlinkoScenario } from '$lib/simulation/scenario-catalogue';
 import { toRenderSceneViewModel } from './render-scene-data';
 
 function withBodyRadius(radius: number): SimulationInput {
@@ -25,6 +27,8 @@ describe('render scene view-model adaptation', () => {
 			representation: 'sphere',
 			material: 'dynamic-body',
 			centre: input.initialDynamicBodies[0]?.position,
+			z: 0,
+			orientation: [0, 0, 0],
 			radius
 		});
 	});
@@ -43,6 +47,7 @@ describe('render scene view-model adaptation', () => {
 			representation: 'cylinder',
 			material: 'fixed-peg',
 			centre: collider.centre,
+			z: 0,
 			radius: collider.physicalShape.radius,
 			depth: 0.32,
 			orientation: [Math.PI / 2, 0, 0]
@@ -52,10 +57,41 @@ describe('render scene view-model adaptation', () => {
 		expect('orientation' in collider).toBe(false);
 	});
 
+	it('derives the board, boundaries and completion region from physical coordinates', () => {
+		const viewModel = toRenderSceneViewModel(defaultCanonicalPlinkoScenario.input);
+		const leftWall = viewModel.objects.find(({ id }) => id === 'boundary-left-wall');
+		const exit = viewModel.objects.find(({ id }) => id === 'termination-centre-exit');
+
+		expect(viewModel.board).toEqual({
+			centre: [0, canonicalPlinkoBoard.bounds.height / 2],
+			size: [canonicalPlinkoBoard.bounds.width, canonicalPlinkoBoard.bounds.height, 0.3]
+		});
+		expect(leftWall).toEqual({
+			id: 'boundary-left-wall',
+			motionAuthority: 'static',
+			representation: 'box',
+			material: 'fixed-boundary',
+			centre: [-2.55, 3.35],
+			z: 0,
+			size: [5.8, 0.08, 0.24],
+			orientation: [0, 0, Math.PI / 2]
+		});
+		expect(exit).toEqual({
+			id: 'termination-centre-exit',
+			motionAuthority: 'static',
+			representation: 'plane',
+			material: 'termination-region',
+			centre: [0, -0.09],
+			z: -0.08,
+			size: [1, 0.42],
+			orientation: [0, 0, 0]
+		});
+	});
+
 	it('keeps playback dimensions consistent with the simulation input', () => {
 		const input = withBodyRadius(0.47);
 		const playback = {
-			contractVersion: 2,
+			contractVersion: 3,
 			scene: input.scene,
 			initialDynamicBodies: input.initialDynamicBodies,
 			status: { type: 'complete' },
@@ -71,6 +107,8 @@ describe('render scene view-model adaptation', () => {
 
 		const renderedBody = toRenderSceneViewModel(playback).objects.find(({ id }) => id === 'ball');
 
-		expect(renderedBody?.radius).toBe(input.initialDynamicBodies[0]?.physicalShape.radius);
+		expect(renderedBody?.representation).toBe('sphere');
+		if (renderedBody?.representation !== 'sphere') return;
+		expect(renderedBody.radius).toBe(input.initialDynamicBodies[0]?.physicalShape.radius);
 	});
 });

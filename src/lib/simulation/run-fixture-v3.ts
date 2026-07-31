@@ -1,10 +1,11 @@
 import type { SimulationRunRecord } from './contracts';
 import { RunFixtureError } from './run-fixture-error';
+import { validateSceneDefinition } from './scene-validation';
 
-export function validateRunFixtureV2(value: unknown): SimulationRunRecord {
+export function validateRunFixtureV3(value: unknown): SimulationRunRecord {
 	const run = requireRecord(value, '$');
 
-	requireLiteral(run.contractVersion, 2, '$.contractVersion');
+	requireLiteral(run.contractVersion, 3, '$.contractVersion');
 	validateSimulationInput(run.input, '$.input');
 	validateRunStatus(run.status, '$.status');
 	validateTrajectories(run.trajectories, '$.trajectories');
@@ -16,20 +17,12 @@ export function validateRunFixtureV2(value: unknown): SimulationRunRecord {
 
 function validateSimulationInput(value: unknown, path: string): void {
 	const input = requireRecord(value, path);
-	const scene = requireRecord(input.scene, `${path}.scene`);
+	const sceneValidation = validateSceneDefinition(input.scene, `${path}.scene`);
 
-	requireString(scene.id, `${path}.scene.id`);
-	requireArray(scene.staticColliders, `${path}.scene.staticColliders`).forEach(
-		(collider, index) => {
-			const colliderPath = `${path}.scene.staticColliders[${index}]`;
-			const record = requireRecord(collider, colliderPath);
-
-			requireString(record.id, `${colliderPath}.id`);
-			requireLiteral(record.motionAuthority, 'static', `${colliderPath}.motionAuthority`);
-			validateCirclePhysicalShape(record.physicalShape, `${colliderPath}.physicalShape`);
-			validateVec2(record.centre, `${colliderPath}.centre`);
-		}
-	);
+	if (!sceneValidation.valid) {
+		const diagnostic = sceneValidation.diagnostics[0]!;
+		fail(diagnostic.path, `${diagnostic.code}: ${diagnostic.message}`);
+	}
 
 	requireArray(input.initialDynamicBodies, `${path}.initialDynamicBodies`).forEach(
 		(body, index) => {

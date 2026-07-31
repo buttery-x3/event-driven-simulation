@@ -62,7 +62,7 @@
 				class="scene"
 				bind:this={sceneHost}
 				role="img"
-				aria-label="A ball replaying recorded trajectory data past fixed pegs"
+				aria-label="A canonical Plinko board replaying recorded ball trajectory data"
 			></div>
 			{#if mode === 'recorded-prefix'}
 				<div class="restriction" role="status">

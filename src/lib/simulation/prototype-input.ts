@@ -3,6 +3,16 @@ import type { SimulationInput } from './contracts';
 export const prototypeSimulationInput = {
 	scene: {
 		id: 'prototype-scene',
+		coordinateSystem: {
+			origin: 'centre-bottom',
+			horizontalAxis: 'right',
+			verticalAxis: 'up',
+			lengthUnit: 'metre'
+		},
+		bounds: {
+			width: 3,
+			height: 3
+		},
 		staticColliders: [
 			{
 				id: 'peg-left',
@@ -21,6 +31,15 @@ export const prototypeSimulationInput = {
 				motionAuthority: 'static',
 				physicalShape: { type: 'circle', radius: 0.2 },
 				centre: [0.8, 1.55]
+			}
+		],
+		terminationRegions: [
+			{
+				id: 'prototype-exit',
+				type: 'axis-aligned-box',
+				purpose: 'complete',
+				minimum: [-0.5, -0.2],
+				maximum: [0.5, 0]
 			}
 		]
 	},

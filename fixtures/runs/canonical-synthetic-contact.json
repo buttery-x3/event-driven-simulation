@@ -1,37 +1,641 @@
 {
-	"contractVersion": 2,
+	"contractVersion": 3,
 	"input": {
 		"scene": {
-			"id": "canonical-synthetic-scene",
+			"id": "canonical-plinko-board",
+			"coordinateSystem": {
+				"origin": "centre-bottom",
+				"horizontalAxis": "right",
+				"verticalAxis": "up",
+				"lengthUnit": "metre"
+			},
+			"bounds": {
+				"width": 5.4,
+				"height": 7
+			},
 			"staticColliders": [
 				{
-					"id": "canonical-peg",
+					"id": "peg-row-01-column-01",
 					"motionAuthority": "static",
 					"physicalShape": {
 						"type": "circle",
-						"radius": 0.25
+						"radius": 0.09
 					},
-					"centre": [1, 0.55]
+					"centre": [-1.8, 5.75]
+				},
+				{
+					"id": "peg-row-01-column-02",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-1.2, 5.75]
+				},
+				{
+					"id": "peg-row-01-column-03",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-0.6, 5.75]
+				},
+				{
+					"id": "peg-row-01-column-04",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0, 5.75]
+				},
+				{
+					"id": "peg-row-01-column-05",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0.6, 5.75]
+				},
+				{
+					"id": "peg-row-01-column-06",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [1.2, 5.75]
+				},
+				{
+					"id": "peg-row-01-column-07",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [1.8, 5.75]
+				},
+				{
+					"id": "peg-row-02-column-01",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-2.1, 5.15]
+				},
+				{
+					"id": "peg-row-02-column-02",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-1.5, 5.15]
+				},
+				{
+					"id": "peg-row-02-column-03",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-0.9, 5.15]
+				},
+				{
+					"id": "peg-row-02-column-04",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-0.3, 5.15]
+				},
+				{
+					"id": "peg-row-02-column-05",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0.3, 5.15]
+				},
+				{
+					"id": "peg-row-02-column-06",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0.9, 5.15]
+				},
+				{
+					"id": "peg-row-02-column-07",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [1.5, 5.15]
+				},
+				{
+					"id": "peg-row-02-column-08",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [2.1, 5.15]
+				},
+				{
+					"id": "peg-row-03-column-01",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-1.8, 4.55]
+				},
+				{
+					"id": "peg-row-03-column-02",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-1.2, 4.55]
+				},
+				{
+					"id": "peg-row-03-column-03",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-0.6, 4.55]
+				},
+				{
+					"id": "peg-row-03-column-04",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0, 4.55]
+				},
+				{
+					"id": "peg-row-03-column-05",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0.6, 4.55]
+				},
+				{
+					"id": "peg-row-03-column-06",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [1.2, 4.55]
+				},
+				{
+					"id": "peg-row-03-column-07",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [1.8, 4.55]
+				},
+				{
+					"id": "peg-row-04-column-01",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-2.1, 3.95]
+				},
+				{
+					"id": "peg-row-04-column-02",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-1.5, 3.95]
+				},
+				{
+					"id": "peg-row-04-column-03",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-0.9, 3.95]
+				},
+				{
+					"id": "peg-row-04-column-04",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-0.3, 3.95]
+				},
+				{
+					"id": "peg-row-04-column-05",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0.3, 3.95]
+				},
+				{
+					"id": "peg-row-04-column-06",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0.9, 3.95]
+				},
+				{
+					"id": "peg-row-04-column-07",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [1.5, 3.95]
+				},
+				{
+					"id": "peg-row-04-column-08",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [2.1, 3.95]
+				},
+				{
+					"id": "peg-row-05-column-01",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-1.8, 3.35]
+				},
+				{
+					"id": "peg-row-05-column-02",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-1.2, 3.35]
+				},
+				{
+					"id": "peg-row-05-column-03",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-0.6, 3.35]
+				},
+				{
+					"id": "peg-row-05-column-04",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0, 3.35]
+				},
+				{
+					"id": "peg-row-05-column-05",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0.6, 3.35]
+				},
+				{
+					"id": "peg-row-05-column-06",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [1.2, 3.35]
+				},
+				{
+					"id": "peg-row-05-column-07",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [1.8, 3.35]
+				},
+				{
+					"id": "peg-row-06-column-01",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-2.1, 2.75]
+				},
+				{
+					"id": "peg-row-06-column-02",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-1.5, 2.75]
+				},
+				{
+					"id": "peg-row-06-column-03",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-0.9, 2.75]
+				},
+				{
+					"id": "peg-row-06-column-04",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-0.3, 2.75]
+				},
+				{
+					"id": "peg-row-06-column-05",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0.3, 2.75]
+				},
+				{
+					"id": "peg-row-06-column-06",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0.9, 2.75]
+				},
+				{
+					"id": "peg-row-06-column-07",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [1.5, 2.75]
+				},
+				{
+					"id": "peg-row-06-column-08",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [2.1, 2.75]
+				},
+				{
+					"id": "peg-row-07-column-01",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-1.8, 2.15]
+				},
+				{
+					"id": "peg-row-07-column-02",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-1.2, 2.15]
+				},
+				{
+					"id": "peg-row-07-column-03",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-0.6, 2.15]
+				},
+				{
+					"id": "peg-row-07-column-04",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0, 2.15]
+				},
+				{
+					"id": "peg-row-07-column-05",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0.6, 2.15]
+				},
+				{
+					"id": "peg-row-07-column-06",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [1.2, 2.15]
+				},
+				{
+					"id": "peg-row-07-column-07",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [1.8, 2.15]
+				},
+				{
+					"id": "peg-row-08-column-01",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-2.1, 1.55]
+				},
+				{
+					"id": "peg-row-08-column-02",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-1.5, 1.55]
+				},
+				{
+					"id": "peg-row-08-column-03",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-0.9, 1.55]
+				},
+				{
+					"id": "peg-row-08-column-04",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-0.3, 1.55]
+				},
+				{
+					"id": "peg-row-08-column-05",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0.3, 1.55]
+				},
+				{
+					"id": "peg-row-08-column-06",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0.9, 1.55]
+				},
+				{
+					"id": "peg-row-08-column-07",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [1.5, 1.55]
+				},
+				{
+					"id": "peg-row-08-column-08",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [2.1, 1.55]
+				},
+				{
+					"id": "boundary-left-wall",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "line-segment",
+						"start": [-2.55, 0.45],
+						"end": [-2.55, 6.25]
+					}
+				},
+				{
+					"id": "boundary-right-wall",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "line-segment",
+						"start": [2.55, 0.45],
+						"end": [2.55, 6.25]
+					}
+				},
+				{
+					"id": "boundary-left-entry-guide",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "line-segment",
+						"start": [-2.55, 6.25],
+						"end": [-2.05, 6.72]
+					}
+				},
+				{
+					"id": "boundary-right-entry-guide",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "line-segment",
+						"start": [2.05, 6.72],
+						"end": [2.55, 6.25]
+					}
+				},
+				{
+					"id": "boundary-left-exit-floor",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "line-segment",
+						"start": [-2.55, 0.45],
+						"end": [-0.5, 0.12]
+					}
+				},
+				{
+					"id": "boundary-right-exit-floor",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "line-segment",
+						"start": [0.5, 0.12],
+						"end": [2.55, 0.45]
+					}
+				}
+			],
+			"terminationRegions": [
+				{
+					"id": "termination-centre-exit",
+					"type": "axis-aligned-box",
+					"purpose": "complete",
+					"minimum": [-0.5, -0.3],
+					"maximum": [0.5, 0.12]
 				}
 			]
 		},
 		"initialDynamicBodies": [
 			{
-				"id": "canonical-ball",
+				"id": "ball-primary",
 				"motionAuthority": "dynamic",
 				"physicalShape": {
 					"type": "circle",
-					"radius": 0.2
+					"radius": 0.13
 				},
-				"position": [0, 2],
-				"velocity": [1, 0]
+				"position": [0, 6.62],
+				"velocity": [0, 0]
 			}
 		],
 		"settings": {
-			"gravity": [0, -2],
-			"restitution": 0.5,
-			"maximumEvents": 1,
-			"maximumSimulationTime": 2,
+			"gravity": [0, -9.81],
+			"restitution": 0.78,
+			"maximumEvents": 1000,
+			"maximumSimulationTime": 10,
 			"tolerances": {
 				"contactDistance": 1e-9,
 				"eventTime": 1e-9
@@ -43,23 +647,23 @@
 	},
 	"trajectories": [
 		{
-			"bodyId": "canonical-ball",
+			"bodyId": "ball-primary",
 			"segments": [
 				{
-					"bodyId": "canonical-ball",
+					"bodyId": "ball-primary",
 					"startTime": 0,
-					"endTime": 1,
-					"startPosition": [0, 2],
-					"startVelocity": [1, 0],
-					"acceleration": [0, -2]
+					"endTime": 0.36402999730771823,
+					"startPosition": [0, 6.62],
+					"startVelocity": [0, 0],
+					"acceleration": [0, -9.81]
 				},
 				{
-					"bodyId": "canonical-ball",
-					"startTime": 1,
-					"endTime": 2,
-					"startPosition": [1, 1],
-					"startVelocity": [1, 1],
-					"acceleration": [0, -2]
+					"bodyId": "ball-primary",
+					"startTime": 0.36402999730771823,
+					"endTime": 1.776029997307718,
+					"startPosition": [0, 5.97],
+					"startVelocity": [0, 2.7854847333991986],
+					"acceleration": [0, -9.81]
 				}
 			]
 		}
@@ -67,23 +671,23 @@
 	"events": [
 		{
 			"type": "contact",
-			"time": 1,
-			"bodyId": "canonical-ball",
-			"colliderId": "canonical-peg",
-			"position": [1, 1],
+			"time": 0.36402999730771823,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-01-column-04",
+			"position": [0, 5.97],
 			"normal": [0, 1]
 		}
 	],
 	"diagnostics": {
 		"iterations": 1,
-		"simulatedUntilTime": 2,
+		"simulatedUntilTime": 1.776029997307718,
 		"entries": [
 			{
 				"severity": "info",
 				"code": "SYNTHETIC_CONTACT_GENERATED",
 				"message": "Generated the canonical synthetic trajectory and representative contact.",
-				"time": 1,
-				"bodyId": "canonical-ball"
+				"time": 0.36402999730771823,
+				"bodyId": "ball-primary"
 			}
 		]
 	}

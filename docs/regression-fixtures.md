@@ -31,6 +31,6 @@ Keep one run record per file. Do not create renderer-specific copies.
 There is deliberately no migration framework. If `contractVersion` changes, decide how to update
 or retain affected fixtures as part of that contract change.
 
-FLAME-22 advanced the contract to version 2 so saved records explicitly distinguish static circle
-colliders and dynamic circle bodies. The pre-release canonical fixture was updated in place; version
-1 data is intentionally rejected rather than guessed or migrated.
+FLAME-26 advanced the contract to version 3 so saved records include the board coordinate system,
+line-segment boundaries and termination regions. The pre-release canonical fixture was updated in
+place; earlier data is intentionally rejected rather than guessed or migrated.

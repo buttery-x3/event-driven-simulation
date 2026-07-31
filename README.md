@@ -169,3 +169,6 @@ the authoritative local quality gate with `npm run check`.
 
 See [the repository quality workflow](docs/workflow.md) for the focused development commands and
 the simulation-renderer boundary used by the scaffold.
+
+The canonical Milestone 2 Plinko board, coordinate conventions and named launch catalogue are
+documented in [the simulation guide](docs/simulation.md).
