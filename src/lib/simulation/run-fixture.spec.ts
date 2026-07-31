@@ -5,6 +5,7 @@ import {
 	getPlaybackFrame,
 	toRendererPlaybackInput
 } from '$lib/rendering/playback';
+import { getRenderableCircles } from '$lib/rendering/render-scene-data';
 import type { SimulationRunRecord } from './contracts';
 import {
 	loadSimulationRunFixture,
@@ -31,6 +32,33 @@ describe('saved run fixtures', () => {
 			time: 2,
 			bodies: [{ position: [2, 1], segmentIndex: 1 }]
 		});
+	});
+
+	it('keeps canonical contact geometry and playback poses in one coordinate system', () => {
+		const run = parseSimulationRunFixture(canonicalFixtureJson);
+		const playback = toRendererPlaybackInput(run);
+		const contact = run.events[0];
+		const body = run.input.initialBodies[0];
+		const collider = run.input.scene.fixedCircles[0];
+		const frameBody = getPlaybackFrame(playback, contact!.time).bodies[0];
+		const renderedCircles = getRenderableCircles(playback);
+		const renderedBody = renderedCircles.find(({ id }) => id === body!.id);
+		const renderedCollider = renderedCircles.find(({ id }) => id === collider!.id);
+		const contactSeparation = Math.hypot(
+			contact!.position[0] - collider!.centre[0],
+			contact!.position[1] - collider!.centre[1]
+		);
+
+		expect(frameBody?.position).toEqual(contact!.position);
+		expect(renderedBody).toMatchObject({
+			centre: body!.position,
+			radius: body!.radius
+		});
+		expect(renderedCollider).toMatchObject({
+			centre: collider!.centre,
+			radius: collider!.radius
+		});
+		expect(contactSeparation).toBeCloseTo(body!.radius + collider!.radius);
 	});
 
 	it('reports malformed JSON as a typed fixture failure', () => {

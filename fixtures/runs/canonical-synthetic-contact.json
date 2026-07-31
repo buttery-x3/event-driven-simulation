@@ -6,7 +6,7 @@
 			"fixedCircles": [
 				{
 					"id": "canonical-peg",
-					"centre": [1, 0],
+					"centre": [1, 0.55],
 					"radius": 0.25
 				}
 			]

@@ -9,7 +9,7 @@ import {
 const input = {
 	scene: {
 		id: 'synthetic-test-scene',
-		fixedCircles: [{ id: 'test-peg', centre: [1, 0], radius: 0.25 }]
+		fixedCircles: [{ id: 'test-peg', centre: [1, 0.55], radius: 0.25 }]
 	},
 	initialBodies: [
 		{
