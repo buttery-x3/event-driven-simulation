@@ -91,12 +91,35 @@ export default defineConfig(
 				{
 					patterns: [
 						{
-							regex: '^\\$lib/simulation/(?!contracts$)',
-							message: 'Rendering may consume simulation contracts, not simulation implementations.'
+							regex: '^\\$lib/simulation/(?!contracts$|trajectory$)',
+							message:
+								'Rendering may consume simulation contracts and the canonical trajectory evaluator, not other simulation implementations.'
 						},
 						{
-							regex: '^(?:\\.\\./)+simulation/(?!contracts(?:\\.ts)?$)',
-							message: 'Rendering may consume simulation contracts, not simulation implementations.'
+							regex: '^(?:\\.\\./)+simulation/(?!contracts(?:\\.ts)?$|trajectory(?:\\.ts)?$)',
+							message:
+								'Rendering may consume simulation contracts and the canonical trajectory evaluator, not other simulation implementations.'
+						}
+					]
+				}
+			]
+		}
+	},
+	{
+		files: ['src/routes/**/*.{js,ts,svelte}'],
+		rules: {
+			'no-restricted-imports': [
+				'error',
+				{
+					patterns: [
+						{
+							regex:
+								'^\\$lib/rendering/(?:playback-admission|playback-clock|recorded-frame)(?:\\.ts)?$',
+							message: 'Application routes must use the rendering/playback public entry point.'
+						},
+						{
+							regex: '^\\$lib/simulation/run-fixture-(?:error|json|v1|version)(?:\\.ts)?$',
+							message: 'Application routes must use the simulation/run-fixture public entry point.'
 						}
 					]
 				}

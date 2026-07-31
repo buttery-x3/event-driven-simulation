@@ -20,6 +20,12 @@ Simulation data uses two-dimensional coordinates. Rendering may map that data in
 three-dimensional presentation, but renderer objects never enter the simulation contracts and
 rendering is not a source of physical truth.
 
+Modules expose narrow public APIs and have one primary reason to change. Where a subsystem needs
+multiple implementation modules, a deliberately small entry point may preserve its public contract
+without exposing those implementation files to application routes. This rule is enforced for the
+saved-run and playback boundaries described below; it is not a reason to add barrels for unrelated
+modules.
+
 ## Contract responsibilities
 
 - `SimulationInput` groups the fixed scene, initial dynamic body states and all current behavioural
@@ -50,10 +56,11 @@ Rust/Wasm module without adding either transport today.
 ## Saved run boundary
 
 Saved run fixtures live under the repository-level `fixtures/` directory so headless tests and the
-browser renderer consume the same files. `src/lib/simulation/run-fixture.ts` is the runtime boundary
-from unknown JSON data to `SimulationRunRecord`. It validates the complete public shape and returns
-typed `RunFixtureError` failures for malformed JSON, unsupported contract versions and incompatible
-fields.
+browser renderer consume the same files. `src/lib/simulation/run-fixture.ts` is the narrow runtime
+entry point from unknown JSON data to `SimulationRunRecord`. JSON parsing, typed fixture errors,
+contract-version recognition and version 1 structural validation live in separate implementation
+modules behind that entry point. Version dispatch is intentionally explicit rather than a general
+schema registry.
 
 Loading a fixture establishes only that it matches the saved-run contract. It does not promote the
 run status or make an incomplete run eligible for ordinary playback. The renderer still converts
@@ -68,18 +75,22 @@ the supplied scene, body state and simulation settings. The contact time is the 
 configured maximum simulation time; its position and normal come from the generated path and first
 fixed circle, and the outgoing velocity uses the configured restitution.
 
-The same module evaluates individual motion segments and complete body trajectories at requested
-simulation times. It imports only the plain simulation contracts and is exercised in Vitest's Node
-environment, so it does not depend on Svelte, Three.js, a renderer or browser globals. This
+Canonical recorded-segment position and velocity evaluation lives in
+`src/lib/simulation/trajectory.ts`. Synthetic generation and renderer playback both consume this
+framework-independent evaluator, so rendering cannot acquire a duplicate motion equation.
+Low-level two-dimensional vector operations live separately in `src/lib/simulation/vector.ts`.
+These modules import only the plain simulation contracts and are exercised in Vitest's Node
+environment, so they do not depend on Svelte, Three.js, a renderer or browser globals. This
 synthetic path proves the precompute-and-replay boundary without claiming to solve real collisions;
 physical event search remains a later simulation concern.
 
 ## Renderer playback
 
-`src/lib/rendering/playback.ts` converts a completed `SimulationRunRecord` into the narrower
-`RendererPlaybackInput` contract and rejects non-complete runs from ordinary playback with the run
-status and reason in the diagnostic. Its presentation clock owns only playback time: play, pause,
-restart and seek cannot change the run record.
+`src/lib/rendering/playback.ts` is the playback subsystem's narrow public entry point.
+Run-to-renderer adaptation and admission, recorded-frame evaluation, and presentation-clock control
+live in separate cohesive modules behind it. Admission rejects non-complete runs from ordinary
+playback with the run status and reason in the diagnostic. The presentation clock owns only playback
+time: play, pause, restart and seek cannot change the run record.
 
 At each presentation time, the playback evaluator clamps to the recorded duration, selects the
 motion segment whose recorded interval contains that time and evaluates the segment's declared
@@ -101,9 +112,11 @@ regenerated in the route nor duplicated into a presentation-specific format.
 ESLint makes the architectural boundary executable. Production files under
 `src/lib/simulation/` cannot import Svelte, Three.js or rendering modules and cannot reference
 browser, worker or network globals. Production files under `src/lib/rendering/` may import the
-plain simulation contracts but not simulation producers or fixture loaders. Co-located tests may
-cross the boundary deliberately to prove end-to-end fixture replay, while the production modules
-remain independently reusable.
+plain simulation contracts and the canonical trajectory evaluator, but not simulation producers or
+fixture loaders. Application routes must use the `rendering/playback` and
+`simulation/run-fixture` entry points rather than their internal implementation modules. Co-located
+tests may cross the boundary deliberately to prove end-to-end fixture replay, while the production
+modules remain independently reusable.
 
 The Milestone 1 architecture and scope audit is recorded in
 [`docs/milestone-1-verification.md`](milestone-1-verification.md).
