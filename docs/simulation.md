@@ -61,6 +61,40 @@ The scenario records include their initial-condition summaries and verification 
 do not need this document to interpret them. The catalogue is JSON-serialisable for headless tests,
 browser replay input and future regression capture.
 
+## Ballistic motion and peg contacts
+
+`MotionSegment` is the canonical ballistic-path representation. Its start position, start velocity
+and constant acceleration are immutable initial conditions at `startTime`;
+`evaluateMotionSegmentPosition` and `evaluateMotionSegmentVelocity` evaluate them directly at any
+requested time. Simulation code must not mutate the segment or advance it through sampled
+timesteps.
+
+`findEarliestPegContact` performs continuous ball-versus-fixed-circle discovery over a declared
+future interval inside one motion segment. It substitutes normalized interval time into the
+ballistic path and forms the quartic squared-distance equation using the combined ball and peg
+radius. Real roots are isolated by recursively partitioning the interval at the roots of the
+polynomial derivative. Sign-changing intervals are refined by bisection; a zero at a derivative
+root preserves tangent contacts that sign-change-only searches would miss.
+
+The contact policy accepts the earliest root on the supported interval whose geometric separation
+is within `contactDistance` and whose outward normal velocity is no greater than
+`normalVelocity`. Separating roots are retained in diagnostics and rejected. A segment that starts
+penetrating the peg is invalid. The search horizon is inclusive and must not extend beyond the
+segment.
+
+The query has four typed outcomes: `contact`, `no-contact`, `unresolved`, and `invalid-input`.
+Coefficient overflow, a degenerate polynomial, non-finite candidate state, or exhausted root
+refinement returns `unresolved`; numerical uncertainty is never reported as a clear path.
+Tolerances are named by purpose:
+
+- `contactDistance` verifies candidate geometry and stable normals;
+- `eventTime` controls root isolation/refinement precision;
+- `normalVelocity` classifies approach versus separation; and
+- `polynomialResidual` detects roots at interval and derivative-partition boundaries.
+
+Diagnostics record the normalized polynomial, its scale, candidate sources, residuals, geometric
+separation, normal velocity, classification, and refinement counts.
+
 ## Scene validation
 
 `validateSceneDefinition` accepts unknown input and returns either the validated scene or typed,

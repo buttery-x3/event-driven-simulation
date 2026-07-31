@@ -34,3 +34,8 @@ or retain affected fixtures as part of that contract change.
 FLAME-26 advanced the contract to version 3 so saved records include the board coordinate system,
 line-segment boundaries and termination regions. The pre-release canonical fixture was updated in
 place; earlier data is intentionally rejected rather than guessed or migrated.
+
+`flame-27-high-speed-peg-contact.json` is a complete, minimal run record whose incoming motion
+segment crosses a fixed peg at 10,000 m/s. The focused peg-contact test loads that public fixture
+and replays its segment through the continuous solver, so regression data exercises collision
+discovery without a renderer or a fixed-step fallback.

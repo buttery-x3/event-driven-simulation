@@ -47,6 +47,28 @@ describe('recorded trajectory evaluation', () => {
 		expect(evaluateMotionSegmentVelocity(secondSegment, 2)).toEqual([1, 0]);
 	});
 
+	it('evaluates a ballistic segment from immutable conditions at a non-zero start time', () => {
+		const segment = {
+			bodyId: 'offset-time-ball',
+			startTime: 10,
+			endTime: 12,
+			startPosition: [3, 7],
+			startVelocity: [-2, 4],
+			acceleration: [1, -2]
+		} as const satisfies MotionSegment;
+
+		expect(evaluateMotionSegmentPosition(segment, 12)).toEqual([1, 11]);
+		expect(evaluateMotionSegmentVelocity(segment, 12)).toEqual([0, 0]);
+		expect(segment).toEqual({
+			bodyId: 'offset-time-ball',
+			startTime: 10,
+			endTime: 12,
+			startPosition: [3, 7],
+			startVelocity: [-2, 4],
+			acceleration: [1, -2]
+		});
+	});
+
 	it('evaluates a trajectory only across its inclusive recorded time range', () => {
 		expect(evaluateBodyTrajectoryPosition(trajectory, -Number.EPSILON)).toBeNull();
 		expect(evaluateBodyTrajectoryPosition(trajectory, 0)).toEqual([0, 2]);

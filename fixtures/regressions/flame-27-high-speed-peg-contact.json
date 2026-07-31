@@ -1,0 +1,93 @@
+{
+	"contractVersion": 3,
+	"input": {
+		"scene": {
+			"id": "flame-27-high-speed-contact",
+			"coordinateSystem": {
+				"origin": "centre-bottom",
+				"horizontalAxis": "right",
+				"verticalAxis": "up",
+				"lengthUnit": "metre"
+			},
+			"bounds": {
+				"width": 240,
+				"height": 10
+			},
+			"staticColliders": [
+				{
+					"id": "peg-high-speed",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.5
+					},
+					"centre": [0, 5]
+				}
+			],
+			"terminationRegions": []
+		},
+		"initialDynamicBodies": [
+			{
+				"id": "ball-high-speed",
+				"motionAuthority": "dynamic",
+				"physicalShape": {
+					"type": "circle",
+					"radius": 0.5
+				},
+				"position": [-100, 5],
+				"velocity": [10000, 0]
+			}
+		],
+		"settings": {
+			"gravity": [0, 0],
+			"restitution": 0.78,
+			"maximumEvents": 1,
+			"maximumSimulationTime": 0.0099,
+			"tolerances": {
+				"contactDistance": 1e-9,
+				"eventTime": 1e-9
+			}
+		}
+	},
+	"status": {
+		"type": "complete"
+	},
+	"trajectories": [
+		{
+			"bodyId": "ball-high-speed",
+			"segments": [
+				{
+					"bodyId": "ball-high-speed",
+					"startTime": 0,
+					"endTime": 0.0099,
+					"startPosition": [-100, 5],
+					"startVelocity": [10000, 0],
+					"acceleration": [0, 0]
+				}
+			]
+		}
+	],
+	"events": [
+		{
+			"type": "contact",
+			"time": 0.0099,
+			"bodyId": "ball-high-speed",
+			"colliderId": "peg-high-speed",
+			"position": [-1, 5],
+			"normal": [-1, 0]
+		}
+	],
+	"diagnostics": {
+		"iterations": 1,
+		"simulatedUntilTime": 0.0099,
+		"entries": [
+			{
+				"severity": "info",
+				"code": "PEG_CONTACT_SOLVED",
+				"message": "Continuous solving found the supported high-speed peg contact.",
+				"time": 0.0099,
+				"bodyId": "ball-high-speed"
+			}
+		]
+	}
+}
