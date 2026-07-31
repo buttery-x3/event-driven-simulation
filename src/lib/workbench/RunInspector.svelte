@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { SimulationRunRecord } from '$lib/simulation/contracts';
+	import FailureBoundary from './FailureBoundary.svelte';
 	import {
 		formatRecordedSeconds,
 		formatSource,
@@ -95,6 +96,10 @@
 			</div>
 		</dl>
 	</section>
+
+	{#if run.outcome !== 'exited' && run.outcome !== 'settled'}
+		<FailureBoundary {run} />
+	{/if}
 
 	<details open>
 		<summary>Numerical policy</summary>

@@ -128,39 +128,15 @@ test('loads a local saved run and retains it after typed validation failures', a
 	await expect(page.getByRole('region', { name: 'Calculated run replay' })).toBeVisible();
 });
 
-test('keeps a failed calculation distinct while exposing its recorded prefix', async ({ page }) => {
+test('plays a zero-time-loop through its committed prefix and freezes at the boundary', async ({
+	page
+}) => {
 	await page.goto('/');
 
-	const unresolved = JSON.parse(await readFile(canonicalFixturePath, 'utf8')) as {
-		outcome: string;
-		terminalReason: unknown;
-		diagnostics: {
-			simulatedUntilTime: number;
-			entries: Array<{
-				severity: string;
-				code: string;
-				message: string;
-				time: number | null;
-				bodyId: string | null;
-			}>;
-		};
-	};
-	unresolved.outcome = 'unresolved';
-	unresolved.terminalReason = {
-		type: 'unresolved-collision-search',
-		time: unresolved.diagnostics.simulatedUntilTime,
-		detail: 'The solver retained a validated prefix for inspection.'
-	};
-	unresolved.diagnostics.entries[unresolved.diagnostics.entries.length - 1] = {
-		severity: 'error',
-		code: 'RUN_UNRESOLVED',
-		message: 'The solver retained a validated prefix for inspection.',
-		time: unresolved.diagnostics.simulatedUntilTime,
-		bodyId: 'ball-primary'
-	};
+	const unresolved = makeZeroTimeLoopFixture(await readFile(canonicalFixturePath, 'utf8'));
 
 	await chooseFile(page, {
-		name: 'unresolved-run.json',
+		name: 'zero-time-loop-run.json',
 		mimeType: 'application/json',
 		buffer: Buffer.from(JSON.stringify(unresolved))
 	});
@@ -168,21 +144,140 @@ test('keeps a failed calculation distinct while exposing its recorded prefix', a
 	const prefix = page.getByRole('region', { name: 'Recorded-prefix inspection' });
 	await expect(prefix).toBeVisible();
 	await expect(prefix.getByText('Recorded prefix only')).toBeVisible();
+	await expect(prefix.locator('canvas')).toBeVisible();
 	await expect(
-		page
-			.getByLabel('Run inspector')
-			.getByText('The solver retained a validated prefix for inspection.')
+		page.getByLabel('Calculation outcome').getByText('The next contact repeats at the boundary.')
 	).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Failure boundary' })).toBeVisible();
+	await expect(page.getByText('valid / unresolved', { exact: true })).toBeVisible();
+	await expect(page.getByText('Not accepted motion', { exact: true })).toBeVisible();
+	await expect(page.getByText('0 s', { exact: true })).toBeVisible();
 
 	const controls = page.getByRole('region', { name: 'Replay controls' });
-	await expect(controls.getByRole('button', { name: 'Play' })).toBeDisabled();
+	await expect(controls.getByRole('button', { name: 'Play' })).toBeEnabled();
 	await expect(
 		controls.getByRole('slider', { name: 'Seek recorded simulation time' })
 	).toBeEnabled();
 
 	await page.getByRole('button', { name: /^Event 1, contact at / }).click();
 	await expect(controls.locator('output')).toHaveText('0.386 s / 4.145 s');
+
+	const seek = controls.getByRole('slider', { name: 'Seek recorded simulation time' });
+	await seek.evaluate((element) => {
+		const input = element as HTMLInputElement;
+		input.value = input.max;
+		input.dispatchEvent(new Event('input', { bubbles: true }));
+	});
+	await expect(prefix.getByText('ended', { exact: true })).toBeVisible();
 });
+
+test('renders and replays an invalid saved prefix as distinct forensic evidence', async ({
+	page
+}) => {
+	await page.goto('/');
+
+	const invalid = makeZeroTimeLoopFixture(await readFile(canonicalFixturePath, 'utf8'));
+	invalid.validity = 'invalid';
+	invalid.outcome = 'invalid';
+	invalid.terminalReason = {
+		type: 'invalid-state',
+		time: invalid.diagnostics.simulatedUntilTime,
+		detail: 'The committed prefix ended at an invalid state.'
+	};
+	invalid.diagnostics.entries[invalid.diagnostics.entries.length - 1] = {
+		severity: 'error',
+		code: 'RUN_INVALID',
+		message: 'The committed prefix ended at an invalid state.',
+		time: invalid.diagnostics.simulatedUntilTime,
+		bodyId: 'ball-primary'
+	};
+
+	await chooseFile(page, {
+		name: 'invalid-partial-run.json',
+		mimeType: 'application/json',
+		buffer: Buffer.from(JSON.stringify(invalid))
+	});
+
+	const prefix = page.getByRole('region', { name: 'Invalid-prefix inspection' });
+	await expect(prefix).toBeVisible();
+	await expect(prefix.locator('canvas')).toBeVisible();
+	await expect(prefix.getByText('Invalid committed prefix')).toBeVisible();
+	await expect(page.getByText('invalid / invalid', { exact: true })).toBeVisible();
+	await expect(
+		page
+			.getByLabel('Calculation outcome')
+			.getByText('The committed prefix ended at an invalid state.')
+	).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Play' })).toBeEnabled();
+});
+
+interface MutableRunFixture {
+	validity: string;
+	outcome: string;
+	terminalReason: unknown;
+	events: Array<{ colliderId: string }>;
+	diagnostics: {
+		iterations: number;
+		simulatedUntilTime: number;
+		candidateCount: number;
+		contactSearches: unknown[];
+		entries: Array<{
+			severity: string;
+			code: string;
+			message: string;
+			time: number | null;
+			bodyId: string | null;
+		}>;
+	};
+}
+
+function makeZeroTimeLoopFixture(json: string): MutableRunFixture {
+	const run = JSON.parse(json) as MutableRunFixture;
+	const time = run.diagnostics.simulatedUntilTime;
+	const colliderId = run.events.at(-1)!.colliderId;
+
+	run.outcome = 'unresolved';
+	run.terminalReason = {
+		type: 'zero-time-loop',
+		time,
+		colliderId,
+		detail: 'The next contact repeats at the boundary.'
+	};
+	run.diagnostics.contactSearches.push({
+		searchInterval: [time, time + 1],
+		eventTimeTolerance: 1e-9,
+		outcome: 'contact',
+		reason: null,
+		selectedColliderId: colliderId,
+		candidates: [
+			{
+				colliderId,
+				feature: 'circle',
+				time,
+				classification: 'accepted',
+				timeDelta: 0,
+				position: [0, 0],
+				contactPoint: [0, 0],
+				normal: [0, 1],
+				normalVelocity: 0,
+				preContactVelocity: [0, 0],
+				postContactVelocity: [0, 0],
+				nearSimultaneous: true
+			}
+		]
+	});
+	run.diagnostics.iterations += 1;
+	run.diagnostics.candidateCount += 1;
+	run.diagnostics.entries[run.diagnostics.entries.length - 1] = {
+		severity: 'error',
+		code: 'RUN_UNRESOLVED',
+		message: 'The next contact repeats at the boundary.',
+		time,
+		bodyId: 'ball-primary'
+	};
+
+	return run;
+}
 
 async function expectRejectedCandidate(
 	page: Page,

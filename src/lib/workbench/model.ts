@@ -22,7 +22,7 @@ export type LoadFeedback =
 	| { readonly kind: 'success'; readonly message: string }
 	| { readonly kind: 'error'; readonly message: string };
 
-export type InspectionMode = 'completed-replay' | 'recorded-prefix' | 'diagnostics-only';
+export type InspectionMode = 'completed-replay' | 'recorded-prefix' | 'invalid-prefix';
 
 export interface RunCounts {
 	readonly bodies: number;
@@ -40,7 +40,7 @@ export interface SeverityCounts {
 }
 
 export function getInspectionMode(validity: RunValidity, outcome: RunOutcome): InspectionMode {
-	if (validity === 'invalid') return 'diagnostics-only';
+	if (validity === 'invalid') return 'invalid-prefix';
 	return outcome === 'exited' || outcome === 'settled' ? 'completed-replay' : 'recorded-prefix';
 }
 
@@ -50,8 +50,8 @@ export function getInspectionModeLabel(mode: InspectionMode): string {
 			return 'Calculated run replay';
 		case 'recorded-prefix':
 			return 'Recorded-prefix inspection';
-		case 'diagnostics-only':
-			return 'Diagnostics only';
+		case 'invalid-prefix':
+			return 'Invalid-prefix inspection';
 	}
 }
 

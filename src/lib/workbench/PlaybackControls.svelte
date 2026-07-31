@@ -19,8 +19,9 @@
 		onSeek: (time: number) => void;
 	} = $props();
 
-	let canPlay = $derived(mode === 'completed-replay' && duration > 0);
-	let canSeek = $derived(mode !== 'diagnostics-only' && duration > 0);
+	let canPlay = $derived(duration > 0);
+	let canSeek = $derived(duration > 0);
+	let seekStep = $derived(duration > 0 ? duration / Math.ceil(duration / 0.001) : 0.001);
 
 	function seek(event: Event): void {
 		onSeek(Number((event.currentTarget as HTMLInputElement).value));
@@ -41,7 +42,7 @@
 			type="range"
 			min="0"
 			max={duration}
-			step="0.001"
+			step={seekStep}
 			value={time}
 			oninput={seek}
 			disabled={!canSeek}
@@ -55,8 +56,8 @@
 		{mode === 'completed-replay'
 			? 'Replaying already calculated trajectory data'
 			: mode === 'recorded-prefix'
-				? 'Explicit inspection of the recorded prefix'
-				: 'No replayable trajectory is available'}
+				? 'Replaying committed history up to an unresolved boundary'
+				: 'Replaying committed history up to an invalid boundary'}
 	</p>
 </section>
 

@@ -60,14 +60,12 @@
 	let replayTime = $state(0);
 	let playing = $state(false);
 	let selectedEventIndex = $state<number | null>(null);
-	let transportState: 'playing' | 'paused' | 'ended' | 'unavailable' = $derived(
-		inspectionMode === 'diagnostics-only'
-			? 'unavailable'
-			: playing
-				? 'playing'
-				: replayTime >= playback.playableUntilTime && playback.playableUntilTime > 0
-					? 'ended'
-					: 'paused'
+	let transportState: 'playing' | 'paused' | 'ended' = $derived(
+		playing
+			? 'playing'
+			: replayTime >= playback.playableUntilTime && playback.playableUntilTime > 0
+				? 'ended'
+				: 'paused'
 	);
 
 	function getInitialFixture(): RepositoryRunFixture | undefined {
@@ -80,7 +78,7 @@
 	}
 
 	function togglePlayback(): void {
-		if (inspectionMode !== 'completed-replay') return;
+		if (playback.playableUntilTime <= 0) return;
 
 		if (clock.playing) clock.pause();
 		else clock.play();
@@ -88,7 +86,7 @@
 	}
 
 	function restartPlayback(): void {
-		if (inspectionMode !== 'completed-replay') return;
+		if (playback.playableUntilTime <= 0) return;
 
 		selectedEventIndex = null;
 		clock.restart();
@@ -96,16 +94,12 @@
 	}
 
 	function seekPlayback(time: number): void {
-		if (inspectionMode === 'diagnostics-only') return;
-
 		clock.pause();
 		clock.seek(time);
 		syncClock();
 	}
 
 	function selectEvent(index: number, time: number): void {
-		if (inspectionMode === 'diagnostics-only') return;
-
 		selectedEventIndex = index;
 		seekPlayback(time);
 	}
@@ -317,7 +311,7 @@
 		<EventTimeline
 			events={currentRun.events}
 			selectedIndex={selectedEventIndex}
-			canSeek={inspectionMode !== 'diagnostics-only'}
+			canSeek={true}
 			onSelect={selectEvent}
 		/>
 		<DiagnosticsConsole entries={currentRun.diagnostics.entries} />

@@ -99,16 +99,16 @@ the separate saved-run boundary.
 
 ### Inspection modes
 
-| Validity / outcome                    | Mode                           | Viewport and transport behaviour                                                                                               | Required status copy                                  |
-| ------------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------- |
-| `valid` / `exited` or `settled`       | **Completed replay**           | Full seek, play, pause and restart are available.                                                                              | “Calculation complete · replaying recorded data”      |
-| `valid` / any other supported outcome | **Recorded-prefix inspection** | Do not autoplay or offer ordinary continuous playback. Allow explicit seek and event selection within the recorded prefix.     | Typed terminal-reason label and detail when available |
-| `invalid` / `invalid`                 | **Diagnostics only**           | Disable replay and event-seek actions. Keep the viewport in a clearly unavailable state; show record metadata and diagnostics. | “Invalid run · replay unavailable”                    |
+| Validity / outcome                    | Mode                           | Viewport and transport behaviour                                                                                            | Required status copy                                  |
+| ------------------------------------- | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| `valid` / `exited` or `settled`       | **Completed replay**           | Full seek, play, pause and restart are available.                                                                           | “Calculation complete · replaying recorded data”      |
+| `valid` / any other supported outcome | **Recorded-prefix inspection** | Play, pause, restart, seek and event selection are limited to committed segments and freeze at the terminating boundary.    | Typed terminal-reason label and detail when available |
+| `invalid` / `invalid`                 | **Invalid-prefix inspection**  | Render and play any committed prefix with invalid styling; zero-duration records show the initial state with transport off. | “Invalid committed prefix”                            |
 
-Prefix inspection is deliberately different from ordinary playback. It may evaluate already
-recorded poses at a user-selected time, but it must not imply that calculation completed or that
-unrecorded motion is safe. The visible upper bound is `playableUntilTime`, and the unresolved
-overlay remains present while inspecting it.
+Prefix inspection is deliberately different from ordinary successful playback. It evaluates only
+recorded poses, never a proposed candidate trajectory. The visible upper bound is
+`playableUntilTime`; transport freezes there and the unresolved or invalid overlay remains visible.
+The failure-boundary report labels candidate contact data as uncommitted diagnostic evidence.
 
 An invalid JSON document or structurally invalid record is not a run with `validity === 'invalid'`.
 It is a **rejected load attempt** and never becomes the current run.
@@ -192,7 +192,7 @@ The primary workspace contains the viewport, a compact viewport header and playb
 
 The viewport header always shows:
 
-- mode label: **Calculated run replay**, **Recorded-prefix inspection** or **Diagnostics only**;
+- mode label: **Calculated run replay**, **Recorded-prefix inspection** or **Invalid-prefix inspection**;
 - calculation-status badge; and
 - transport badge when transport exists.
 
@@ -221,13 +221,12 @@ Interaction rules:
 
 - accepting any run resets the cursor to `0`, pauses transport and clears event selection;
 - **Play** from the end restarts at `0`, matching `PlaybackClock`;
-- **Restart** sets the cursor to `0` and starts replay for a complete non-zero-duration run,
-  matching current behaviour;
+- **Restart** sets the cursor to `0` and starts replay for any non-zero committed prefix;
 - seeking to the end stops transport;
 - manual seek pauses first, then updates the viewport;
 - selecting an event pauses, seeks to that exact stored timestamp and marks the event selected;
 - a zero-duration completed run shows `0 / 0 s` with play and restart disabled; and
-- prefix-inspection and diagnostics-only restrictions follow the inspection-mode table above.
+- prefix-inspection restrictions follow the inspection-mode table above.
 
 ### Persistent run inspector
 
@@ -280,8 +279,8 @@ Each selectable entry is one keyboard-operable control, not a clickable collecti
 The selected entry uses `aria-current="true"` or equivalent and a non-colour-only selected
 indicator. Selection follows the interaction rules in the primary workspace.
 
-For diagnostics-only runs, timeline entries remain readable but are not seek actions. For an empty
-event list, show `No physical events were recorded`; do not hide the panel.
+For every accepted run, timeline entries seek within the committed prefix. For an empty event list,
+show `No physical events were recorded`; do not hide the panel.
 
 ### Diagnostics console
 
@@ -519,7 +518,7 @@ implementation already exists.
 - Preserve the current accepted run on parser or validation rejection.
 - Expose all events and diagnostics, including empty states.
 - Implement event selection as an exact seek for eligible inspection modes.
-- Apply completed-replay, recorded-prefix and diagnostics-only restrictions.
+- Apply completed-replay, recorded-prefix and invalid-prefix restrictions.
 - Show recorded/derived/unavailable metric provenance without adding a profiler.
 - Keep route, viewport lifecycle, controls and read-only diagnostic regions in cohesive component
   homes.

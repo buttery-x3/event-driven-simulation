@@ -13,7 +13,7 @@ describe('workbench run presentation model', () => {
 	it.each([
 		['valid', 'exited', 'completed-replay'],
 		['valid', 'event-limit', 'recorded-prefix'],
-		['invalid', 'invalid', 'diagnostics-only']
+		['invalid', 'invalid', 'invalid-prefix']
 	] as const)(
 		'maps $0/$1 calculation result to its inspection mode',
 		(validity, outcome, expected) => {

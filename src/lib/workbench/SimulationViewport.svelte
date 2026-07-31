@@ -12,7 +12,7 @@
 		input: RendererPlaybackInput;
 		time: number;
 		mode: InspectionMode;
-		transportState: 'playing' | 'paused' | 'ended' | 'unavailable';
+		transportState: 'playing' | 'paused' | 'ended';
 	} = $props();
 
 	let sceneHost = $state<HTMLDivElement>();
@@ -21,9 +21,7 @@
 	$effect(() => {
 		const host = sceneHost;
 		const playbackInput = input;
-		const canInspect = mode !== 'diagnostics-only';
-
-		if (!host || !canInspect) return;
+		if (!host) return;
 
 		const controller = mountScene(host, playbackInput);
 		sceneController = controller;
@@ -54,23 +52,18 @@
 	</header>
 
 	<div class="viewport">
-		{#if mode !== 'diagnostics-only'}
-			<div
-				class="scene"
-				bind:this={sceneHost}
-				role="img"
-				aria-label="A canonical Plinko board replaying recorded ball trajectory data"
-			></div>
-			{#if mode === 'recorded-prefix'}
-				<div class="restriction" role="status">
-					<strong>Recorded prefix only</strong>
-					<span>Calculation did not complete. Continuous replay is disabled.</span>
-				</div>
-			{/if}
-		{:else}
-			<div class="unavailable" role="status">
-				<strong>Replay unavailable</strong>
-				<span>This run is invalid. Inspect its reason and structured diagnostics.</span>
+		<div
+			class="scene"
+			bind:this={sceneHost}
+			role="img"
+			aria-label="A canonical Plinko board replaying recorded ball trajectory data"
+		></div>
+		{#if mode !== 'completed-replay'}
+			<div class:invalid={mode === 'invalid-prefix'} class="restriction" role="status">
+				<strong
+					>{mode === 'invalid-prefix' ? 'Invalid committed prefix' : 'Recorded prefix only'}</strong
+				>
+				<span>Playback freezes at the last committed state. Candidate motion is not rendered.</span>
 			</div>
 		{/if}
 	</div>
@@ -188,25 +181,17 @@
 		color: var(--color-warning);
 	}
 
-	.restriction span,
-	.unavailable span {
+	.restriction.invalid {
+		border-color: color-mix(in srgb, var(--color-danger) 50%, transparent);
+	}
+
+	.restriction.invalid strong {
+		color: var(--color-danger);
+	}
+
+	.restriction span {
 		color: var(--color-text-subtle);
 		font-size: var(--font-size-sm);
-	}
-
-	.unavailable {
-		position: absolute;
-		inset: 0;
-		display: grid;
-		place-content: center;
-		gap: var(--space-2);
-		padding: var(--space-8);
-		text-align: center;
-	}
-
-	.unavailable strong {
-		color: var(--color-danger);
-		font-size: 1.2rem;
 	}
 
 	@media (max-width: 1099px) {
