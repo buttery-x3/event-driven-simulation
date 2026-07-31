@@ -1,5 +1,8 @@
 export type RunFixtureErrorCode =
-	'MALFORMED_FIXTURE_JSON' | 'UNSUPPORTED_CONTRACT_VERSION' | 'INVALID_RUN_RECORD';
+	| 'MALFORMED_FIXTURE_JSON'
+	| 'UNSUPPORTED_CONTRACT_VERSION'
+	| 'INVALID_RUN_RECORD'
+	| 'INVALID_SIMULATION_INPUT';
 
 export class RunFixtureError extends Error {
 	public readonly name = 'RunFixtureError';

@@ -11,7 +11,7 @@ export function validateRunFixtureV5(value: unknown): SimulationRunRecord {
 	const run = requireRecord(value, '$');
 
 	requireLiteral(run.contractVersion, 5, '$.contractVersion');
-	validateSimulationInput(run.input, '$.input');
+	validateSimulationInputV5(run.input, '$.input');
 	requireOneOf(run.validity, ['valid', 'invalid'], '$.validity');
 	requireOneOf(
 		run.outcome,
@@ -36,7 +36,10 @@ export function validateRunFixtureV5(value: unknown): SimulationRunRecord {
 	return value as SimulationRunRecord;
 }
 
-function validateSimulationInput(value: unknown, path: string): void {
+export function validateSimulationInputV5(
+	value: unknown,
+	path = '$'
+): SimulationRunRecord['input'] {
 	const input = requireRecord(value, path);
 	const sceneValidation = validateSceneDefinition(input.scene, `${path}.scene`);
 
@@ -84,6 +87,8 @@ function validateSimulationInput(value: unknown, path: string): void {
 			`${path}.settings.settlement.minimumPressingAcceleration`
 		);
 	}
+
+	return value as SimulationRunRecord['input'];
 }
 
 function validateCirclePhysicalShape(value: unknown, path: string): void {

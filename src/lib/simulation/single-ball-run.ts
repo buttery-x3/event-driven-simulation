@@ -29,6 +29,26 @@ interface EventState {
 	readonly velocity: Vec2;
 }
 
+export interface SimulationInputDiagnostic {
+	readonly code:
+		| 'INVALID_SCENE'
+		| 'INVALID_BODY_COUNT'
+		| 'INVALID_BODY_ID'
+		| 'DUPLICATE_BODY_ID'
+		| 'INVALID_RADIUS'
+		| 'INVALID_POSITION'
+		| 'INVALID_VELOCITY'
+		| 'POSITION_OUTSIDE_BOUNDS'
+		| 'INVALID_GRAVITY'
+		| 'INVALID_RESTITUTION'
+		| 'INVALID_MAXIMUM_EVENTS'
+		| 'INVALID_MAXIMUM_TIME'
+		| 'INVALID_TOLERANCES'
+		| 'INVALID_SETTLEMENT_POLICY';
+	readonly path: string;
+	readonly message: string;
+}
+
 interface TerminationEntry {
 	readonly time: number;
 	readonly reason: Extract<
@@ -48,10 +68,18 @@ export function constructSingleBallRun(input: SimulationInput): SimulationRunRec
 	const events: SimulationRunRecord['events'][number][] = [];
 	const entries: DiagnosticEntry[] = [];
 	const contactSearches: RunContactSearchDiagnostic[] = [];
-	const invalidReason = validateInput(input);
+	const invalidDiagnostic = validateSingleBallInput(input)[0];
 
-	if (invalidReason) {
-		return finish('invalid', { type: 'invalid-state', time: null, detail: invalidReason }, 0);
+	if (invalidDiagnostic) {
+		return finish(
+			'invalid',
+			{
+				type: 'invalid-state',
+				time: null,
+				detail: `${invalidDiagnostic.path}: ${invalidDiagnostic.message}`
+			},
+			0
+		);
 	}
 
 	const body = input.initialDynamicBodies[0]!;
@@ -345,49 +373,130 @@ export function constructSingleBallRun(input: SimulationInput): SimulationRunRec
 	}
 }
 
-function validateInput(input: SimulationInput): string | null {
+export function validateSingleBallInput(
+	input: SimulationInput
+): readonly SimulationInputDiagnostic[] {
 	const sceneValidation = validateSceneDefinition(input.scene, '$.scene');
 	if (!sceneValidation.valid) {
 		const first = sceneValidation.diagnostics[0]!;
-		return `${first.path}: ${first.message}`;
+		return [
+			{
+				code: 'INVALID_SCENE',
+				path: first.path,
+				message: first.message
+			}
+		];
 	}
 
 	if (input.initialDynamicBodies.length !== 1) {
-		return 'A single-ball run requires exactly one dynamic body.';
+		return [
+			{
+				code: 'INVALID_BODY_COUNT',
+				path: '$.initialDynamicBodies',
+				message: 'A single-ball run requires exactly one dynamic body.'
+			}
+		];
 	}
 
 	const body = input.initialDynamicBodies[0]!;
-	if (body.id.trim().length === 0) return 'The dynamic body ID must be non-empty.';
+	if (body.id.trim().length === 0) {
+		return [
+			{
+				code: 'INVALID_BODY_ID',
+				path: '$.initialDynamicBodies[0].id',
+				message: 'The dynamic body ID must be non-empty.'
+			}
+		];
+	}
 	if (
 		input.scene.staticColliders.some(({ id }) => id === body.id) ||
 		input.scene.terminationRegions.some(({ id }) => id === body.id)
 	) {
-		return `Dynamic body ID "${body.id}" duplicates a scene entity ID.`;
+		return [
+			{
+				code: 'DUPLICATE_BODY_ID',
+				path: '$.initialDynamicBodies[0].id',
+				message: `Dynamic body ID "${body.id}" duplicates a scene entity ID.`
+			}
+		];
 	}
 	if (!Number.isFinite(body.physicalShape.radius) || body.physicalShape.radius <= 0) {
-		return 'The dynamic body radius must be a positive finite number.';
+		return [
+			{
+				code: 'INVALID_RADIUS',
+				path: '$.initialDynamicBodies[0].physicalShape.radius',
+				message: 'The dynamic body radius must be a positive finite number.'
+			}
+		];
 	}
-	if (!isFiniteVec2(body.position) || !isFiniteVec2(body.velocity)) {
-		return 'The dynamic body position and velocity must contain finite numbers.';
+	if (!isFiniteVec2(body.position)) {
+		return [
+			{
+				code: 'INVALID_POSITION',
+				path: '$.initialDynamicBodies[0].position',
+				message: 'The dynamic body position must contain finite numbers.'
+			}
+		];
+	}
+	if (!isFiniteVec2(body.velocity)) {
+		return [
+			{
+				code: 'INVALID_VELOCITY',
+				path: '$.initialDynamicBodies[0].velocity',
+				message: 'The dynamic body velocity must contain finite numbers.'
+			}
+		];
 	}
 	if (!isInsideBounds(body.position, input.scene.bounds)) {
-		return 'The dynamic body initial position must be inside the supported scene bounds.';
+		return [
+			{
+				code: 'POSITION_OUTSIDE_BOUNDS',
+				path: '$.initialDynamicBodies[0].position',
+				message: 'The dynamic body initial position must be inside the supported scene bounds.'
+			}
+		];
 	}
 
 	const settings = input.settings;
-	if (!isFiniteVec2(settings.gravity)) return 'Gravity must contain finite numbers.';
+	if (!isFiniteVec2(settings.gravity)) {
+		return [
+			{
+				code: 'INVALID_GRAVITY',
+				path: '$.settings.gravity',
+				message: 'Gravity must contain finite numbers.'
+			}
+		];
+	}
 	if (
 		!Number.isFinite(settings.restitution) ||
 		settings.restitution < 0 ||
 		settings.restitution > 1
 	) {
-		return 'Restitution must be a finite number between zero and one.';
+		return [
+			{
+				code: 'INVALID_RESTITUTION',
+				path: '$.settings.restitution',
+				message: 'Restitution must be a finite number between zero and one.'
+			}
+		];
 	}
 	if (!Number.isInteger(settings.maximumEvents) || settings.maximumEvents < 0) {
-		return 'The maximum event count must be a non-negative integer.';
+		return [
+			{
+				code: 'INVALID_MAXIMUM_EVENTS',
+				path: '$.settings.maximumEvents',
+				message: 'The maximum event count must be a non-negative integer.'
+			}
+		];
 	}
 	if (!Number.isFinite(settings.maximumSimulationTime) || settings.maximumSimulationTime <= 0) {
-		return 'Maximum simulation time must be a positive finite number.';
+		return [
+			{
+				code: 'INVALID_MAXIMUM_TIME',
+				path: '$.settings.maximumSimulationTime',
+				message: 'Maximum simulation time must be a positive finite number.'
+			}
+		];
 	}
 	if (
 		!Number.isFinite(settings.tolerances.contactDistance) ||
@@ -395,7 +504,13 @@ function validateInput(input: SimulationInput): string | null {
 		!Number.isFinite(settings.tolerances.eventTime) ||
 		settings.tolerances.eventTime <= 0
 	) {
-		return 'Contact-distance and event-time tolerances must be positive finite numbers.';
+		return [
+			{
+				code: 'INVALID_TOLERANCES',
+				path: '$.settings.tolerances',
+				message: 'Contact-distance and event-time tolerances must be positive finite numbers.'
+			}
+		];
 	}
 	if (settings.settlement) {
 		const policy = settings.settlement;
@@ -409,11 +524,18 @@ function validateInput(input: SimulationInput): string | null {
 			!Number.isFinite(policy.minimumPressingAcceleration) ||
 			policy.minimumPressingAcceleration <= 0
 		) {
-			return 'Settlement thresholds must be finite, with non-negative speed thresholds and positive distance and pressing-acceleration thresholds.';
+			return [
+				{
+					code: 'INVALID_SETTLEMENT_POLICY',
+					path: '$.settings.settlement',
+					message:
+						'Settlement thresholds must be finite, with non-negative speed thresholds and positive distance and pressing-acceleration thresholds.'
+				}
+			];
 		}
 	}
 
-	return null;
+	return [];
 }
 
 function findEarliestTerminationEntry(

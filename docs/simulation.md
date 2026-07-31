@@ -61,6 +61,17 @@ The scenario records include their initial-condition summaries and verification 
 do not need this document to interpret them. The catalogue is JSON-serialisable for headless tests,
 browser replay input and future regression capture.
 
+The workbench may replace only the selected scenario's initial ball position and velocity.
+User-facing speed and angle controls use degrees measured from positive `x` toward positive `y`;
+they deterministically produce `(speed × cos(angle), speed × sin(angle))`. Direct velocity
+components remain available for exact regression reproduction. An explicit Run action validates
+and snapshots the resulting `SimulationInput` before invoking the headless solver.
+
+Scenario input JSON uses a version 5 `simulation-input` envelope. Its loader applies the same
+structural input validation used by saved-run contract validation, followed by the authoritative
+single-ball semantic validator. A loaded scenario never becomes renderer state directly: only the
+run record returned by the simulator can be adapted for replay.
+
 ## Ballistic motion and fixed-world contacts
 
 `MotionSegment` is the canonical ballistic-path representation. Its start position, start velocity
