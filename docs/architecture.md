@@ -109,8 +109,16 @@ framework-independent evaluator, so rendering cannot acquire a duplicate motion 
 Low-level two-dimensional vector operations live separately in `src/lib/simulation/vector.ts`.
 These modules import only the plain simulation contracts and are exercised in Vitest's Node
 environment, so they do not depend on Svelte, Three.js, a renderer or browser globals. This
-synthetic path proves the precompute-and-replay boundary without claiming to solve real collisions;
-physical event search remains a later simulation concern.
+synthetic path proves the precompute-and-replay boundary, while the continuous-contact modules own
+real fixed-world collision discovery separately.
+
+Continuous fixed-world collision discovery is headless simulation code.
+`peg-contact.ts` solves ball-versus-circle contacts, `boundary-contact.ts` solves finite segment
+faces and endpoints, and `fixed-world-contact.ts` compares their common typed candidates.
+`polynomial-roots.ts` contains the shared interval root isolation used by both geometry solvers.
+None of these modules advances state through fixed timesteps or imports rendering code. Renderer
+line thickness remains presentation-only; collision offsets use the dynamic ball radius and the
+zero-thickness physical segment contract.
 
 ## Renderer playback
 

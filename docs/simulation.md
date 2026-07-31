@@ -61,7 +61,7 @@ The scenario records include their initial-condition summaries and verification 
 do not need this document to interpret them. The catalogue is JSON-serialisable for headless tests,
 browser replay input and future regression capture.
 
-## Ballistic motion and peg contacts
+## Ballistic motion and fixed-world contacts
 
 `MotionSegment` is the canonical ballistic-path representation. Its start position, start velocity
 and constant acceleration are immutable initial conditions at `startTime`;
@@ -94,6 +94,38 @@ Tolerances are named by purpose:
 
 Diagnostics record the normalized polynomial, its scale, candidate sources, residuals, geometric
 separation, normal velocity, classification, and refinement counts.
+
+`findEarliestBoundaryContact` applies the same continuous-path policy to a fixed line segment. The
+ball centre is solved against the two parallel face offsets at one ball radius from the supporting
+line. A face root is valid only when its tangent coordinate lies within the finite segment extent;
+an infinite-line root outside that extent is retained as a rejection diagnostic, not promoted to a
+contact.
+
+Finite boundaries use explicit capsule semantics. The segment face owns the closed tangent interval
+between its endpoints. Each endpoint is also solved continuously as a zero-radius point feature and
+owns roots immediately beyond its adjacent face extent. This makes endpoint-adjacent contact
+possible without extending the face into an infinite wall. The selected boundary state records the
+owning feature and physical surface contact point as well as the ball-centre position, outward
+normal and normal velocity.
+
+`findEarliestFixedWorldContact` queries every fixed circle and line segment over the same ballistic
+interval and converts successful results into `FixedWorldContactCandidate`. This common candidate
+contains the collider ID and kind, owning feature, event time, ball-centre position, surface contact
+point, normal and normal velocity. The query returns `contact`, `no-event`, `unresolved`, or
+`invalid-input`.
+
+Candidate ordering follows this numerical policy:
+
+1. exact event time ascending;
+2. collider ID using deterministic string ordering; then
+3. feature name using deterministic string ordering.
+
+The exact earliest timestamp always wins. Every candidate no later than `eventTime` after that
+timestamp is also reported as near-simultaneous, so a later tolerance-neighbour cannot win silently.
+The ID and feature keys resolve exact-time ties only. A `no-event` result is permitted only when
+every collider reports no contact. Any unresolved collider calculation makes the whole world query
+unresolved because it could conceal an earlier event; a valid later candidate remains diagnostic
+evidence but is not committed as the result.
 
 ## Scene validation
 

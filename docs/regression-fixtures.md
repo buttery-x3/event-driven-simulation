@@ -39,3 +39,8 @@ place; earlier data is intentionally rejected rather than guessed or migrated.
 segment crosses a fixed peg at 10,000 m/s. The focused peg-contact test loads that public fixture
 and replays its segment through the continuous solver, so regression data exercises collision
 discovery without a renderer or a fixed-step fallback.
+
+`flame-28-high-speed-wall-contact.json` records the analogous 10,000 m/s crossing of a finite
+vertical boundary. Its focused test replays the ballistic segment through the boundary solver and
+asserts the radius-offset face event at `0.00995 s`, guarding against tunnelling and accidental use
+of renderer line thickness.
