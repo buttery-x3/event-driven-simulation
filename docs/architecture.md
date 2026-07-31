@@ -57,12 +57,12 @@ diagnostics for unsupported geometry, duplicate IDs, malformed coordinates and i
   behavioural settings and numerical tolerances.
 - `MotionSegment`, `BodyTrajectory` and `PhysicalEvent` describe the calculated history without
   requiring frame-by-frame simulation during playback.
-- `SimulationRunRecord` preserves the input, valid trajectory prefix, physical events, terminal
-  status and diagnostics needed for saved runs and regression fixtures.
+- `SimulationRunRecord` preserves the input, prefix validity, typed terminal reason, physical
+  events, trajectory prefix and diagnostics needed for saved runs and regression fixtures.
 - `RendererPlaybackInput` contains only plain data needed to present a run. It carries the same
   scene and initial body definitions as simulation input, so physical dimensions have one source
-  of truth, and it retains the run status so incomplete output cannot silently masquerade as a
-  complete result.
+  of truth, and it retains validity and the terminal reason so incomplete output cannot silently
+  masquerade as a normal exit.
 
 The renderer derives dynamic-body and fixed-collider radii and positions from these contracts.
 Cylinder depth and orientation, camera values and decorative backdrop dimensions remain
@@ -70,13 +70,14 @@ presentation settings because they cannot affect physical results. If the backdr
 collision geometry, its dimensions must move into `SceneDefinition` rather than remaining
 renderer-owned.
 
-Run statuses are discriminated values: `complete`, `unresolved`, `iteration-limited` and `invalid`.
-Expected calculation failures therefore remain data, with a reason and diagnostics, rather than
-being represented by missing fields, booleans or exceptions.
+Run validity is `valid` or `invalid` and is deliberately separate from the typed terminal reason.
+Completion and escape regions, no-future-event, time and event limits, unresolved search,
+zero-time loops, invalid state and numerical failure therefore remain explicit data rather than
+missing fields, booleans or exceptions.
 
-`contractVersion` is `3` after FLAME-26 added board coordinates, line-segment boundaries and
-termination regions. Earlier fixtures are rejected rather than silently interpreted as version 3;
-the prototype has no external compatibility requirement. The contracts intentionally use
+`contractVersion` is `4` after FLAME-29 separated prefix validity from terminal reason and added
+run-level search and count diagnostics. Earlier fixtures are rejected rather than silently
+interpreted as version 4; the prototype has no external compatibility requirement. The contracts intentionally use
 ordinary objects, arrays, strings, numbers and `null`. This keeps them JSON-serialisable and leaves
 the calculation implementation replaceable by a future worker or Rust/Wasm module without adding
 either transport today.
@@ -86,31 +87,30 @@ either transport today.
 Saved run fixtures live under the repository-level `fixtures/` directory so headless tests and the
 browser renderer consume the same files. `src/lib/simulation/run-fixture.ts` is the narrow runtime
 entry point from unknown JSON data to `SimulationRunRecord`. JSON parsing, typed fixture errors,
-contract-version recognition and version 3 structural validation live in separate implementation
+contract-version recognition and version 4 structural validation live in separate implementation
 modules behind that entry point. Version dispatch is intentionally explicit rather than a general
 schema registry.
 
 Loading a fixture establishes only that it matches the saved-run contract. It does not promote the
-run status or make an incomplete run eligible for ordinary playback. The renderer still converts
-the record through `toRendererPlaybackInput` and applies `assertPlaybackEligible`, preserving the
-same status validation used for freshly generated runs.
+terminal reason or make an incomplete run eligible for ordinary playback. The renderer still
+converts the record through `toRendererPlaybackInput` and applies `assertPlaybackEligible`, which
+admits only valid `completion-region` results.
 
-## Headless synthetic run
+## Headless event-driven run
 
-`src/lib/simulation/synthetic-run.ts` is the first producer of a completed run record. It generates
-two continuous constant-acceleration segments separated by a representative contact, using only
-the supplied scene, body state and simulation settings. The contact time is the midpoint of the
-configured maximum simulation time; its position and normal come from the generated path and first
-fixed circle, and the outgoing velocity uses the configured restitution.
+`src/lib/simulation/single-ball-run.ts` is the authoritative producer of single-ball run records.
+It repeatedly constructs one continuous constant-acceleration path, selects the earliest supported
+fixed-world contact or termination-region entry, commits only the certified interval, resolves the
+contact from its evaluated event state and continues from the exact event time. The old
+`generateSyntheticRun` name is a compatibility alias for this producer and no longer invents a
+midpoint contact.
 
 Canonical recorded-segment position and velocity evaluation lives in
 `src/lib/simulation/trajectory.ts`. Synthetic generation and renderer playback both consume this
 framework-independent evaluator, so rendering cannot acquire a duplicate motion equation.
 Low-level two-dimensional vector operations live separately in `src/lib/simulation/vector.ts`.
 These modules import only the plain simulation contracts and are exercised in Vitest's Node
-environment, so they do not depend on Svelte, Three.js, a renderer or browser globals. This
-synthetic path proves the precompute-and-replay boundary, while the continuous-contact modules own
-real fixed-world collision discovery separately.
+environment, so they do not depend on Svelte, Three.js, a renderer or browser globals.
 
 Continuous fixed-world collision discovery is headless simulation code.
 `peg-contact.ts` solves ball-versus-circle contacts, `boundary-contact.ts` solves finite segment
@@ -124,8 +124,8 @@ zero-thickness physical segment contract.
 
 `src/lib/rendering/playback.ts` is the playback subsystem's narrow public entry point.
 Run-to-renderer adaptation and admission, recorded-frame evaluation, and presentation-clock control
-live in separate cohesive modules behind it. Admission rejects non-complete runs from ordinary
-playback with the run status and reason in the diagnostic. The presentation clock owns only playback
+live in separate cohesive modules behind it. Admission rejects runs from ordinary playback unless
+validity is `valid` and the terminal reason is `completion-region`. The presentation clock owns only playback
 time: play, pause, restart and seek cannot change the run record.
 
 At each presentation time, the playback evaluator clamps to the recorded duration, selects the
@@ -148,9 +148,10 @@ object geometry/material creation, dynamic mesh registration and owned-resource 
 does not inspect their geometry. Fixed collider radii and centres still come directly from the
 public scene contract; renderer-owned values never feed back into simulation data.
 
-The browser prototype loads `fixtures/runs/canonical-synthetic-contact.json` through the saved-run
-boundary and replays it through this same renderer contract. The fixture is therefore neither
-regenerated in the route nor duplicated into a presentation-specific format.
+The browser prototype loads `fixtures/runs/canonical-event-driven-offset-drop.json` through the
+saved-run boundary and replays its 25-contact authoritative run through this same renderer
+contract. The fixture is neither regenerated in the route nor duplicated into a
+presentation-specific format.
 
 ## Enforced dependency direction
 

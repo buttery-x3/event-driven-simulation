@@ -36,18 +36,18 @@ FLAME-23 must not add placeholder controls for those capabilities.
 
 Use these terms consistently in component names, labels, tests and accessible descriptions.
 
-| Term                     | Meaning                                                                                                                                                         | UI usage                                                                           |
-| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| **Run**                  | A parsed, contract-valid `SimulationRunRecord`, including its input, trajectories, events, terminal status and diagnostics.                                     | “Current run”, “Run status”                                                        |
-| **Source**               | Workbench metadata identifying where the run was loaded from. It is not part of contract v3.                                                                    | `Repository fixture · canonical-synthetic-contact.json` or `Local file · run.json` |
-| **Simulation time**      | Domain time recorded in trajectory segments, events and diagnostics, measured from run `t = 0`.                                                                 | Event and diagnostic timestamps                                                    |
-| **Simulated until**      | `run.diagnostics.simulatedUntilTime`: the end of the calculation’s recorded or validated horizon. It does not imply success.                                    | Run inspector                                                                      |
-| **Playable until**       | The greatest simulation time the presentation may seek to for the current inspection mode. For the current complete-run adapter it equals `simulatedUntilTime`. | Playback controls and run inspector                                                |
-| **Replay time**          | The current presentation cursor. Advancing or seeking it evaluates recorded segments; it does not calculate new motion.                                         | `Replay 0.750 s / 2 s`                                                             |
-| **Calculation status**   | `run.status`: `complete`, `unresolved`, `iteration-limited` or `invalid`.                                                                                       | Persistent status badge and run inspector                                          |
-| **Transport state**      | Presentation-only state: `playing`, `paused` or `ended`.                                                                                                        | Viewport/controls; never labelled as run status                                    |
-| **Recorded prefix**      | Trajectories and events retained up to a failed calculation’s validated horizon.                                                                                | “Recorded prefix inspection” for unresolved or iteration-limited runs              |
-| **Calculation duration** | Wall-clock time spent calculating a run. This is not simulation time and is not present in contract v3.                                                         | Metrics panel only when a future schema records it                                 |
+| Term                     | Meaning                                                                                                                                                         | UI usage                                                                                  |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| **Run**                  | A parsed, contract-valid `SimulationRunRecord`, including its input, trajectories, events, terminal status and diagnostics.                                     | “Current run”, “Run status”                                                               |
+| **Source**               | Workbench metadata identifying where the run was loaded from. It is not part of contract v4.                                                                    | `Repository fixture · canonical-event-driven-offset-drop.json` or `Local file · run.json` |
+| **Simulation time**      | Domain time recorded in trajectory segments, events and diagnostics, measured from run `t = 0`.                                                                 | Event and diagnostic timestamps                                                           |
+| **Simulated until**      | `run.diagnostics.simulatedUntilTime`: the end of the calculation’s recorded or validated horizon. It does not imply success.                                    | Run inspector                                                                             |
+| **Playable until**       | The greatest simulation time the presentation may seek to for the current inspection mode. For the current complete-run adapter it equals `simulatedUntilTime`. | Playback controls and run inspector                                                       |
+| **Replay time**          | The current presentation cursor. Advancing or seeking it evaluates recorded segments; it does not calculate new motion.                                         | `Replay 0.750 s / 2 s`                                                                    |
+| **Calculation outcome**  | `run.validity` plus the typed `run.terminalReason`.                                                                                                             | Persistent outcome badge and run inspector                                                |
+| **Transport state**      | Presentation-only state: `playing`, `paused` or `ended`.                                                                                                        | Viewport/controls; never labelled as run status                                           |
+| **Recorded prefix**      | Trajectories and events retained up to a failed calculation’s validated horizon.                                                                                | “Recorded prefix inspection” for unresolved or iteration-limited runs                     |
+| **Calculation duration** | `run.diagnostics.simulationWallTimeMilliseconds`; wall-clock instrumentation that never participates in physical advancement.                                   | Metrics panel                                                                             |
 
 Prefer **replay** in user-facing transport copy because the workbench presents already calculated
 data. Use **playback** for the underlying presentation subsystem where that is already established.
@@ -59,7 +59,7 @@ The workbench has three independent state axes. Components must not collapse the
 “status”.
 
 1. **Load state:** idle, reading, accepted or rejected.
-2. **Calculation status:** the terminal `run.status` stored in the current run.
+2. **Calculation outcome:** `run.validity` and `run.terminalReason` stored in the current run.
 3. **Transport state:** paused, playing or ended for the current replay cursor.
 
 The session retains:
@@ -75,20 +75,19 @@ cursor, viewport, event selection or diagnostics.
 
 ### Inspection modes
 
-| Run status          | Mode                           | Viewport and transport behaviour                                                                                               | Required status copy                                                        |
-| ------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
-| `complete`          | **Completed replay**           | Full seek, play, pause and restart are available.                                                                              | “Calculation complete · replaying recorded data”                            |
-| `unresolved`        | **Recorded-prefix inspection** | Do not autoplay or offer ordinary continuous playback. Allow explicit seek and event selection within the recorded prefix.     | “Unresolved · inspecting recorded prefix” plus `status.reason`              |
-| `iteration-limited` | **Recorded-prefix inspection** | Same as `unresolved`.                                                                                                          | “Iteration limit reached · inspecting recorded prefix” plus `status.reason` |
-| `invalid`           | **Diagnostics only**           | Disable replay and event-seek actions. Keep the viewport in a clearly unavailable state; show record metadata and diagnostics. | “Invalid run · replay unavailable” plus `status.reason`                     |
+| Validity / terminal reason                    | Mode                           | Viewport and transport behaviour                                                                                               | Required status copy                                  |
+| --------------------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------- |
+| `valid` / `completion-region`                 | **Completed replay**           | Full seek, play, pause and restart are available.                                                                              | “Calculation complete · replaying recorded data”      |
+| `valid` / any other supported terminal reason | **Recorded-prefix inspection** | Do not autoplay or offer ordinary continuous playback. Allow explicit seek and event selection within the recorded prefix.     | Typed terminal-reason label and detail when available |
+| `invalid` / `invalid-state`                   | **Diagnostics only**           | Disable replay and event-seek actions. Keep the viewport in a clearly unavailable state; show record metadata and diagnostics. | “Invalid run · replay unavailable”                    |
 
 Prefix inspection is deliberately different from ordinary playback. It may evaluate already
 recorded poses at a user-selected time, but it must not imply that calculation completed or that
 unrecorded motion is safe. The visible upper bound is `playableUntilTime`, and the unresolved
 overlay remains present while inspecting it.
 
-An invalid JSON document or structurally invalid record is not a run with `status.type ===
-'invalid'`. It is a **rejected load attempt** and never becomes the current run.
+An invalid JSON document or structurally invalid record is not a run with `validity === 'invalid'`.
+It is a **rejected load attempt** and never becomes the current run.
 
 ## Desktop information architecture
 
@@ -142,18 +141,18 @@ The bar is one or two compact rows, not a hero. It contains:
 - concise load feedback.
 
 The repository fixture catalog is a small explicit build-time list. Initially it contains
-`canonical-synthetic-contact.json`. Do not introduce runtime directory discovery, a backend or a
+`canonical-event-driven-offset-drop.json`. Do not introduce runtime directory discovery, a backend or a
 fixture database.
 
 The current source label is never replaced by the name of a rejected candidate. During a local file
 attempt, feedback may say `Could not load candidate.json`, while the source continues to say
-`Repository fixture · canonical-synthetic-contact.json`.
+`Repository fixture · canonical-event-driven-offset-drop.json`.
 
-Success feedback is short and non-sticky, for example `Loaded run.json · contract v3`. Rejection
+Success feedback is short and non-sticky, for example `Loaded run.json · contract v4`. Rejection
 feedback contains the typed error code, message and validation path when present:
 
 ```text
-UNSUPPORTED_CONTRACT_VERSION · expected version 3 · $.contractVersion
+UNSUPPORTED_CONTRACT_VERSION · expected version 4 · $.contractVersion
 ```
 
 The detailed run diagnostics console contains diagnostics from the current run only. Candidate file
@@ -276,8 +275,8 @@ Milestone 1 behaviour; severity filters are optional and should be added only if
 remains small. If filters are added, `All` is the default and a zero-result filtered state must not
 look like an empty diagnostic record.
 
-Show the terminal `run.status.reason` in the run inspector, not duplicated as a synthetic diagnostic
-entry. Do not merge load-attempt errors into this console.
+Show the typed `run.terminalReason` and its detail, region or limit context in the run inspector.
+Do not merge load-attempt errors into this console.
 
 For an empty list, show `No diagnostic entries were recorded`. This is not the same as a successful
 run and must not override the calculation-status badge.
@@ -294,17 +293,18 @@ exists. Each metric carries one of these provenance labels:
 
 Milestone 1 shows:
 
-| Metric                        | Provenance  | Current value source             |
-| ----------------------------- | ----------- | -------------------------------- |
-| Solver iterations             | Recorded    | `diagnostics.iterations`         |
-| Simulated until               | Recorded    | `diagnostics.simulatedUntilTime` |
-| Event count                   | Derived     | `events.length`                  |
-| Segment count                 | Derived     | Sum of trajectory segment counts |
-| Diagnostic counts by severity | Derived     | Count of `diagnostics.entries`   |
-| Calculation duration          | Unavailable | Contract v2 has no field         |
-| Validation duration           | Unavailable | Loader does not record it        |
-| Renderer FPS/frame time       | Unavailable | Not deliberately measured        |
-| Lookahead/horizon performance | Unavailable | Deferred beyond Milestone 1      |
+| Metric                        | Provenance  | Current value source                         |
+| ----------------------------- | ----------- | -------------------------------------------- |
+| Solver iterations             | Recorded    | `diagnostics.iterations`                     |
+| Simulated until               | Recorded    | `diagnostics.simulatedUntilTime`             |
+| Event count                   | Recorded    | `diagnostics.eventCount`                     |
+| Candidate count               | Recorded    | `diagnostics.candidateCount`                 |
+| Segment count                 | Recorded    | `diagnostics.segmentCount`                   |
+| Diagnostic counts by severity | Derived     | Count of `diagnostics.entries`               |
+| Calculation duration          | Recorded    | `diagnostics.simulationWallTimeMilliseconds` |
+| Validation duration           | Unavailable | Loader does not record it                    |
+| Renderer FPS/frame time       | Unavailable | Not deliberately measured                    |
+| Lookahead/horizon performance | Unavailable | Deferred beyond Milestone 1                  |
 
 Do not use a live stopwatch around fixture parsing and label it “calculation duration”. Do not infer
 solver performance from simulation time, event count or iterations. Live renderer measurements
@@ -321,7 +321,7 @@ long settings or diagnostic messages.
 1. The user chooses a fixture from the explicit catalog.
 2. The application loads its raw JSON through `parseSimulationRunFixture`.
 3. The candidate is accepted atomically only after parse and contract validation succeed.
-4. The workbench sets source kind/name, determines inspection mode from `run.status`, resets replay
+4. The workbench sets source kind/name, determines inspection mode from validity and terminal reason, resets replay
    state and reports success.
 5. An unexpected bundled-fixture failure follows the same rejection rules and retains the previous
    run.
@@ -344,10 +344,10 @@ and not part of the run record.
 
 ### Accept a failed calculation record
 
-A structurally valid record whose status is `unresolved`, `iteration-limited` or `invalid` loaded
-successfully. It replaces the prior current run because its failure is domain data worth
+A structurally valid record with a non-completion terminal reason or invalid validity loads
+successfully. It replaces the prior current run because its outcome is domain data worth
 inspecting, not a loader failure. The workbench then applies the restricted inspection mode and
-never silently promotes it to `complete`.
+never silently promotes its terminal reason to `completion-region`.
 
 ### Load feedback lifecycle
 
@@ -434,7 +434,7 @@ frame then flows to the viewport; the event list never manipulates a mesh.
 
 - contract version;
 - scene ID and source name/kind;
-- all four run statuses and failure reason;
+- run validity and every typed terminal reason;
 - bodies, static colliders and their physical circle data;
 - simulation settings and tolerances;
 - trajectories and segment counts;

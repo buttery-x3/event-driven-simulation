@@ -127,6 +127,37 @@ every collider reports no contact. Any unresolved collider calculation makes the
 unresolved because it could conceal an earlier event; a valid later candidate remains diagnostic
 evidence but is not committed as the result.
 
+## Event-to-event single-ball runs
+
+`constructSingleBallRun` is the authoritative Milestone 2 producer. It accepts one immutable
+`SimulationInput`, constructs a ballistic path from the current event state, queries every fixed
+collider continuously, and commits a segment only after the selected interval has been certified
+collision-free. It never advances collision state through renderer frames or physics timesteps.
+
+Each selected contact is evaluated directly on the incoming path. For outward unit normal `n`,
+incoming velocity `v` and restitution `e`, the outgoing velocity is:
+
+```text
+v' = v - (1 + e)(v · n)n
+```
+
+The contact position becomes the next segment's exact start position. No positional nudge or
+arbitrary time advance is applied. A separating response naturally suppresses the start-time root
+for that collider; if the next query still selects a contact within `eventTime` of the current
+state, the run stops with `zero-time-loop` and preserves the certified prefix.
+
+Axis-aligned completion and escape regions are intersected continuously with the same ballistic
+path. A contact at or before a region entry wins; otherwise the committed terminal segment ends
+exactly at the region boundary. Event and time limits, unresolved fixed-world searches, invalid
+state, numerical failure and permanently stationary no-future-event states remain distinct typed
+terminal reasons.
+
+Run `validity` records whether the retained prefix conforms to the public contract. It is separate
+from `terminalReason`, which records why calculation stopped. Diagnostics retain each contact
+search's accepted and rejected candidates and record search iterations, event count, candidate
+count, segment count, simulated horizon and calculation wall time. Instrumentation is written only
+when the result is finalised and never participates in event selection.
+
 ## Scene validation
 
 `validateSceneDefinition` accepts unknown input and returns either the validated scene or typed,
@@ -145,5 +176,5 @@ Current diagnostic codes are:
 Validation covers the coordinate convention, board dimensions, supported circle and line-segment
 colliders, finite coordinates, positive circle radii, non-zero segment lengths, unique collider and
 termination IDs, and positive axis-aligned termination-region dimensions. Saved-run loading and
-the current headless synthetic producer both validate the scene before accepting or generating run
-data.
+the authoritative headless run constructor both validate the scene before accepting or generating
+run data.
