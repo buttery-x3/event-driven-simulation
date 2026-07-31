@@ -29,11 +29,17 @@
 	</header>
 
 	<section class="outcome" aria-label="Calculation outcome">
-		<strong class:failed={run.status.type !== 'complete'}>{getRunStatusLabel(run.status)}</strong>
-		{#if run.status.type === 'complete'}
+		<strong class:failed={run.terminalReason.type !== 'completion-region'}
+			>{getRunStatusLabel(run.terminalReason)}</strong
+		>
+		{#if run.terminalReason.type === 'completion-region'}
 			<p>Calculation completed before replay began.</p>
 		{:else}
-			<p>{run.status.reason}</p>
+			<p>
+				{'detail' in run.terminalReason
+					? run.terminalReason.detail
+					: `Simulation stopped at ${run.terminalReason.type}.`}
+			</p>
 		{/if}
 	</section>
 

@@ -5,7 +5,8 @@ export function toRendererPlaybackInput(run: SimulationRunRecord): RendererPlayb
 		contractVersion: run.contractVersion,
 		scene: run.input.scene,
 		initialDynamicBodies: run.input.initialDynamicBodies,
-		status: run.status,
+		validity: run.validity,
+		terminalReason: run.terminalReason,
 		playableUntilTime: run.diagnostics.simulatedUntilTime,
 		trajectories: run.trajectories,
 		events: run.events,
@@ -15,10 +16,12 @@ export function toRendererPlaybackInput(run: SimulationRunRecord): RendererPlayb
 
 export function assertPlaybackEligible(
 	input: RendererPlaybackInput
-): asserts input is RendererPlaybackInput & { status: { readonly type: 'complete' } } {
-	if (input.status.type !== 'complete') {
+): asserts input is RendererPlaybackInput & {
+	terminalReason: Extract<RendererPlaybackInput['terminalReason'], { type: 'completion-region' }>;
+} {
+	if (input.validity !== 'valid' || input.terminalReason.type !== 'completion-region') {
 		throw new Error(
-			`Ordinary playback requires a complete run; received ${input.status.type}: ${input.status.reason}`
+			`Ordinary playback requires a valid completion-region run; received ${input.validity} ${input.terminalReason.type}.`
 		);
 	}
 
@@ -28,11 +31,11 @@ export function assertPlaybackEligible(
 export function assertRecordedInspectionEligible(
 	input: RendererPlaybackInput
 ): asserts input is RendererPlaybackInput & {
-	status: { readonly type: 'complete' | 'unresolved' | 'iteration-limited' };
+	validity: 'valid';
 } {
-	if (input.status.type === 'invalid') {
+	if (input.validity === 'invalid') {
 		throw new Error(
-			`Recorded inspection is unavailable for an invalid run: ${input.status.reason}`
+			`Recorded inspection is unavailable for an invalid run: ${input.terminalReason.type}.`
 		);
 	}
 

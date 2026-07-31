@@ -1,15 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import type { RendererPlaybackInput, RunStatus, SimulationRunRecord } from './contracts';
+import type { RendererPlaybackInput, RunTerminalReason, SimulationRunRecord } from './contracts';
 import { prototypeSimulationInput } from './prototype-input';
 
 const diagnostics = {
-	iterations: 1,
+	iterations: 0,
 	simulatedUntilTime: 0.5,
+	eventCount: 0,
+	candidateCount: 0,
+	segmentCount: 1,
+	simulationWallTimeMilliseconds: 1,
+	contactSearches: [],
 	entries: [
 		{
 			severity: 'info',
-			code: 'CONTACT_COMMITTED',
-			message: 'Committed the earliest supported contact.',
+			code: 'COMPLETION_REGION',
+			message: 'Run reached prototype-exit.',
 			time: 0.5,
 			bodyId: 'ball'
 		}
@@ -32,77 +37,56 @@ const trajectories = [
 	}
 ] as const;
 
-const events = [
-	{
-		type: 'contact',
-		time: 0.5,
-		bodyId: 'ball',
-		colliderId: 'peg-centre',
-		position: [0, 1.5],
-		normal: [0, 1]
-	}
-] as const;
-
 describe('simulation and replay contracts', () => {
 	it('round-trips a representative run record as plain JSON data', () => {
 		const run = {
-			contractVersion: 3,
+			contractVersion: 4,
 			input: prototypeSimulationInput,
-			status: { type: 'complete' },
+			validity: 'valid',
+			terminalReason: { type: 'completion-region', regionId: 'prototype-exit', time: 0.5 },
 			trajectories,
-			events,
+			events: [],
 			diagnostics
 		} as const satisfies SimulationRunRecord;
 
 		const restored = JSON.parse(JSON.stringify(run)) as SimulationRunRecord;
 
 		expect(restored).toEqual(run);
-		expect(restored.input.initialDynamicBodies).toEqual(
-			prototypeSimulationInput.initialDynamicBodies
-		);
-		expect(restored.input.scene).toEqual(prototypeSimulationInput.scene);
-		expect(restored.input.settings).toEqual(prototypeSimulationInput.settings);
-		expect(restored.status.type).toBe('complete');
-		expect(restored.trajectories).toEqual(trajectories);
-		expect(restored.events).toEqual(events);
-		expect(restored.diagnostics).toEqual(diagnostics);
+		expect(restored.validity).toBe('valid');
+		expect(restored.terminalReason.type).toBe('completion-region');
 	});
 
-	it('preserves each terminal run status and its failure context', () => {
-		const statuses = [
-			{ type: 'complete' },
-			{ type: 'unresolved', reason: 'No reliable collision root was found.' },
-			{ type: 'iteration-limited', reason: 'The configured event limit was reached.' },
-			{ type: 'invalid', reason: 'A body radius was not positive.' }
-		] as const satisfies readonly RunStatus[];
+	it('preserves distinct terminal reasons independently of prefix validity', () => {
+		const reasons = [
+			{ type: 'completion-region', regionId: 'exit', time: 1 },
+			{ type: 'escape-region', regionId: 'escape', time: 1 },
+			{ type: 'event-limit', time: 1, limit: 10 },
+			{ type: 'time-limit', time: 1, limit: 1 },
+			{ type: 'unresolved-collision-search', time: 1, detail: 'uncertain root' },
+			{ type: 'invalid-state', time: null, detail: 'invalid body' },
+			{ type: 'numerical-failure', time: 1, detail: 'overflow' }
+		] as const satisfies readonly RunTerminalReason[];
 
-		const restored = JSON.parse(JSON.stringify(statuses)) as RunStatus[];
-
-		expect(restored).toEqual(statuses);
+		expect(JSON.parse(JSON.stringify(reasons))).toEqual(reasons);
 	});
 
 	it('keeps renderer playback input serialisable and explicit about incomplete runs', () => {
 		const playback = {
-			contractVersion: 3,
+			contractVersion: 4,
 			scene: prototypeSimulationInput.scene,
 			initialDynamicBodies: prototypeSimulationInput.initialDynamicBodies,
-			status: {
-				type: 'unresolved',
-				reason: 'Playback contains only the validated trajectory prefix.'
+			validity: 'valid',
+			terminalReason: {
+				type: 'unresolved-collision-search',
+				time: 0.5,
+				detail: 'Playback contains only the validated trajectory prefix.'
 			},
 			playableUntilTime: diagnostics.simulatedUntilTime,
 			trajectories,
-			events,
+			events: [],
 			diagnostics
 		} as const satisfies RendererPlaybackInput;
 
-		const restored = JSON.parse(JSON.stringify(playback)) as RendererPlaybackInput;
-
-		expect(restored).toEqual(playback);
-		expect(restored.initialDynamicBodies[0]?.physicalShape.radius).toBe(
-			prototypeSimulationInput.initialDynamicBodies[0].physicalShape.radius
-		);
-		expect(restored.status.type).toBe('unresolved');
-		expect(restored.playableUntilTime).toBe(0.5);
+		expect(JSON.parse(JSON.stringify(playback))).toEqual(playback);
 	});
 });

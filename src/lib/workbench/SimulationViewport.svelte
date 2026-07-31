@@ -46,11 +46,8 @@
 			<h2 id="viewport-heading">{getInspectionModeLabel(mode)}</h2>
 		</div>
 		<div class="badges" aria-label="Run and transport status">
-			<span
-				class:danger={input.status.type === 'invalid'}
-				class:warning={mode === 'recorded-prefix'}
-			>
-				{getRunStatusLabel(input.status)}
+			<span class:danger={input.validity === 'invalid'} class:warning={mode === 'recorded-prefix'}>
+				{getRunStatusLabel(input.terminalReason)}
 			</span>
 			<span class:playing={transportState === 'playing'}>{transportState}</span>
 		</div>

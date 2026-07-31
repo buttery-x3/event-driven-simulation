@@ -108,11 +108,51 @@ export interface ContactEvent {
 
 export type PhysicalEvent = ContactEvent;
 
-export type RunStatus =
-	| { readonly type: 'complete' }
-	| { readonly type: 'unresolved'; readonly reason: string }
-	| { readonly type: 'iteration-limited'; readonly reason: string }
-	| { readonly type: 'invalid'; readonly reason: string };
+export type RunValidity = 'valid' | 'invalid';
+
+export type RunTerminalReason =
+	| {
+			readonly type: 'completion-region';
+			readonly regionId: EntityId;
+			readonly time: number;
+	  }
+	| {
+			readonly type: 'escape-region';
+			readonly regionId: EntityId;
+			readonly time: number;
+	  }
+	| { readonly type: 'no-future-event'; readonly time: number; readonly detail: string }
+	| {
+			readonly type: 'time-limit';
+			readonly time: number;
+			readonly limit: number;
+	  }
+	| {
+			readonly type: 'event-limit';
+			readonly time: number;
+			readonly limit: number;
+	  }
+	| {
+			readonly type: 'unresolved-collision-search';
+			readonly time: number;
+			readonly detail: string;
+	  }
+	| {
+			readonly type: 'zero-time-loop';
+			readonly time: number;
+			readonly colliderId: EntityId;
+			readonly detail: string;
+	  }
+	| {
+			readonly type: 'invalid-state';
+			readonly time: number | null;
+			readonly detail: string;
+	  }
+	| {
+			readonly type: 'numerical-failure';
+			readonly time: number;
+			readonly detail: string;
+	  };
 
 export interface DiagnosticEntry {
 	readonly severity: 'info' | 'warning' | 'error';
@@ -122,26 +162,48 @@ export interface DiagnosticEntry {
 	readonly bodyId: EntityId | null;
 }
 
+export interface RunContactCandidateDiagnostic {
+	readonly colliderId: EntityId;
+	readonly feature: string;
+	readonly time: number;
+	readonly classification: string;
+}
+
+export interface RunContactSearchDiagnostic {
+	readonly searchInterval: readonly [startTime: number, endTime: number];
+	readonly outcome: 'contact' | 'no-event' | 'unresolved' | 'invalid-input';
+	readonly reason: string | null;
+	readonly selectedColliderId: EntityId | null;
+	readonly candidates: readonly RunContactCandidateDiagnostic[];
+}
+
 export interface RunDiagnostics {
 	readonly iterations: number;
 	readonly simulatedUntilTime: number;
+	readonly eventCount: number;
+	readonly candidateCount: number;
+	readonly segmentCount: number;
+	readonly simulationWallTimeMilliseconds: number;
+	readonly contactSearches: readonly RunContactSearchDiagnostic[];
 	readonly entries: readonly DiagnosticEntry[];
 }
 
 export interface SimulationRunRecord {
-	readonly contractVersion: 3;
+	readonly contractVersion: 4;
 	readonly input: SimulationInput;
-	readonly status: RunStatus;
+	readonly validity: RunValidity;
+	readonly terminalReason: RunTerminalReason;
 	readonly trajectories: readonly BodyTrajectory[];
 	readonly events: readonly PhysicalEvent[];
 	readonly diagnostics: RunDiagnostics;
 }
 
 export interface RendererPlaybackInput {
-	readonly contractVersion: 3;
+	readonly contractVersion: 4;
 	readonly scene: SceneDefinition;
 	readonly initialDynamicBodies: readonly InitialDynamicCircleBodyState[];
-	readonly status: RunStatus;
+	readonly validity: RunValidity;
+	readonly terminalReason: RunTerminalReason;
 	readonly playableUntilTime: number;
 	readonly trajectories: readonly BodyTrajectory[];
 	readonly events: readonly PhysicalEvent[];

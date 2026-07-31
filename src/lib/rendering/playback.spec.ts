@@ -32,8 +32,8 @@ const input = {
 				id: 'test-exit',
 				type: 'axis-aligned-box',
 				purpose: 'complete',
-				minimum: [-0.5, -0.2],
-				maximum: [0.5, 0]
+				minimum: [1.9, 0.9],
+				maximum: [2.1, 1.2]
 			}
 		]
 	},
@@ -49,7 +49,7 @@ const input = {
 	settings: {
 		gravity: [0, -2],
 		restitution: 0.5,
-		maximumEvents: 1,
+		maximumEvents: 10,
 		maximumSimulationTime: 2,
 		tolerances: {
 			contactDistance: 1e-9,
@@ -73,8 +73,8 @@ describe('recorded playback frame evaluation', () => {
 			mostRecentEvent: { type: 'contact', time: 1 }
 		});
 		expect(getPlaybackFrame(playback, 10)).toMatchObject({
-			time: 2,
-			bodies: [{ position: [2, 1], segmentIndex: 1 }]
+			time: 1.9,
+			bodies: [{ position: [1.9, 1.09], segmentIndex: 1 }]
 		});
 	});
 
@@ -91,26 +91,30 @@ describe('recorded playback frame evaluation', () => {
 });
 
 describe('playback admission and adaptation', () => {
-	it.each(['unresolved', 'iteration-limited', 'invalid'] as const)(
-		'rejects a %s run from ordinary playback with its diagnostic reason',
-		(statusType) => {
+	it.each([
+		{ type: 'event-limit', time: 1, limit: 1 },
+		{ type: 'escape-region', regionId: 'escape', time: 1 },
+		{ type: 'numerical-failure', time: 1, detail: 'test failure detail' }
+	] as const)('rejects a $type run from ordinary playback', (terminalReason) => {
+		const playback = {
+			...completedPlayback(),
+			terminalReason
+		} satisfies RendererPlaybackInput;
+
+		expect(() => assertPlaybackEligible(playback)).toThrow(
+			`Ordinary playback requires a valid completion-region run; received valid ${terminalReason.type}.`
+		);
+	});
+
+	it.each([
+		{ type: 'unresolved-collision-search', time: 1, detail: 'test retained prefix' },
+		{ type: 'event-limit', time: 1, limit: 1 }
+	] as const)(
+		'allows explicit recorded-prefix inspection for a $type run without admitting ordinary playback',
+		(terminalReason) => {
 			const playback = {
 				...completedPlayback(),
-				status: { type: statusType, reason: 'test failure detail' }
-			} satisfies RendererPlaybackInput;
-
-			expect(() => assertPlaybackEligible(playback)).toThrow(
-				`Ordinary playback requires a complete run; received ${statusType}: test failure detail`
-			);
-		}
-	);
-
-	it.each(['unresolved', 'iteration-limited'] as const)(
-		'allows explicit recorded-prefix inspection for a %s run without admitting ordinary playback',
-		(statusType) => {
-			const playback = {
-				...completedPlayback(),
-				status: { type: statusType, reason: 'test retained prefix' }
+				terminalReason
 			} satisfies RendererPlaybackInput;
 
 			expect(() => assertRecordedInspectionEligible(playback)).not.toThrow();
@@ -125,11 +129,16 @@ describe('playback admission and adaptation', () => {
 	it('rejects an invalid run from both playback and recorded inspection', () => {
 		const playback = {
 			...completedPlayback(),
-			status: { type: 'invalid', reason: 'test invalid record' }
+			validity: 'invalid',
+			terminalReason: {
+				type: 'invalid-state',
+				time: null,
+				detail: 'test invalid record'
+			}
 		} satisfies RendererPlaybackInput;
 
 		expect(() => assertRecordedInspectionEligible(playback)).toThrow(
-			'Recorded inspection is unavailable for an invalid run: test invalid record'
+			'Recorded inspection is unavailable for an invalid run: invalid-state.'
 		);
 	});
 });

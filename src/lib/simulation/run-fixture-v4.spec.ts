@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import canonicalFixtureJson from '../../../fixtures/runs/canonical-synthetic-contact.json?raw';
+import canonicalFixtureJson from '../../../fixtures/runs/canonical-event-driven-offset-drop.json?raw';
 import { RunFixtureError } from './run-fixture-error';
-import { validateRunFixtureV3 } from './run-fixture-v3';
+import { validateRunFixtureV4 } from './run-fixture-v4';
 
-describe('version 3 run fixture validation', () => {
-	it('accepts the complete version 3 saved-run shape', () => {
-		expect(validateRunFixtureV3(JSON.parse(canonicalFixtureJson)).status).toEqual({
-			type: 'complete'
-		});
+describe('version 4 run fixture validation', () => {
+	it('accepts the complete version 4 saved-run shape', () => {
+		expect(validateRunFixtureV4(JSON.parse(canonicalFixtureJson)).terminalReason.type).toBe(
+			'completion-region'
+		);
 	});
 
 	it('reports the exact incompatible contract field', () => {
@@ -18,7 +18,7 @@ describe('version 3 run fixture validation', () => {
 		};
 		delete incompatible.input.initialDynamicBodies[0]!.physicalShape.radius;
 
-		expect(() => validateRunFixtureV3(incompatible)).toThrowError(
+		expect(() => validateRunFixtureV4(incompatible)).toThrowError(
 			expect.objectContaining<Partial<RunFixtureError>>({
 				code: 'INVALID_RUN_RECORD',
 				path: '$.input.initialDynamicBodies[0].physicalShape.radius'

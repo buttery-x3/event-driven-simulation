@@ -1,5 +1,5 @@
 {
-	"contractVersion": 3,
+	"contractVersion": 4,
 	"input": {
 		"scene": {
 			"id": "flame-27-high-speed-contact",
@@ -49,8 +49,11 @@
 			}
 		}
 	},
-	"status": {
-		"type": "complete"
+	"validity": "valid",
+	"terminalReason": {
+		"type": "event-limit",
+		"time": 0.0099,
+		"limit": 1
 	},
 	"trajectories": [
 		{
@@ -80,6 +83,11 @@
 	"diagnostics": {
 		"iterations": 1,
 		"simulatedUntilTime": 0.0099,
+		"eventCount": 1,
+		"candidateCount": 0,
+		"segmentCount": 1,
+		"simulationWallTimeMilliseconds": 0,
+		"contactSearches": [],
 		"entries": [
 			{
 				"severity": "info",

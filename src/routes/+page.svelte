@@ -1,12 +1,12 @@
 <script lang="ts">
-	import canonicalFixtureJson from '../../fixtures/runs/canonical-synthetic-contact.json?raw';
+	import canonicalFixtureJson from '../../fixtures/runs/canonical-event-driven-offset-drop.json?raw';
 	import SimulationWorkbench from '$lib/workbench/SimulationWorkbench.svelte';
 	import type { RepositoryRunFixture } from '$lib/workbench/model';
 
 	const repositoryFixtures = [
 		{
-			id: 'canonical-synthetic-contact',
-			name: 'canonical-synthetic-contact.json',
+			id: 'canonical-event-driven-offset-drop',
+			name: 'canonical-event-driven-offset-drop.json',
 			json: canonicalFixtureJson
 		}
 	] as const satisfies readonly RepositoryRunFixture[];

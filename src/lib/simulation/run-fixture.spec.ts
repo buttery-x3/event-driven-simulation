@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import canonicalFixtureJson from '../../../fixtures/runs/canonical-synthetic-contact.json?raw';
+import canonicalFixtureJson from '../../../fixtures/runs/canonical-event-driven-offset-drop.json?raw';
 import {
 	assertPlaybackEligible,
 	getPlaybackFrame,
@@ -9,7 +9,7 @@ import { toRenderSceneViewModel } from '$lib/rendering/render-scene-data';
 import { canonicalPlinkoBoard } from './canonical-board';
 import type { SimulationRunRecord } from './contracts';
 import { loadSimulationRunFixture, parseSimulationRunFixture } from './run-fixture';
-import { defaultCanonicalPlinkoScenario } from './scenario-catalogue';
+import { canonicalPlinkoScenarios } from './scenario-catalogue';
 
 describe('saved run fixtures', () => {
 	it('loads and replays the canonical fixture headlessly through the public contract', () => {
@@ -19,22 +19,23 @@ describe('saved run fixtures', () => {
 		expect('window' in globalThis).toBe(false);
 		expect(run.input.scene.id).toBe('canonical-plinko-board');
 		expect(run.input.scene).toEqual(canonicalPlinkoBoard);
-		expect(run.input.initialDynamicBodies).toEqual(
-			defaultCanonicalPlinkoScenario.input.initialDynamicBodies
-		);
-		expect(run.input.settings).toEqual(defaultCanonicalPlinkoScenario.input.settings);
-		expect(run.status).toEqual({ type: 'complete' });
-		expect(run.events).toHaveLength(1);
-		expect(run.diagnostics.entries[0]?.code).toBe('SYNTHETIC_CONTACT_GENERATED');
-		const contactTime = run.events[0]!.time;
+		const offsetScenario = canonicalPlinkoScenarios.find(({ id }) => id === 'offset-drop')!;
+		expect(run.input.initialDynamicBodies).toEqual(offsetScenario.input.initialDynamicBodies);
+		expect(run.input.settings).toEqual(offsetScenario.input.settings);
+		expect(run.validity).toBe('valid');
+		expect(run.terminalReason.type).toBe('completion-region');
+		expect(run.events.length).toBeGreaterThan(1);
+		expect(run.diagnostics.entries[0]?.code).toBe('CONTACT_COMMITTED');
+		const contact = run.events[0]!;
+		const contactTime = contact.time;
 		expect(getPlaybackFrame(playback, contactTime)).toMatchObject({
 			time: contactTime,
-			bodies: [{ bodyId: 'ball-primary', position: [0, 5.97], segmentIndex: 1 }],
-			mostRecentEvent: { type: 'contact', colliderId: 'peg-row-01-column-04' }
+			bodies: [{ bodyId: 'ball-primary', position: contact!.position, segmentIndex: 1 }],
+			mostRecentEvent: { type: 'contact', colliderId: contact!.colliderId }
 		});
 		expect(getPlaybackFrame(playback, run.diagnostics.simulatedUntilTime)).toMatchObject({
 			time: run.diagnostics.simulatedUntilTime,
-			bodies: [{ segmentIndex: 1 }]
+			bodies: [{ segmentIndex: run.trajectories[0]!.segments.length - 1 }]
 		});
 	});
 
@@ -71,18 +72,19 @@ describe('saved run fixtures', () => {
 		);
 	});
 
-	it('retains normal run-status validation after fixture loading', () => {
+	it('retains terminal-reason playback admission after fixture loading', () => {
 		const incomplete = {
 			...(JSON.parse(canonicalFixtureJson) as SimulationRunRecord),
-			status: {
-				type: 'unresolved',
-				reason: 'The saved fixture contains only a validated trajectory prefix.'
+			terminalReason: {
+				type: 'unresolved-collision-search',
+				time: 0,
+				detail: 'The saved fixture contains only a validated trajectory prefix.'
 			}
 		};
 		const playback = toRendererPlaybackInput(loadSimulationRunFixture(incomplete));
 
 		expect(() => assertPlaybackEligible(playback)).toThrow(
-			'Ordinary playback requires a complete run; received unresolved: The saved fixture contains only a validated trajectory prefix.'
+			'Ordinary playback requires a valid completion-region run; received valid unresolved-collision-search.'
 		);
 	});
 });

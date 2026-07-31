@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import canonicalFixtureJson from '../../../fixtures/runs/canonical-synthetic-contact.json?raw';
-import type { RunStatus } from '$lib/simulation/contracts';
+import canonicalFixtureJson from '../../../fixtures/runs/canonical-event-driven-offset-drop.json?raw';
 import { parseSimulationRunFixture } from '$lib/simulation/run-fixture';
 import {
 	formatRecordedSeconds,
@@ -12,14 +11,13 @@ import {
 
 describe('workbench run presentation model', () => {
 	it.each([
-		[{ type: 'complete' }, 'completed-replay'],
-		[{ type: 'unresolved', reason: 'test' }, 'recorded-prefix'],
-		[{ type: 'iteration-limited', reason: 'test' }, 'recorded-prefix'],
-		[{ type: 'invalid', reason: 'test' }, 'diagnostics-only']
-	] satisfies readonly (readonly [RunStatus, string])[])(
-		'maps $type calculation status to its inspection mode',
-		(status, expected) => {
-			expect(getInspectionMode(status)).toBe(expected);
+		['valid', { type: 'completion-region', regionId: 'exit', time: 1 }, 'completed-replay'],
+		['valid', { type: 'event-limit', time: 1, limit: 2 }, 'recorded-prefix'],
+		['invalid', { type: 'invalid-state', time: null, detail: 'test' }, 'diagnostics-only']
+	] as const)(
+		'maps $0/$1 calculation result to its inspection mode',
+		(validity, reason, expected) => {
+			expect(getInspectionMode(validity, reason)).toBe(expected);
 		}
 	);
 
@@ -31,11 +29,15 @@ describe('workbench run presentation model', () => {
 			bodies: 1,
 			colliders: 66,
 			trajectories: 1,
-			segments: 2,
-			events: 1,
-			diagnostics: 1
+			segments: run.diagnostics.segmentCount,
+			events: run.diagnostics.eventCount,
+			diagnostics: run.diagnostics.entries.length
 		});
-		expect(getSeverityCounts(run)).toEqual({ info: 1, warning: 0, error: 0 });
+		expect(getSeverityCounts(run)).toEqual({
+			info: run.diagnostics.entries.length,
+			warning: 0,
+			error: 0
+		});
 		expect(JSON.stringify(run)).toBe(before);
 	});
 

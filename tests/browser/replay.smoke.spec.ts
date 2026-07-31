@@ -10,7 +10,7 @@ interface FilePayload {
 
 const canonicalFixturePath = path.resolve(
 	process.cwd(),
-	'fixtures/runs/canonical-synthetic-contact.json'
+	'fixtures/runs/canonical-event-driven-offset-drop.json'
 );
 
 test.describe.configure({ mode: 'serial' });
@@ -47,7 +47,7 @@ test('presents a calculated run as a diagnostic workbench and seeks exact events
 	await event.click();
 
 	await expect(event).toHaveAttribute('aria-current', 'true');
-	await expect(controls.locator('output')).toHaveText('0.364 s / 1.776 s');
+	await expect(controls.locator('output')).toHaveText('0.386 s / 4.145 s');
 	await expect(controls.getByRole('button', { name: 'Play' })).toBeVisible();
 });
 
@@ -65,7 +65,7 @@ test('loads a local saved run and retains it after typed validation failures', a
 		page.getByLabel('Current run source').getByText('Local file · local-run.json', { exact: true })
 	).toBeVisible();
 	await expect(
-		page.getByText('Loaded local-run.json · contract v3', { exact: true })
+		page.getByText('Loaded local-run.json · contract v4', { exact: true })
 	).toBeVisible();
 
 	await expectRejectedCandidate(page, {
@@ -80,7 +80,7 @@ test('loads a local saved run and retains it after typed validation failures', a
 	});
 	await expectRejectedCandidate(page, {
 		name: 'invalid-record.json',
-		content: JSON.stringify({ contractVersion: 3 }),
+		content: JSON.stringify({ contractVersion: 4 }),
 		code: 'INVALID_RUN_RECORD'
 	});
 
@@ -94,11 +94,12 @@ test('keeps a failed calculation distinct while exposing its recorded prefix', a
 	await page.goto('/');
 
 	const unresolved = JSON.parse(await readFile(canonicalFixturePath, 'utf8')) as {
-		status: unknown;
+		terminalReason: unknown;
 	};
-	unresolved.status = {
-		type: 'unresolved',
-		reason: 'The solver retained a validated prefix for inspection.'
+	unresolved.terminalReason = {
+		type: 'unresolved-collision-search',
+		time: 0,
+		detail: 'The solver retained a validated prefix for inspection.'
 	};
 
 	await chooseFile(page, {
@@ -121,7 +122,7 @@ test('keeps a failed calculation distinct while exposing its recorded prefix', a
 	).toBeEnabled();
 
 	await page.getByRole('button', { name: /^Event 1, contact at / }).click();
-	await expect(controls.locator('output')).toHaveText('0.364 s / 1.776 s');
+	await expect(controls.locator('output')).toHaveText('0.386 s / 4.145 s');
 });
 
 async function expectRejectedCandidate(

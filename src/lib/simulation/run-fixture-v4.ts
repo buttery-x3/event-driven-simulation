@@ -2,12 +2,13 @@ import type { SimulationRunRecord } from './contracts';
 import { RunFixtureError } from './run-fixture-error';
 import { validateSceneDefinition } from './scene-validation';
 
-export function validateRunFixtureV3(value: unknown): SimulationRunRecord {
+export function validateRunFixtureV4(value: unknown): SimulationRunRecord {
 	const run = requireRecord(value, '$');
 
-	requireLiteral(run.contractVersion, 3, '$.contractVersion');
+	requireLiteral(run.contractVersion, 4, '$.contractVersion');
 	validateSimulationInput(run.input, '$.input');
-	validateRunStatus(run.status, '$.status');
+	requireOneOf(run.validity, ['valid', 'invalid'], '$.validity');
+	validateTerminalReason(run.terminalReason, '$.terminalReason');
 	validateTrajectories(run.trajectories, '$.trajectories');
 	validateEvents(run.events, '$.events');
 	validateDiagnostics(run.diagnostics, '$.diagnostics');
@@ -55,19 +56,37 @@ function validateCirclePhysicalShape(value: unknown, path: string): void {
 	requireFiniteNumber(shape.radius, `${path}.radius`);
 }
 
-function validateRunStatus(value: unknown, path: string): void {
-	const status = requireRecord(value, path);
+function validateTerminalReason(value: unknown, path: string): void {
+	const reason = requireRecord(value, path);
 
-	switch (status.type) {
-		case 'complete':
+	switch (reason.type) {
+		case 'completion-region':
+		case 'escape-region':
+			requireString(reason.regionId, `${path}.regionId`);
+			requireFiniteNumber(reason.time, `${path}.time`);
 			return;
-		case 'unresolved':
-		case 'iteration-limited':
-		case 'invalid':
-			requireString(status.reason, `${path}.reason`);
+		case 'no-future-event':
+		case 'unresolved-collision-search':
+		case 'numerical-failure':
+			requireFiniteNumber(reason.time, `${path}.time`);
+			requireString(reason.detail, `${path}.detail`);
+			return;
+		case 'time-limit':
+		case 'event-limit':
+			requireFiniteNumber(reason.time, `${path}.time`);
+			requireFiniteNumber(reason.limit, `${path}.limit`);
+			return;
+		case 'zero-time-loop':
+			requireFiniteNumber(reason.time, `${path}.time`);
+			requireString(reason.colliderId, `${path}.colliderId`);
+			requireString(reason.detail, `${path}.detail`);
+			return;
+		case 'invalid-state':
+			requireNullableFiniteNumber(reason.time, `${path}.time`);
+			requireString(reason.detail, `${path}.detail`);
 			return;
 		default:
-			fail(`${path}.type`, 'must be a supported run status');
+			fail(`${path}.type`, 'must be a supported terminal reason');
 	}
 }
 
@@ -110,6 +129,40 @@ function validateDiagnostics(value: unknown, path: string): void {
 
 	requireInteger(diagnostics.iterations, `${path}.iterations`);
 	requireFiniteNumber(diagnostics.simulatedUntilTime, `${path}.simulatedUntilTime`);
+	requireInteger(diagnostics.eventCount, `${path}.eventCount`);
+	requireInteger(diagnostics.candidateCount, `${path}.candidateCount`);
+	requireInteger(diagnostics.segmentCount, `${path}.segmentCount`);
+	requireFiniteNumber(
+		diagnostics.simulationWallTimeMilliseconds,
+		`${path}.simulationWallTimeMilliseconds`
+	);
+	requireArray(diagnostics.contactSearches, `${path}.contactSearches`).forEach(
+		(search, searchIndex) => {
+			const searchPath = `${path}.contactSearches[${searchIndex}]`;
+			const record = requireRecord(search, searchPath);
+			const interval = requireArray(record.searchInterval, `${searchPath}.searchInterval`);
+			if (interval.length !== 2) fail(`${searchPath}.searchInterval`, 'must contain two times');
+			requireFiniteNumber(interval[0], `${searchPath}.searchInterval[0]`);
+			requireFiniteNumber(interval[1], `${searchPath}.searchInterval[1]`);
+			requireOneOf(
+				record.outcome,
+				['contact', 'no-event', 'unresolved', 'invalid-input'],
+				`${searchPath}.outcome`
+			);
+			requireNullableString(record.reason, `${searchPath}.reason`);
+			requireNullableString(record.selectedColliderId, `${searchPath}.selectedColliderId`);
+			requireArray(record.candidates, `${searchPath}.candidates`).forEach(
+				(candidate, candidateIndex) => {
+					const candidatePath = `${searchPath}.candidates[${candidateIndex}]`;
+					const candidateRecord = requireRecord(candidate, candidatePath);
+					requireString(candidateRecord.colliderId, `${candidatePath}.colliderId`);
+					requireString(candidateRecord.feature, `${candidatePath}.feature`);
+					requireFiniteNumber(candidateRecord.time, `${candidatePath}.time`);
+					requireString(candidateRecord.classification, `${candidatePath}.classification`);
+				}
+			);
+		}
+	);
 	requireArray(diagnostics.entries, `${path}.entries`).forEach((entry, index) => {
 		const entryPath = `${path}.entries[${index}]`;
 		const record = requireRecord(entry, entryPath);

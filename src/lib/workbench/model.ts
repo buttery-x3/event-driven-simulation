@@ -1,4 +1,9 @@
-import type { RunStatus, SimulationRunRecord, Vec2 } from '$lib/simulation/contracts';
+import type {
+	RunTerminalReason,
+	RunValidity,
+	SimulationRunRecord,
+	Vec2
+} from '$lib/simulation/contracts';
 
 export interface RepositoryRunFixture {
 	readonly id: string;
@@ -32,16 +37,12 @@ export interface SeverityCounts {
 	readonly error: number;
 }
 
-export function getInspectionMode(status: RunStatus): InspectionMode {
-	switch (status.type) {
-		case 'complete':
-			return 'completed-replay';
-		case 'unresolved':
-		case 'iteration-limited':
-			return 'recorded-prefix';
-		case 'invalid':
-			return 'diagnostics-only';
-	}
+export function getInspectionMode(
+	validity: RunValidity,
+	terminalReason: RunTerminalReason
+): InspectionMode {
+	if (validity === 'invalid') return 'diagnostics-only';
+	return terminalReason.type === 'completion-region' ? 'completed-replay' : 'recorded-prefix';
 }
 
 export function getInspectionModeLabel(mode: InspectionMode): string {
@@ -55,16 +56,26 @@ export function getInspectionModeLabel(mode: InspectionMode): string {
 	}
 }
 
-export function getRunStatusLabel(status: RunStatus): string {
-	switch (status.type) {
-		case 'complete':
+export function getRunStatusLabel(reason: RunTerminalReason): string {
+	switch (reason.type) {
+		case 'completion-region':
 			return 'Complete';
-		case 'unresolved':
-			return 'Unresolved';
-		case 'iteration-limited':
-			return 'Iteration limit reached';
-		case 'invalid':
+		case 'escape-region':
+			return 'Escaped';
+		case 'no-future-event':
+			return 'No future event';
+		case 'time-limit':
+			return 'Time limit reached';
+		case 'event-limit':
+			return 'Event limit reached';
+		case 'unresolved-collision-search':
+			return 'Unresolved collision search';
+		case 'zero-time-loop':
+			return 'Zero-time loop';
+		case 'invalid-state':
 			return 'Invalid run';
+		case 'numerical-failure':
+			return 'Numerical failure';
 	}
 }
 

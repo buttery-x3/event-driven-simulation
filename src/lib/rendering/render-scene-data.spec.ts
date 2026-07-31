@@ -91,16 +91,26 @@ describe('render scene view-model adaptation', () => {
 	it('keeps playback dimensions consistent with the simulation input', () => {
 		const input = withBodyRadius(0.47);
 		const playback = {
-			contractVersion: 3,
+			contractVersion: 4,
 			scene: input.scene,
 			initialDynamicBodies: input.initialDynamicBodies,
-			status: { type: 'complete' },
+			validity: 'valid',
+			terminalReason: {
+				type: 'completion-region',
+				regionId: 'termination-centre-exit',
+				time: input.settings.maximumSimulationTime
+			},
 			playableUntilTime: input.settings.maximumSimulationTime,
 			trajectories: [],
 			events: [],
 			diagnostics: {
 				iterations: 0,
 				simulatedUntilTime: 0,
+				eventCount: 0,
+				candidateCount: 0,
+				segmentCount: 0,
+				simulationWallTimeMilliseconds: 0,
+				contactSearches: [],
 				entries: []
 			}
 		} as const satisfies RendererPlaybackInput;

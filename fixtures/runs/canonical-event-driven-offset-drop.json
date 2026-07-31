@@ -1,0 +1,2790 @@
+{
+	"contractVersion": 4,
+	"input": {
+		"scene": {
+			"id": "canonical-plinko-board",
+			"coordinateSystem": {
+				"origin": "centre-bottom",
+				"horizontalAxis": "right",
+				"verticalAxis": "up",
+				"lengthUnit": "metre"
+			},
+			"bounds": {
+				"width": 5.4,
+				"height": 7
+			},
+			"staticColliders": [
+				{
+					"id": "peg-row-01-column-01",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-1.8, 5.75]
+				},
+				{
+					"id": "peg-row-01-column-02",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-1.2, 5.75]
+				},
+				{
+					"id": "peg-row-01-column-03",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-0.6, 5.75]
+				},
+				{
+					"id": "peg-row-01-column-04",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0, 5.75]
+				},
+				{
+					"id": "peg-row-01-column-05",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0.6, 5.75]
+				},
+				{
+					"id": "peg-row-01-column-06",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [1.2, 5.75]
+				},
+				{
+					"id": "peg-row-01-column-07",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [1.8, 5.75]
+				},
+				{
+					"id": "peg-row-02-column-01",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-2.1, 5.15]
+				},
+				{
+					"id": "peg-row-02-column-02",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-1.5, 5.15]
+				},
+				{
+					"id": "peg-row-02-column-03",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-0.9, 5.15]
+				},
+				{
+					"id": "peg-row-02-column-04",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-0.3, 5.15]
+				},
+				{
+					"id": "peg-row-02-column-05",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0.3, 5.15]
+				},
+				{
+					"id": "peg-row-02-column-06",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0.9, 5.15]
+				},
+				{
+					"id": "peg-row-02-column-07",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [1.5, 5.15]
+				},
+				{
+					"id": "peg-row-02-column-08",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [2.1, 5.15]
+				},
+				{
+					"id": "peg-row-03-column-01",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-1.8, 4.55]
+				},
+				{
+					"id": "peg-row-03-column-02",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-1.2, 4.55]
+				},
+				{
+					"id": "peg-row-03-column-03",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-0.6, 4.55]
+				},
+				{
+					"id": "peg-row-03-column-04",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0, 4.55]
+				},
+				{
+					"id": "peg-row-03-column-05",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0.6, 4.55]
+				},
+				{
+					"id": "peg-row-03-column-06",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [1.2, 4.55]
+				},
+				{
+					"id": "peg-row-03-column-07",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [1.8, 4.55]
+				},
+				{
+					"id": "peg-row-04-column-01",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-2.1, 3.95]
+				},
+				{
+					"id": "peg-row-04-column-02",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-1.5, 3.95]
+				},
+				{
+					"id": "peg-row-04-column-03",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-0.9, 3.95]
+				},
+				{
+					"id": "peg-row-04-column-04",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-0.3, 3.95]
+				},
+				{
+					"id": "peg-row-04-column-05",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0.3, 3.95]
+				},
+				{
+					"id": "peg-row-04-column-06",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0.9, 3.95]
+				},
+				{
+					"id": "peg-row-04-column-07",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [1.5, 3.95]
+				},
+				{
+					"id": "peg-row-04-column-08",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [2.1, 3.95]
+				},
+				{
+					"id": "peg-row-05-column-01",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-1.8, 3.35]
+				},
+				{
+					"id": "peg-row-05-column-02",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-1.2, 3.35]
+				},
+				{
+					"id": "peg-row-05-column-03",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-0.6, 3.35]
+				},
+				{
+					"id": "peg-row-05-column-04",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0, 3.35]
+				},
+				{
+					"id": "peg-row-05-column-05",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0.6, 3.35]
+				},
+				{
+					"id": "peg-row-05-column-06",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [1.2, 3.35]
+				},
+				{
+					"id": "peg-row-05-column-07",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [1.8, 3.35]
+				},
+				{
+					"id": "peg-row-06-column-01",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-2.1, 2.75]
+				},
+				{
+					"id": "peg-row-06-column-02",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-1.5, 2.75]
+				},
+				{
+					"id": "peg-row-06-column-03",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-0.9, 2.75]
+				},
+				{
+					"id": "peg-row-06-column-04",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-0.3, 2.75]
+				},
+				{
+					"id": "peg-row-06-column-05",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0.3, 2.75]
+				},
+				{
+					"id": "peg-row-06-column-06",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0.9, 2.75]
+				},
+				{
+					"id": "peg-row-06-column-07",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [1.5, 2.75]
+				},
+				{
+					"id": "peg-row-06-column-08",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [2.1, 2.75]
+				},
+				{
+					"id": "peg-row-07-column-01",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-1.8, 2.15]
+				},
+				{
+					"id": "peg-row-07-column-02",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-1.2, 2.15]
+				},
+				{
+					"id": "peg-row-07-column-03",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-0.6, 2.15]
+				},
+				{
+					"id": "peg-row-07-column-04",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0, 2.15]
+				},
+				{
+					"id": "peg-row-07-column-05",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0.6, 2.15]
+				},
+				{
+					"id": "peg-row-07-column-06",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [1.2, 2.15]
+				},
+				{
+					"id": "peg-row-07-column-07",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [1.8, 2.15]
+				},
+				{
+					"id": "peg-row-08-column-01",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-2.1, 1.55]
+				},
+				{
+					"id": "peg-row-08-column-02",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-1.5, 1.55]
+				},
+				{
+					"id": "peg-row-08-column-03",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-0.9, 1.55]
+				},
+				{
+					"id": "peg-row-08-column-04",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-0.3, 1.55]
+				},
+				{
+					"id": "peg-row-08-column-05",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0.3, 1.55]
+				},
+				{
+					"id": "peg-row-08-column-06",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0.9, 1.55]
+				},
+				{
+					"id": "peg-row-08-column-07",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [1.5, 1.55]
+				},
+				{
+					"id": "peg-row-08-column-08",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [2.1, 1.55]
+				},
+				{
+					"id": "boundary-left-wall",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "line-segment",
+						"start": [-2.55, 0.45],
+						"end": [-2.55, 6.25]
+					}
+				},
+				{
+					"id": "boundary-right-wall",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "line-segment",
+						"start": [2.55, 0.45],
+						"end": [2.55, 6.25]
+					}
+				},
+				{
+					"id": "boundary-left-entry-guide",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "line-segment",
+						"start": [-2.55, 6.25],
+						"end": [-2.05, 6.72]
+					}
+				},
+				{
+					"id": "boundary-right-entry-guide",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "line-segment",
+						"start": [2.05, 6.72],
+						"end": [2.55, 6.25]
+					}
+				},
+				{
+					"id": "boundary-left-exit-floor",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "line-segment",
+						"start": [-2.55, 0.45],
+						"end": [-0.5, 0.12]
+					}
+				},
+				{
+					"id": "boundary-right-exit-floor",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "line-segment",
+						"start": [0.5, 0.12],
+						"end": [2.55, 0.45]
+					}
+				}
+			],
+			"terminationRegions": [
+				{
+					"id": "termination-centre-exit",
+					"type": "axis-aligned-box",
+					"purpose": "complete",
+					"minimum": [-0.5, -0.3],
+					"maximum": [0.5, 0.12]
+				}
+			]
+		},
+		"initialDynamicBodies": [
+			{
+				"id": "ball-primary",
+				"motionAuthority": "dynamic",
+				"physicalShape": {
+					"type": "circle",
+					"radius": 0.13
+				},
+				"position": [0.43, 6.62],
+				"velocity": [0, 0]
+			}
+		],
+		"settings": {
+			"gravity": [0, -9.81],
+			"restitution": 0.78,
+			"maximumEvents": 1000,
+			"maximumSimulationTime": 10,
+			"tolerances": {
+				"contactDistance": 1e-9,
+				"eventTime": 1e-9
+			}
+		}
+	},
+	"validity": "valid",
+	"terminalReason": {
+		"type": "completion-region",
+		"regionId": "termination-centre-exit",
+		"time": 4.14479708431158
+	},
+	"trajectories": [
+		{
+			"bodyId": "ball-primary",
+			"segments": [
+				{
+					"bodyId": "ball-primary",
+					"startTime": 0,
+					"endTime": 0.38587644644228003,
+					"startPosition": [0.43, 6.62],
+					"startVelocity": [0, 0],
+					"acceleration": [0, -9.81]
+				},
+				{
+					"bodyId": "ball-primary",
+					"startTime": 0.38587644644228003,
+					"endTime": 0.4510878955958154,
+					"startPosition": [0.43, 5.889642400437689],
+					"startVelocity": [-3.304898648791084, -1.0707186424195871],
+					"acceleration": [0, -9.81]
+				},
+				{
+					"bodyId": "ball-primary",
+					"startTime": 0.4510878955958154,
+					"endTime": 0.5074851876019059,
+					"startPosition": [0.21448276980677242, 5.798960611270847],
+					"startVelocity": [2.9470388029442502, -0.2832948499829395],
+					"acceleration": [0, -9.81]
+				},
+				{
+					"bodyId": "ball-primary",
+					"startTime": 0.5074851876019059,
+					"endTime": 0.5760211065714895,
+					"startPosition": [0.38068777772969853, 5.767382438346271],
+					"startVelocity": [-2.3832271579169073, -0.41408144151181153],
+					"acceleration": [0, -9.81]
+				},
+				{
+					"bodyId": "ball-primary",
+					"startTime": 0.5760211065714895,
+					"endTime": 0.7417479923174255,
+					"startPosition": [0.2173511143485942, 5.715963356636938],
+					"startVelocity": [1.461794311895391, -1.6885395957401301],
+					"acceleration": [0, -9.81]
+				},
+				{
+					"bodyId": "ball-primary",
+					"startTime": 0.7417479923174255,
+					"endTime": 0.8143265213642464,
+					"startPosition": [0.45960973326014076, 5.301409157743601],
+					"startVelocity": [3.0378853428520403, -1.8192071669698646],
+					"acceleration": [0, -9.81]
+				},
+				{
+					"bodyId": "ball-primary",
+					"startTime": 0.8143265213642464,
+					"endTime": 1.1762237298983216,
+					"startPosition": [0.6800949828572391, 5.14353598921396],
+					"startVelocity": [-2.2325583209471507, -2.6861248990038105],
+					"acceleration": [0, -9.81]
+				},
+				{
+					"bodyId": "ball-primary",
+					"startTime": 1.1762237298983216,
+					"endTime": 1.2243188733350265,
+					"startPosition": [-0.12786164138305656, 3.5290290497735786],
+					"startVelocity": [-6.140337014956703, -0.7647509887869788],
+					"acceleration": [0, -9.81]
+				},
+				{
+					"bodyId": "ball-primary",
+					"startTime": 1.2243188733350265,
+					"endTime": 1.2798012637062528,
+					"startPosition": [-0.42318203086710793, 3.4809022757316295],
+					"startVelocity": [1.9725097778067564, 4.769556598948288],
+					"acceleration": [0, -9.81]
+				},
+				{
+					"bodyId": "ball-primary",
+					"startTime": 1.2798012637062528,
+					"endTime": 1.3553627559550727,
+					"startPosition": [-0.3137424733637727, 3.730429636731535],
+					"startVelocity": [1.489922696701198, -3.4852605668442145],
+					"acceleration": [0, -9.81]
+				},
+				{
+					"bodyId": "ball-primary",
+					"startTime": 1.3553627559550727,
+					"endTime": 1.4067598475290435,
+					"startPosition": [-0.20116169106564424, 3.439072858086008],
+					"startVelocity": [-3.5125470874680067, -2.0114634500642663],
+					"acceleration": [0, -9.81]
+				},
+				{
+					"bodyId": "ball-primary",
+					"startTime": 1.4067598475290435,
+					"endTime": 1.5156560270399717,
+					"startPosition": [-0.3816963953781217, 3.322732139631159],
+					"startVelocity": [2.093004662993536, -3.2158470152652594],
+					"acceleration": [0, -9.81]
+				},
+				{
+					"bodyId": "ball-primary",
+					"startTime": 1.5156560270399717,
+					"endTime": 1.5718853725301403,
+					"startPosition": [-0.15377618387956776, 2.914373342118416],
+					"startVelocity": [4.234105017714332, -1.8772614971479253],
+					"acceleration": [0, -9.81]
+				},
+				{
+					"bodyId": "ball-primary",
+					"startTime": 1.5718853725301403,
+					"endTime": 1.6146178123871346,
+					"startPosition": [0.08430477000314768, 2.7933078255815844],
+					"startVelocity": [-3.844966606384122, -0.8067352505278966],
+					"acceleration": [0, -9.81]
+				},
+				{
+					"bodyId": "ball-primary",
+					"startTime": 1.6146178123871346,
+					"endTime": 1.6746592771949178,
+					"startPosition": [-0.08000003425631358, 2.749877228761758],
+					"startVelocity": [2.9978540571915424, -1.2297591296011343],
+					"acceleration": [0, -9.81]
+				},
+				{
+					"bodyId": "ball-primary",
+					"startTime": 1.6746592771949178,
+					"endTime": 1.7575140816052826,
+					"startPosition": [0.0999955146174224, 2.6583582746405856],
+					"startVelocity": [-0.18642708618265447, -3.27779826781496],
+					"acceleration": [0, -9.81]
+				},
+				{
+					"bodyId": "ball-primary",
+					"startTime": 1.7575140816052826,
+					"endTime": 1.8631172685384851,
+					"startPosition": [0.08454913485496435, 2.3531045144630642],
+					"startVelocity": [2.4459798568976345, 2.2329822021925088],
+					"acceleration": [0, -9.81]
+				},
+				{
+					"bodyId": "ball-primary",
+					"startTime": 1.8631172685384851,
+					"endTime": 2.1069210856126728,
+					"startPosition": [0.34285240291777336, 2.5342138290710623],
+					"startVelocity": [2.6878657497693506, -0.02101782222771309],
+					"acceleration": [0, -9.81]
+				},
+				{
+					"bodyId": "ball-primary",
+					"startTime": 2.1069210856126728,
+					"endTime": 2.1718879922296543,
+					"startPosition": [0.9981643324945142, 2.237534926301534],
+					"startVelocity": [-2.9068020203858604, 0.013640806761578528],
+					"acceleration": [0, -9.81]
+				},
+				{
+					"bodyId": "ball-primary",
+					"startTime": 2.1718879922296543,
+					"endTime": 2.2694934573359107,
+					"startPosition": [0.8093183970820527, 2.2177185989444563],
+					"startVelocity": [2.102197109054496, 0.9968247243141998],
+					"acceleration": [0, -9.81]
+				},
+				{
+					"bodyId": "ball-primary",
+					"startTime": 2.2694934573359107,
+					"endTime": 2.65261212585585,
+					"startPosition": [1.0145043236563442, 2.2682850542452844],
+					"startVelocity": [-0.526286552221447, 1.7154206607391296],
+					"acceleration": [0, -9.81]
+				},
+				{
+					"bodyId": "ball-primary",
+					"startTime": 2.65261212585585,
+					"endTime": 2.8493084356262384,
+					"startPosition": [0.8128741205093138, 2.205539254742805],
+					"startVelocity": [1.2391016646157555, -1.5823804017764718],
+					"acceleration": [0, -9.81]
+				},
+				{
+					"bodyId": "ball-primary",
+					"startTime": 2.8493084356262384,
+					"endTime": 2.918550860928569,
+					"startPosition": [1.056600845369578, 1.7045191743102885],
+					"startVelocity": [3.2469189236941176, -1.5308435489401486],
+					"acceleration": [0, -9.81]
+				},
+				{
+					"bodyId": "ball-primary",
+					"startTime": 2.918550860928569,
+					"endTime": 2.9803206078544835,
+					"startPosition": [1.281425386406192, 1.5750027656933674],
+					"startVelocity": [-2.902146116058952, -1.5067197511423203],
+					"acceleration": [0, -9.81]
+				},
+				{
+					"bodyId": "ball-primary",
+					"startTime": 2.9803206078544835,
+					"endTime": 3.2224554563640906,
+					"startPosition": [1.102160555275205, 1.4632180324559245],
+					"startVelocity": [0.09674369708153963, -3.400021904396279],
+					"acceleration": [0, -9.81]
+				},
+				{
+					"bodyId": "ball-primary",
+					"startTime": 3.2224554563640906,
+					"endTime": 4.14479708431158,
+					"startPosition": [1.1255855757123028, 0.35237760145369706],
+					"startVelocity": [-1.5206599269719043, 4.2721425932685975],
+					"acceleration": [0, -9.81]
+				}
+			]
+		}
+	],
+	"events": [
+		{
+			"type": "contact",
+			"time": 0.38587644644228003,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-01-column-05",
+			"position": [0.43, 5.889642400437689],
+			"normal": [-0.7727272727272745, 0.634738183807677]
+		},
+		{
+			"type": "contact",
+			"time": 0.4510878955958154,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-01-column-04",
+			"position": [0.21448276980677242, 5.798960611270847],
+			"normal": [0.974921680939875, 0.22254823304930638]
+		},
+		{
+			"type": "contact",
+			"time": 0.5074851876019059,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-01-column-05",
+			"position": [0.38068777772969853, 5.767382438346271],
+			"normal": [-0.9968737375922793, 0.0790110833921402]
+		},
+		{
+			"type": "contact",
+			"time": 0.5760211065714895,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-01-column-04",
+			"position": [0.2173511143485942, 5.715963356636938],
+			"normal": [0.9879596106754289, -0.15471201528664508]
+		},
+		{
+			"type": "contact",
+			"time": 0.7417479923174255,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-02-column-05",
+			"position": [0.45960973326014076, 5.301409157743601],
+			"normal": [0.725498787546096, 0.6882234442890948]
+		},
+		{
+			"type": "contact",
+			"time": 0.8143265213642464,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-02-column-06",
+			"position": [0.6800949828572391, 5.14353598921396],
+			"normal": [-0.999568259739822, -0.02938186720927614]
+		},
+		{
+			"type": "contact",
+			"time": 1.1762237298983216,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-05-column-04",
+			"position": [-0.12786164138305656, 3.5290290497735786],
+			"normal": [-0.5811892790138947, 0.8137684080617221]
+		},
+		{
+			"type": "contact",
+			"time": 1.2243188733350265,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-05-column-03",
+			"position": [-0.42318203086710793, 3.4809022757316295],
+			"normal": [0.8037180415131466, 0.5950103442346797]
+		},
+		{
+			"type": "contact",
+			"time": 1.2798012637062528,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-04-column-04",
+			"position": [-0.3137424733637727, 3.730429636731535],
+			"normal": [-0.062465788017148846, -0.9980471057657531]
+		},
+		{
+			"type": "contact",
+			"time": 1.3553627559550727,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-05-column-04",
+			"position": [-0.20116169106564424, 3.439072858086008],
+			"normal": [-0.9143713230256577, 0.40487662766367294]
+		},
+		{
+			"type": "contact",
+			"time": 1.4067598475290435,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-05-column-03",
+			"position": [-0.3816963953781217, 3.322732139631159],
+			"normal": [0.9922891119176288, -0.12394481985836919]
+		},
+		{
+			"type": "contact",
+			"time": 1.5156560270399717,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-06-column-04",
+			"position": [-0.15377618387956776, 2.914373342118416],
+			"normal": [0.6646537096383293, 0.7471515550837109]
+		},
+		{
+			"type": "contact",
+			"time": 1.5718853725301403,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-06-column-05",
+			"position": [0.08430477000314768, 2.7933078255815844],
+			"normal": [-0.9804328636220563, 0.19685375264356558]
+		},
+		{
+			"type": "contact",
+			"time": 1.6146178123871346,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-06-column-04",
+			"position": [-0.08000003425631358, 2.749877228761758],
+			"normal": [0.9999998442894823, -0.0005580510829176909]
+		},
+		{
+			"type": "contact",
+			"time": 1.6746592771949178,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-06-column-05",
+			"position": [0.0999955146174224, 2.6583582746405856],
+			"normal": [-0.9091112971935341, -0.41655329708824707]
+		},
+		{
+			"type": "contact",
+			"time": 1.7575140816052826,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-07-column-04",
+			"position": [0.08454913485496435, 2.3531045144630642],
+			"normal": [0.38431424934074687, 0.9232023384684739]
+		},
+		{
+			"type": "contact",
+			"time": 1.8631172685384851,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-06-column-05",
+			"position": [0.34285240291777336, 2.5342138290710623],
+			"normal": [0.19478364962624278, -0.9808462314951724]
+		},
+		{
+			"type": "contact",
+			"time": 2.1069210856126728,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-07-column-06",
+			"position": [0.9981643324945142, 2.237534926301534],
+			"normal": [-0.9174348522976626, 0.39788602864333605]
+		},
+		{
+			"type": "contact",
+			"time": 2.1718879922296543,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-07-column-05",
+			"position": [0.8093183970820527, 2.2177185989444563],
+			"normal": [0.9514472594638758, 0.3078118133838928]
+		},
+		{
+			"type": "contact",
+			"time": 2.2694934573359107,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-07-column-06",
+			"position": [1.0145043236563442, 2.2682850542452844],
+			"normal": [-0.8431621651984337, 0.5376593374785649]
+		},
+		{
+			"type": "contact",
+			"time": 2.65261212585585,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-07-column-05",
+			"position": [0.8128741205093138, 2.205539254742805],
+			"normal": [0.9676096386786985, 0.25245115792184103]
+		},
+		{
+			"type": "contact",
+			"time": 2.8493084356262384,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-08-column-06",
+			"position": [1.056600845369578, 1.7045191743102885],
+			"normal": [0.7118220244071743, 0.7023598832285853]
+		},
+		{
+			"type": "contact",
+			"time": 2.918550860928569,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-08-column-07",
+			"position": [1.281425386406192, 1.5750027656933674],
+			"normal": [-0.9935209708809465, 0.11364893496985168]
+		},
+		{
+			"type": "contact",
+			"time": 2.9803206078544835,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-08-column-06",
+			"position": [1.102160555275205, 1.4632180324559245],
+			"normal": [0.9189116148872937, -0.3944634888367063]
+		},
+		{
+			"type": "contact",
+			"time": 3.2224554563640906,
+			"bodyId": "ball-primary",
+			"colliderId": "boundary-right-exit-floor",
+			"position": [1.1255855757123028, 0.35237760145369706],
+			"normal": [-0.15892959664780545, 0.9872899185697005]
+		}
+	],
+	"diagnostics": {
+		"iterations": 26,
+		"simulatedUntilTime": 4.14479708431158,
+		"eventCount": 25,
+		"candidateCount": 220,
+		"segmentCount": 26,
+		"simulationWallTimeMilliseconds": 23,
+		"contactSearches": [
+			{
+				"searchInterval": [0, 1.1511639281173522],
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-01-column-05",
+				"candidates": [
+					{
+						"colliderId": "peg-row-01-column-05",
+						"feature": "circle",
+						"time": 0.38587644644228003,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-02-column-05",
+						"feature": "circle",
+						"time": 0.5133324608807492,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-03-column-05",
+						"feature": "circle",
+						"time": 0.6273347989405141,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-04-column-05",
+						"feature": "circle",
+						"time": 0.7128523924605291,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-05-column-05",
+						"feature": "circle",
+						"time": 0.7988724979648182,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-06-column-05",
+						"feature": "circle",
+						"time": 0.8676444268705436,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-07-column-05",
+						"feature": "circle",
+						"time": 0.9395986302924039,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-08-column-05",
+						"feature": "circle",
+						"time": 0.9987267742092065,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "start-endpoint",
+						"time": 1.141422426473775,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 1.1404520725630165,
+						"classification": "rejected-outside-extent"
+					}
+				]
+			},
+			{
+				"searchInterval": [0.38587644644228003, 10],
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-01-column-04",
+				"candidates": [
+					{
+						"colliderId": "peg-row-01-column-04",
+						"feature": "circle",
+						"time": 0.4510878955958154,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-02-column-04",
+						"feature": "circle",
+						"time": 0.6216896945325375,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-03-column-02",
+						"feature": "circle",
+						"time": 0.8125898647479115,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-04-column-02",
+						"feature": "circle",
+						"time": 0.9056443220313691,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-05-column-01",
+						"feature": "circle",
+						"time": 0.9963945726513185,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-06-column-01",
+						"feature": "circle",
+						"time": 1.0848576857022678,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "boundary-left-wall",
+						"feature": "segment-face-negative",
+						"time": 1.2482326948078741,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-01-column-05",
+						"feature": "circle",
+						"time": 0.38587644644228003,
+						"classification": "rejected-separating"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 1.320974170365706,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-negative",
+						"time": 1.3451464351105504,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 1.4055530505833418,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-negative",
+						"time": 1.4302506157351922,
+						"classification": "rejected-outside-extent"
+					}
+				]
+			},
+			{
+				"searchInterval": [0.4510878955958154, 10],
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-01-column-05",
+				"candidates": [
+					{
+						"colliderId": "peg-row-01-column-05",
+						"feature": "circle",
+						"time": 0.5074851876019059,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-03-column-07",
+						"feature": "circle",
+						"time": 0.916697383203494,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-04-column-08",
+						"feature": "circle",
+						"time": 1.0222900847728407,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "boundary-right-wall",
+						"feature": "segment-face-positive",
+						"time": 1.1994720797435767,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-01-column-04",
+						"feature": "circle",
+						"time": 0.4510878955958154,
+						"classification": "rejected-separating"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 1.5451724456358815,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-negative",
+						"time": 1.569869724828104,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 1.444496012763096,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-negative",
+						"time": 1.4692825431806145,
+						"classification": "rejected-outside-extent"
+					}
+				]
+			},
+			{
+				"searchInterval": [0.5074851876019059, 10],
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-01-column-04",
+				"candidates": [
+					{
+						"colliderId": "peg-row-01-column-04",
+						"feature": "circle",
+						"time": 0.5760211065714895,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-02-column-04",
+						"feature": "circle",
+						"time": 0.7586106698999042,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-03-column-03",
+						"feature": "circle",
+						"time": 0.9181804807524698,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-04-column-03",
+						"feature": "circle",
+						"time": 1.0376244349449246,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-05-column-02",
+						"feature": "circle",
+						"time": 1.138082965629835,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-06-column-02",
+						"feature": "circle",
+						"time": 1.2305385196329723,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 1.5032114743371665,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-01-column-05",
+						"feature": "circle",
+						"time": 0.5074851876019059,
+						"classification": "rejected-separating"
+					},
+					{
+						"colliderId": "boundary-left-wall",
+						"feature": "segment-face-negative",
+						"time": 1.6826512931181248,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-left-wall",
+						"feature": "segment-face-positive",
+						"time": 1.7917470623301774,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 1.5666593659187376,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-negative",
+						"time": 1.5916366838924096,
+						"classification": "rejected-outside-extent"
+					}
+				]
+			},
+			{
+				"searchInterval": [0.5760211065714895, 10],
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-02-column-05",
+				"candidates": [
+					{
+						"colliderId": "peg-row-02-column-05",
+						"feature": "circle",
+						"time": 0.7417479923174255,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-03-column-05",
+						"feature": "circle",
+						"time": 0.8772382037565755,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-04-column-06",
+						"feature": "circle",
+						"time": 0.9932450761909525,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-05-column-06",
+						"feature": "circle",
+						"time": 1.1079759017163806,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-07-column-06",
+						"feature": "circle",
+						"time": 1.247567823769476,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-08-column-07",
+						"feature": "circle",
+						"time": 1.3280960533795865,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 1.4577595402197225,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-01-column-04",
+						"feature": "circle",
+						"time": 0.5760211065714895,
+						"classification": "rejected-separating"
+					},
+					{
+						"colliderId": "boundary-right-wall",
+						"feature": "segment-face-positive",
+						"time": 2.0828328842116752,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-wall",
+						"feature": "segment-face-negative",
+						"time": 2.260696485050892,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 1.5046900550091817,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-negative",
+						"time": 1.5293379514872163,
+						"classification": "rejected-outside-extent"
+					}
+				]
+			},
+			{
+				"searchInterval": [0.7417479923174255, 10],
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-02-column-06",
+				"candidates": [
+					{
+						"colliderId": "peg-row-02-column-06",
+						"feature": "circle",
+						"time": 0.8143265213642464,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-03-column-06",
+						"feature": "circle",
+						"time": 0.9444167882987842,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-04-column-07",
+						"feature": "circle",
+						"time": 1.0717843925540982,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-05-column-07",
+						"feature": "circle",
+						"time": 1.1787618963961628,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-06-column-08",
+						"feature": "circle",
+						"time": 1.2706103370214652,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "boundary-right-wall",
+						"feature": "segment-face-positive",
+						"time": 1.387062099168936,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-02-column-05",
+						"feature": "circle",
+						"time": 0.7417479923174255,
+						"classification": "rejected-separating"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 1.645088914926266,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-negative",
+						"time": 1.6706140824562827,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 1.548661666199171,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-negative",
+						"time": 1.574108607512421,
+						"classification": "rejected-outside-extent"
+					}
+				]
+			},
+			{
+				"searchInterval": [0.8143265213642464, 10],
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-05-column-04",
+				"candidates": [
+					{
+						"colliderId": "peg-row-05-column-04",
+						"feature": "circle",
+						"time": 1.1762237298983216,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-06-column-04",
+						"feature": "circle",
+						"time": 1.260384032511665,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-07-column-03",
+						"feature": "circle",
+						"time": 1.3437183756625823,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-08-column-03",
+						"feature": "circle",
+						"time": 1.4301465346347704,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 1.56803359743927,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-02-column-06",
+						"feature": "circle",
+						"time": 0.8143265213642464,
+						"classification": "rejected-separating"
+					},
+					{
+						"colliderId": "boundary-left-wall",
+						"feature": "segment-face-negative",
+						"time": 2.2029106196027373,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-left-wall",
+						"feature": "segment-face-positive",
+						"time": 2.3193689434729494,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 1.6007016975067883,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-negative",
+						"time": 1.6266010100185828,
+						"classification": "rejected-outside-extent"
+					}
+				]
+			},
+			{
+				"searchInterval": [1.1762237298983216, 10],
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-05-column-03",
+				"candidates": [
+					{
+						"colliderId": "peg-row-05-column-03",
+						"feature": "circle",
+						"time": 1.2243188733350265,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-05-column-02",
+						"feature": "circle",
+						"time": 1.3151795869174059,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-06-column-01",
+						"feature": "circle",
+						"time": 1.4690487947304653,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "boundary-left-wall",
+						"feature": "segment-face-negative",
+						"time": 1.5495156767464713,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-05-column-04",
+						"feature": "circle",
+						"time": 1.1762237298983216,
+						"classification": "rejected-separating"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 1.841498191437227,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-negative",
+						"time": 1.872727409212386,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 2.0292623200057687,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-negative",
+						"time": 2.060989979477426,
+						"classification": "rejected-outside-extent"
+					}
+				]
+			},
+			{
+				"searchInterval": [1.2243188733350265, 10],
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-04-column-04",
+				"candidates": [
+					{
+						"colliderId": "peg-row-04-column-04",
+						"feature": "circle",
+						"time": 1.2798012637062528,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-03-column-04",
+						"feature": "circle",
+						"time": 1.4606980965883345,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-03-column-05",
+						"feature": "circle",
+						"time": 1.6362224418278595,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-04-column-07",
+						"feature": "circle",
+						"time": 2.087852681690889,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-07-column-07",
+						"feature": "circle",
+						"time": 2.39326131051092,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-08-column-08",
+						"feature": "circle",
+						"time": 2.476369986005847,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 2.623982825986852,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-05-column-03",
+						"feature": "circle",
+						"time": 1.2243188733350265,
+						"classification": "rejected-separating"
+					},
+					{
+						"colliderId": "boundary-right-wall",
+						"feature": "segment-face-positive",
+						"time": 2.6657221367593813,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-wall",
+						"feature": "segment-face-negative",
+						"time": 2.7975339041459515,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 2.707131288984673,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-negative",
+						"time": 2.734580595210058,
+						"classification": "rejected-outside-extent"
+					}
+				]
+			},
+			{
+				"searchInterval": [1.2798012637062528, 10],
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-05-column-04",
+				"candidates": [
+					{
+						"colliderId": "peg-row-05-column-04",
+						"feature": "circle",
+						"time": 1.3553627559550727,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-07-column-04",
+						"feature": "circle",
+						"time": 1.5645629472818052,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-08-column-05",
+						"feature": "circle",
+						"time": 1.6509189877551629,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 1.8382252896861755,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-04-column-04",
+						"feature": "circle",
+						"time": 1.2798012637062528,
+						"classification": "rejected-separating"
+					},
+					{
+						"colliderId": "boundary-right-wall",
+						"feature": "segment-face-positive",
+						"time": 3.1146229490302537,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-wall",
+						"feature": "segment-face-negative",
+						"time": 3.2891286469269696,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 1.857150998286738,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-negative",
+						"time": 1.8862439563290576,
+						"classification": "rejected-outside-extent"
+					}
+				]
+			},
+			{
+				"searchInterval": [1.3553627559550727, 10],
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-05-column-03",
+				"candidates": [
+					{
+						"colliderId": "peg-row-05-column-03",
+						"feature": "circle",
+						"time": 1.4067598475290435,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-06-column-03",
+						"feature": "circle",
+						"time": 1.5272525658794291,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-07-column-02",
+						"feature": "circle",
+						"time": 1.663502414258691,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 1.9462833473868404,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-05-column-04",
+						"feature": "circle",
+						"time": 1.3553627559550727,
+						"classification": "rejected-separating"
+					},
+					{
+						"colliderId": "boundary-left-wall",
+						"feature": "segment-face-negative",
+						"time": 1.987052026926181,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-left-wall",
+						"feature": "segment-face-positive",
+						"time": 2.0610723869457304,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 2.041365190591903,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-negative",
+						"time": 2.072976585991224,
+						"classification": "rejected-outside-extent"
+					}
+				]
+			},
+			{
+				"searchInterval": [1.4067598475290435, 10],
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-06-column-04",
+				"candidates": [
+					{
+						"colliderId": "peg-row-06-column-04",
+						"feature": "circle",
+						"time": 1.5156560270399717,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-07-column-04",
+						"feature": "circle",
+						"time": 1.631706173721078,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-08-column-05",
+						"feature": "circle",
+						"time": 1.7301253474373635,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 1.9312823497832745,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-05-column-03",
+						"feature": "circle",
+						"time": 1.4067598475290435,
+						"classification": "rejected-separating"
+					},
+					{
+						"colliderId": "boundary-right-wall",
+						"feature": "segment-face-positive",
+						"time": 2.7453600164225866,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-wall",
+						"feature": "segment-face-negative",
+						"time": 2.869583342149981,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 1.9595267022577278,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-negative",
+						"time": 1.9906759952932214,
+						"classification": "rejected-outside-extent"
+					}
+				]
+			},
+			{
+				"searchInterval": [1.5156560270399717, 10],
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-06-column-05",
+				"candidates": [
+					{
+						"colliderId": "peg-row-06-column-05",
+						"feature": "circle",
+						"time": 1.5718853725301403,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-07-column-05",
+						"feature": "circle",
+						"time": 1.712373699562898,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-08-column-07",
+						"feature": "circle",
+						"time": 1.8628763893920708,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 2.05001839427028,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-06-column-04",
+						"feature": "circle",
+						"time": 1.5156560270399717,
+						"classification": "rejected-separating"
+					},
+					{
+						"colliderId": "boundary-right-wall",
+						"feature": "segment-face-positive",
+						"time": 2.123523846357536,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-wall",
+						"feature": "segment-face-negative",
+						"time": 2.184929975613242,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 2.148141666693906,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-negative",
+						"time": 2.1829254627944303,
+						"classification": "rejected-outside-extent"
+					}
+				]
+			},
+			{
+				"searchInterval": [1.5718853725301403, 10],
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-06-column-04",
+				"candidates": [
+					{
+						"colliderId": "peg-row-06-column-04",
+						"feature": "circle",
+						"time": 1.6146178123871346,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-07-column-02",
+						"feature": "circle",
+						"time": 1.8496773443217558,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-08-column-02",
+						"feature": "circle",
+						"time": 1.958682080120255,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 2.1738637418667834,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-06-column-05",
+						"feature": "circle",
+						"time": 1.5718853725301403,
+						"classification": "rejected-separating"
+					},
+					{
+						"colliderId": "boundary-left-wall",
+						"feature": "segment-face-negative",
+						"time": 2.223205663802642,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-left-wall",
+						"feature": "segment-face-positive",
+						"time": 2.290826537172075,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 2.2822501769008623,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-negative",
+						"time": 2.3181646060902894,
+						"classification": "rejected-outside-extent"
+					}
+				]
+			},
+			{
+				"searchInterval": [1.6146178123871346, 10],
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-06-column-05",
+				"candidates": [
+					{
+						"colliderId": "peg-row-06-column-05",
+						"feature": "circle",
+						"time": 1.6746592771949178,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-07-column-05",
+						"feature": "circle",
+						"time": 1.8043828435279057,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-08-column-06",
+						"feature": "circle",
+						"time": 1.9541894529453703,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 2.187610264248154,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-06-column-04",
+						"feature": "circle",
+						"time": 1.6146178123871346,
+						"classification": "rejected-separating"
+					},
+					{
+						"colliderId": "boundary-right-wall",
+						"feature": "segment-face-positive",
+						"time": 2.4485476790726297,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-wall",
+						"feature": "segment-face-negative",
+						"time": 2.535276384019519,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 2.2657098766046264,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-negative",
+						"time": 2.301730204968527,
+						"classification": "rejected-outside-extent"
+					}
+				]
+			},
+			{
+				"searchInterval": [1.6746592771949178, 2.1337182120287794],
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-07-column-04",
+				"candidates": [
+					{
+						"colliderId": "peg-row-07-column-04",
+						"feature": "circle",
+						"time": 1.7575140816052826,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-06-column-05",
+						"feature": "circle",
+						"time": 1.6746592771949178,
+						"classification": "rejected-separating"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 2.1274376118600626,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 2.1267848008225068,
+						"classification": "rejected-outside-extent"
+					}
+				]
+			},
+			{
+				"searchInterval": [1.7575140816052826, 10],
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-06-column-05",
+				"candidates": [
+					{
+						"colliderId": "peg-row-06-column-05",
+						"feature": "circle",
+						"time": 1.8631172685384851,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-06-column-06",
+						"feature": "circle",
+						"time": 2.025368773469196,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-07-column-06",
+						"feature": "circle",
+						"time": 2.2054749899584984,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 2.635805475503858,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-07-column-04",
+						"feature": "circle",
+						"time": 1.7575140816052826,
+						"classification": "rejected-separating"
+					},
+					{
+						"colliderId": "boundary-right-wall",
+						"feature": "segment-face-positive",
+						"time": 2.7123260595367817,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-wall",
+						"feature": "segment-face-negative",
+						"time": 2.8186229283629096,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 2.7459028157282503,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-negative",
+						"time": 2.782238614561469,
+						"classification": "rejected-outside-extent"
+					}
+				]
+			},
+			{
+				"searchInterval": [1.8631172685384851, 10],
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-07-column-06",
+				"candidates": [
+					{
+						"colliderId": "peg-row-07-column-06",
+						"feature": "circle",
+						"time": 2.1069210856126728,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-08-column-07",
+						"feature": "circle",
+						"time": 2.260523555965901,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 2.5043612269991415,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-06-column-05",
+						"feature": "circle",
+						"time": 1.8631172685384851,
+						"classification": "rejected-separating"
+					},
+					{
+						"colliderId": "boundary-right-wall",
+						"feature": "segment-face-positive",
+						"time": 2.6359042268381954,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-wall",
+						"feature": "segment-face-negative",
+						"time": 2.732635248475831,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 2.608481146887771,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-negative",
+						"time": 2.6456627250449203,
+						"classification": "rejected-outside-extent"
+					}
+				]
+			},
+			{
+				"searchInterval": [2.1069210856126728, 10],
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-07-column-05",
+				"candidates": [
+					{
+						"colliderId": "peg-row-07-column-05",
+						"feature": "circle",
+						"time": 2.1718879922296543,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-08-column-04",
+						"feature": "circle",
+						"time": 2.4780574607433783,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 2.7360215924447626,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-07-column-06",
+						"feature": "circle",
+						"time": 2.1069210856126728,
+						"classification": "rejected-separating"
+					},
+					{
+						"colliderId": "boundary-left-wall",
+						"feature": "segment-face-negative",
+						"time": 3.2828402945998656,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-left-wall",
+						"feature": "segment-face-positive",
+						"time": 3.3722856707130573,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 2.781250520282536,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-negative",
+						"time": 2.822804770311878,
+						"classification": "rejected-outside-extent"
+					}
+				]
+			},
+			{
+				"searchInterval": [2.1718879922296543, 10],
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-07-column-06",
+				"candidates": [
+					{
+						"colliderId": "peg-row-07-column-06",
+						"feature": "circle",
+						"time": 2.2694934573359107,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 2.8676373018056305,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-07-column-05",
+						"feature": "circle",
+						"time": 2.1718879922296543,
+						"classification": "rejected-separating"
+					},
+					{
+						"colliderId": "boundary-right-wall",
+						"feature": "segment-face-positive",
+						"time": 2.938077611642832,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-wall",
+						"feature": "segment-face-negative",
+						"time": 3.061757736061298,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 2.9879382244583264,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-negative",
+						"time": 3.0263350719223583,
+						"classification": "rejected-outside-extent"
+					}
+				]
+			},
+			{
+				"searchInterval": [2.2694934573359107, 10],
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-07-column-05",
+				"candidates": [
+					{
+						"colliderId": "peg-row-07-column-05",
+						"feature": "circle",
+						"time": 2.65261212585585,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-08-column-06",
+						"feature": "circle",
+						"time": 2.8342830821151375,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 3.1071506121535752,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-07-column-06",
+						"feature": "circle",
+						"time": 2.2694934573359107,
+						"classification": "rejected-separating"
+					},
+					{
+						"colliderId": "boundary-left-wall",
+						"feature": "segment-face-negative",
+						"time": 8.795414192265117,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-left-wall",
+						"feature": "segment-face-positive",
+						"time": 9.28944163587458,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 3.134628059892818,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-negative",
+						"time": 3.1720366131830566,
+						"classification": "rejected-outside-extent"
+					}
+				]
+			},
+			{
+				"searchInterval": [2.65261212585585, 10],
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-08-column-06",
+				"candidates": [
+					{
+						"colliderId": "peg-row-08-column-06",
+						"feature": "circle",
+						"time": 2.8493084356262384,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 3.119871719461618,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-07-column-05",
+						"feature": "circle",
+						"time": 2.65261212585585,
+						"classification": "rejected-separating"
+					},
+					{
+						"colliderId": "boundary-right-wall",
+						"feature": "segment-face-positive",
+						"time": 3.9496210197863206,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-wall",
+						"feature": "segment-face-negative",
+						"time": 4.159450453015777,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 3.1908335617130295,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-negative",
+						"time": 3.229270542201636,
+						"classification": "rejected-outside-extent"
+					}
+				]
+			},
+			{
+				"searchInterval": [2.8493084356262384, 10],
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-08-column-07",
+				"candidates": [
+					{
+						"colliderId": "peg-row-08-column-07",
+						"feature": "circle",
+						"time": 2.918550860928569,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 3.2072082487939904,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-08-column-06",
+						"feature": "circle",
+						"time": 2.8493084356262384,
+						"classification": "rejected-separating"
+					},
+					{
+						"colliderId": "boundary-right-wall",
+						"feature": "segment-face-positive",
+						"time": 3.2692139481048934,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-wall",
+						"feature": "segment-face-negative",
+						"time": 3.3492898619513007,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 3.344739578345311,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-negative",
+						"time": 3.3880477374912776,
+						"classification": "rejected-outside-extent"
+					}
+				]
+			},
+			{
+				"searchInterval": [2.918550860928569, 3.330846345791759],
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-08-column-06",
+				"candidates": [
+					{
+						"colliderId": "peg-row-08-column-06",
+						"feature": "circle",
+						"time": 2.9803206078544835,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-08-column-07",
+						"feature": "circle",
+						"time": 2.918550860928569,
+						"classification": "rejected-separating"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 3.3245799831184244,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 3.3179301072985687,
+						"classification": "rejected-outside-extent"
+					}
+				]
+			},
+			{
+				"searchInterval": [2.9803206078544835, 10],
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "boundary-right-exit-floor",
+				"candidates": [
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 3.2224554563640906,
+						"classification": "accepted"
+					},
+					{
+						"colliderId": "peg-row-08-column-06",
+						"feature": "circle",
+						"time": 2.9803206078544835,
+						"classification": "rejected-separating"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 3.2823196857165695,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-negative",
+						"time": 3.3225595421038583,
+						"classification": "rejected-outside-extent"
+					}
+				]
+			},
+			{
+				"searchInterval": [3.2224554563640906, 4.14479708431158],
+				"outcome": "no-event",
+				"reason": null,
+				"selectedColliderId": null,
+				"candidates": [
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 4.125352498554253,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 3.2224554563640906,
+						"classification": "rejected-separating"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 4.143338586281433,
+						"classification": "rejected-outside-extent"
+					}
+				]
+			}
+		],
+		"entries": [
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with peg-row-01-column-05.",
+				"time": 0.38587644644228003,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with peg-row-01-column-04.",
+				"time": 0.4510878955958154,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with peg-row-01-column-05.",
+				"time": 0.5074851876019059,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with peg-row-01-column-04.",
+				"time": 0.5760211065714895,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with peg-row-02-column-05.",
+				"time": 0.7417479923174255,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with peg-row-02-column-06.",
+				"time": 0.8143265213642464,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with peg-row-05-column-04.",
+				"time": 1.1762237298983216,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with peg-row-05-column-03.",
+				"time": 1.2243188733350265,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with peg-row-04-column-04.",
+				"time": 1.2798012637062528,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with peg-row-05-column-04.",
+				"time": 1.3553627559550727,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with peg-row-05-column-03.",
+				"time": 1.4067598475290435,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with peg-row-06-column-04.",
+				"time": 1.5156560270399717,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with peg-row-06-column-05.",
+				"time": 1.5718853725301403,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with peg-row-06-column-04.",
+				"time": 1.6146178123871346,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with peg-row-06-column-05.",
+				"time": 1.6746592771949178,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with peg-row-07-column-04.",
+				"time": 1.7575140816052826,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with peg-row-06-column-05.",
+				"time": 1.8631172685384851,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with peg-row-07-column-06.",
+				"time": 2.1069210856126728,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with peg-row-07-column-05.",
+				"time": 2.1718879922296543,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with peg-row-07-column-06.",
+				"time": 2.2694934573359107,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with peg-row-07-column-05.",
+				"time": 2.65261212585585,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with peg-row-08-column-06.",
+				"time": 2.8493084356262384,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with peg-row-08-column-07.",
+				"time": 2.918550860928569,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with peg-row-08-column-06.",
+				"time": 2.9803206078544835,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with boundary-right-exit-floor.",
+				"time": 3.2224554563640906,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "COMPLETION_REGION",
+				"message": "Run reached termination-centre-exit.",
+				"time": 4.14479708431158,
+				"bodyId": "ball-primary"
+			}
+		]
+	}
+}
