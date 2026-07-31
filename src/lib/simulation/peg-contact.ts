@@ -1,4 +1,5 @@
 import type { ContactEvent, MotionSegment, StaticCircleCollider, Vec2 } from './contracts';
+import { evaluatePolynomial, isolatePolynomialRoots } from './polynomial-roots';
 import { evaluateMotionSegmentPosition, evaluateMotionSegmentVelocity } from './trajectory';
 import { dotVec2, normaliseVec2 } from './vector';
 
@@ -74,24 +75,6 @@ export type PegContactQueryResult =
 			readonly type: 'invalid-input';
 			readonly reason: string;
 			readonly diagnostics: PegContactDiagnostics;
-	  };
-
-interface IsolatedRoot {
-	readonly normalizedTime: number;
-	readonly source: PegContactCandidateDiagnostic['source'];
-	readonly refinementIterations: number;
-}
-
-type RootIsolationResult =
-	| {
-			readonly type: 'roots';
-			readonly roots: readonly IsolatedRoot[];
-			readonly refinementIterations: number;
-	  }
-	| {
-			readonly type: 'unresolved';
-			readonly reason: string;
-			readonly refinementIterations: number;
 	  };
 
 const defaultMaximumRefinementIterations = 128;
@@ -209,7 +192,7 @@ export function findEarliestPegContact(query: PegContactQuery): PegContactQueryR
 		polynomialScale
 	};
 
-	const rootIsolation = isolateRoots(
+	const rootIsolation = isolatePolynomialRoots(
 		normalizedCoefficients,
 		0,
 		1,
@@ -409,216 +392,4 @@ function buildContactPolynomial(
 		2 * dotVec2(scaledVelocity, scaledHalfAcceleration),
 		dotVec2(scaledHalfAcceleration, scaledHalfAcceleration)
 	];
-}
-
-function isolateRoots(
-	inputCoefficients: readonly number[],
-	minimum: number,
-	maximum: number,
-	timeTolerance: number,
-	residualTolerance: number,
-	maximumIterations: number
-): RootIsolationResult {
-	const coefficients = trimPolynomial(inputCoefficients);
-	const degree = coefficients.length - 1;
-
-	if (degree < 1) {
-		return Math.abs(coefficients[0] ?? 0) <= residualTolerance
-			? {
-					type: 'unresolved',
-					reason: 'The contact polynomial is numerically indistinguishable from zero.',
-					refinementIterations: 0
-				}
-			: { type: 'roots', roots: [], refinementIterations: 0 };
-	}
-
-	if (degree === 1) {
-		const root = -coefficients[0]! / coefficients[1]!;
-		if (!Number.isFinite(root)) {
-			return {
-				type: 'unresolved',
-				reason: 'A linear root could not be represented as a finite number.',
-				refinementIterations: 0
-			};
-		}
-		if (root < minimum - timeTolerance || root > maximum + timeTolerance) {
-			return { type: 'roots', roots: [], refinementIterations: 0 };
-		}
-		return {
-			type: 'roots',
-			roots: [
-				{
-					normalizedTime: clamp(root, minimum, maximum),
-					source: 'bracketed-root',
-					refinementIterations: 0
-				}
-			],
-			refinementIterations: 0
-		};
-	}
-
-	const derivative = coefficients.slice(1).map((coefficient, index) => coefficient * (index + 1));
-	const criticalResult = isolateRoots(
-		derivative,
-		minimum,
-		maximum,
-		timeTolerance,
-		residualTolerance,
-		maximumIterations
-	);
-	if (criticalResult.type === 'unresolved') return criticalResult;
-
-	const criticalPoints = deduplicateRoots(criticalResult.roots, timeTolerance)
-		.map((root) => root.normalizedTime)
-		.filter((root) => root > minimum + timeTolerance && root < maximum - timeTolerance);
-	const partition = [minimum, ...criticalPoints, maximum];
-	const roots: IsolatedRoot[] = [];
-	let refinementIterations = criticalResult.refinementIterations;
-
-	for (let index = 0; index < partition.length; index += 1) {
-		const point = partition[index]!;
-		const value = evaluatePolynomial(coefficients, point);
-		if (!Number.isFinite(value)) {
-			return {
-				type: 'unresolved',
-				reason: 'The contact polynomial produced a non-finite value during root isolation.',
-				refinementIterations
-			};
-		}
-		if (Math.abs(value) <= residualTolerance) {
-			roots.push({
-				normalizedTime: point,
-				source: point === minimum || point === maximum ? 'boundary' : 'critical-point',
-				refinementIterations: 0
-			});
-		}
-	}
-
-	for (let index = 0; index < partition.length - 1; index += 1) {
-		const left = partition[index]!;
-		const right = partition[index + 1]!;
-		const leftValue = evaluatePolynomial(coefficients, left);
-		const rightValue = evaluatePolynomial(coefficients, right);
-
-		if (leftValue === 0 || rightValue === 0 || Math.sign(leftValue) === Math.sign(rightValue)) {
-			continue;
-		}
-
-		const refined = refineBracketedRoot(
-			coefficients,
-			left,
-			right,
-			leftValue,
-			timeTolerance,
-			maximumIterations
-		);
-		refinementIterations += refined.iterations;
-		if (refined.type === 'unresolved') {
-			return {
-				type: 'unresolved',
-				reason: refined.reason,
-				refinementIterations
-			};
-		}
-		roots.push({
-			normalizedTime: refined.root,
-			source: 'bracketed-root',
-			refinementIterations: refined.iterations
-		});
-	}
-
-	return {
-		type: 'roots',
-		roots: deduplicateRoots(roots, timeTolerance),
-		refinementIterations
-	};
-}
-
-function refineBracketedRoot(
-	coefficients: readonly number[],
-	initialLeft: number,
-	initialRight: number,
-	initialLeftValue: number,
-	timeTolerance: number,
-	maximumIterations: number
-):
-	| { readonly type: 'root'; readonly root: number; readonly iterations: number }
-	| { readonly type: 'unresolved'; readonly reason: string; readonly iterations: number } {
-	let left = initialLeft;
-	let right = initialRight;
-	let leftValue = initialLeftValue;
-
-	for (let iteration = 1; iteration <= maximumIterations; iteration += 1) {
-		const midpoint = left + (right - left) / 2;
-		const midpointValue = evaluatePolynomial(coefficients, midpoint);
-		if (!Number.isFinite(midpointValue)) {
-			return {
-				type: 'unresolved',
-				reason: 'Root refinement produced a non-finite polynomial value.',
-				iterations: iteration
-			};
-		}
-		if (midpointValue === 0) {
-			return { type: 'root', root: midpoint, iterations: iteration };
-		}
-		if (right - left <= timeTolerance) {
-			const rightValue = evaluatePolynomial(coefficients, right);
-			const secantRoot =
-				leftValue === rightValue
-					? midpoint
-					: left - (leftValue * (right - left)) / (rightValue - leftValue);
-			return {
-				type: 'root',
-				root:
-					Number.isFinite(secantRoot) && secantRoot >= left && secantRoot <= right
-						? secantRoot
-						: midpoint,
-				iterations: iteration
-			};
-		}
-		if (Math.sign(leftValue) === Math.sign(midpointValue)) {
-			left = midpoint;
-			leftValue = midpointValue;
-		} else {
-			right = midpoint;
-		}
-	}
-
-	return {
-		type: 'unresolved',
-		reason: `Root refinement did not reach the event-time tolerance in ${maximumIterations} iterations.`,
-		iterations: maximumIterations
-	};
-}
-
-function trimPolynomial(coefficients: readonly number[]): number[] {
-	const trimmed = [...coefficients];
-	while (trimmed.length > 1 && trimmed.at(-1) === 0) trimmed.pop();
-	return trimmed;
-}
-
-function evaluatePolynomial(coefficients: readonly number[], value: number): number {
-	let result = 0;
-	for (let index = coefficients.length - 1; index >= 0; index -= 1) {
-		result = result * value + coefficients[index]!;
-	}
-	return result;
-}
-
-function deduplicateRoots(roots: readonly IsolatedRoot[], timeTolerance: number): IsolatedRoot[] {
-	const sorted = [...roots].sort((left, right) => left.normalizedTime - right.normalizedTime);
-	const unique: IsolatedRoot[] = [];
-
-	for (const root of sorted) {
-		const previous = unique.at(-1);
-		if (!previous || Math.abs(root.normalizedTime - previous.normalizedTime) > timeTolerance) {
-			unique.push(root);
-		}
-	}
-
-	return unique;
-}
-
-function clamp(value: number, minimum: number, maximum: number): number {
-	return Math.min(maximum, Math.max(minimum, value));
 }

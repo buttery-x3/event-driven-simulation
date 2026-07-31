@@ -1,0 +1,93 @@
+{
+	"contractVersion": 3,
+	"input": {
+		"scene": {
+			"id": "flame-28-high-speed-wall-contact",
+			"coordinateSystem": {
+				"origin": "centre-bottom",
+				"horizontalAxis": "right",
+				"verticalAxis": "up",
+				"lengthUnit": "metre"
+			},
+			"bounds": {
+				"width": 240,
+				"height": 10
+			},
+			"staticColliders": [
+				{
+					"id": "wall-high-speed",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "line-segment",
+						"start": [0, 0],
+						"end": [0, 10]
+					}
+				}
+			],
+			"terminationRegions": []
+		},
+		"initialDynamicBodies": [
+			{
+				"id": "ball-high-speed",
+				"motionAuthority": "dynamic",
+				"physicalShape": {
+					"type": "circle",
+					"radius": 0.5
+				},
+				"position": [-100, 5],
+				"velocity": [10000, 0]
+			}
+		],
+		"settings": {
+			"gravity": [0, 0],
+			"restitution": 0.78,
+			"maximumEvents": 1,
+			"maximumSimulationTime": 0.01,
+			"tolerances": {
+				"contactDistance": 1e-9,
+				"eventTime": 1e-9
+			}
+		}
+	},
+	"status": {
+		"type": "complete"
+	},
+	"trajectories": [
+		{
+			"bodyId": "ball-high-speed",
+			"segments": [
+				{
+					"bodyId": "ball-high-speed",
+					"startTime": 0,
+					"endTime": 0.01,
+					"startPosition": [-100, 5],
+					"startVelocity": [10000, 0],
+					"acceleration": [0, 0]
+				}
+			]
+		}
+	],
+	"events": [
+		{
+			"type": "contact",
+			"time": 0.00995,
+			"bodyId": "ball-high-speed",
+			"colliderId": "wall-high-speed",
+			"position": [-0.5, 5],
+			"normal": [-1, 0]
+		}
+	],
+	"diagnostics": {
+		"iterations": 1,
+		"simulatedUntilTime": 0.00995,
+		"entries": [
+			{
+				"severity": "info",
+				"code": "BOUNDARY_CONTACT_SOLVED",
+				"message": "Continuous solving found the supported high-speed wall contact.",
+				"time": 0.00995,
+				"bodyId": "ball-high-speed"
+			}
+		]
+	}
+}
