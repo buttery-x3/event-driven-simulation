@@ -5,14 +5,22 @@ import { generateSyntheticRun } from './synthetic-run';
 const input = {
 	scene: {
 		id: 'synthetic-test-scene',
-		fixedCircles: [{ id: 'test-peg', centre: [1, 0.55], radius: 0.25 }]
+		staticColliders: [
+			{
+				id: 'test-peg',
+				motionAuthority: 'static',
+				physicalShape: { type: 'circle', radius: 0.25 },
+				centre: [1, 0.55]
+			}
+		]
 	},
-	initialBodies: [
+	initialDynamicBodies: [
 		{
 			id: 'test-ball',
+			motionAuthority: 'dynamic',
+			physicalShape: { type: 'circle', radius: 0.2 },
 			position: [0, 2],
-			velocity: [1, 0],
-			radius: 0.2
+			velocity: [1, 0]
 		}
 	],
 	settings: {

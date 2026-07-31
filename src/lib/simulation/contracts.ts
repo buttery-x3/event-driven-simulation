@@ -2,22 +2,29 @@ export type EntityId = string;
 
 export type Vec2 = readonly [x: number, y: number];
 
-export interface FixedCircle {
-	readonly id: EntityId;
-	readonly centre: Vec2;
+export interface CirclePhysicalShape {
+	readonly type: 'circle';
 	readonly radius: number;
+}
+
+export interface StaticCircleCollider {
+	readonly id: EntityId;
+	readonly motionAuthority: 'static';
+	readonly physicalShape: CirclePhysicalShape;
+	readonly centre: Vec2;
 }
 
 export interface SceneDefinition {
 	readonly id: string;
-	readonly fixedCircles: readonly FixedCircle[];
+	readonly staticColliders: readonly StaticCircleCollider[];
 }
 
-export interface InitialBodyState {
+export interface InitialDynamicCircleBodyState {
 	readonly id: EntityId;
+	readonly motionAuthority: 'dynamic';
+	readonly physicalShape: CirclePhysicalShape;
 	readonly position: Vec2;
 	readonly velocity: Vec2;
-	readonly radius: number;
 }
 
 export interface SimulationTolerances {
@@ -35,7 +42,7 @@ export interface SimulationSettings {
 
 export interface SimulationInput {
 	readonly scene: SceneDefinition;
-	readonly initialBodies: readonly InitialBodyState[];
+	readonly initialDynamicBodies: readonly InitialDynamicCircleBodyState[];
 	readonly settings: SimulationSettings;
 }
 
@@ -85,7 +92,7 @@ export interface RunDiagnostics {
 }
 
 export interface SimulationRunRecord {
-	readonly contractVersion: 1;
+	readonly contractVersion: 2;
 	readonly input: SimulationInput;
 	readonly status: RunStatus;
 	readonly trajectories: readonly BodyTrajectory[];
@@ -94,9 +101,9 @@ export interface SimulationRunRecord {
 }
 
 export interface RendererPlaybackInput {
-	readonly contractVersion: 1;
+	readonly contractVersion: 2;
 	readonly scene: SceneDefinition;
-	readonly initialBodies: readonly InitialBodyState[];
+	readonly initialDynamicBodies: readonly InitialDynamicCircleBodyState[];
 	readonly status: RunStatus;
 	readonly playableUntilTime: number;
 	readonly trajectories: readonly BodyTrajectory[];

@@ -24,8 +24,8 @@ const trajectories = [
 				bodyId: 'ball',
 				startTime: 0,
 				endTime: 0.5,
-				startPosition: prototypeSimulationInput.initialBodies[0].position,
-				startVelocity: prototypeSimulationInput.initialBodies[0].velocity,
+				startPosition: prototypeSimulationInput.initialDynamicBodies[0].position,
+				startVelocity: prototypeSimulationInput.initialDynamicBodies[0].velocity,
 				acceleration: prototypeSimulationInput.settings.gravity
 			}
 		]
@@ -46,7 +46,7 @@ const events = [
 describe('simulation and replay contracts', () => {
 	it('round-trips a representative run record as plain JSON data', () => {
 		const run = {
-			contractVersion: 1,
+			contractVersion: 2,
 			input: prototypeSimulationInput,
 			status: { type: 'complete' },
 			trajectories,
@@ -57,7 +57,9 @@ describe('simulation and replay contracts', () => {
 		const restored = JSON.parse(JSON.stringify(run)) as SimulationRunRecord;
 
 		expect(restored).toEqual(run);
-		expect(restored.input.initialBodies).toEqual(prototypeSimulationInput.initialBodies);
+		expect(restored.input.initialDynamicBodies).toEqual(
+			prototypeSimulationInput.initialDynamicBodies
+		);
 		expect(restored.input.scene).toEqual(prototypeSimulationInput.scene);
 		expect(restored.input.settings).toEqual(prototypeSimulationInput.settings);
 		expect(restored.status.type).toBe('complete');
@@ -81,9 +83,9 @@ describe('simulation and replay contracts', () => {
 
 	it('keeps renderer playback input serialisable and explicit about incomplete runs', () => {
 		const playback = {
-			contractVersion: 1,
+			contractVersion: 2,
 			scene: prototypeSimulationInput.scene,
-			initialBodies: prototypeSimulationInput.initialBodies,
+			initialDynamicBodies: prototypeSimulationInput.initialDynamicBodies,
 			status: {
 				type: 'unresolved',
 				reason: 'Playback contains only the validated trajectory prefix.'
@@ -97,8 +99,8 @@ describe('simulation and replay contracts', () => {
 		const restored = JSON.parse(JSON.stringify(playback)) as RendererPlaybackInput;
 
 		expect(restored).toEqual(playback);
-		expect(restored.initialBodies[0]?.radius).toBe(
-			prototypeSimulationInput.initialBodies[0].radius
+		expect(restored.initialDynamicBodies[0]?.physicalShape.radius).toBe(
+			prototypeSimulationInput.initialDynamicBodies[0].physicalShape.radius
 		);
 		expect(restored.status.type).toBe('unresolved');
 		expect(restored.playableUntilTime).toBe(0.5);

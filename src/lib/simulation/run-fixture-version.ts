@@ -1,21 +1,21 @@
 import type { SimulationRunRecord } from './contracts';
 import { RunFixtureError } from './run-fixture-error';
-import { validateRunFixtureV1 } from './run-fixture-v1';
+import { validateRunFixtureV2 } from './run-fixture-v2';
 
 export function loadSimulationRunFixture(value: unknown): SimulationRunRecord {
 	if (isRecord(value)) {
 		const contractVersion = value.contractVersion;
 
-		if (typeof contractVersion === 'number' && contractVersion !== 1) {
+		if (typeof contractVersion === 'number' && contractVersion !== 2) {
 			throw new RunFixtureError(
 				'UNSUPPORTED_CONTRACT_VERSION',
-				`Saved run fixture uses unsupported contract version ${contractVersion}; expected version 1.`,
+				`Saved run fixture uses unsupported contract version ${contractVersion}; expected version 2.`,
 				'$.contractVersion'
 			);
 		}
 	}
 
-	return validateRunFixtureV1(value);
+	return validateRunFixtureV2(value);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

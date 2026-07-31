@@ -4,14 +4,14 @@ import { RunFixtureError } from './run-fixture-error';
 import { loadSimulationRunFixture } from './run-fixture-version';
 
 describe('run fixture contract-version dispatch', () => {
-	it('dispatches contract version 1 to its validator', () => {
-		expect(loadSimulationRunFixture(JSON.parse(canonicalFixtureJson)).contractVersion).toBe(1);
+	it('dispatches contract version 2 to its validator', () => {
+		expect(loadSimulationRunFixture(JSON.parse(canonicalFixtureJson)).contractVersion).toBe(2);
 	});
 
 	it('rejects a recognized numeric version without an implementation', () => {
 		const unsupported = {
 			...JSON.parse(canonicalFixtureJson),
-			contractVersion: 2
+			contractVersion: 1
 		};
 
 		expect(() => loadSimulationRunFixture(unsupported)).toThrowError(

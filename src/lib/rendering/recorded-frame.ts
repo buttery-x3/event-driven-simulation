@@ -35,7 +35,7 @@ export function getPlaybackFrame(
 
 	return {
 		time,
-		bodies: input.initialBodies.map((body) => {
+		bodies: input.initialDynamicBodies.map((body) => {
 			const trajectory = trajectoriesByBody.get(body.id);
 			const selection = trajectory ? selectRecordedSegment(trajectory, time) : null;
 

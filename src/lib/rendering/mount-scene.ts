@@ -1,7 +1,9 @@
 import * as THREE from 'three';
-import type { EntityId, RendererPlaybackInput } from '$lib/simulation/contracts';
+import type { RendererPlaybackInput } from '$lib/simulation/contracts';
+import { applyDynamicBodyPoses } from './dynamic-pose';
 import { assertPlaybackEligible, getPlaybackFrame, type PlaybackFrame } from './playback';
-import { getRenderableCircles } from './render-scene-data';
+import { toRenderSceneViewModel } from './render-scene-data';
+import { createSceneObjectResources } from './scene-object-resources';
 
 // These values control only camera framing and the decorative backdrop. They are not simulation
 // geometry and cannot affect physical results.
@@ -65,33 +67,8 @@ export function mountScene(host: HTMLElement, input: RendererPlaybackInput): Mou
 	board.receiveShadow = true;
 	scene.add(board);
 
-	const ballMaterial = new THREE.MeshStandardMaterial({
-		color: 0xff8a4c,
-		roughness: 0.28,
-		metalness: 0.12
-	});
-	const pegMaterial = new THREE.MeshStandardMaterial({
-		color: 0x70d6ff,
-		roughness: 0.42,
-		metalness: 0.18
-	});
-	const bodyGeometries: THREE.SphereGeometry[] = [];
-	const dynamicBodyMeshes = new Map<EntityId, THREE.Mesh>();
-
-	for (const circle of getRenderableCircles(input)) {
-		const geometry = new THREE.SphereGeometry(circle.radius, 40, 24);
-		const material = circle.role === 'dynamic-body' ? ballMaterial : pegMaterial;
-		const mesh = new THREE.Mesh(geometry, material);
-		mesh.position.set(circle.centre[0], circle.centre[1], 0);
-		mesh.castShadow = true;
-		mesh.receiveShadow = true;
-		bodyGeometries.push(geometry);
-		scene.add(mesh);
-
-		if (circle.role === 'dynamic-body') {
-			dynamicBodyMeshes.set(circle.id, mesh);
-		}
-	}
+	const sceneObjectResources = createSceneObjectResources(toRenderSceneViewModel(input));
+	scene.add(...sceneObjectResources.meshes);
 
 	const render = () => {
 		const width = Math.max(host.clientWidth, 1);
@@ -108,25 +85,14 @@ export function mountScene(host: HTMLElement, input: RendererPlaybackInput): Mou
 	return {
 		setTime(time) {
 			const frame = getPlaybackFrame(input, time);
-
-			for (const body of frame.bodies) {
-				const mesh = dynamicBodyMeshes.get(body.bodyId);
-				if (!mesh) continue;
-
-				mesh.visible = body.position !== null;
-				if (body.position) {
-					mesh.position.set(body.position[0], body.position[1], 0);
-				}
-			}
+			applyDynamicBodyPoses(frame, sceneObjectResources.dynamicBodyMeshes);
 
 			render();
 			return frame;
 		},
 		destroy() {
 			resizeObserver.disconnect();
-			bodyGeometries.forEach((geometry) => geometry.dispose());
-			ballMaterial.dispose();
-			pegMaterial.dispose();
+			sceneObjectResources.dispose();
 			boardGeometry.dispose();
 			boardMaterial.dispose();
 			renderer.dispose();

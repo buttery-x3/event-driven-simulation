@@ -1,10 +1,10 @@
 import type { SimulationRunRecord } from './contracts';
 import { RunFixtureError } from './run-fixture-error';
 
-export function validateRunFixtureV1(value: unknown): SimulationRunRecord {
+export function validateRunFixtureV2(value: unknown): SimulationRunRecord {
 	const run = requireRecord(value, '$');
 
-	requireLiteral(run.contractVersion, 1, '$.contractVersion');
+	requireLiteral(run.contractVersion, 2, '$.contractVersion');
 	validateSimulationInput(run.input, '$.input');
 	validateRunStatus(run.status, '$.status');
 	validateTrajectories(run.trajectories, '$.trajectories');
@@ -19,24 +19,30 @@ function validateSimulationInput(value: unknown, path: string): void {
 	const scene = requireRecord(input.scene, `${path}.scene`);
 
 	requireString(scene.id, `${path}.scene.id`);
-	requireArray(scene.fixedCircles, `${path}.scene.fixedCircles`).forEach((circle, index) => {
-		const circlePath = `${path}.scene.fixedCircles[${index}]`;
-		const record = requireRecord(circle, circlePath);
+	requireArray(scene.staticColliders, `${path}.scene.staticColliders`).forEach(
+		(collider, index) => {
+			const colliderPath = `${path}.scene.staticColliders[${index}]`;
+			const record = requireRecord(collider, colliderPath);
 
-		requireString(record.id, `${circlePath}.id`);
-		validateVec2(record.centre, `${circlePath}.centre`);
-		requireFiniteNumber(record.radius, `${circlePath}.radius`);
-	});
+			requireString(record.id, `${colliderPath}.id`);
+			requireLiteral(record.motionAuthority, 'static', `${colliderPath}.motionAuthority`);
+			validateCirclePhysicalShape(record.physicalShape, `${colliderPath}.physicalShape`);
+			validateVec2(record.centre, `${colliderPath}.centre`);
+		}
+	);
 
-	requireArray(input.initialBodies, `${path}.initialBodies`).forEach((body, index) => {
-		const bodyPath = `${path}.initialBodies[${index}]`;
-		const record = requireRecord(body, bodyPath);
+	requireArray(input.initialDynamicBodies, `${path}.initialDynamicBodies`).forEach(
+		(body, index) => {
+			const bodyPath = `${path}.initialDynamicBodies[${index}]`;
+			const record = requireRecord(body, bodyPath);
 
-		requireString(record.id, `${bodyPath}.id`);
-		validateVec2(record.position, `${bodyPath}.position`);
-		validateVec2(record.velocity, `${bodyPath}.velocity`);
-		requireFiniteNumber(record.radius, `${bodyPath}.radius`);
-	});
+			requireString(record.id, `${bodyPath}.id`);
+			requireLiteral(record.motionAuthority, 'dynamic', `${bodyPath}.motionAuthority`);
+			validateCirclePhysicalShape(record.physicalShape, `${bodyPath}.physicalShape`);
+			validateVec2(record.position, `${bodyPath}.position`);
+			validateVec2(record.velocity, `${bodyPath}.velocity`);
+		}
+	);
 
 	const settings = requireRecord(input.settings, `${path}.settings`);
 	validateVec2(settings.gravity, `${path}.settings.gravity`);
@@ -47,6 +53,13 @@ function validateSimulationInput(value: unknown, path: string): void {
 	const tolerances = requireRecord(settings.tolerances, `${path}.settings.tolerances`);
 	requireFiniteNumber(tolerances.contactDistance, `${path}.settings.tolerances.contactDistance`);
 	requireFiniteNumber(tolerances.eventTime, `${path}.settings.tolerances.eventTime`);
+}
+
+function validateCirclePhysicalShape(value: unknown, path: string): void {
+	const shape = requireRecord(value, path);
+
+	requireLiteral(shape.type, 'circle', `${path}.type`);
+	requireFiniteNumber(shape.radius, `${path}.radius`);
 }
 
 function validateRunStatus(value: unknown, path: string): void {

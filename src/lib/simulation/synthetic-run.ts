@@ -9,10 +9,10 @@ import { evaluateMotionSegmentPosition, evaluateMotionSegmentVelocity } from './
 import { dotVec2, normaliseVec2 } from './vector';
 
 export function generateSyntheticRun(input: SimulationInput): SimulationRunRecord {
-	const body = input.initialBodies[0];
-	const collider = input.scene.fixedCircles[0];
+	const body = input.initialDynamicBodies[0];
+	const collider = input.scene.staticColliders[0];
 
-	if (input.initialBodies.length !== 1 || !body) {
+	if (input.initialDynamicBodies.length !== 1 || !body) {
 		return stoppedRun(input, { type: 'invalid', reason: 'A synthetic run requires one body.' });
 	}
 
@@ -79,7 +79,7 @@ export function generateSyntheticRun(input: SimulationInput): SimulationRunRecor
 	};
 
 	return {
-		contractVersion: 1,
+		contractVersion: 2,
 		input,
 		status: { type: 'complete' },
 		trajectories: [{ bodyId: body.id, segments: [firstSegment, secondSegment] }],
@@ -111,7 +111,7 @@ export function generateSyntheticRun(input: SimulationInput): SimulationRunRecor
 
 function stoppedRun(input: SimulationInput, status: Exclude<RunStatus, { type: 'complete' }>) {
 	return {
-		contractVersion: 1,
+		contractVersion: 2,
 		input,
 		status,
 		trajectories: [],

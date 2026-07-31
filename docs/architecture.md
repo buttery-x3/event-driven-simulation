@@ -26,10 +26,29 @@ without exposing those implementation files to application routes. This rule is 
 saved-run and playback boundaries described below; it is not a reason to add barrels for unrelated
 modules.
 
+## Physical scene semantics
+
+Physical shape, motion authority and renderer representation are separate concepts:
+
+- **Physical shape** is the two-dimensional geometry used by simulation. The current
+  `CirclePhysicalShape` contains only a radius; a static collider supplies its centre and a dynamic
+  body supplies its initial position separately.
+- **Motion authority** identifies who determines an entity's pose. `static` entities remain at
+  their configured pose, `dynamic` entities are solved and recorded by simulation, and `prescribed`
+  is reserved for future mechanically controlled motion such as roulette. Milestone 1 implements
+  only static colliders and dynamic bodies; it does not add prescribed-motion trajectories.
+- **Renderer representation** is a renderer-owned view model. It chooses Three.js geometry,
+  material, depth and visual orientation without changing collision data.
+
+`StaticCircleCollider` and `InitialDynamicCircleBodyState` are explicit physical records. Each
+carries a stable entity ID, a motion-authority discriminant and a circle shape discriminant, so
+their meaning does not depend only on which array contains them. The same IDs continue through
+contact events, body trajectories, playback poses and renderer mesh registration.
+
 ## Contract responsibilities
 
-- `SimulationInput` groups the fixed scene, initial dynamic body states and all current behavioural
-  settings and numerical tolerances.
+- `SimulationInput` groups the scene's `staticColliders`, `initialDynamicBodies` and all current
+  behavioural settings and numerical tolerances.
 - `MotionSegment`, `BodyTrajectory` and `PhysicalEvent` describe the calculated history without
   requiring frame-by-frame simulation during playback.
 - `SimulationRunRecord` preserves the input, valid trajectory prefix, physical events, terminal
@@ -39,26 +58,29 @@ modules.
   of truth, and it retains the run status so incomplete output cannot silently masquerade as a
   complete result.
 
-The renderer derives dynamic-body and fixed-collider radii and positions from these contracts. Its
-camera and decorative backdrop values are grouped separately as presentation settings because they
-cannot affect physical results. If the backdrop later becomes collision geometry, its dimensions
-must move into `SceneDefinition` rather than remaining renderer-owned.
+The renderer derives dynamic-body and fixed-collider radii and positions from these contracts.
+Cylinder depth and orientation, camera values and decorative backdrop dimensions remain
+presentation settings because they cannot affect physical results. If the backdrop later becomes
+collision geometry, its dimensions must move into `SceneDefinition` rather than remaining
+renderer-owned.
 
 Run statuses are discriminated values: `complete`, `unresolved`, `iteration-limited` and `invalid`.
 Expected calculation failures therefore remain data, with a reason and diagnostics, rather than
 being represented by missing fields, booleans or exceptions.
 
-`contractVersion` starts at `1` so persisted records can be identified if the public schema changes.
-The contracts intentionally use ordinary objects, arrays, strings, numbers and `null`. This keeps
-them JSON-serialisable and leaves the calculation implementation replaceable by a future worker or
-Rust/Wasm module without adding either transport today.
+`contractVersion` is `2` after FLAME-22 made physical shape and motion authority explicit in saved
+records. Version 1 fixtures are rejected rather than silently interpreted as version 2; the
+prototype has no external version 1 compatibility requirement. The contracts intentionally use
+ordinary objects, arrays, strings, numbers and `null`. This keeps them JSON-serialisable and leaves
+the calculation implementation replaceable by a future worker or Rust/Wasm module without adding
+either transport today.
 
 ## Saved run boundary
 
 Saved run fixtures live under the repository-level `fixtures/` directory so headless tests and the
 browser renderer consume the same files. `src/lib/simulation/run-fixture.ts` is the narrow runtime
 entry point from unknown JSON data to `SimulationRunRecord`. JSON parsing, typed fixture errors,
-contract-version recognition and version 1 structural validation live in separate implementation
+contract-version recognition and version 2 structural validation live in separate implementation
 modules behind that entry point. Version dispatch is intentionally explicit rather than a general
 schema registry.
 
@@ -98,10 +120,18 @@ position function. When adjacent segments share a boundary, the later segment is
 exact transition time. Missing recorded intervals produce no body pose rather than invented or
 integrated renderer motion.
 
-Three.js consumes these evaluated poses and maps simulation `(x, y)` coordinates to presentation
-`(x, y, 0)` coordinates. Fixed collider dimensions still come directly from the public scene
-contract. The renderer owns only camera, lighting, materials and decorative backdrop resources;
-none of them feed back into simulation data.
+`toRenderSceneViewModel` adapts physical records to a small renderer-side discriminated union.
+Dynamic circular bodies become spheres. Static circular Plinko colliders become cylinders whose
+depth and orientation exist only in that renderer view model. Adding a renderer representation
+therefore changes the adapter and Three.js geometry factory, not the playback clock or canonical
+trajectory evaluator.
+
+Three.js consumes evaluated poses and maps simulation `(x, y)` coordinates to presentation
+`(x, y, 0)` coordinates. `mount-scene.ts` remains the browser lifecycle orchestrator, while scene
+object geometry/material creation, dynamic mesh registration and owned-resource disposal live in
+`scene-object-resources.ts`. `dynamic-pose.ts` updates registered meshes by stable entity ID and
+does not inspect their geometry. Fixed collider radii and centres still come directly from the
+public scene contract; renderer-owned values never feed back into simulation data.
 
 The browser prototype loads `fixtures/runs/canonical-synthetic-contact.json` through the saved-run
 boundary and replays it through this same renderer contract. The fixture is therefore neither

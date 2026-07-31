@@ -5,7 +5,7 @@ import {
 	getPlaybackFrame,
 	toRendererPlaybackInput
 } from '$lib/rendering/playback';
-import { getRenderableCircles } from '$lib/rendering/render-scene-data';
+import { toRenderSceneViewModel } from '$lib/rendering/render-scene-data';
 import type { SimulationRunRecord } from './contracts';
 import { loadSimulationRunFixture, parseSimulationRunFixture } from './run-fixture';
 
@@ -34,12 +34,12 @@ describe('saved run fixtures', () => {
 		const run = parseSimulationRunFixture(canonicalFixtureJson);
 		const playback = toRendererPlaybackInput(run);
 		const contact = run.events[0];
-		const body = run.input.initialBodies[0];
-		const collider = run.input.scene.fixedCircles[0];
+		const body = run.input.initialDynamicBodies[0];
+		const collider = run.input.scene.staticColliders[0];
 		const frameBody = getPlaybackFrame(playback, contact!.time).bodies[0];
-		const renderedCircles = getRenderableCircles(playback);
-		const renderedBody = renderedCircles.find(({ id }) => id === body!.id);
-		const renderedCollider = renderedCircles.find(({ id }) => id === collider!.id);
+		const renderedObjects = toRenderSceneViewModel(playback).objects;
+		const renderedBody = renderedObjects.find(({ id }) => id === body!.id);
+		const renderedCollider = renderedObjects.find(({ id }) => id === collider!.id);
 		const contactSeparation = Math.hypot(
 			contact!.position[0] - collider!.centre[0],
 			contact!.position[1] - collider!.centre[1]
@@ -47,14 +47,18 @@ describe('saved run fixtures', () => {
 
 		expect(frameBody?.position).toEqual(contact!.position);
 		expect(renderedBody).toMatchObject({
+			representation: 'sphere',
 			centre: body!.position,
-			radius: body!.radius
+			radius: body!.physicalShape.radius
 		});
 		expect(renderedCollider).toMatchObject({
+			representation: 'cylinder',
 			centre: collider!.centre,
-			radius: collider!.radius
+			radius: collider!.physicalShape.radius
 		});
-		expect(contactSeparation).toBeCloseTo(body!.radius + collider!.radius);
+		expect(contactSeparation).toBeCloseTo(
+			body!.physicalShape.radius + collider!.physicalShape.radius
+		);
 	});
 
 	it('retains normal run-status validation after fixture loading', () => {

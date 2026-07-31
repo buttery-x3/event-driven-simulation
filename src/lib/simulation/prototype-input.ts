@@ -3,18 +3,34 @@ import type { SimulationInput } from './contracts';
 export const prototypeSimulationInput = {
 	scene: {
 		id: 'prototype-scene',
-		fixedCircles: [
-			{ id: 'peg-left', centre: [-0.8, 1.55], radius: 0.2 },
-			{ id: 'peg-centre', centre: [0, 0.75], radius: 0.2 },
-			{ id: 'peg-right', centre: [0.8, 1.55], radius: 0.2 }
+		staticColliders: [
+			{
+				id: 'peg-left',
+				motionAuthority: 'static',
+				physicalShape: { type: 'circle', radius: 0.2 },
+				centre: [-0.8, 1.55]
+			},
+			{
+				id: 'peg-centre',
+				motionAuthority: 'static',
+				physicalShape: { type: 'circle', radius: 0.2 },
+				centre: [0, 0.75]
+			},
+			{
+				id: 'peg-right',
+				motionAuthority: 'static',
+				physicalShape: { type: 'circle', radius: 0.2 },
+				centre: [0.8, 1.55]
+			}
 		]
 	},
-	initialBodies: [
+	initialDynamicBodies: [
 		{
 			id: 'ball',
+			motionAuthority: 'dynamic',
+			physicalShape: { type: 'circle', radius: 0.34 },
 			position: [0, 2.7],
-			velocity: [0, 0],
-			radius: 0.34
+			velocity: [0, 0]
 		}
 	],
 	settings: {

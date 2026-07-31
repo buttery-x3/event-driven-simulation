@@ -4,7 +4,7 @@ export function toRendererPlaybackInput(run: SimulationRunRecord): RendererPlayb
 	return {
 		contractVersion: run.contractVersion,
 		scene: run.input.scene,
-		initialBodies: run.input.initialBodies,
+		initialDynamicBodies: run.input.initialDynamicBodies,
 		status: run.status,
 		playableUntilTime: run.diagnostics.simulatedUntilTime,
 		trajectories: run.trajectories,

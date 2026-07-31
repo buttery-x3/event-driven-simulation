@@ -1,38 +1,63 @@
 import { describe, expect, it } from 'vitest';
 import type { RendererPlaybackInput, SimulationInput } from '$lib/simulation/contracts';
 import { prototypeSimulationInput } from '$lib/simulation/prototype-input';
-import { getRenderableCircles } from './render-scene-data';
+import { toRenderSceneViewModel } from './render-scene-data';
 
 function withBodyRadius(radius: number): SimulationInput {
 	return {
 		...prototypeSimulationInput,
-		initialBodies: prototypeSimulationInput.initialBodies.map((body) => ({ ...body, radius }))
+		initialDynamicBodies: prototypeSimulationInput.initialDynamicBodies.map((body) => ({
+			...body,
+			physicalShape: { ...body.physicalShape, radius }
+		}))
 	};
 }
 
-describe('render scene data', () => {
-	it.each([0.18, 0.62])(
-		'uses a configured body radius of %s through the same rendering path',
-		(radius) => {
-			const input = withBodyRadius(radius);
+describe('render scene view-model adaptation', () => {
+	it.each([0.18, 0.62])('renders a dynamic physical circle of radius %s as a sphere', (radius) => {
+		const input = withBodyRadius(radius);
 
-			const renderedBody = getRenderableCircles(input).find(({ id }) => id === 'ball');
+		const renderedBody = toRenderSceneViewModel(input).objects.find(({ id }) => id === 'ball');
 
-			expect(renderedBody).toEqual({
-				id: 'ball',
-				role: 'dynamic-body',
-				centre: input.initialBodies[0]?.position,
-				radius
-			});
-		}
-	);
+		expect(renderedBody).toEqual({
+			id: 'ball',
+			motionAuthority: 'dynamic',
+			representation: 'sphere',
+			material: 'dynamic-body',
+			centre: input.initialDynamicBodies[0]?.position,
+			radius
+		});
+	});
+
+	it('renders a static physical circle as a presentation-only cylinder', () => {
+		const collider = prototypeSimulationInput.scene.staticColliders[0]!;
+		const before = JSON.stringify(collider);
+
+		const renderedCollider = toRenderSceneViewModel(prototypeSimulationInput).objects.find(
+			({ id }) => id === collider.id
+		);
+
+		expect(renderedCollider).toEqual({
+			id: collider.id,
+			motionAuthority: 'static',
+			representation: 'cylinder',
+			material: 'fixed-peg',
+			centre: collider.centre,
+			radius: collider.physicalShape.radius,
+			depth: 0.32,
+			orientation: [Math.PI / 2, 0, 0]
+		});
+		expect(JSON.stringify(collider)).toBe(before);
+		expect('depth' in collider).toBe(false);
+		expect('orientation' in collider).toBe(false);
+	});
 
 	it('keeps playback dimensions consistent with the simulation input', () => {
 		const input = withBodyRadius(0.47);
 		const playback = {
-			contractVersion: 1,
+			contractVersion: 2,
 			scene: input.scene,
-			initialBodies: input.initialBodies,
+			initialDynamicBodies: input.initialDynamicBodies,
 			status: { type: 'complete' },
 			playableUntilTime: input.settings.maximumSimulationTime,
 			trajectories: [],
@@ -44,8 +69,8 @@ describe('render scene data', () => {
 			}
 		} as const satisfies RendererPlaybackInput;
 
-		const renderedBody = getRenderableCircles(playback).find(({ id }) => id === 'ball');
+		const renderedBody = toRenderSceneViewModel(playback).objects.find(({ id }) => id === 'ball');
 
-		expect(renderedBody?.radius).toBe(input.initialBodies[0]?.radius);
+		expect(renderedBody?.radius).toBe(input.initialDynamicBodies[0]?.physicalShape.radius);
 	});
 });
