@@ -147,6 +147,3 @@ fixture loaders. Application routes must use the `rendering/playback` and
 `simulation/run-fixture` entry points rather than their internal implementation modules. Co-located
 tests may cross the boundary deliberately to prove end-to-end fixture replay, while the production
 modules remain independently reusable.
-
-The Milestone 1 architecture and scope audit is recorded in
-[`docs/milestone-1-verification.md`](milestone-1-verification.md).
