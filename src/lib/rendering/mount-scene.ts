@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import type { RendererPlaybackInput } from '$lib/simulation/contracts';
 import { applyDynamicBodyPoses } from './dynamic-pose';
-import { assertPlaybackEligible, getPlaybackFrame, type PlaybackFrame } from './playback';
+import { assertRecordedInspectionEligible, getPlaybackFrame, type PlaybackFrame } from './playback';
 import { toRenderSceneViewModel } from './render-scene-data';
 import { createSceneObjectResources } from './scene-object-resources';
 
@@ -27,7 +27,7 @@ export interface MountedPlaybackScene {
 }
 
 export function mountScene(host: HTMLElement, input: RendererPlaybackInput): MountedPlaybackScene {
-	assertPlaybackEligible(input);
+	assertRecordedInspectionEligible(input);
 
 	const scene = new THREE.Scene();
 	scene.background = new THREE.Color(0x0b1220);

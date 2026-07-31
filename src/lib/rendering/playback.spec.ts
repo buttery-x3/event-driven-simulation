@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { RendererPlaybackInput, SimulationInput } from '$lib/simulation/contracts';
 import { generateSyntheticRun } from '$lib/simulation/synthetic-run';
-import { assertPlaybackEligible, toRendererPlaybackInput } from './playback-admission';
+import {
+	assertPlaybackEligible,
+	assertRecordedInspectionEligible,
+	toRendererPlaybackInput
+} from './playback-admission';
 import { PlaybackClock } from './playback-clock';
 import { getPlaybackFrame } from './recorded-frame';
 
@@ -84,6 +88,34 @@ describe('playback admission and adaptation', () => {
 			);
 		}
 	);
+
+	it.each(['unresolved', 'iteration-limited'] as const)(
+		'allows explicit recorded-prefix inspection for a %s run without admitting ordinary playback',
+		(statusType) => {
+			const playback = {
+				...completedPlayback(),
+				status: { type: statusType, reason: 'test retained prefix' }
+			} satisfies RendererPlaybackInput;
+
+			expect(() => assertRecordedInspectionEligible(playback)).not.toThrow();
+			expect(getPlaybackFrame(playback, 1)).toMatchObject({
+				time: 1,
+				bodies: [{ position: [1, 1] }]
+			});
+			expect(() => assertPlaybackEligible(playback)).toThrow();
+		}
+	);
+
+	it('rejects an invalid run from both playback and recorded inspection', () => {
+		const playback = {
+			...completedPlayback(),
+			status: { type: 'invalid', reason: 'test invalid record' }
+		} satisfies RendererPlaybackInput;
+
+		expect(() => assertRecordedInspectionEligible(playback)).toThrow(
+			'Recorded inspection is unavailable for an invalid run: test invalid record'
+		);
+	});
 });
 
 describe('playback clock', () => {

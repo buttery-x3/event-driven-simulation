@@ -7,7 +7,7 @@ import type {
 	Vec2
 } from '$lib/simulation/contracts';
 import { evaluateMotionSegmentPosition } from '$lib/simulation/trajectory';
-import { assertPlaybackEligible } from './playback-admission';
+import { assertRecordedInspectionEligible } from './playback-admission';
 import { clampPlaybackTime } from './playback-clock';
 
 export interface PlaybackBodyPose {
@@ -26,7 +26,7 @@ export function getPlaybackFrame(
 	input: RendererPlaybackInput,
 	requestedTime: number
 ): PlaybackFrame {
-	assertPlaybackEligible(input);
+	assertRecordedInspectionEligible(input);
 
 	const time = clampPlaybackTime(requestedTime, input.playableUntilTime);
 	const trajectoriesByBody = new Map(

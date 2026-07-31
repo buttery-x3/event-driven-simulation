@@ -22,7 +22,25 @@ export function assertPlaybackEligible(
 		);
 	}
 
-	if (!Number.isFinite(input.playableUntilTime) || input.playableUntilTime < 0) {
-		throw new Error('Ordinary playback requires a finite, non-negative playable duration.');
+	assertPlayableDuration(input.playableUntilTime, 'Ordinary playback');
+}
+
+export function assertRecordedInspectionEligible(
+	input: RendererPlaybackInput
+): asserts input is RendererPlaybackInput & {
+	status: { readonly type: 'complete' | 'unresolved' | 'iteration-limited' };
+} {
+	if (input.status.type === 'invalid') {
+		throw new Error(
+			`Recorded inspection is unavailable for an invalid run: ${input.status.reason}`
+		);
+	}
+
+	assertPlayableDuration(input.playableUntilTime, 'Recorded inspection');
+}
+
+function assertPlayableDuration(duration: number, operation: string): void {
+	if (!Number.isFinite(duration) || duration < 0) {
+		throw new Error(`${operation} requires a finite, non-negative playable duration.`);
 	}
 }

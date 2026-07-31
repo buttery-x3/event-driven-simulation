@@ -147,3 +147,30 @@ fixture loaders. Application routes must use the `rendering/playback` and
 `simulation/run-fixture` entry points rather than their internal implementation modules. Co-located
 tests may cross the boundary deliberately to prove end-to-end fixture replay, while the production
 modules remain independently reusable.
+
+## Workbench UI and CSS
+
+The browser route provides the explicit repository fixture catalog and composes
+`SimulationWorkbench`; it does not own Three.js lifecycle, the animation loop, local-file parsing,
+diagnostic markup or page styling. Workbench components under `src/lib/workbench/` divide
+responsibilities by state ownership and independently evolving regions:
+
+- `SimulationWorkbench` coordinates the last accepted run, source, load feedback, inspection mode,
+  event selection and presentation clock;
+- `SimulationViewport` owns Three.js mount, update and disposal;
+- application bar and playback controls expose typed callbacks rather than reaching into renderer
+  state; and
+- the run inspector, event timeline, diagnostics console and metrics panel render read-only views
+  of the accepted run.
+
+The current styling policy is Svelte component-scoped CSS plus global CSS custom properties.
+`src/app.css` contains the reset, document defaults and shared tokens for colour, spacing,
+typography, radii, shadows and overlay order. Layout and component internals remain in the scoped
+`<style>` block of the component that owns them. A shared primitive is justified only after
+repeated markup and behaviour establish a real common responsibility; repeated token usage alone
+is not a reason to add wrapper components.
+
+Tailwind and other component or CSS frameworks remain deferred. Reconsider them only if the
+implemented workbench demonstrates sustained repetition that scoped CSS and the existing token set
+cannot address clearly. Any future adoption should solve an observed maintenance problem rather
+than replace the current policy speculatively.
