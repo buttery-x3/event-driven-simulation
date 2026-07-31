@@ -4,6 +4,8 @@ node_modules
 .svelte-kit
 build
 .output
+playwright-report
+test-results
 
 # Environment
 .env
