@@ -96,6 +96,8 @@ Behavioural changes should include appropriate tests.
 
 Previously discovered bugs should become regression fixtures whenever practical.
 
+For all browser testing and local browser automation, follow `docs/browser-testing.md`. Do not invent alternate ports or server-lifecycle workflows unless the active issue explicitly requires it.
+
 ---
 
 ## Git Workflow
