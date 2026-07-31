@@ -38,10 +38,13 @@ export function getPlaybackFrame(
 		bodies: input.initialDynamicBodies.map((body) => {
 			const trajectory = trajectoriesByBody.get(body.id);
 			const selection = trajectory ? selectRecordedSegment(trajectory, time) : null;
+			const initialPosition = time === 0 ? body.position : null;
 
 			return {
 				bodyId: body.id,
-				position: selection ? evaluateMotionSegmentPosition(selection.segment, time) : null,
+				position: selection
+					? evaluateMotionSegmentPosition(selection.segment, time)
+					: initialPosition,
 				segmentIndex: selection?.index ?? null
 			};
 		}),

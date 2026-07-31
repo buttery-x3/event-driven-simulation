@@ -9,6 +9,7 @@ import type {
 import { toRendererPlaybackInput } from '$lib/rendering/playback';
 import { canonicalPlinkoScenarios } from './scenario-catalogue';
 import { constructSingleBallRun } from './single-ball-run';
+import { parseSimulationRunFixture } from './run-fixture';
 import { evaluateMotionSegmentPosition } from './trajectory';
 
 const coordinateSystem = {
@@ -139,6 +140,21 @@ describe('authoritative event-driven single-ball runs', () => {
 		expect(run.events).toHaveLength(1);
 		expect(run.trajectories[0]!.segments).toHaveLength(1);
 		expect(run.diagnostics.simulatedUntilTime).toBe(run.events[0]!.time);
+		const boundarySearch = run.diagnostics.contactSearches.at(-1)!;
+		const proposedContact = boundarySearch.candidates.find(
+			({ colliderId, classification }) => colliderId === 'floor' && classification === 'accepted'
+		)!;
+		expect(boundarySearch.eventTimeTolerance).toBe(input().settings.tolerances.eventTime);
+		expect(proposedContact).toMatchObject({
+			colliderId: 'floor',
+			timeDelta: 0,
+			normal: [0, 1],
+			nearSimultaneous: true
+		});
+		expect(proposedContact.preContactVelocity).toEqual(proposedContact.postContactVelocity);
+		expect(parseSimulationRunFixture(JSON.stringify(run)).diagnostics.contactSearches).toEqual(
+			run.diagnostics.contactSearches
+		);
 	});
 
 	it('keeps event and time limits as distinct terminal reasons', () => {

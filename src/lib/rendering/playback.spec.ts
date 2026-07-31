@@ -141,7 +141,7 @@ describe('playback admission and adaptation', () => {
 		}
 	);
 
-	it('rejects an invalid run from both playback and recorded inspection', () => {
+	it('renders an invalid run for forensic inspection without admitting ordinary playback', () => {
 		const playback = {
 			...completedPlayback(),
 			validity: 'invalid',
@@ -153,9 +153,29 @@ describe('playback admission and adaptation', () => {
 			}
 		} satisfies RendererPlaybackInput;
 
-		expect(() => assertRecordedInspectionEligible(playback)).toThrow(
-			'Recorded inspection is unavailable for an invalid run: invalid.'
-		);
+		expect(() => assertRecordedInspectionEligible(playback)).not.toThrow();
+		expect(getPlaybackFrame(playback, 1)).toMatchObject({
+			time: 1,
+			bodies: [{ position: [1, 1] }]
+		});
+		expect(() => assertPlaybackEligible(playback)).toThrow();
+	});
+
+	it('shows the recorded initial state for a zero-duration invalid run', () => {
+		const playback = {
+			...completedPlayback(),
+			validity: 'invalid',
+			outcome: 'invalid',
+			terminalReason: { type: 'invalid-state', time: null, detail: 'invalid input' },
+			playableUntilTime: 0,
+			trajectories: [],
+			events: []
+		} satisfies RendererPlaybackInput;
+
+		expect(getPlaybackFrame(playback, 0)).toMatchObject({
+			time: 0,
+			bodies: [{ position: input.initialDynamicBodies[0].position, segmentIndex: null }]
+		});
 	});
 });
 

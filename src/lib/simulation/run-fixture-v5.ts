@@ -310,6 +310,9 @@ function validateDiagnostics(value: unknown, path: string): void {
 			if (interval.length !== 2) fail(`${searchPath}.searchInterval`, 'must contain two times');
 			requireFiniteNumber(interval[0], `${searchPath}.searchInterval[0]`);
 			requireFiniteNumber(interval[1], `${searchPath}.searchInterval[1]`);
+			if (record.eventTimeTolerance !== undefined) {
+				requireFiniteNumber(record.eventTimeTolerance, `${searchPath}.eventTimeTolerance`);
+			}
 			requireOneOf(
 				record.outcome,
 				['contact', 'no-event', 'unresolved', 'invalid-input'],
@@ -325,6 +328,29 @@ function validateDiagnostics(value: unknown, path: string): void {
 					requireString(candidateRecord.feature, `${candidatePath}.feature`);
 					requireFiniteNumber(candidateRecord.time, `${candidatePath}.time`);
 					requireString(candidateRecord.classification, `${candidatePath}.classification`);
+					if (candidateRecord.timeDelta !== undefined) {
+						requireFiniteNumber(candidateRecord.timeDelta, `${candidatePath}.timeDelta`);
+					}
+					for (const field of [
+						'position',
+						'contactPoint',
+						'normal',
+						'preContactVelocity',
+						'postContactVelocity'
+					] as const) {
+						if (candidateRecord[field] !== undefined) {
+							validateVec2(candidateRecord[field], `${candidatePath}.${field}`);
+						}
+					}
+					if (candidateRecord.normalVelocity !== undefined) {
+						requireFiniteNumber(candidateRecord.normalVelocity, `${candidatePath}.normalVelocity`);
+					}
+					if (
+						candidateRecord.nearSimultaneous !== undefined &&
+						typeof candidateRecord.nearSimultaneous !== 'boolean'
+					) {
+						fail(`${candidatePath}.nearSimultaneous`, 'must be a boolean');
+					}
 				}
 			);
 		}

@@ -168,7 +168,11 @@ export function constructSingleBallRun(input: SimulationInput): SimulationRunRec
 				eventTime: input.settings.tolerances.eventTime
 			}
 		});
-		const searchDiagnostic = toRunContactSearchDiagnostic(contactResult);
+		const searchDiagnostic = toRunContactSearchDiagnostic(
+			contactResult,
+			path,
+			input.settings.restitution
+		);
 		contactSearches.push(searchDiagnostic);
 
 		if (contactResult.type === 'invalid-input') {
@@ -650,15 +654,35 @@ function solveCoordinateCrossings(a: number, b: number, c: number): readonly num
 }
 
 function toRunContactSearchDiagnostic(
-	result: FixedWorldContactQueryResult
+	result: FixedWorldContactQueryResult,
+	path: MotionSegment,
+	restitution: number
 ): RunContactSearchDiagnostic {
 	const diagnostics: FixedWorldContactDiagnostics = result.diagnostics;
-	const accepted = diagnostics.orderedCandidates.map((candidate) => ({
-		colliderId: candidate.colliderId,
-		feature: candidate.feature,
-		time: candidate.time,
-		classification: 'accepted'
-	}));
+	const nearSimultaneous = new Set(diagnostics.nearSimultaneousCandidates);
+	const accepted = diagnostics.orderedCandidates.map((candidate) => {
+		const preContactVelocity = evaluateMotionSegmentVelocity(path, candidate.time);
+		const responseScale = (1 + restitution) * dotVec2(preContactVelocity, candidate.normal);
+		const postContactVelocity: Vec2 = [
+			preContactVelocity[0] - responseScale * candidate.normal[0],
+			preContactVelocity[1] - responseScale * candidate.normal[1]
+		];
+
+		return {
+			colliderId: candidate.colliderId,
+			feature: candidate.feature,
+			time: candidate.time,
+			classification: 'accepted',
+			timeDelta: normalizeDiagnosticNumber(candidate.time - path.startTime),
+			position: normalizeDiagnosticVector(candidate.position),
+			contactPoint: normalizeDiagnosticVector(candidate.contactPoint),
+			normal: normalizeDiagnosticVector(candidate.normal),
+			normalVelocity: normalizeDiagnosticNumber(candidate.normalVelocity),
+			preContactVelocity: normalizeDiagnosticVector(preContactVelocity),
+			postContactVelocity: normalizeDiagnosticVector(postContactVelocity),
+			nearSimultaneous: nearSimultaneous.has(candidate)
+		};
+	});
 	const rejected = diagnostics.colliderEvaluations.flatMap((evaluation) =>
 		evaluation.rejectedCandidates.map((candidate) => ({
 			colliderId: evaluation.colliderId,
@@ -670,11 +694,20 @@ function toRunContactSearchDiagnostic(
 
 	return {
 		searchInterval: diagnostics.searchInterval,
+		eventTimeTolerance: diagnostics.eventTimeTolerance,
 		outcome: result.type,
 		reason: 'reason' in result ? result.reason : null,
 		selectedColliderId: result.type === 'contact' ? result.event.colliderId : null,
 		candidates: [...accepted, ...rejected]
 	};
+}
+
+function normalizeDiagnosticVector(vector: Vec2): Vec2 {
+	return [normalizeDiagnosticNumber(vector[0]), normalizeDiagnosticNumber(vector[1])];
+}
+
+function normalizeDiagnosticNumber(value: number): number {
+	return Object.is(value, -0) ? 0 : value;
 }
 
 function findContainingRegion(

@@ -168,8 +168,11 @@ Contract version 5 records the stable top-level `outcome` vocabulary (`exited`, 
 from the detailed `terminalReason`. Run `validity` records whether the retained prefix conforms to
 the public contract. Diagnostics retain each contact search's accepted and rejected candidates and
 record search iterations, event count, candidate count, segment count, simulated horizon and
-calculation wall time. Instrumentation is written only when the result is finalised and never
-participates in event selection.
+calculation wall time. Accepted contact candidates additionally preserve their proposed time delta,
+position, contact point, normal, pre- and proposed post-contact velocity, and near-simultaneous
+classification. These optional forensic fields keep earlier version 5 fixtures readable. They are
+diagnostic evidence only: instrumentation is written after selection and never participates in
+event selection or becomes authoritative trajectory motion.
 
 Supported scene-bounds crossings are solved continuously alongside explicit completion and escape
 regions. A declared horizontal `supporting-flat` line may produce `settled` only when the optional

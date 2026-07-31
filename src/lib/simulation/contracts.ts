@@ -199,10 +199,19 @@ export interface RunContactCandidateDiagnostic {
 	readonly feature: string;
 	readonly time: number;
 	readonly classification: string;
+	readonly timeDelta?: number;
+	readonly position?: Vec2;
+	readonly contactPoint?: Vec2;
+	readonly normal?: Vec2;
+	readonly normalVelocity?: number;
+	readonly preContactVelocity?: Vec2;
+	readonly postContactVelocity?: Vec2;
+	readonly nearSimultaneous?: boolean;
 }
 
 export interface RunContactSearchDiagnostic {
 	readonly searchInterval: readonly [startTime: number, endTime: number];
+	readonly eventTimeTolerance?: number;
 	readonly outcome: 'contact' | 'no-event' | 'unresolved' | 'invalid-input';
 	readonly reason: string | null;
 	readonly selectedColliderId: EntityId | null;

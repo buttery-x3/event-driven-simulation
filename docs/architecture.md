@@ -94,8 +94,10 @@ schema registry.
 
 Loading a fixture establishes only that it matches the saved-run contract. It does not promote the
 terminal reason or make an incomplete run eligible for ordinary playback. The renderer still
-converts the record through `toRendererPlaybackInput` and applies `assertPlaybackEligible`, which
-admits only valid `exited` and narrowly supported `settled` results.
+converts the record through `toRendererPlaybackInput`. `assertPlaybackEligible` admits only valid
+`exited` and narrowly supported `settled` results, while `assertRecordedInspectionEligible` admits
+complete, unresolved and invalid records with a finite non-negative recorded horizon. Inspection
+never evaluates motion beyond the committed segment boundary.
 
 ## Headless event-driven run
 

@@ -29,13 +29,7 @@ export function assertPlaybackEligible(
 
 export function assertRecordedInspectionEligible(
 	input: RendererPlaybackInput
-): asserts input is RendererPlaybackInput & {
-	validity: 'valid';
-} {
-	if (input.validity === 'invalid') {
-		throw new Error(`Recorded inspection is unavailable for an invalid run: ${input.outcome}.`);
-	}
-
+): asserts input is RendererPlaybackInput {
 	assertPlayableDuration(input.playableUntilTime, 'Recorded inspection');
 }
 
