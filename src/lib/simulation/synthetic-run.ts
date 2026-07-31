@@ -1,33 +1,12 @@
 import type {
-	BodyTrajectory,
 	MotionSegment,
 	RunStatus,
 	SimulationInput,
 	SimulationRunRecord,
 	Vec2
 } from './contracts';
-
-export function evaluateMotionSegment(segment: MotionSegment, time: number): Vec2 {
-	const elapsed = time - segment.startTime;
-	const elapsedSquared = elapsed * elapsed;
-
-	return [
-		segment.startPosition[0] +
-			segment.startVelocity[0] * elapsed +
-			0.5 * segment.acceleration[0] * elapsedSquared,
-		segment.startPosition[1] +
-			segment.startVelocity[1] * elapsed +
-			0.5 * segment.acceleration[1] * elapsedSquared
-	];
-}
-
-export function evaluateBodyTrajectory(trajectory: BodyTrajectory, time: number): Vec2 | null {
-	const segment = trajectory.segments.find(
-		(candidate) => time >= candidate.startTime && time <= candidate.endTime
-	);
-
-	return segment ? evaluateMotionSegment(segment, time) : null;
-}
+import { evaluateMotionSegmentPosition, evaluateMotionSegmentVelocity } from './trajectory';
+import { dotVec2, normaliseVec2 } from './vector';
 
 export function generateSyntheticRun(input: SimulationInput): SimulationRunRecord {
 	const body = input.initialBodies[0];
@@ -70,8 +49,8 @@ export function generateSyntheticRun(input: SimulationInput): SimulationRunRecor
 		startVelocity: body.velocity,
 		acceleration: input.settings.gravity
 	};
-	const eventPosition = evaluateMotionSegment(firstSegment, eventTime);
-	const contactNormal = normalise(
+	const eventPosition = evaluateMotionSegmentPosition(firstSegment, eventTime);
+	const contactNormal = normaliseVec2(
 		[eventPosition[0] - collider.centre[0], eventPosition[1] - collider.centre[1]],
 		input.settings.tolerances.contactDistance
 	);
@@ -83,8 +62,8 @@ export function generateSyntheticRun(input: SimulationInput): SimulationRunRecor
 		});
 	}
 
-	const incomingVelocity = evaluateVelocity(firstSegment, eventTime);
-	const normalVelocity = dot(incomingVelocity, contactNormal);
+	const incomingVelocity = evaluateMotionSegmentVelocity(firstSegment, eventTime);
+	const normalVelocity = dotVec2(incomingVelocity, contactNormal);
 	const restitutionScale = (1 + input.settings.restitution) * normalVelocity;
 	const outgoingVelocity: Vec2 = [
 		incomingVelocity[0] - restitutionScale * contactNormal[0],
@@ -128,29 +107,6 @@ export function generateSyntheticRun(input: SimulationInput): SimulationRunRecor
 			]
 		}
 	};
-}
-
-function evaluateVelocity(segment: MotionSegment, time: number): Vec2 {
-	const elapsed = time - segment.startTime;
-
-	return [
-		segment.startVelocity[0] + segment.acceleration[0] * elapsed,
-		segment.startVelocity[1] + segment.acceleration[1] * elapsed
-	];
-}
-
-function normalise(vector: Vec2, tolerance: number): Vec2 | null {
-	const length = Math.hypot(vector[0], vector[1]);
-
-	if (!Number.isFinite(length) || length <= tolerance) {
-		return null;
-	}
-
-	return [vector[0] / length, vector[1] / length];
-}
-
-function dot(left: Vec2, right: Vec2): number {
-	return left[0] * right[0] + left[1] * right[1];
 }
 
 function stoppedRun(input: SimulationInput, status: Exclude<RunStatus, { type: 'complete' }>) {

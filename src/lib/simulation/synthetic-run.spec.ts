@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { BodyTrajectory, SimulationInput } from './contracts';
-import {
-	evaluateBodyTrajectory,
-	evaluateMotionSegment,
-	generateSyntheticRun
-} from './synthetic-run';
+import type { SimulationInput } from './contracts';
+import { generateSyntheticRun } from './synthetic-run';
 
 const input = {
 	scene: {
@@ -32,45 +28,6 @@ const input = {
 } as const satisfies SimulationInput;
 
 describe('synthetic headless run', () => {
-	it('evaluates known positions at segment starts, intermediate times and ends', () => {
-		const trajectory = completedTrajectory();
-		const [firstSegment, secondSegment] = trajectory.segments;
-
-		expect(firstSegment).toBeDefined();
-		expect(secondSegment).toBeDefined();
-		expect(evaluateMotionSegment(firstSegment!, 0)).toEqual([0, 2]);
-		expect(evaluateMotionSegment(firstSegment!, 0.5)).toEqual([0.5, 1.75]);
-		expect(evaluateMotionSegment(firstSegment!, 1)).toEqual([1, 1]);
-		expect(evaluateMotionSegment(secondSegment!, 1)).toEqual([1, 1]);
-		expect(evaluateMotionSegment(secondSegment!, 1.5)).toEqual([1.5, 1.25]);
-		expect(evaluateMotionSegment(secondSegment!, 2)).toEqual([2, 1]);
-	});
-
-	it('evaluates a trajectory only across its inclusive simulation-time range', () => {
-		const trajectory = completedTrajectory();
-
-		expect(evaluateBodyTrajectory(trajectory, -input.settings.tolerances.eventTime)).toBeNull();
-		expect(evaluateBodyTrajectory(trajectory, 0)).toEqual([0, 2]);
-		expect(evaluateBodyTrajectory(trajectory, 1)).toEqual([1, 1]);
-		expect(evaluateBodyTrajectory(trajectory, 2)).toEqual([2, 1]);
-		expect(
-			evaluateBodyTrajectory(
-				trajectory,
-				input.settings.maximumSimulationTime + input.settings.tolerances.eventTime
-			)
-		).toBeNull();
-	});
-
-	it('joins adjacent segments continuously within the configured contact tolerance', () => {
-		const trajectory = completedTrajectory();
-		const [firstSegment, secondSegment] = trajectory.segments;
-		const firstEnd = evaluateMotionSegment(firstSegment!, firstSegment!.endTime);
-		const secondStart = evaluateMotionSegment(secondSegment!, secondSegment!.startTime);
-		const joinDistance = Math.hypot(firstEnd[0] - secondStart[0], firstEnd[1] - secondStart[1]);
-
-		expect(joinDistance).toBeLessThanOrEqual(input.settings.tolerances.contactDistance);
-	});
-
 	it('produces an ordered, complete and diagnostic-rich serialisable run', () => {
 		const run = generateSyntheticRun(input);
 		const trajectory = run.trajectories[0];
@@ -116,12 +73,3 @@ describe('synthetic headless run', () => {
 		expect(generateSyntheticRun(input).status.type).toBe('complete');
 	});
 });
-
-function completedTrajectory(): BodyTrajectory {
-	const run = generateSyntheticRun(input);
-
-	expect(run.status.type).toBe('complete');
-	expect(run.trajectories[0]).toBeDefined();
-
-	return run.trajectories[0]!;
-}

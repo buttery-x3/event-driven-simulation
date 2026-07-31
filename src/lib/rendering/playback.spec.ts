@@ -1,12 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { RendererPlaybackInput, SimulationInput } from '$lib/simulation/contracts';
 import { generateSyntheticRun } from '$lib/simulation/synthetic-run';
-import {
-	assertPlaybackEligible,
-	getPlaybackFrame,
-	PlaybackClock,
-	toRendererPlaybackInput
-} from './playback';
+import { assertPlaybackEligible, toRendererPlaybackInput } from './playback-admission';
+import { PlaybackClock } from './playback-clock';
+import { getPlaybackFrame } from './recorded-frame';
 
 const input = {
 	scene: {
@@ -33,7 +30,7 @@ const input = {
 	}
 } as const satisfies SimulationInput;
 
-describe('renderer playback', () => {
+describe('recorded playback frame evaluation', () => {
 	it('clamps requested time and selects recorded segments at their boundaries', () => {
 		const playback = completedPlayback();
 
@@ -63,7 +60,9 @@ describe('renderer playback', () => {
 
 		expect(JSON.stringify(run)).toBe(before);
 	});
+});
 
+describe('playback admission and adaptation', () => {
 	it.each(['unresolved', 'iteration-limited', 'invalid'] as const)(
 		'rejects a %s run from ordinary playback with its diagnostic reason',
 		(statusType) => {
@@ -77,7 +76,9 @@ describe('renderer playback', () => {
 			);
 		}
 	);
+});
 
+describe('playback clock', () => {
 	it('supports play, pause, restart, seek, clamping and stopping at the end', () => {
 		const clock = new PlaybackClock(2);
 
