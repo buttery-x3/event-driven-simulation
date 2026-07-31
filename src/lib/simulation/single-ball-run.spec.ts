@@ -178,6 +178,24 @@ describe('authoritative event-driven single-ball runs', () => {
 		expect(evaluateMotionSegmentPosition(terminalSegment, terminalSegment.endTime)).toEqual([1, 1]);
 	});
 
+	it('escapes at the exact continuous supported-bounds crossing', () => {
+		const run = constructSingleBallRun(
+			input({
+				position: [0, 1],
+				velocity: [4, 0],
+				gravity: [0, 0],
+				maximumSimulationTime: 2
+			})
+		);
+		const terminalSegment = run.trajectories[0]!.segments.at(-1)!;
+
+		expect(run).toMatchObject({
+			outcome: 'escaped',
+			terminalReason: { type: 'bounds-escape', boundary: 'right', time: 1.25 }
+		});
+		expect(evaluateMotionSegmentPosition(terminalSegment, terminalSegment.endTime)).toEqual([5, 1]);
+	});
+
 	it('preserves the valid prefix and candidate diagnostics for an unresolved search', () => {
 		const run = constructSingleBallRun(
 			input({
@@ -218,14 +236,21 @@ describe('authoritative event-driven single-ball runs', () => {
 			...input(),
 			initialDynamicBodies: []
 		});
-		const numerical = constructSingleBallRun(
-			input({
-				position: [1e308, 1],
-				velocity: [1e308, 0],
+		const numerical = constructSingleBallRun({
+			...input({
+				position: [8e307, 1],
+				velocity: [0, 0],
 				gravity: [0, 0],
+				regions: [region('overflow-region', 'complete', [-1e308, 0], [-9e307, 2])],
 				maximumSimulationTime: 2
-			})
-		);
+			}),
+			scene: {
+				...input().scene,
+				bounds: { width: Number.MAX_VALUE, height: 10 },
+				staticColliders: [],
+				terminationRegions: [region('overflow-region', 'complete', [-1e308, 0], [-9e307, 2])]
+			}
+		});
 
 		expect(invalid).toMatchObject({
 			validity: 'invalid',

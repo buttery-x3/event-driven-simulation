@@ -1,5 +1,5 @@
 {
-	"contractVersion": 4,
+	"contractVersion": 5,
 	"input": {
 		"scene": {
 			"id": "flame-27-high-speed-contact",
@@ -50,6 +50,7 @@
 		}
 	},
 	"validity": "valid",
+	"outcome": "event-limit",
 	"terminalReason": {
 		"type": "event-limit",
 		"time": 0.0099,
@@ -81,7 +82,7 @@
 		}
 	],
 	"diagnostics": {
-		"iterations": 1,
+		"iterations": 0,
 		"simulatedUntilTime": 0.0099,
 		"eventCount": 1,
 		"candidateCount": 0,
@@ -93,6 +94,13 @@
 				"severity": "info",
 				"code": "PEG_CONTACT_SOLVED",
 				"message": "Continuous solving found the supported high-speed peg contact.",
+				"time": 0.0099,
+				"bodyId": "ball-high-speed"
+			},
+			{
+				"severity": "warning",
+				"code": "RUN_EVENT_LIMIT",
+				"message": "Run reached the configured event limit.",
 				"time": 0.0099,
 				"bodyId": "ball-high-speed"
 			}

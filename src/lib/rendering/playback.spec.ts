@@ -18,7 +18,7 @@ const input = {
 			verticalAxis: 'up',
 			lengthUnit: 'metre'
 		},
-		bounds: { width: 3, height: 3 },
+		bounds: { width: 5, height: 3 },
 		staticColliders: [
 			{
 				id: 'test-peg',
@@ -61,21 +61,28 @@ const input = {
 describe('recorded playback frame evaluation', () => {
 	it('clamps requested time and selects recorded segments at their boundaries', () => {
 		const playback = completedPlayback();
+		const contact = playback.events[0]!;
 
 		expect(getPlaybackFrame(playback, -10)).toMatchObject({
 			time: 0,
 			bodies: [{ position: [0, 2], segmentIndex: 0 }],
 			mostRecentEvent: null
 		});
-		expect(getPlaybackFrame(playback, 1)).toMatchObject({
-			time: 1,
-			bodies: [{ position: [1, 1], segmentIndex: 1 }],
-			mostRecentEvent: { type: 'contact', time: 1 }
+		expect(getPlaybackFrame(playback, contact.time)).toMatchObject({
+			time: contact.time,
+			bodies: [{ position: contact.position, segmentIndex: 1 }],
+			mostRecentEvent: { type: 'contact', time: contact.time }
 		});
-		expect(getPlaybackFrame(playback, 10)).toMatchObject({
-			time: 1.9,
-			bodies: [{ position: [1.9, 1.09], segmentIndex: 1 }]
+		const terminalFrame = getPlaybackFrame(playback, 10);
+		expect(terminalFrame).toMatchObject({
+			time: playback.playableUntilTime,
+			bodies: [{ segmentIndex: 1 }]
 		});
+		const terminalPosition = terminalFrame.bodies[0]!.position;
+		expect(terminalPosition).not.toBeNull();
+		if (!terminalPosition) return;
+		expect(terminalPosition[0]).toBeCloseTo(1.9, 12);
+		expect(terminalPosition[1]).toBeCloseTo(1.09, 12);
 	});
 
 	it('does not mutate the supplied completed run while evaluating it', () => {
@@ -96,13 +103,20 @@ describe('playback admission and adaptation', () => {
 		{ type: 'escape-region', regionId: 'escape', time: 1 },
 		{ type: 'numerical-failure', time: 1, detail: 'test failure detail' }
 	] as const)('rejects a $type run from ordinary playback', (terminalReason) => {
+		const outcome =
+			terminalReason.type === 'escape-region'
+				? 'escaped'
+				: terminalReason.type === 'event-limit'
+					? 'event-limit'
+					: 'unresolved';
 		const playback = {
 			...completedPlayback(),
+			outcome,
 			terminalReason
 		} satisfies RendererPlaybackInput;
 
 		expect(() => assertPlaybackEligible(playback)).toThrow(
-			`Ordinary playback requires a valid completion-region run; received valid ${terminalReason.type}.`
+			`Ordinary playback requires a valid exited or settled run; received valid ${outcome}.`
 		);
 	});
 
@@ -114,6 +128,7 @@ describe('playback admission and adaptation', () => {
 		(terminalReason) => {
 			const playback = {
 				...completedPlayback(),
+				outcome: terminalReason.type === 'event-limit' ? 'event-limit' : 'unresolved',
 				terminalReason
 			} satisfies RendererPlaybackInput;
 
@@ -130,6 +145,7 @@ describe('playback admission and adaptation', () => {
 		const playback = {
 			...completedPlayback(),
 			validity: 'invalid',
+			outcome: 'invalid',
 			terminalReason: {
 				type: 'invalid-state',
 				time: null,
@@ -138,7 +154,7 @@ describe('playback admission and adaptation', () => {
 		} satisfies RendererPlaybackInput;
 
 		expect(() => assertRecordedInspectionEligible(playback)).toThrow(
-			'Recorded inspection is unavailable for an invalid run: invalid-state.'
+			'Recorded inspection is unavailable for an invalid run: invalid.'
 		);
 	});
 });

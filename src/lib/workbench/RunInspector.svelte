@@ -29,10 +29,10 @@
 	</header>
 
 	<section class="outcome" aria-label="Calculation outcome">
-		<strong class:failed={run.terminalReason.type !== 'completion-region'}
+		<strong class:failed={run.outcome !== 'exited' && run.outcome !== 'settled'}
 			>{getRunStatusLabel(run.terminalReason)}</strong
 		>
-		{#if run.terminalReason.type === 'completion-region'}
+		{#if run.outcome === 'exited' || run.outcome === 'settled'}
 			<p>Calculation completed before replay began.</p>
 		{:else}
 			<p>

@@ -24,6 +24,7 @@ export interface StaticLineSegmentCollider {
 	readonly id: EntityId;
 	readonly motionAuthority: 'static';
 	readonly physicalShape: LineSegmentPhysicalShape;
+	readonly surfaceRole?: 'supporting-flat';
 }
 
 export type StaticCollider = StaticCircleCollider | StaticLineSegmentCollider;
@@ -69,12 +70,20 @@ export interface SimulationTolerances {
 	readonly eventTime: number;
 }
 
+export interface NarrowSettlementPolicy {
+	readonly maximumNormalSeparationSpeed: number;
+	readonly maximumTangentialSpeed: number;
+	readonly contactDistance: number;
+	readonly minimumPressingAcceleration: number;
+}
+
 export interface SimulationSettings {
 	readonly gravity: Vec2;
 	readonly restitution: number;
 	readonly maximumEvents: number;
 	readonly maximumSimulationTime: number;
 	readonly tolerances: SimulationTolerances;
+	readonly settlement?: NarrowSettlementPolicy;
 }
 
 export interface SimulationInput {
@@ -110,6 +119,16 @@ export type PhysicalEvent = ContactEvent;
 
 export type RunValidity = 'valid' | 'invalid';
 
+export type RunOutcome =
+	| 'exited'
+	| 'escaped'
+	| 'settled'
+	| 'no-future-event'
+	| 'time-limit'
+	| 'event-limit'
+	| 'unresolved'
+	| 'invalid';
+
 export type RunTerminalReason =
 	| {
 			readonly type: 'completion-region';
@@ -119,6 +138,11 @@ export type RunTerminalReason =
 	| {
 			readonly type: 'escape-region';
 			readonly regionId: EntityId;
+			readonly time: number;
+	  }
+	| {
+			readonly type: 'bounds-escape';
+			readonly boundary: 'left' | 'right' | 'bottom' | 'top';
 			readonly time: number;
 	  }
 	| { readonly type: 'no-future-event'; readonly time: number; readonly detail: string }
@@ -131,6 +155,14 @@ export type RunTerminalReason =
 			readonly type: 'event-limit';
 			readonly time: number;
 			readonly limit: number;
+	  }
+	| {
+			readonly type: 'settled-supporting-surface';
+			readonly time: number;
+			readonly colliderId: EntityId;
+			readonly position: Vec2;
+			readonly normalSeparationSpeed: number;
+			readonly tangentialSpeed: number;
 	  }
 	| {
 			readonly type: 'unresolved-collision-search';
@@ -189,9 +221,10 @@ export interface RunDiagnostics {
 }
 
 export interface SimulationRunRecord {
-	readonly contractVersion: 4;
+	readonly contractVersion: 5;
 	readonly input: SimulationInput;
 	readonly validity: RunValidity;
+	readonly outcome: RunOutcome;
 	readonly terminalReason: RunTerminalReason;
 	readonly trajectories: readonly BodyTrajectory[];
 	readonly events: readonly PhysicalEvent[];
@@ -199,10 +232,11 @@ export interface SimulationRunRecord {
 }
 
 export interface RendererPlaybackInput {
-	readonly contractVersion: 4;
+	readonly contractVersion: 5;
 	readonly scene: SceneDefinition;
 	readonly initialDynamicBodies: readonly InitialDynamicCircleBodyState[];
 	readonly validity: RunValidity;
+	readonly outcome: RunOutcome;
 	readonly terminalReason: RunTerminalReason;
 	readonly playableUntilTime: number;
 	readonly trajectories: readonly BodyTrajectory[];

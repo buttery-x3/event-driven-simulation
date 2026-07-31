@@ -11,13 +11,13 @@ import {
 
 describe('workbench run presentation model', () => {
 	it.each([
-		['valid', { type: 'completion-region', regionId: 'exit', time: 1 }, 'completed-replay'],
-		['valid', { type: 'event-limit', time: 1, limit: 2 }, 'recorded-prefix'],
-		['invalid', { type: 'invalid-state', time: null, detail: 'test' }, 'diagnostics-only']
+		['valid', 'exited', 'completed-replay'],
+		['valid', 'event-limit', 'recorded-prefix'],
+		['invalid', 'invalid', 'diagnostics-only']
 	] as const)(
 		'maps $0/$1 calculation result to its inspection mode',
-		(validity, reason, expected) => {
-			expect(getInspectionMode(validity, reason)).toBe(expected);
+		(validity, outcome, expected) => {
+			expect(getInspectionMode(validity, outcome)).toBe(expected);
 		}
 	);
 

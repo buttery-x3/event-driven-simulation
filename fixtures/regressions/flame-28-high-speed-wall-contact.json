@@ -1,5 +1,5 @@
 {
-	"contractVersion": 4,
+	"contractVersion": 5,
 	"input": {
 		"scene": {
 			"id": "flame-28-high-speed-wall-contact",
@@ -50,6 +50,7 @@
 		}
 	},
 	"validity": "valid",
+	"outcome": "event-limit",
 	"terminalReason": {
 		"type": "event-limit",
 		"time": 0.00995,
@@ -62,7 +63,7 @@
 				{
 					"bodyId": "ball-high-speed",
 					"startTime": 0,
-					"endTime": 0.01,
+					"endTime": 0.00995,
 					"startPosition": [-100, 5],
 					"startVelocity": [10000, 0],
 					"acceleration": [0, 0]
@@ -81,7 +82,7 @@
 		}
 	],
 	"diagnostics": {
-		"iterations": 1,
+		"iterations": 0,
 		"simulatedUntilTime": 0.00995,
 		"eventCount": 1,
 		"candidateCount": 0,
@@ -93,6 +94,13 @@
 				"severity": "info",
 				"code": "BOUNDARY_CONTACT_SOLVED",
 				"message": "Continuous solving found the supported high-speed wall contact.",
+				"time": 0.00995,
+				"bodyId": "ball-high-speed"
+			},
+			{
+				"severity": "warning",
+				"code": "RUN_EVENT_LIMIT",
+				"message": "Run reached the configured event limit.",
 				"time": 0.00995,
 				"bodyId": "ball-high-speed"
 			}

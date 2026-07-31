@@ -31,10 +31,10 @@ Keep one run record per file. Do not create renderer-specific copies.
 There is deliberately no migration framework. If `contractVersion` changes, decide how to update
 or retain affected fixtures as part of that contract change.
 
-FLAME-29 advanced the contract to version 4 so saved records separate prefix validity from the
-typed terminal reason and retain candidate/count/timing diagnostics. The pre-release canonical and
-regression fixtures were updated in place; earlier data is intentionally rejected rather than
-guessed or migrated.
+FLAME-33 advanced the contract to version 5 so saved records expose the stable terminal outcome
+vocabulary and validate its agreement with validity, detailed terminal reason and diagnostics. The
+pre-release canonical and regression fixtures were updated in place; earlier data is intentionally
+rejected rather than guessed or migrated.
 
 `flame-27-high-speed-peg-contact.json` is a complete, minimal run record whose incoming motion
 segment crosses a fixed peg at 10,000 m/s. The focused peg-contact test loads that public fixture

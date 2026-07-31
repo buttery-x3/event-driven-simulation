@@ -152,11 +152,19 @@ exactly at the region boundary. Event and time limits, unresolved fixed-world se
 state, numerical failure and permanently stationary no-future-event states remain distinct typed
 terminal reasons.
 
-Run `validity` records whether the retained prefix conforms to the public contract. It is separate
-from `terminalReason`, which records why calculation stopped. Diagnostics retain each contact
-search's accepted and rejected candidates and record search iterations, event count, candidate
-count, segment count, simulated horizon and calculation wall time. Instrumentation is written only
-when the result is finalised and never participates in event selection.
+Contract version 5 records the stable top-level `outcome` vocabulary (`exited`, `escaped`,
+`settled`, `no-future-event`, `time-limit`, `event-limit`, `unresolved`, or `invalid`) separately
+from the detailed `terminalReason`. Run `validity` records whether the retained prefix conforms to
+the public contract. Diagnostics retain each contact search's accepted and rejected candidates and
+record search iterations, event count, candidate count, segment count, simulated horizon and
+calculation wall time. Instrumentation is written only when the result is finalised and never
+participates in event selection.
+
+Supported scene-bounds crossings are solved continuously alongside explicit completion and escape
+regions. A declared horizontal `supporting-flat` line may produce `settled` only when the optional
+named settlement policy certifies pressing acceleration, low post-response normal and tangential
+speed, and contact geometry. See [the board-state matrix](./board-state-matrix.md) for the complete
+scenario catalogue and threshold policy.
 
 ## Scene validation
 

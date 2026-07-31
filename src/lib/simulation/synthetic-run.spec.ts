@@ -20,6 +20,6 @@ describe('legacy synthetic-run entry point', () => {
 	it('runs without browser globals', () => {
 		expect('window' in globalThis).toBe(false);
 		expect('document' in globalThis).toBe(false);
-		expect(generateSyntheticRun(prototypeSimulationInput).contractVersion).toBe(4);
+		expect(generateSyntheticRun(prototypeSimulationInput).contractVersion).toBe(5);
 	});
 });

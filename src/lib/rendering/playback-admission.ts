@@ -6,6 +6,7 @@ export function toRendererPlaybackInput(run: SimulationRunRecord): RendererPlayb
 		scene: run.input.scene,
 		initialDynamicBodies: run.input.initialDynamicBodies,
 		validity: run.validity,
+		outcome: run.outcome,
 		terminalReason: run.terminalReason,
 		playableUntilTime: run.diagnostics.simulatedUntilTime,
 		trajectories: run.trajectories,
@@ -16,12 +17,10 @@ export function toRendererPlaybackInput(run: SimulationRunRecord): RendererPlayb
 
 export function assertPlaybackEligible(
 	input: RendererPlaybackInput
-): asserts input is RendererPlaybackInput & {
-	terminalReason: Extract<RendererPlaybackInput['terminalReason'], { type: 'completion-region' }>;
-} {
-	if (input.validity !== 'valid' || input.terminalReason.type !== 'completion-region') {
+): asserts input is RendererPlaybackInput & { validity: 'valid' } {
+	if (input.validity !== 'valid' || (input.outcome !== 'exited' && input.outcome !== 'settled')) {
 		throw new Error(
-			`Ordinary playback requires a valid completion-region run; received ${input.validity} ${input.terminalReason.type}.`
+			`Ordinary playback requires a valid exited or settled run; received ${input.validity} ${input.outcome}.`
 		);
 	}
 
@@ -34,9 +33,7 @@ export function assertRecordedInspectionEligible(
 	validity: 'valid';
 } {
 	if (input.validity === 'invalid') {
-		throw new Error(
-			`Recorded inspection is unavailable for an invalid run: ${input.terminalReason.type}.`
-		);
+		throw new Error(`Recorded inspection is unavailable for an invalid run: ${input.outcome}.`);
 	}
 
 	assertPlayableDuration(input.playableUntilTime, 'Recorded inspection');

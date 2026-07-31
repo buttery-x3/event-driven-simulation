@@ -73,18 +73,34 @@ describe('saved run fixtures', () => {
 	});
 
 	it('retains terminal-reason playback admission after fixture loading', () => {
+		const source = JSON.parse(canonicalFixtureJson) as SimulationRunRecord;
+		const terminalTime = source.diagnostics.simulatedUntilTime;
 		const incomplete = {
-			...(JSON.parse(canonicalFixtureJson) as SimulationRunRecord),
+			...source,
+			outcome: 'unresolved',
 			terminalReason: {
 				type: 'unresolved-collision-search',
-				time: 0,
+				time: terminalTime,
 				detail: 'The saved fixture contains only a validated trajectory prefix.'
+			},
+			diagnostics: {
+				...source.diagnostics,
+				entries: [
+					...source.diagnostics.entries.slice(0, -1),
+					{
+						severity: 'error',
+						code: 'RUN_UNRESOLVED',
+						message: 'The saved fixture contains only a validated trajectory prefix.',
+						time: terminalTime,
+						bodyId: 'ball-primary'
+					}
+				]
 			}
 		};
 		const playback = toRendererPlaybackInput(loadSimulationRunFixture(incomplete));
 
 		expect(() => assertPlaybackEligible(playback)).toThrow(
-			'Ordinary playback requires a valid completion-region run; received valid unresolved-collision-search.'
+			'Ordinary playback requires a valid exited or settled run; received valid unresolved.'
 		);
 	});
 });

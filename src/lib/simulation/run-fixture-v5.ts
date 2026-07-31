@@ -1,17 +1,37 @@
 import type { SimulationRunRecord } from './contracts';
 import { RunFixtureError } from './run-fixture-error';
+import {
+	getRunOutcome,
+	getTerminalDiagnosticCode,
+	isOutcomeConsistentWithValidity
+} from './run-outcome';
 import { validateSceneDefinition } from './scene-validation';
 
-export function validateRunFixtureV4(value: unknown): SimulationRunRecord {
+export function validateRunFixtureV5(value: unknown): SimulationRunRecord {
 	const run = requireRecord(value, '$');
 
-	requireLiteral(run.contractVersion, 4, '$.contractVersion');
+	requireLiteral(run.contractVersion, 5, '$.contractVersion');
 	validateSimulationInput(run.input, '$.input');
 	requireOneOf(run.validity, ['valid', 'invalid'], '$.validity');
+	requireOneOf(
+		run.outcome,
+		[
+			'exited',
+			'escaped',
+			'settled',
+			'no-future-event',
+			'time-limit',
+			'event-limit',
+			'unresolved',
+			'invalid'
+		],
+		'$.outcome'
+	);
 	validateTerminalReason(run.terminalReason, '$.terminalReason');
 	validateTrajectories(run.trajectories, '$.trajectories');
 	validateEvents(run.events, '$.events');
 	validateDiagnostics(run.diagnostics, '$.diagnostics');
+	validateRunConsistency(run);
 
 	return value as SimulationRunRecord;
 }
@@ -47,6 +67,23 @@ function validateSimulationInput(value: unknown, path: string): void {
 	const tolerances = requireRecord(settings.tolerances, `${path}.settings.tolerances`);
 	requireFiniteNumber(tolerances.contactDistance, `${path}.settings.tolerances.contactDistance`);
 	requireFiniteNumber(tolerances.eventTime, `${path}.settings.tolerances.eventTime`);
+
+	if (settings.settlement !== undefined) {
+		const settlement = requireRecord(settings.settlement, `${path}.settings.settlement`);
+		requireFiniteNumber(
+			settlement.maximumNormalSeparationSpeed,
+			`${path}.settings.settlement.maximumNormalSeparationSpeed`
+		);
+		requireFiniteNumber(
+			settlement.maximumTangentialSpeed,
+			`${path}.settings.settlement.maximumTangentialSpeed`
+		);
+		requireFiniteNumber(settlement.contactDistance, `${path}.settings.settlement.contactDistance`);
+		requireFiniteNumber(
+			settlement.minimumPressingAcceleration,
+			`${path}.settings.settlement.minimumPressingAcceleration`
+		);
+	}
 }
 
 function validateCirclePhysicalShape(value: unknown, path: string): void {
@@ -65,6 +102,10 @@ function validateTerminalReason(value: unknown, path: string): void {
 			requireString(reason.regionId, `${path}.regionId`);
 			requireFiniteNumber(reason.time, `${path}.time`);
 			return;
+		case 'bounds-escape':
+			requireOneOf(reason.boundary, ['left', 'right', 'bottom', 'top'], `${path}.boundary`);
+			requireFiniteNumber(reason.time, `${path}.time`);
+			return;
 		case 'no-future-event':
 		case 'unresolved-collision-search':
 		case 'numerical-failure':
@@ -75,6 +116,13 @@ function validateTerminalReason(value: unknown, path: string): void {
 		case 'event-limit':
 			requireFiniteNumber(reason.time, `${path}.time`);
 			requireFiniteNumber(reason.limit, `${path}.limit`);
+			return;
+		case 'settled-supporting-surface':
+			requireFiniteNumber(reason.time, `${path}.time`);
+			requireString(reason.colliderId, `${path}.colliderId`);
+			validateVec2(reason.position, `${path}.position`);
+			requireFiniteNumber(reason.normalSeparationSpeed, `${path}.normalSeparationSpeed`);
+			requireFiniteNumber(reason.tangentialSpeed, `${path}.tangentialSpeed`);
 			return;
 		case 'zero-time-loop':
 			requireFiniteNumber(reason.time, `${path}.time`);
@@ -87,6 +135,119 @@ function validateTerminalReason(value: unknown, path: string): void {
 			return;
 		default:
 			fail(`${path}.type`, 'must be a supported terminal reason');
+	}
+}
+
+function validateRunConsistency(run: Record<string, unknown>): void {
+	const record = run as unknown as SimulationRunRecord;
+	const expectedOutcome = getRunOutcome(record.terminalReason);
+	if (record.outcome !== expectedOutcome) {
+		fail(
+			'$.outcome',
+			`must be ${JSON.stringify(expectedOutcome)} for terminal reason ${JSON.stringify(record.terminalReason.type)}`
+		);
+	}
+	if (!isOutcomeConsistentWithValidity(record.outcome, record.validity)) {
+		fail('$.validity', `must agree with terminal outcome ${JSON.stringify(record.outcome)}`);
+	}
+	if (record.diagnostics.eventCount !== record.events.length) {
+		fail('$.diagnostics.eventCount', 'must equal the recorded event count');
+	}
+	if (record.diagnostics.iterations !== record.diagnostics.contactSearches.length) {
+		fail('$.diagnostics.iterations', 'must equal the recorded contact-search count');
+	}
+	const candidateCount = record.diagnostics.contactSearches.reduce(
+		(total, search) => total + search.candidates.length,
+		0
+	);
+	if (record.diagnostics.candidateCount !== candidateCount) {
+		fail('$.diagnostics.candidateCount', 'must equal the recorded candidate count');
+	}
+	const segmentCount = record.trajectories.reduce(
+		(total, trajectory) => total + trajectory.segments.length,
+		0
+	);
+	if (record.diagnostics.segmentCount !== segmentCount) {
+		fail('$.diagnostics.segmentCount', 'must equal the recorded trajectory segment count');
+	}
+	if (
+		record.terminalReason.time !== null &&
+		record.diagnostics.simulatedUntilTime !== record.terminalReason.time
+	) {
+		fail('$.diagnostics.simulatedUntilTime', 'must equal the terminal-reason time');
+	}
+	if (record.terminalReason.time === null && record.diagnostics.simulatedUntilTime !== 0) {
+		fail('$.diagnostics.simulatedUntilTime', 'must be zero when terminal time is unavailable');
+	}
+	const finalSegmentTime = record.trajectories
+		.flatMap(({ segments }) => segments)
+		.reduce<number | null>(
+			(latest, segment) => (latest === null ? segment.endTime : Math.max(latest, segment.endTime)),
+			null
+		);
+	if (finalSegmentTime !== null && finalSegmentTime !== record.diagnostics.simulatedUntilTime) {
+		fail('$.trajectories', 'must end at the simulated-until time');
+	}
+	if (record.events.some(({ time }) => time > record.diagnostics.simulatedUntilTime)) {
+		fail('$.events', 'must not contain an event after the simulated-until time');
+	}
+	const terminalEntry = record.diagnostics.entries.at(-1);
+	if (!terminalEntry || terminalEntry.code !== getTerminalDiagnosticCode(record.outcome)) {
+		fail(
+			'$.diagnostics.entries',
+			`must end with ${getTerminalDiagnosticCode(record.outcome)} for the terminal outcome`
+		);
+	}
+	validateTerminalReference(record);
+}
+
+function validateTerminalReference(record: SimulationRunRecord): void {
+	const reason = record.terminalReason;
+	if (reason.type === 'completion-region' || reason.type === 'escape-region') {
+		const region = record.input.scene.terminationRegions.find(({ id }) => id === reason.regionId);
+		const expectedPurpose = reason.type === 'completion-region' ? 'complete' : 'escape';
+		if (!region || region.purpose !== expectedPurpose) {
+			fail(
+				'$.terminalReason.regionId',
+				`must identify a ${expectedPurpose} termination region in the input scene`
+			);
+		}
+	}
+	if (reason.type === 'settled-supporting-surface') {
+		const policy = record.input.settings.settlement;
+		if (!policy) {
+			fail('$.input.settings.settlement', 'must be present for a settled outcome');
+		}
+		const collider = record.input.scene.staticColliders.find(({ id }) => id === reason.colliderId);
+		if (
+			!collider ||
+			collider.physicalShape.type !== 'line-segment' ||
+			!('surfaceRole' in collider) ||
+			collider.surfaceRole !== 'supporting-flat'
+		) {
+			fail('$.terminalReason.colliderId', 'must identify a declared supporting-flat line segment');
+		}
+		if (
+			reason.normalSeparationSpeed < 0 ||
+			reason.normalSeparationSpeed > policy.maximumNormalSeparationSpeed ||
+			reason.tangentialSpeed < 0 ||
+			reason.tangentialSpeed > policy.maximumTangentialSpeed
+		) {
+			fail('$.terminalReason', 'must satisfy the configured settlement speed thresholds');
+		}
+		const lastEvent = record.events.at(-1);
+		if (
+			!lastEvent ||
+			lastEvent.colliderId !== reason.colliderId ||
+			lastEvent.time !== reason.time ||
+			lastEvent.position[0] !== reason.position[0] ||
+			lastEvent.position[1] !== reason.position[1]
+		) {
+			fail(
+				'$.terminalReason',
+				'must agree with the final recorded contact on its supporting surface'
+			);
+		}
 	}
 }
 

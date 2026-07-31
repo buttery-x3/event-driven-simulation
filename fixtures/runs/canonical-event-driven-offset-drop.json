@@ -1,5 +1,5 @@
 {
-	"contractVersion": 4,
+	"contractVersion": 5,
 	"input": {
 		"scene": {
 			"id": "canonical-plinko-board",
@@ -643,6 +643,7 @@
 		}
 	},
 	"validity": "valid",
+	"outcome": "exited",
 	"terminalReason": {
 		"type": "completion-region",
 		"regionId": "termination-centre-exit",
@@ -2780,7 +2781,7 @@
 			},
 			{
 				"severity": "info",
-				"code": "COMPLETION_REGION",
+				"code": "RUN_EXITED",
 				"message": "Run reached termination-centre-exit.",
 				"time": 4.14479708431158,
 				"bodyId": "ball-primary"

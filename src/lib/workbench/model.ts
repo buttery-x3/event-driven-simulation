@@ -1,5 +1,6 @@
 import type {
 	RunTerminalReason,
+	RunOutcome,
 	RunValidity,
 	SimulationRunRecord,
 	Vec2
@@ -37,12 +38,9 @@ export interface SeverityCounts {
 	readonly error: number;
 }
 
-export function getInspectionMode(
-	validity: RunValidity,
-	terminalReason: RunTerminalReason
-): InspectionMode {
+export function getInspectionMode(validity: RunValidity, outcome: RunOutcome): InspectionMode {
 	if (validity === 'invalid') return 'diagnostics-only';
-	return terminalReason.type === 'completion-region' ? 'completed-replay' : 'recorded-prefix';
+	return outcome === 'exited' || outcome === 'settled' ? 'completed-replay' : 'recorded-prefix';
 }
 
 export function getInspectionModeLabel(mode: InspectionMode): string {
@@ -59,9 +57,13 @@ export function getInspectionModeLabel(mode: InspectionMode): string {
 export function getRunStatusLabel(reason: RunTerminalReason): string {
 	switch (reason.type) {
 		case 'completion-region':
-			return 'Complete';
+			return 'Exited';
 		case 'escape-region':
 			return 'Escaped';
+		case 'bounds-escape':
+			return 'Escaped bounds';
+		case 'settled-supporting-surface':
+			return 'Settled';
 		case 'no-future-event':
 			return 'No future event';
 		case 'time-limit':

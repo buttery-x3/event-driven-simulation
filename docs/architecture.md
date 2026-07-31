@@ -70,14 +70,15 @@ presentation settings because they cannot affect physical results. If the backdr
 collision geometry, its dimensions must move into `SceneDefinition` rather than remaining
 renderer-owned.
 
-Run validity is `valid` or `invalid` and is deliberately separate from the typed terminal reason.
-Completion and escape regions, no-future-event, time and event limits, unresolved search,
-zero-time loops, invalid state and numerical failure therefore remain explicit data rather than
-missing fields, booleans or exceptions.
+Run validity is `valid` or `invalid` and is deliberately separate from the stable terminal
+`outcome` and detailed terminal reason. The eight outcomes are `exited`, `escaped`, `settled`,
+`no-future-event`, `time-limit`, `event-limit`, `unresolved`, and `invalid`. Detailed reasons retain
+the specific region, bounds edge, support collider, collision-search failure or explicit limit.
 
-`contractVersion` is `4` after FLAME-29 separated prefix validity from terminal reason and added
-run-level search and count diagnostics. Earlier fixtures are rejected rather than silently
-interpreted as version 4; the prototype has no external compatibility requirement. The contracts intentionally use
+`contractVersion` is `5` after FLAME-33 added the stable outcome vocabulary, continuous supported
+bounds exits, narrow settlement details and cross-field validation. Earlier fixtures are rejected
+rather than silently interpreted as version 5; the prototype has no external compatibility
+requirement. The contracts intentionally use
 ordinary objects, arrays, strings, numbers and `null`. This keeps them JSON-serialisable and leaves
 the calculation implementation replaceable by a future worker or Rust/Wasm module without adding
 either transport today.
@@ -87,14 +88,14 @@ either transport today.
 Saved run fixtures live under the repository-level `fixtures/` directory so headless tests and the
 browser renderer consume the same files. `src/lib/simulation/run-fixture.ts` is the narrow runtime
 entry point from unknown JSON data to `SimulationRunRecord`. JSON parsing, typed fixture errors,
-contract-version recognition and version 4 structural validation live in separate implementation
+contract-version recognition and version 5 structural and consistency validation live in separate implementation
 modules behind that entry point. Version dispatch is intentionally explicit rather than a general
 schema registry.
 
 Loading a fixture establishes only that it matches the saved-run contract. It does not promote the
 terminal reason or make an incomplete run eligible for ordinary playback. The renderer still
 converts the record through `toRendererPlaybackInput` and applies `assertPlaybackEligible`, which
-admits only valid `completion-region` results.
+admits only valid `exited` and narrowly supported `settled` results.
 
 ## Headless event-driven run
 
@@ -125,7 +126,7 @@ zero-thickness physical segment contract.
 `src/lib/rendering/playback.ts` is the playback subsystem's narrow public entry point.
 Run-to-renderer adaptation and admission, recorded-frame evaluation, and presentation-clock control
 live in separate cohesive modules behind it. Admission rejects runs from ordinary playback unless
-validity is `valid` and the terminal reason is `completion-region`. The presentation clock owns only playback
+validity is `valid` and the outcome is `exited` or `settled`. The presentation clock owns only playback
 time: play, pause, restart and seek cannot change the run record.
 
 At each presentation time, the playback evaluator clamps to the recorded duration, selects the

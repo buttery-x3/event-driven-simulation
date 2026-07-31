@@ -40,9 +40,10 @@ const trajectories = [
 describe('simulation and replay contracts', () => {
 	it('round-trips a representative run record as plain JSON data', () => {
 		const run = {
-			contractVersion: 4,
+			contractVersion: 5,
 			input: prototypeSimulationInput,
 			validity: 'valid',
+			outcome: 'exited',
 			terminalReason: { type: 'completion-region', regionId: 'prototype-exit', time: 0.5 },
 			trajectories,
 			events: [],
@@ -53,6 +54,7 @@ describe('simulation and replay contracts', () => {
 
 		expect(restored).toEqual(run);
 		expect(restored.validity).toBe('valid');
+		expect(restored.outcome).toBe('exited');
 		expect(restored.terminalReason.type).toBe('completion-region');
 	});
 
@@ -60,6 +62,15 @@ describe('simulation and replay contracts', () => {
 		const reasons = [
 			{ type: 'completion-region', regionId: 'exit', time: 1 },
 			{ type: 'escape-region', regionId: 'escape', time: 1 },
+			{ type: 'bounds-escape', boundary: 'right', time: 1 },
+			{
+				type: 'settled-supporting-surface',
+				time: 1,
+				colliderId: 'floor',
+				position: [0, 0.1],
+				normalSeparationSpeed: 0,
+				tangentialSpeed: 0
+			},
 			{ type: 'event-limit', time: 1, limit: 10 },
 			{ type: 'time-limit', time: 1, limit: 1 },
 			{ type: 'unresolved-collision-search', time: 1, detail: 'uncertain root' },
@@ -72,10 +83,11 @@ describe('simulation and replay contracts', () => {
 
 	it('keeps renderer playback input serialisable and explicit about incomplete runs', () => {
 		const playback = {
-			contractVersion: 4,
+			contractVersion: 5,
 			scene: prototypeSimulationInput.scene,
 			initialDynamicBodies: prototypeSimulationInput.initialDynamicBodies,
 			validity: 'valid',
+			outcome: 'unresolved',
 			terminalReason: {
 				type: 'unresolved-collision-search',
 				time: 0.5,

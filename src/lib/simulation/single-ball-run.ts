@@ -1,5 +1,6 @@
 import type {
 	AxisAlignedTerminationRegion,
+	BoardBounds,
 	DiagnosticEntry,
 	InitialDynamicCircleBodyState,
 	MotionSegment,
@@ -8,6 +9,7 @@ import type {
 	RunValidity,
 	SimulationInput,
 	SimulationRunRecord,
+	StaticLineSegmentCollider,
 	Vec2
 } from './contracts';
 import {
@@ -17,6 +19,7 @@ import {
 	type FixedWorldContactQueryResult
 } from './fixed-world-contact';
 import { validateSceneDefinition } from './scene-validation';
+import { getRunOutcome, getTerminalDiagnosticCode } from './run-outcome';
 import { evaluateMotionSegmentPosition, evaluateMotionSegmentVelocity } from './trajectory';
 import { dotVec2 } from './vector';
 
@@ -28,7 +31,10 @@ interface EventState {
 
 interface TerminationEntry {
 	readonly time: number;
-	readonly region: AxisAlignedTerminationRegion;
+	readonly reason: Extract<
+		RunTerminalReason,
+		{ type: 'completion-region' | 'escape-region' | 'bounds-escape' }
+	>;
 }
 
 type TerminationSearchResult =
@@ -101,8 +107,10 @@ export function constructSingleBallRun(input: SimulationInput): SimulationRunRec
 		const terminationSearch = findEarliestTerminationEntry(
 			path,
 			input.scene.terminationRegions,
+			input.scene.bounds,
 			input.settings.maximumSimulationTime,
-			input.settings.tolerances.contactDistance
+			input.settings.tolerances.contactDistance,
+			input.settings.tolerances.eventTime
 		);
 
 		if (terminationSearch.type === 'numerical-failure') {
@@ -224,6 +232,20 @@ export function constructSingleBallRun(input: SimulationInput): SimulationRunRec
 				);
 			}
 
+			const settledReason = classifySettlement(
+				input,
+				body.physicalShape.radius,
+				contactResult.event.colliderId,
+				contactResult.event.time,
+				eventPosition,
+				contactResult.event.normal,
+				contactResult.candidate.contactPoint,
+				outgoingVelocity
+			);
+			if (settledReason) {
+				return finish('valid', settledReason, contactResult.event.time);
+			}
+
 			state = {
 				time: contactResult.event.time,
 				position: contactResult.event.position,
@@ -246,11 +268,7 @@ export function constructSingleBallRun(input: SimulationInput): SimulationRunRec
 				);
 			}
 			segments.push(terminalSegment);
-			return finish(
-				'valid',
-				terminationReason(terminationSearch.entry.region, terminationSearch.entry.time),
-				terminationSearch.entry.time
-			);
+			return finish('valid', terminationSearch.entry.reason, terminationSearch.entry.time);
 		}
 
 		if (isPermanentlyStationary(state, input.settings.gravity)) {
@@ -295,16 +313,18 @@ export function constructSingleBallRun(input: SimulationInput): SimulationRunRec
 		terminalReasonValue: RunTerminalReason,
 		simulatedUntilTime: number
 	): SimulationRunRecord {
-		entries.push(toTerminalDiagnostic(terminalReasonValue, bodyOrNull(input)));
+		const outcome = getRunOutcome(terminalReasonValue);
+		entries.push(toTerminalDiagnostic(outcome, terminalReasonValue, bodyOrNull(input)));
 		const candidateCount = contactSearches.reduce(
 			(total, search) => total + search.candidates.length,
 			0
 		);
 
 		return {
-			contractVersion: 4,
+			contractVersion: 5,
 			input,
 			validity,
+			outcome,
 			terminalReason: terminalReasonValue,
 			trajectories:
 				input.initialDynamicBodies.length === 1
@@ -350,6 +370,9 @@ function validateInput(input: SimulationInput): string | null {
 	if (!isFiniteVec2(body.position) || !isFiniteVec2(body.velocity)) {
 		return 'The dynamic body position and velocity must contain finite numbers.';
 	}
+	if (!isInsideBounds(body.position, input.scene.bounds)) {
+		return 'The dynamic body initial position must be inside the supported scene bounds.';
+	}
 
 	const settings = input.settings;
 	if (!isFiniteVec2(settings.gravity)) return 'Gravity must contain finite numbers.';
@@ -374,6 +397,21 @@ function validateInput(input: SimulationInput): string | null {
 	) {
 		return 'Contact-distance and event-time tolerances must be positive finite numbers.';
 	}
+	if (settings.settlement) {
+		const policy = settings.settlement;
+		if (
+			!Number.isFinite(policy.maximumNormalSeparationSpeed) ||
+			policy.maximumNormalSeparationSpeed < 0 ||
+			!Number.isFinite(policy.maximumTangentialSpeed) ||
+			policy.maximumTangentialSpeed < 0 ||
+			!Number.isFinite(policy.contactDistance) ||
+			policy.contactDistance <= 0 ||
+			!Number.isFinite(policy.minimumPressingAcceleration) ||
+			policy.minimumPressingAcceleration <= 0
+		) {
+			return 'Settlement thresholds must be finite, with non-negative speed thresholds and positive distance and pressing-acceleration thresholds.';
+		}
+	}
 
 	return null;
 }
@@ -381,15 +419,20 @@ function validateInput(input: SimulationInput): string | null {
 function findEarliestTerminationEntry(
 	segment: MotionSegment,
 	regions: readonly AxisAlignedTerminationRegion[],
+	bounds: BoardBounds,
 	searchUntilTime: number,
-	tolerance: number
+	tolerance: number,
+	eventTimeTolerance: number
 ): TerminationSearchResult {
 	const candidates: TerminationEntry[] = [];
 	const duration = searchUntilTime - segment.startTime;
 
 	for (const region of regions) {
 		if (contains(region, segment.startPosition, tolerance)) {
-			candidates.push({ time: segment.startTime, region });
+			candidates.push({
+				time: segment.startTime,
+				reason: terminationReason(region, segment.startTime)
+			});
 			continue;
 		}
 
@@ -423,16 +466,33 @@ function findEarliestTerminationEntry(
 						detail: `Termination-region crossing state for ${region.id} was not finite.`
 					};
 				}
-				if (contains(region, position, tolerance)) candidates.push({ time, region });
+				if (contains(region, position, tolerance)) {
+					candidates.push({ time, reason: terminationReason(region, time) });
+				}
 			}
 		}
 	}
 
+	const boundsCandidates = findBoundsExitCandidates(
+		segment,
+		bounds,
+		searchUntilTime,
+		eventTimeTolerance
+	);
+	if (boundsCandidates === null) {
+		return {
+			type: 'numerical-failure',
+			detail: 'Supported-bounds crossings could not be solved numerically.'
+		};
+	}
+	candidates.push(...boundsCandidates);
+
 	candidates.sort(
 		(left, right) =>
 			left.time - right.time ||
-			Number(left.region.purpose === 'escape') - Number(right.region.purpose === 'escape') ||
-			left.region.id.localeCompare(right.region.id)
+			Number(left.reason.type !== 'completion-region') -
+				Number(right.reason.type !== 'completion-region') ||
+			terminationKey(left.reason).localeCompare(terminationKey(right.reason))
 	);
 
 	return candidates[0] ? { type: 'entry', entry: candidates[0] } : { type: 'none' };
@@ -524,7 +584,10 @@ function contains(
 	);
 }
 
-function terminationReason(region: AxisAlignedTerminationRegion, time: number): RunTerminalReason {
+function terminationReason(
+	region: AxisAlignedTerminationRegion,
+	time: number
+): Extract<RunTerminalReason, { type: 'completion-region' | 'escape-region' }> {
 	return region.purpose === 'complete'
 		? { type: 'completion-region', regionId: region.id, time }
 		: { type: 'escape-region', regionId: region.id, time };
@@ -537,6 +600,118 @@ function isPermanentlyStationary(state: EventState, acceleration: Vec2): boolean
 		acceleration[0] === 0 &&
 		acceleration[1] === 0
 	);
+}
+
+function findBoundsExitCandidates(
+	segment: MotionSegment,
+	bounds: BoardBounds,
+	searchUntilTime: number,
+	eventTimeTolerance: number
+): readonly TerminationEntry[] | null {
+	const duration = searchUntilTime - segment.startTime;
+	const boundaries = [
+		{ axis: 0 as const, value: -bounds.width / 2, boundary: 'left' as const, direction: -1 },
+		{ axis: 0 as const, value: bounds.width / 2, boundary: 'right' as const, direction: 1 },
+		{ axis: 1 as const, value: 0, boundary: 'bottom' as const, direction: -1 },
+		{ axis: 1 as const, value: bounds.height, boundary: 'top' as const, direction: 1 }
+	];
+	const candidates: TerminationEntry[] = [];
+
+	for (const boundary of boundaries) {
+		const roots = solveCoordinateCrossings(
+			0.5 * segment.acceleration[boundary.axis],
+			segment.startVelocity[boundary.axis],
+			segment.startPosition[boundary.axis] - boundary.value
+		);
+		if (roots === null) return null;
+
+		for (const elapsed of roots) {
+			if (elapsed <= eventTimeTolerance || elapsed > duration) continue;
+			const time = segment.startTime + elapsed;
+			const velocity = evaluateMotionSegmentVelocity(segment, time);
+			const outwardSpeed = velocity[boundary.axis] * boundary.direction;
+			const outwardAcceleration = segment.acceleration[boundary.axis] * boundary.direction;
+			if (
+				!isFiniteVec2(velocity) ||
+				(outwardSpeed <= eventTimeTolerance && outwardAcceleration <= 0)
+			) {
+				continue;
+			}
+			candidates.push({
+				time,
+				reason: { type: 'bounds-escape', boundary: boundary.boundary, time }
+			});
+		}
+	}
+
+	return candidates;
+}
+
+function terminationKey(reason: TerminationEntry['reason']): string {
+	switch (reason.type) {
+		case 'completion-region':
+		case 'escape-region':
+			return `${reason.type}:${reason.regionId}`;
+		case 'bounds-escape':
+			return `${reason.type}:${reason.boundary}`;
+	}
+}
+
+function isInsideBounds(position: Vec2, bounds: BoardBounds): boolean {
+	return (
+		position[0] >= -bounds.width / 2 &&
+		position[0] <= bounds.width / 2 &&
+		position[1] >= 0 &&
+		position[1] <= bounds.height
+	);
+}
+
+function classifySettlement(
+	input: SimulationInput,
+	ballRadius: number,
+	colliderId: string,
+	time: number,
+	position: Vec2,
+	normal: Vec2,
+	contactPoint: Vec2,
+	outgoingVelocity: Vec2
+): Extract<RunTerminalReason, { type: 'settled-supporting-surface' }> | null {
+	const policy = input.settings.settlement;
+	if (!policy) return null;
+
+	const collider = input.scene.staticColliders.find(
+		(candidate): candidate is StaticLineSegmentCollider =>
+			candidate.id === colliderId && candidate.physicalShape.type === 'line-segment'
+	);
+	if (!collider || collider.surfaceRole !== 'supporting-flat') return null;
+
+	const normalSeparationSpeed = dotVec2(outgoingVelocity, normal);
+	const tangent: Vec2 = [-normal[1], normal[0]];
+	const tangentialSpeed = Math.abs(dotVec2(outgoingVelocity, tangent));
+	const pressingAcceleration = -dotVec2(input.settings.gravity, normal);
+	const contactSeparation = Math.hypot(
+		position[0] - contactPoint[0],
+		position[1] - contactPoint[1]
+	);
+
+	if (
+		normalSeparationSpeed < -input.settings.tolerances.eventTime ||
+		normalSeparationSpeed > policy.maximumNormalSeparationSpeed ||
+		tangentialSpeed > policy.maximumTangentialSpeed ||
+		pressingAcceleration < policy.minimumPressingAcceleration ||
+		Math.abs(contactSeparation - ballRadius) > policy.contactDistance
+	) {
+		return null;
+	}
+
+	return {
+		type: 'settled-supporting-surface',
+		time,
+		colliderId,
+		position,
+		normalSeparationSpeed,
+		tangentialSpeed
+	};
 }
 
 function hasFiniteEndState(segment: MotionSegment): boolean {
@@ -555,13 +730,14 @@ function bodyOrNull(input: SimulationInput): InitialDynamicCircleBodyState | nul
 }
 
 function toTerminalDiagnostic(
+	outcome: SimulationRunRecord['outcome'],
 	reason: RunTerminalReason,
 	body: InitialDynamicCircleBodyState | null
 ): DiagnosticEntry {
 	const severity =
-		reason.type === 'completion-region'
+		outcome === 'exited' || outcome === 'settled'
 			? 'info'
-			: reason.type === 'invalid-state' || reason.type === 'numerical-failure'
+			: outcome === 'invalid' || outcome === 'unresolved'
 				? 'error'
 				: 'warning';
 	const message =
@@ -569,11 +745,13 @@ function toTerminalDiagnostic(
 			? reason.detail
 			: reason.type === 'completion-region' || reason.type === 'escape-region'
 				? `Run reached ${reason.regionId}.`
-				: `Run reached the configured ${reason.type}.`;
+				: reason.type === 'settled-supporting-surface'
+					? `Run settled on ${reason.colliderId}.`
+					: `Run reached the configured ${reason.type}.`;
 
 	return {
 		severity,
-		code: reason.type.toUpperCase().replaceAll('-', '_'),
+		code: getTerminalDiagnosticCode(outcome),
 		message,
 		time: reason.time,
 		bodyId: body?.id ?? null

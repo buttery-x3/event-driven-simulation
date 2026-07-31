@@ -65,7 +65,7 @@ test('loads a local saved run and retains it after typed validation failures', a
 		page.getByLabel('Current run source').getByText('Local file · local-run.json', { exact: true })
 	).toBeVisible();
 	await expect(
-		page.getByText('Loaded local-run.json · contract v4', { exact: true })
+		page.getByText('Loaded local-run.json · contract v5', { exact: true })
 	).toBeVisible();
 
 	await expectRejectedCandidate(page, {
@@ -80,7 +80,7 @@ test('loads a local saved run and retains it after typed validation failures', a
 	});
 	await expectRejectedCandidate(page, {
 		name: 'invalid-record.json',
-		content: JSON.stringify({ contractVersion: 4 }),
+		content: JSON.stringify({ contractVersion: 5 }),
 		code: 'INVALID_RUN_RECORD'
 	});
 
@@ -94,12 +94,31 @@ test('keeps a failed calculation distinct while exposing its recorded prefix', a
 	await page.goto('/');
 
 	const unresolved = JSON.parse(await readFile(canonicalFixturePath, 'utf8')) as {
+		outcome: string;
 		terminalReason: unknown;
+		diagnostics: {
+			simulatedUntilTime: number;
+			entries: Array<{
+				severity: string;
+				code: string;
+				message: string;
+				time: number | null;
+				bodyId: string | null;
+			}>;
+		};
 	};
+	unresolved.outcome = 'unresolved';
 	unresolved.terminalReason = {
 		type: 'unresolved-collision-search',
-		time: 0,
+		time: unresolved.diagnostics.simulatedUntilTime,
 		detail: 'The solver retained a validated prefix for inspection.'
+	};
+	unresolved.diagnostics.entries[unresolved.diagnostics.entries.length - 1] = {
+		severity: 'error',
+		code: 'RUN_UNRESOLVED',
+		message: 'The solver retained a validated prefix for inspection.',
+		time: unresolved.diagnostics.simulatedUntilTime,
+		bodyId: 'ball-primary'
 	};
 
 	await chooseFile(page, {
@@ -112,7 +131,9 @@ test('keeps a failed calculation distinct while exposing its recorded prefix', a
 	await expect(prefix).toBeVisible();
 	await expect(prefix.getByText('Recorded prefix only')).toBeVisible();
 	await expect(
-		page.getByText('The solver retained a validated prefix for inspection.')
+		page
+			.getByLabel('Run inspector')
+			.getByText('The solver retained a validated prefix for inspection.')
 	).toBeVisible();
 
 	const controls = page.getByRole('region', { name: 'Replay controls' });

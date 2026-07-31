@@ -91,10 +91,11 @@ describe('render scene view-model adaptation', () => {
 	it('keeps playback dimensions consistent with the simulation input', () => {
 		const input = withBodyRadius(0.47);
 		const playback = {
-			contractVersion: 4,
+			contractVersion: 5,
 			scene: input.scene,
 			initialDynamicBodies: input.initialDynamicBodies,
 			validity: 'valid',
+			outcome: 'exited',
 			terminalReason: {
 				type: 'completion-region',
 				regionId: 'termination-centre-exit',

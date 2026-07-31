@@ -31,7 +31,7 @@
 	});
 	let loadFeedback = $state.raw<LoadFeedback | null>(null);
 	let playback = $derived(toRendererPlaybackInput(currentRun));
-	let inspectionMode = $derived(getInspectionMode(currentRun.validity, currentRun.terminalReason));
+	let inspectionMode = $derived(getInspectionMode(currentRun.validity, currentRun.outcome));
 	let clock = new PlaybackClock(initialRun.diagnostics.simulatedUntilTime);
 	let replayTime = $state(0);
 	let playing = $state(false);
