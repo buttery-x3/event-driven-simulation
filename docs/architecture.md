@@ -174,11 +174,23 @@ responsibilities by state ownership and independently evolving regions:
 
 - `SimulationWorkbench` coordinates the last accepted run, source, load feedback, inspection mode,
   event selection and presentation clock;
+- `LaunchControls` edits a launch draft, while `launch-controls.ts` converts velocity controls,
+  validates the draft and creates a deep immutable submitted input before invoking the headless
+  simulator;
 - `SimulationViewport` owns Three.js mount, update and disposal;
 - application bar and playback controls expose typed callbacks rather than reaching into renderer
   state; and
 - the run inspector, event timeline, diagnostics console and metrics panel render read-only views
   of the accepted run.
+
+Draft input, submitted input, returned run record and presentation clock are distinct state. Preset
+selection and field editing cannot mutate an accepted run. The explicit Run action is the only path
+from a launch draft to simulation; renderer playback still receives only the returned run through
+`toRendererPlaybackInput`.
+
+`simulation-input-fixture.ts` provides the versioned JSON boundary for scenario inputs. It reuses
+the version 5 structural input validator and then applies the single-ball semantic validator.
+Saved run records continue to use the independent `run-fixture.ts` boundary.
 
 The current styling policy is Svelte component-scoped CSS plus global CSS custom properties.
 `src/app.css` contains the reset, document defaults and shared tokens for colour, spacing,

@@ -1,11 +1,20 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { PlaybackClock, toRendererPlaybackInput } from '$lib/rendering/playback';
-	import type { SimulationRunRecord } from '$lib/simulation/contracts';
+	import type { SimulationInput, SimulationRunRecord } from '$lib/simulation/contracts';
+	import {
+		canonicalPlinkoScenarios,
+		defaultCanonicalPlinkoScenario
+	} from '$lib/simulation/scenario-catalogue';
 	import { parseSimulationRunFixture, RunFixtureError } from '$lib/simulation/run-fixture';
+	import {
+		parseSimulationInputFixture,
+		serializeSimulationInputFixture
+	} from '$lib/simulation/simulation-input-fixture';
 	import ApplicationBar from './ApplicationBar.svelte';
 	import DiagnosticsConsole from './DiagnosticsConsole.svelte';
 	import EventTimeline from './EventTimeline.svelte';
+	import LaunchControls from './LaunchControls.svelte';
 	import MetricsPanel from './MetricsPanel.svelte';
 	import PlaybackControls from './PlaybackControls.svelte';
 	import RunInspector from './RunInspector.svelte';
@@ -16,6 +25,13 @@
 		type RepositoryRunFixture,
 		type RunSource
 	} from './model';
+	import {
+		createLaunchDraft,
+		executeLaunchSubmission,
+		prepareLaunchSubmission,
+		type LaunchDraft,
+		type LaunchValidationError
+	} from './launch-controls';
 
 	let { fixtures }: { fixtures: readonly RepositoryRunFixture[] } = $props();
 
@@ -30,6 +46,14 @@
 		name: initialFixture.name
 	});
 	let loadFeedback = $state.raw<LoadFeedback | null>(null);
+	let selectedScenarioId = $state<string | null>(defaultCanonicalPlinkoScenario.id);
+	let launchBaseInput = $state.raw<SimulationInput>(defaultCanonicalPlinkoScenario.input);
+	let launchDraft = $state.raw<LaunchDraft>(
+		createLaunchDraft(defaultCanonicalPlinkoScenario.input)
+	);
+	let launchErrors = $state.raw<readonly LaunchValidationError[]>([]);
+	let launchFeedback = $state<string | null>(null);
+	let submittedInput = $state.raw<SimulationInput | null>(null);
 	let playback = $derived(toRendererPlaybackInput(currentRun));
 	let inspectionMode = $derived(getInspectionMode(currentRun.validity, currentRun.outcome));
 	let clock = new PlaybackClock(initialRun.diagnostics.simulatedUntilTime);
@@ -93,6 +117,88 @@
 		replayTime = 0;
 		playing = false;
 		selectedEventIndex = null;
+	}
+
+	function selectScenario(scenarioId: string): void {
+		const scenario = canonicalPlinkoScenarios.find(({ id }) => id === scenarioId);
+		if (!scenario) return;
+
+		selectedScenarioId = scenario.id;
+		launchBaseInput = scenario.input;
+		launchDraft = createLaunchDraft(scenario.input);
+		launchErrors = [];
+		launchFeedback = `Draft reset to ${scenario.name}. Current run unchanged until Run.`;
+	}
+
+	function resetCanonicalDefault(): void {
+		selectScenario(defaultCanonicalPlinkoScenario.id);
+	}
+
+	function changeLaunchDraft(nextDraft: LaunchDraft): void {
+		launchDraft = nextDraft;
+		launchErrors = [];
+		launchFeedback = null;
+	}
+
+	function runDraftScenario(): void {
+		const submission = prepareLaunchSubmission(launchBaseInput, launchDraft);
+		if (!submission.valid) {
+			launchErrors = submission.errors;
+			launchFeedback = null;
+			return;
+		}
+
+		const calculation = executeLaunchSubmission(submission.input);
+		submittedInput = calculation.submittedInput;
+		const run = calculation.run;
+		const scenarioName =
+			canonicalPlinkoScenarios.find(({ id }) => id === selectedScenarioId)?.name ??
+			'Loaded custom scenario';
+		acceptRun(run, { kind: 'simulation', name: scenarioName });
+		launchErrors = [];
+		launchFeedback = `Run calculated · ${run.outcome} · ${run.events.length} events · ${run.diagnostics.simulationWallTimeMilliseconds} ms wall time.`;
+	}
+
+	async function loadScenarioFile(file: File): Promise<void> {
+		try {
+			const input = parseSimulationInputFixture(await file.text());
+			selectedScenarioId = null;
+			launchBaseInput = input;
+			launchDraft = createLaunchDraft(input);
+			launchErrors = [];
+			launchFeedback = `Loaded ${file.name}. Current run unchanged until Run.`;
+		} catch (error) {
+			launchErrors = [
+				{
+					field: 'scenario',
+					code: error instanceof RunFixtureError ? error.code : 'FILE_READ_ERROR',
+					message:
+						error instanceof Error ? error.message : 'Could not read the scenario input file.'
+				}
+			];
+			launchFeedback = null;
+		}
+	}
+
+	function saveScenario(): void {
+		const submission = prepareLaunchSubmission(launchBaseInput, launchDraft);
+		if (!submission.valid) {
+			launchErrors = submission.errors;
+			launchFeedback = null;
+			return;
+		}
+
+		const blob = new Blob([serializeSimulationInputFixture(submission.input)], {
+			type: 'application/json'
+		});
+		const url = URL.createObjectURL(blob);
+		const link = document.createElement('a');
+		link.href = url;
+		link.download = `${selectedScenarioId ?? 'custom-scenario'}-input.json`;
+		link.click();
+		URL.revokeObjectURL(url);
+		launchErrors = [];
+		launchFeedback = `Saved ${link.download}.`;
 	}
 
 	function selectRepositoryFixture(fixtureId: string): void {
@@ -164,6 +270,21 @@
 		feedback={loadFeedback}
 		onSelectFixture={selectRepositoryFixture}
 		onLoadFile={loadLocalFile}
+	/>
+
+	<LaunchControls
+		scenarios={canonicalPlinkoScenarios}
+		{selectedScenarioId}
+		draft={launchDraft}
+		errors={launchErrors}
+		feedback={launchFeedback}
+		lastSubmittedInput={submittedInput}
+		onSelectScenario={selectScenario}
+		onResetDefault={resetCanonicalDefault}
+		onChangeDraft={changeLaunchDraft}
+		onRun={runDraftScenario}
+		onLoadScenario={loadScenarioFile}
+		onSaveScenario={saveScenario}
 	/>
 
 	<div class="primary-workspace">

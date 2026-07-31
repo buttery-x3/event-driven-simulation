@@ -51,6 +51,44 @@ test('presents a calculated run as a diagnostic workbench and seeks exact events
 	await expect(controls.getByRole('button', { name: 'Play' })).toBeVisible();
 });
 
+test('selects, edits, runs and replays a canonical launch without mutating the prior run', async ({
+	page
+}) => {
+	await page.goto('/');
+
+	await page.getByLabel('Scenario preset').selectOption('offset-drop');
+	await expect(
+		page.getByText('Draft reset to Offset drop. Current run unchanged until Run.')
+	).toBeVisible();
+	await expect(
+		page
+			.getByLabel('Current run source')
+			.getByText('Repository fixture · canonical-event-driven-offset-drop.json', { exact: true })
+	).toBeVisible();
+
+	const position = page.getByRole('group', { name: 'Initial position (m)' });
+	await position.getByLabel('X').fill('0.44');
+	await page.getByLabel('Components').check();
+	await page.getByLabel('Velocity X (m/s)').fill('0');
+	await page.getByLabel('Velocity Y (m/s)').fill('0');
+	await page.getByRole('button', { name: 'Run simulation' }).click();
+
+	await expect(
+		page
+			.getByLabel('Current run source')
+			.getByText('Calculated scenario · Offset drop', { exact: true })
+	).toBeVisible();
+	await expect(
+		page.getByText(/^Run calculated · exited · \d+ events · \d+ ms wall time\.$/)
+	).toBeVisible();
+	await expect(page.getByText('Calculation completed before replay began.')).toBeVisible();
+	await expect(page.getByRole('button', { name: /^Event 1, contact at / })).toBeVisible();
+
+	const controls = page.getByRole('region', { name: 'Replay controls' });
+	await controls.getByRole('button', { name: 'Play' }).click();
+	await expect(controls.getByRole('button', { name: 'Pause' })).toBeVisible();
+});
+
 test('loads a local saved run and retains it after typed validation failures', async ({ page }) => {
 	await page.goto('/');
 

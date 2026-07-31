@@ -52,8 +52,10 @@
 				onchange={selectFixture}
 				disabled={feedback?.kind === 'reading'}
 			>
-				{#if source.kind === 'local'}
-					<option value="">Local file selected</option>
+				{#if source.kind !== 'repository'}
+					<option value=""
+						>{source.kind === 'local' ? 'Local file selected' : 'Calculated scenario'}</option
+					>
 				{/if}
 				{#each fixtures as fixture (fixture.id)}
 					<option value={fixture.id}>{fixture.name}</option>

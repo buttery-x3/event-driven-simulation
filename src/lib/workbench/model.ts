@@ -14,7 +14,8 @@ export interface RepositoryRunFixture {
 
 export type RunSource =
 	| { readonly kind: 'repository'; readonly id: string; readonly name: string }
-	| { readonly kind: 'local'; readonly name: string };
+	| { readonly kind: 'local'; readonly name: string }
+	| { readonly kind: 'simulation'; readonly name: string };
 
 export type LoadFeedback =
 	| { readonly kind: 'reading'; readonly message: string }
@@ -115,5 +116,11 @@ export function formatVector(vector: Vec2): string {
 }
 
 export function formatSource(source: RunSource): string {
-	return `${source.kind === 'repository' ? 'Repository fixture' : 'Local file'} · ${source.name}`;
+	const label =
+		source.kind === 'repository'
+			? 'Repository fixture'
+			: source.kind === 'local'
+				? 'Local file'
+				: 'Calculated scenario';
+	return `${label} · ${source.name}`;
 }

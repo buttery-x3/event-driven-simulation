@@ -49,5 +49,8 @@ describe('workbench run presentation model', () => {
 		expect(formatSource({ kind: 'local', name: 'download.json' })).toBe(
 			'Local file · download.json'
 		);
+		expect(formatSource({ kind: 'simulation', name: 'Offset drop' })).toBe(
+			'Calculated scenario · Offset drop'
+		);
 	});
 });

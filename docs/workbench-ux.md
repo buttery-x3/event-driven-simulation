@@ -2,18 +2,18 @@
 
 ## Purpose and scope
 
-This document defines the browser prototype as a diagnostics workbench for saved simulation runs.
-It is the implementation specification for FLAME-23. The workbench loads, validates, replays and
-inspects calculated trajectory data; it is not a project landing page and does not run or edit a
-simulation scenario.
+This document defines the browser prototype as a diagnostics and experiment workbench for saved and
+newly calculated simulation runs. FLAME-23 established the replay and inspection surface; FLAME-31
+adds explicit canonical-scenario launch controls that invoke the real headless single-ball
+simulator.
 
 The large headline, explanatory essay and decorative `simulation -> completed run -> renderer`
 strip in the current route are removed. A compact application bar provides identity and source
 controls. The viewport is the largest region, while exact run, event and diagnostic data remain
 available around it.
 
-Scenario authoring, invoking the real solver and exporting scenarios or runs belong to FLAME-24.
-FLAME-23 must not add placeholder controls for those capabilities.
+The workbench edits only the supported initial position and velocity. It does not provide arbitrary
+board construction, peg dragging, multi-ball controls or continuous recalculation.
 
 ## Product principles
 
@@ -55,12 +55,14 @@ Never call replay progression “simulation progress”.
 
 ## Workbench session state
 
-The workbench has three independent state axes. Components must not collapse them into one
-“status”.
+The workbench has independent calculation and presentation state. Components must not collapse
+them into one “status”.
 
-1. **Load state:** idle, reading, accepted or rejected.
-2. **Calculation outcome:** `run.validity`, `run.outcome`, and `run.terminalReason` stored in the current run.
-3. **Transport state:** paused, playing or ended for the current replay cursor.
+1. **Draft input:** editable controls that have no effect on the current run.
+2. **Submitted input:** an immutable snapshot created only by an explicit Run action.
+3. **Load state:** idle, reading, accepted or rejected.
+4. **Calculation outcome:** `run.validity`, `run.outcome`, and `run.terminalReason` stored in the current run.
+5. **Transport state:** paused, playing or ended for the current replay cursor.
 
 The session retains:
 
@@ -72,6 +74,28 @@ The session retains:
 
 A rejected load attempt changes only load feedback. It does not change the current run, source,
 cursor, viewport, event selection or diagnostics.
+
+### Launch controls
+
+The launch panel exposes the five canonical scenario presets and a reset to the canonical default.
+Selecting a preset replaces the draft but does not calculate or replace the current run. Position
+uses labelled `x` and `y` metre inputs. Velocity can be entered either as speed plus angle or as
+direct `x` and `y` metre-per-second components.
+
+Angles are measured in degrees from positive `x`, with positive angles rotating toward positive
+`y`. The workbench converts speed and angle with `vx = speed × cos(angle)` and
+`vy = speed × sin(angle)`, normalising floating-point components smaller than `1e-15` to zero.
+Switching velocity entry modes preserves the represented vector.
+
+Run validates field syntax and the supported single-ball scenario policy, creates a deep,
+immutable input snapshot, calls `constructSingleBallRun`, and atomically accepts the returned
+record. Invalid draft input leaves the current run and transport untouched. A valid but unresolved
+calculation is accepted in recorded-prefix mode rather than ordinary playback.
+
+Scenario input files use a versioned JSON envelope with `contractVersion: 5`,
+`documentType: "simulation-input"` and an `input` value conforming to `SimulationInput`. Loading
+passes through structural and single-ball semantic validation. Saved run files continue through
+the separate saved-run boundary.
 
 ### Inspection modes
 
@@ -432,6 +456,9 @@ frame then flows to the viewport; the event list never manipulates a mesh.
 
 ### Available now
 
+- canonical scenario selection and precise initial-position/velocity editing;
+- explicit headless simulation runs from immutable submitted input;
+- versioned scenario input load/save;
 - contract version;
 - scene ID and source name/kind;
 - run validity and every typed terminal reason;
@@ -440,6 +467,8 @@ frame then flows to the viewport; the event list never manipulates a mesh.
 - trajectories and segment counts;
 - full contact-event records with time, participants, position and normal;
 - solver iteration count;
+- solver candidate and segment counts;
+- solver calculation duration;
 - simulated-until time;
 - structured diagnostics; and
 - playable-until time derived by the current renderer adapter.
@@ -453,13 +482,10 @@ frame then flows to the viewport; the event list never manipulates a mesh.
 
 ### Deferred or unavailable
 
-- solver calculation duration;
 - saved-run validation duration;
 - frame time and FPS;
 - memory, lookahead or rolling-horizon metrics;
-- export/save actions;
-- scenario input editing;
-- invoking or rerunning the real solver;
+- saved-run export;
 - comparison between runs; and
 - remote storage or fixture discovery.
 

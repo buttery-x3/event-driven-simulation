@@ -30,8 +30,16 @@
 			<dd>{formatRecordedSeconds(run.diagnostics.simulatedUntilTime)}</dd>
 		</div>
 		<div>
-			<dt>Events / segments <span>Derived</span></dt>
+			<dt>Events / segments <span>Recorded</span></dt>
 			<dd>{counts.events} / {counts.segments}</dd>
+		</div>
+		<div>
+			<dt>Candidates <span>Recorded</span></dt>
+			<dd>{run.diagnostics.candidateCount}</dd>
+		</div>
+		<div>
+			<dt>Calculation duration <span>Recorded</span></dt>
+			<dd>{run.diagnostics.simulationWallTimeMilliseconds} ms</dd>
 		</div>
 		<div>
 			<dt>Diagnostics I / W / E <span>Derived</span></dt>
@@ -42,7 +50,6 @@
 	<div class="unavailable">
 		<h3>Not recorded</h3>
 		<ul>
-			<li>Calculation duration</li>
 			<li>Validation duration</li>
 			<li>Renderer frame time / FPS</li>
 			<li>Lookahead / horizon performance</li>
