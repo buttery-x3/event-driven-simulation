@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { describe, expect, it, vi } from 'vitest';
-import { prototypeSimulationInput } from '$lib/simulation/prototype-input';
-import { defaultCanonicalPlinkoScenario } from '$lib/simulation/scenario-catalogue';
+import { prototypeSimulationInput } from '$lib/simulation/world';
+import { defaultCanonicalPlinkoScenario } from '$lib/simulation/world';
 import { toRenderSceneViewModel } from './render-scene-data';
 import { createSceneObjectResources } from './scene-object-resources';
 

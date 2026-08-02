@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { RendererPlaybackInput, SimulationInput } from '$lib/simulation/contracts';
-import { generateSyntheticRun } from '$lib/simulation/synthetic-run';
+import { generateSyntheticRun } from '$lib/simulation/run';
 import {
 	assertPlaybackEligible,
 	assertRecordedInspectionEligible,

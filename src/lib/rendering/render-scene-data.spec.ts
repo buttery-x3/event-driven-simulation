@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { RendererPlaybackInput, SimulationInput } from '$lib/simulation/contracts';
-import { canonicalPlinkoBoard } from '$lib/simulation/canonical-board';
-import { prototypeSimulationInput } from '$lib/simulation/prototype-input';
-import { defaultCanonicalPlinkoScenario } from '$lib/simulation/scenario-catalogue';
+import { canonicalPlinkoBoard } from '$lib/simulation/world';
+import { prototypeSimulationInput } from '$lib/simulation/world';
+import { defaultCanonicalPlinkoScenario } from '$lib/simulation/world';
 import { toRenderSceneViewModel } from './render-scene-data';
 
 function withBodyRadius(radius: number): SimulationInput {

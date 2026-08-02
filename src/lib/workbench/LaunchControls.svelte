@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { SimulationInput } from '$lib/simulation/contracts';
-	import type { SimulationScenario } from '$lib/simulation/scenario-catalogue';
+	import type { SimulationScenario } from '$lib/simulation/world';
 	import type { LaunchDraft, LaunchField, LaunchValidationError } from './launch-controls';
 	import { changeVelocityEntryMode } from './launch-controls';
 

@@ -83,6 +83,29 @@ export default defineConfig(
 		}
 	},
 	{
+		files: ['src/lib/**/*.{js,ts}'],
+		ignores: ['src/lib/**/__tests__/**', 'src/lib/**/*.{spec,test}.{js,ts}'],
+		rules: {
+			'max-lines': [
+				'error',
+				{
+					max: 500,
+					skipBlankLines: true,
+					skipComments: true
+				}
+			],
+			'max-lines-per-function': [
+				'error',
+				{
+					max: 200,
+					skipBlankLines: true,
+					skipComments: true,
+					IIFEs: true
+				}
+			]
+		}
+	},
+	{
 		files: ['src/lib/rendering/**/*.{js,ts}'],
 		ignores: ['src/lib/rendering/**/*.{spec,test}.{js,ts}'],
 		rules: {
@@ -91,12 +114,12 @@ export default defineConfig(
 				{
 					patterns: [
 						{
-							regex: '^\\$lib/simulation/(?!contracts$|trajectory$)',
+							regex: '^\\$lib/simulation/(?!contracts$|motion$)',
 							message:
 								'Rendering may consume simulation contracts and the canonical trajectory evaluator, not other simulation implementations.'
 						},
 						{
-							regex: '^(?:\\.\\./)+simulation/(?!contracts(?:\\.ts)?$|trajectory(?:\\.ts)?$)',
+							regex: '^(?:\\.\\./)+simulation/(?!contracts(?:\\.ts)?$|motion(?:\\.ts)?$)',
 							message:
 								'Rendering may consume simulation contracts and the canonical trajectory evaluator, not other simulation implementations.'
 						}
@@ -106,7 +129,7 @@ export default defineConfig(
 		}
 	},
 	{
-		files: ['src/routes/**/*.{js,ts,svelte}'],
+		files: ['src/routes/**/*.{js,ts,svelte}', 'src/lib/workbench/**/*.{js,ts,svelte}'],
 		rules: {
 			'no-restricted-imports': [
 				'error',
@@ -118,7 +141,7 @@ export default defineConfig(
 							message: 'Application routes must use the rendering/playback public entry point.'
 						},
 						{
-							regex: '^\\$lib/simulation/run-fixture-(?:error|json|v3|version)(?:\\.ts)?$',
+							regex: '^\\$lib/simulation/serialization/run-record/.+',
 							message: 'Application routes must use the simulation/run-fixture public entry point.'
 						}
 					]

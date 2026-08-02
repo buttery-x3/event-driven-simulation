@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canonicalPlinkoScenarios } from '$lib/simulation/scenario-catalogue';
+import { canonicalPlinkoScenarios } from '$lib/simulation/world';
 import {
 	changeVelocityEntryMode,
 	convertSpeedAndAngleToVelocity,

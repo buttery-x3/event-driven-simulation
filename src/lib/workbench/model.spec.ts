@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import canonicalFixtureJson from '../../../fixtures/runs/canonical-event-driven-offset-drop.json?raw';
-import { parseSimulationRunFixture } from '$lib/simulation/run-fixture';
+import { parseSimulationRunFixture } from '$lib/simulation/serialization/run-record';
 import {
 	formatRecordedSeconds,
 	formatSource,

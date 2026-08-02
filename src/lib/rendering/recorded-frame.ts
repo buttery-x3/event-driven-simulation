@@ -6,7 +6,7 @@ import type {
 	RendererPlaybackInput,
 	Vec2
 } from '$lib/simulation/contracts';
-import { evaluateMotionSegmentPosition } from '$lib/simulation/trajectory';
+import { evaluateMotionSegmentPosition } from '$lib/simulation/motion';
 import { assertRecordedInspectionEligible } from './playback-admission';
 import { clampPlaybackTime } from './playback-clock';
 

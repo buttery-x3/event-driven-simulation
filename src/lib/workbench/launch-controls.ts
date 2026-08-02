@@ -3,7 +3,7 @@ import {
 	constructSingleBallRun,
 	validateSingleBallInput,
 	type SimulationInputDiagnostic
-} from '$lib/simulation/single-ball-run';
+} from '$lib/simulation/run';
 
 export type VelocityEntryMode = 'speed-angle' | 'components';
 

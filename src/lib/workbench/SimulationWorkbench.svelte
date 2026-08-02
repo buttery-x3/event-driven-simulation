@@ -5,12 +5,12 @@
 	import {
 		canonicalPlinkoScenarios,
 		defaultCanonicalPlinkoScenario
-	} from '$lib/simulation/scenario-catalogue';
-	import { parseSimulationRunFixture, RunFixtureError } from '$lib/simulation/run-fixture';
+	} from '$lib/simulation/world';
+	import { parseSimulationRunFixture, RunFixtureError } from '$lib/simulation/serialization/run-record';
 	import {
 		parseSimulationInputFixture,
 		serializeSimulationInputFixture
-	} from '$lib/simulation/simulation-input-fixture';
+	} from '$lib/simulation/serialization/simulation-input';
 	import ApplicationBar from './ApplicationBar.svelte';
 	import DiagnosticsConsole from './DiagnosticsConsole.svelte';
 	import EventTimeline from './EventTimeline.svelte';
