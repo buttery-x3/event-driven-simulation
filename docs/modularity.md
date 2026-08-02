@@ -148,10 +148,13 @@ run/single-ball/
         types.ts
         continuation.ts
         linear-contact.ts
-        circular-contact.ts
-        angular-event-search.ts
         contact-mode-results.ts
         geometry.ts
+        circular/
+            index.ts
+            continuation.ts
+            angular-event-search.ts
+            results.ts
         __tests__/
     __tests__/
 ```
@@ -165,9 +168,12 @@ The implemented ownership is:
 - `sustained-contact/index.ts` and `continuation.ts` — the named local capability and shape
   dispatch;
 - `sustained-contact/linear-contact.ts` — fixed-line continuation and endpoint sequencing;
-- `sustained-contact/circular-contact.ts` — changing-normal circular continuation;
-- `sustained-contact/angular-event-search.ts` — independently testable detachment and angular
-  next-event search policy;
+- `sustained-contact/circular/index.ts` and `continuation.ts` — the private circular-contact
+  capability, including exact turning-point reversal and continuous leg sequencing;
+- `sustained-contact/circular/angular-event-search.ts` — independently testable turning-point,
+  support-loss and angular scene-event ordering policy;
+- `sustained-contact/circular/results.ts` — circular leg terminal, continuation and diagnostic
+  result construction;
 - `sustained-contact/contact-mode-results.ts` — shared resting, detachment, unresolved and
   transition-result construction;
 - `sustained-contact/geometry.ts` — distance and containment evaluation for constrained paths;

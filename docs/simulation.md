@@ -228,11 +228,14 @@ endpoint.
 
 For a circular peg or supported line endpoint, the centre remains on the expanded circular contact
 boundary. The evaluator conserves energy to obtain tangential speed as a function of angle and
-uses adaptive quadrature plus bisection to map simulation time to angle. Angular root isolation
-selects detachment when the required outward normal reaction reaches zero and also checks for an
-earlier collider, terminal region or bounds event. The changing normal and resulting path are
-shared by headless simulation and renderer replay; no chain of micro-impacts or renderer-only path
-exists.
+uses endpoint-regularised adaptive quadrature plus bisection to map simulation time to angle.
+Angular root isolation orders zero tangential speed, support loss, another collider, terminal-region
+entry and bounds escape. A supported finite-time turning point ends the uphill segment at exact
+rest; tangential acceleration then either starts a new segment in the opposite direction or leaves
+the body resting when it cannot establish motion. Every accepted leg has positive duration, so the
+same-time reversal boundary cannot enter the free-flight collision loop or require a position
+nudge. The changing normal and resulting path are shared by headless simulation and renderer
+replay; no chain of micro-impacts or renderer-only path exists.
 
 ## Scene validation
 

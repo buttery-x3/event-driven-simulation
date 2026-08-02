@@ -1,0 +1,242 @@
+{
+	"contractVersion": 6,
+	"input": {
+		"scene": {
+			"id": "adversarial-unresolved-circular-turning-point",
+			"coordinateSystem": {
+				"origin": "centre-bottom",
+				"horizontalAxis": "right",
+				"verticalAxis": "up",
+				"lengthUnit": "metre"
+			},
+			"bounds": {
+				"width": 10,
+				"height": 8
+			},
+			"staticColliders": [
+				{
+					"id": "turning-peg",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.5
+					},
+					"centre": [0, 0]
+				}
+			],
+			"terminationRegions": []
+		},
+		"initialDynamicBodies": [
+			{
+				"id": "ball-primary",
+				"motionAuthority": "dynamic",
+				"physicalShape": {
+					"type": "circle",
+					"radius": 0.1
+				},
+				"position": [-0.25010424876483256, 0.5464877535222347],
+				"velocity": [0.13254442633728242, -0.049315059027853936]
+			}
+		],
+		"settings": {
+			"gravity": [0, -10],
+			"restitution": 0,
+			"maximumEvents": 100,
+			"maximumSimulationTime": 5,
+			"tolerances": {
+				"contactDistance": 1e-9,
+				"eventTime": 1e-9
+			}
+		}
+	},
+	"validity": "valid",
+	"outcome": "escaped",
+	"terminalReason": {
+		"type": "bounds-escape",
+		"boundary": "bottom",
+		"time": 0.5328229070270933
+	},
+	"trajectories": [
+		{
+			"bodyId": "ball-primary",
+			"segments": [
+				{
+					"type": "free-flight",
+					"bodyId": "ball-primary",
+					"startTime": 0,
+					"endTime": 0.007467817083602716,
+					"startPosition": [-0.25010424876483256, 0.5464877535222347],
+					"startVelocity": [0.13254442633728242, -0.049315059027853936],
+					"acceleration": [0, -10]
+				},
+				{
+					"type": "circular-contact",
+					"bodyId": "ball-primary",
+					"startTime": 0.007467817083602716,
+					"endTime": 0.024133984054541657,
+					"startPosition": [-0.2491144312334947, 0.5458406362219769],
+					"startVelocity": [0.06286208721721626, 0.028689423366601068],
+					"supportingColliderId": "turning-peg",
+					"centre": [0, 0],
+					"contactRadius": 0.6,
+					"startAngle": 1.9989487619448874,
+					"endAngle": 1.997989413791166,
+					"direction": -1,
+					"startTangentialSpeed": 0.0690993851087908,
+					"gravity": [0, -10]
+				},
+				{
+					"type": "circular-contact",
+					"bodyId": "ball-primary",
+					"startTime": 0.024133984054541657,
+					"endTime": 0.3749519924027356,
+					"startPosition": [-0.24859066547114766, 0.5460793724730975],
+					"startVelocity": [0, 0],
+					"supportingColliderId": "turning-peg",
+					"centre": [0, 0],
+					"contactRadius": 0.6,
+					"startAngle": 1.997989413791166,
+					"endAngle": 2.4896209642578895,
+					"direction": 1,
+					"startTangentialSpeed": 0,
+					"gravity": [0, -10]
+				},
+				{
+					"type": "free-flight",
+					"bodyId": "ball-primary",
+					"startTime": 0.3749519924027356,
+					"endTime": 0.5328229070270933,
+					"startPosition": [-0.4769334073988332, 0.36405291498206493],
+					"startVelocity": [-1.1576986286034858, -1.5166618064520052],
+					"acceleration": [0, -10]
+				}
+			]
+		}
+	],
+	"events": [
+		{
+			"type": "contact",
+			"time": 0.007467817083602716,
+			"bodyId": "ball-primary",
+			"colliderId": "turning-peg",
+			"position": [-0.2491144312334947, 0.5458406362219769],
+			"normal": [-0.4151907187224912, 0.9097343937032948]
+		},
+		{
+			"type": "contact-mode-transition",
+			"time": 0.007467817083602716,
+			"bodyId": "ball-primary",
+			"colliderId": "turning-peg",
+			"from": "impact",
+			"to": "sliding",
+			"reason": "impact-collapse",
+			"position": [-0.2491144312334947, 0.5458406362219769],
+			"normal": [-0.4151907187224912, 0.9097343937032948]
+		},
+		{
+			"type": "contact-mode-transition",
+			"time": 0.3749519924027356,
+			"bodyId": "ball-primary",
+			"colliderId": "turning-peg",
+			"from": "sliding",
+			"to": "free-flight",
+			"reason": "support-lost",
+			"position": [-0.4769334073988332, 0.36405291498206493],
+			"normal": [-0.7948890123313888, 0.6067548583034416]
+		}
+	],
+	"diagnostics": {
+		"iterations": 4,
+		"simulatedUntilTime": 0.5328229070270933,
+		"eventCount": 3,
+		"candidateCount": 2,
+		"segmentCount": 4,
+		"simulationWallTimeMilliseconds": 0,
+		"contactSearches": [
+			{
+				"searchInterval": [0, 0.32570707390138104],
+				"eventTimeTolerance": 1e-9,
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "turning-peg",
+				"candidates": [
+					{
+						"colliderId": "turning-peg",
+						"feature": "circle",
+						"time": 0.007467817083602716,
+						"classification": "accepted-impact",
+						"timeDelta": 0.007467817083602716,
+						"position": [-0.2491144312334947, 0.5458406362219769],
+						"contactPoint": [-0.20759535936124557, 0.4548671968516474],
+						"normal": [-0.4151907187224912, 0.9097343937032948],
+						"normalVelocity": -0.1678321214271677,
+						"preContactVelocity": [0.13254442633728242, -0.12399322986388109],
+						"postContactVelocity": [0.06286208721721626, 0.028689423366601075],
+						"nearSimultaneous": true
+					}
+				]
+			},
+			{
+				"searchInterval": [0.007467817083602716, 0.024133984054541657],
+				"eventTimeTolerance": 1e-9,
+				"outcome": "no-event",
+				"reason": null,
+				"selectedColliderId": null,
+				"candidates": []
+			},
+			{
+				"searchInterval": [0.024133984054541657, 0.3749519924027356],
+				"eventTimeTolerance": 1e-9,
+				"outcome": "no-event",
+				"reason": null,
+				"selectedColliderId": null,
+				"candidates": []
+			},
+			{
+				"searchInterval": [0.3749519924027356, 0.5328229070270933],
+				"eventTimeTolerance": 1e-9,
+				"outcome": "no-event",
+				"reason": null,
+				"selectedColliderId": null,
+				"candidates": [
+					{
+						"colliderId": "turning-peg",
+						"feature": "circle",
+						"time": 0.3749519924027356,
+						"classification": "rejected-release-owned"
+					}
+				]
+			}
+		],
+		"entries": [
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with turning-peg.",
+				"time": 0.007467817083602716,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_MODE_TRANSITION",
+				"message": "impact -> sliding on turning-peg: impact-collapse.",
+				"time": 0.007467817083602716,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_MODE_TRANSITION",
+				"message": "sliding -> free-flight on turning-peg: support-lost.",
+				"time": 0.3749519924027356,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "warning",
+				"code": "RUN_ESCAPED",
+				"message": "Run reached the configured bounds-escape.",
+				"time": 0.5328229070270933,
+				"bodyId": "ball-primary"
+			}
+		]
+	}
+}

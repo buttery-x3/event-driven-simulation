@@ -124,4 +124,25 @@ describe('recorded trajectory evaluation', () => {
 			Math.abs(middle.position[0] * middle.velocity[0] + middle.position[1] * middle.velocity[1])
 		).toBeLessThan(1e-10);
 	});
+
+	it('integrates finite travel time through exact rest at either circular-segment endpoint', () => {
+		const uphill = {
+			centre: [0, 0],
+			contactRadius: 0.6,
+			startAngle: 2,
+			direction: -1,
+			startTangentialSpeed: 0.1,
+			gravity: [0, -10]
+		} as const;
+		const turningAngle = Math.PI - Math.asin(Math.sin(uphill.startAngle) + 0.1 ** 2 / 12);
+		const uphillTime = circularContactTravelTime(uphill, turningAngle);
+		const downhillTime = circularContactTravelTime(
+			{ ...uphill, startAngle: turningAngle, direction: 1, startTangentialSpeed: 0 },
+			uphill.startAngle
+		);
+
+		expect(uphillTime).toBeGreaterThan(0);
+		expect(uphillTime).toBeLessThan(1);
+		expect(downhillTime).toBeCloseTo(uphillTime, 8);
+	});
 });

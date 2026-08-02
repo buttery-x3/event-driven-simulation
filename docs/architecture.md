@@ -127,8 +127,9 @@ result of this boundary.
 records. It sequences free flight, impact and sustained contact, commits only certified intervals,
 and continues from exact physical event times. `impact-response.ts` owns restitution and the
 conservative contracting-impact collapse policy. The named `sustained-contact` subdomain owns
-support-shape dispatch, line and circular continuation, shared contact-mode result construction,
-constrained-path geometry and independently testable detachment/angular scene-event search.
+support-shape dispatch, line continuation, shared contact-mode result construction and
+constrained-path geometry. Its private `circular` subdomain owns changing-normal continuation,
+turning-point reversal and independently testable angular motion/scene-event ordering.
 Validation, termination search and diagnostic construction remain separate modules in the parent
 single-ball subdomain. The
 `run` entry point preserves both `constructSingleBallRun` and the old
@@ -136,9 +137,10 @@ single-ball subdomain. The
 
 Canonical recorded-segment position and velocity evaluation lives in the `simulation/motion`
 subsystem. Constant-acceleration segments use their immutable initial conditions. Circular-contact
-segments use the conserved-energy relation on the expanded peg boundary and adaptive quadrature to
-invert angular travel time; they are not renderer samples or fixed timesteps. Run construction and
-renderer playback both consume this framework-independent evaluator, so rendering cannot acquire a
+segments use the conserved-energy relation on the expanded peg boundary and endpoint-regularised
+adaptive quadrature to invert angular travel time, including segments that start or end at exact
+rest; they are not renderer samples or fixed timesteps. Run construction and renderer playback
+both consume this framework-independent evaluator, so rendering cannot acquire a
 duplicate motion equation. Low-level vector and
 polynomial operations live in `simulation/math`. These modules import only allowed lower-level
 simulation entry points and are exercised in Vitest's Node environment, so they do not depend on

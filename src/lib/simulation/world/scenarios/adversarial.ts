@@ -335,23 +335,26 @@ function unresolvedContinuationScenario(): ScenarioArguments {
 	const tangent: Vec2 = [normal[1], -normal[0]];
 	return {
 		id: 'unresolved-circular-turning-point',
-		name: 'Unresolved circular turning continuation',
+		name: 'Circular turning-point reversal',
 		purpose:
-			'Fails closed when constrained circular motion reverses before a next event can be certified.',
-		coverage: ['sustained.unresolved-continuation'],
+			'Reaches exact rest uphill, reverses under tangential gravity, and continues on certified circular contact.',
+		coverage: ['sustained.circular-turning-point'],
 		input: input({
 			colliders: [circle('turning-peg', [0, 0], 0.5)],
 			position: [normal[0] * 0.601, normal[1] * 0.601],
 			velocity: [tangent[0] * 0.1 - normal[0] * 0.1, tangent[1] * 0.1 - normal[1] * 0.1],
 			restitution: 0
 		}),
-		expectedOutcomes: ['unresolved'],
-		replayExpectation: 'valid-prefix',
+		expectedOutcomes: ['escaped'],
+		replayExpectation: 'complete',
 		events: {
-			summary:
-				'A valid free-flight prefix reaches circular sliding before unresolved continuation.',
+			summary: 'Circular sliding reaches rest, reverses, and then loses support into free flight.',
 			minimumContactEvents: 1,
-			requiredTransitions: [{ from: 'sliding', to: 'free-flight' }]
+			requiredMotionModes: ['circular-contact'],
+			requiredTransitions: [
+				{ from: 'impact', to: 'sliding' },
+				{ from: 'sliding', to: 'free-flight' }
+			]
 		}
 	};
 }

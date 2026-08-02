@@ -10,7 +10,7 @@ import { toRendererPlaybackInput } from '$lib/rendering/playback';
 import { canonicalPlinkoScenarios } from '../../../world';
 import { constructSingleBallRun } from '../construct';
 import { parseSimulationRunFixture } from '../../../serialization/run-record';
-import { evaluateMotionSegmentPosition } from '../../../motion';
+import { evaluateMotionSegmentPosition, evaluateMotionSegmentVelocity } from '../../../motion';
 
 const coordinateSystem = {
 	origin: 'centre-bottom',
@@ -343,7 +343,7 @@ describe('authoritative event-driven single-ball runs', () => {
 		expect(run.events.some((event) => event.type === 'contact-mode-transition')).toBe(false);
 	});
 
-	it('fails closed when circular constrained motion reverses before a certified next event', () => {
+	it('commits an exact circular turning boundary and reverses before support loss', () => {
 		const angle = 2;
 		const normal: Vec2 = [Math.cos(angle), Math.sin(angle)];
 		const clockwiseTangent: Vec2 = [normal[1], -normal[0]];
@@ -362,16 +362,26 @@ describe('authoritative event-driven single-ball runs', () => {
 			})
 		);
 
-		expect(run).toMatchObject({
-			validity: 'valid',
-			outcome: 'unresolved',
-			terminalReason: { type: 'unresolved-collision-search', time: 0 }
-		});
-		expect(run.trajectories[0]!.segments).toEqual([]);
+		expect(run).toMatchObject({ validity: 'valid', outcome: 'escaped' });
+		const circular = run.trajectories[0]!.segments.filter(
+			(segment) => segment.type === 'circular-contact'
+		);
+		expect(circular).toHaveLength(2);
+		const uphill = circular[0]!;
+		const downhill = circular[1]!;
+		expect(uphill.direction).toBe(-1);
+		expect(downhill.direction).toBe(1);
+		expect(downhill.startTangentialSpeed).toBe(0);
+		expect(uphill.endTime).toBe(downhill.startTime);
+		expect(downhill.endTime).toBeGreaterThan(downhill.startTime);
+		expect(evaluateMotionSegmentPosition(uphill, uphill.endTime)).toEqual(downhill.startPosition);
+		expect(evaluateMotionSegmentVelocity(uphill, uphill.endTime)[0]).toBeCloseTo(0, 12);
+		expect(evaluateMotionSegmentVelocity(uphill, uphill.endTime)[1]).toBeCloseTo(0, 12);
 		expect(run.events.at(-1)).toMatchObject({
 			type: 'contact-mode-transition',
 			from: 'sliding',
-			reason: 'unresolved'
+			to: 'free-flight',
+			reason: 'support-lost'
 		});
 	});
 

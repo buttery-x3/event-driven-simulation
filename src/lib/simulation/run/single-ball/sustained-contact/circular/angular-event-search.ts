@@ -1,8 +1,8 @@
-import type { RunTerminalReason, Vec2 } from '../../../contracts';
-import { dotVec2 } from '../../../math';
-import { circularContactSpeedSquared, circularContactTravelTime } from '../../../motion';
-import { circularPosition, colliderSeparation, containsPosition, outsideBounds } from './geometry';
-import type { SustainedContactRequest } from './types';
+import type { RunTerminalReason, Vec2 } from '../../../../contracts';
+import { dotVec2 } from '../../../../math';
+import { circularContactSpeedSquared, circularContactTravelTime } from '../../../../motion';
+import { circularPosition, colliderSeparation, containsPosition, outsideBounds } from '../geometry';
+import type { SustainedContactRequest } from '../types';
 
 export interface CircularContactSeed {
 	readonly centre: Vec2;
@@ -13,41 +13,74 @@ export interface CircularContactSeed {
 	readonly gravity: Vec2;
 }
 
-export interface AngularSceneEvent {
-	readonly angle: number;
-	readonly type: 'contact' | 'terminal';
-	readonly colliderId?: string;
-	readonly terminalReason?: RunTerminalReason;
+export type AngularEvent =
+	| { readonly angle: number; readonly type: 'support-lost' | 'turning-point' }
+	| {
+			readonly angle: number;
+			readonly type: 'contact';
+			readonly colliderId: string;
+	  }
+	| {
+			readonly angle: number;
+			readonly type: 'terminal';
+			readonly terminalReason: RunTerminalReason;
+	  };
+
+export function findEarliestAngularEvent(
+	request: SustainedContactRequest,
+	seed: CircularContactSeed
+): AngularEvent | null {
+	const motionBoundary = findCircularMotionBoundary(seed);
+	if (!motionBoundary) return null;
+
+	return findEarliestAngularSceneEvent(request, seed, motionBoundary.angle) ?? motionBoundary;
 }
 
-export function findDetachAngle(seed: CircularContactSeed): number | null {
-	const supportExpression = (angle: number) => {
-		const normal: Vec2 = [Math.cos(angle), Math.sin(angle)];
-		return (
-			circularContactSpeedSquared(seed, angle) / seed.contactRadius + dotVec2(seed.gravity, normal)
-		);
-	};
+export function findCircularMotionBoundary(seed: CircularContactSeed): AngularEvent | null {
 	let previousAngle = seed.startAngle;
-	let previous = supportExpression(previousAngle);
+	let previousSpeedSquared = circularContactSpeedSquared(seed, previousAngle);
+	let previousSupport = supportExpression(seed, previousAngle);
 	for (let index = 1; index <= 512; index += 1) {
 		const angle = seed.startAngle + seed.direction * ((Math.PI * 2 * index) / 512);
-		if (circularContactSpeedSquared(seed, angle) < -1e-10) return null;
-		const current = supportExpression(angle);
-		if (previous <= 0 && current >= 0) {
-			return bisectNumber(previousAngle, angle, (candidate) => supportExpression(candidate) >= 0);
+		const speedSquared = circularContactSpeedSquared(seed, angle);
+		const support = supportExpression(seed, angle);
+		const candidates: AngularEvent[] = [];
+
+		if (previousSpeedSquared > 0 && speedSquared <= 0) {
+			candidates.push({
+				type: 'turning-point',
+				angle: bisectNumber(
+					previousAngle,
+					angle,
+					(candidate) => circularContactSpeedSquared(seed, candidate) <= 0
+				)
+			});
 		}
+		if (previousSupport <= 0 && support >= 0) {
+			candidates.push({
+				type: 'support-lost',
+				angle: bisectNumber(
+					previousAngle,
+					angle,
+					(candidate) => supportExpression(seed, candidate) >= 0
+				)
+			});
+		}
+		if (candidates.length > 0) return firstAlongDirection(candidates, seed.direction);
+
 		previousAngle = angle;
-		previous = current;
+		previousSpeedSquared = speedSquared;
+		previousSupport = support;
 	}
 	return null;
 }
 
-export function findEarliestAngularSceneEvent(
+function findEarliestAngularSceneEvent(
 	request: SustainedContactRequest,
 	seed: CircularContactSeed,
-	detachAngle: number
-): AngularSceneEvent | null {
-	const angularDistance = seed.direction * (detachAngle - seed.startAngle);
+	endAngle: number
+): AngularEvent | null {
+	const angularDistance = seed.direction * (endAngle - seed.startAngle);
 	let previousAngle = seed.startAngle;
 	let previousPosition = circularPosition(seed.centre, seed.contactRadius, previousAngle);
 	for (let index = 1; index <= 512; index += 1) {
@@ -75,8 +108,8 @@ function crossedSceneEvent(
 	startPosition: Vec2,
 	endPosition: Vec2,
 	seed: CircularContactSeed
-): AngularSceneEvent | null {
-	const events: AngularSceneEvent[] = [];
+): AngularEvent | null {
+	const events: AngularEvent[] = [];
 	for (const region of request.input.scene.terminationRegions) {
 		if (
 			!containsPosition(region.minimum, region.maximum, startPosition) &&
@@ -154,11 +187,24 @@ function crossedSceneEvent(
 			events.push({ type: 'contact', angle, colliderId: collider.id });
 		}
 	}
+	return firstAlongDirection(events, seed.direction);
+}
+
+function supportExpression(seed: CircularContactSeed, angle: number): number {
+	const normal: Vec2 = [Math.cos(angle), Math.sin(angle)];
+	return (
+		circularContactSpeedSquared(seed, angle) / seed.contactRadius + dotVec2(seed.gravity, normal)
+	);
+}
+
+function firstAlongDirection(events: AngularEvent[], direction: -1 | 1): AngularEvent | null {
 	return (
 		events.sort(
 			(left, right) =>
-				seed.direction * (left.angle - right.angle) ||
-				(left.colliderId ?? '').localeCompare(right.colliderId ?? '')
+				direction * (left.angle - right.angle) ||
+				('colliderId' in left ? left.colliderId : '').localeCompare(
+					'colliderId' in right ? right.colliderId : ''
+				)
 		)[0] ?? null
 	);
 }
@@ -171,5 +217,5 @@ function bisectNumber(left: number, right: number, predicate: (value: number) =>
 		if (predicate(middle)) upper = middle;
 		else lower = middle;
 	}
-	return (lower + upper) / 2;
+	return upper;
 }

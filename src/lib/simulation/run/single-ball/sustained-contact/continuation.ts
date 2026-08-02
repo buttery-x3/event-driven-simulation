@@ -1,4 +1,4 @@
-import { continueCircularContact } from './circular-contact';
+import { continueCircularContact } from './circular';
 import { unresolvedContactResult } from './contact-mode-results';
 import { continueLineContact } from './linear-contact';
 import type { SustainedContactRequest, SustainedContactResult } from './types';

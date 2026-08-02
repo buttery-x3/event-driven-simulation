@@ -55,7 +55,7 @@ export function circularContactTravelTime(
 	const angularDistance = segment.direction * (endAngle - segment.startAngle);
 	if (angularDistance <= 0) return 0;
 
-	return integrateTravelTime(segment, Math.sqrt(angularDistance));
+	return integrateTravelTime(segment, angularDistance);
 }
 
 function circularContactAngleAtTime(segment: CircularContactMotionSegment, time: number): number {
@@ -65,7 +65,7 @@ function circularContactAngleAtTime(segment: CircularContactMotionSegment, time:
 	const target = time - segment.startTime;
 	const angularDistance = segment.direction * (segment.endAngle - segment.startAngle);
 	let lower = 0;
-	let upper = Math.sqrt(Math.max(0, angularDistance));
+	let upper = Math.max(0, angularDistance);
 
 	for (let iteration = 0; iteration < 52; iteration += 1) {
 		const middle = (lower + upper) / 2;
@@ -73,8 +73,8 @@ function circularContactAngleAtTime(segment: CircularContactMotionSegment, time:
 		else upper = middle;
 	}
 
-	const root = (lower + upper) / 2;
-	return segment.startAngle + segment.direction * root * root;
+	const distance = (lower + upper) / 2;
+	return segment.startAngle + segment.direction * distance;
 }
 
 function integrateTravelTime(
@@ -82,32 +82,50 @@ function integrateTravelTime(
 		CircularContactMotionSegment,
 		'centre' | 'contactRadius' | 'startAngle' | 'direction' | 'startTangentialSpeed' | 'gravity'
 	>,
-	upper: number
+	angularDistance: number
 ): number {
-	if (upper <= 0) return 0;
+	if (angularDistance <= 0) return 0;
 
-	const integrand = (rootAngle: number): number => {
-		if (rootAngle === 0) {
-			if (segment.startTangentialSpeed > 0) return 0;
-			const normal: Vec2 = [Math.cos(segment.startAngle), Math.sin(segment.startAngle)];
-			const directedTangent: Vec2 = [-normal[1] * segment.direction, normal[0] * segment.direction];
-			const directedAcceleration = dotVec2(segment.gravity, directedTangent);
-			return directedAcceleration > 0
-				? Math.sqrt((2 * segment.contactRadius) / directedAcceleration)
-				: Number.POSITIVE_INFINITY;
-		}
-
-		const angle = segment.startAngle + segment.direction * rootAngle * rootAngle;
+	const integrand = (phase: number): number => {
+		const sine = Math.sin(phase);
+		const cosine = Math.cos(phase);
+		const distance = angularDistance * sine * sine;
+		const angle = segment.startAngle + segment.direction * distance;
 		const speedSquared = circularContactSpeedSquared(segment, angle);
+		if (phase === 0 || phase === Math.PI / 2) {
+			return endpointIntegrand(segment, angle, angularDistance, speedSquared, phase === 0 ? 1 : -1);
+		}
 		if (speedSquared <= 0) return Number.POSITIVE_INFINITY;
-		return (2 * rootAngle * segment.contactRadius) / Math.sqrt(speedSquared);
+		const distanceDerivative = 2 * angularDistance * sine * cosine;
+		return (segment.contactRadius * distanceDerivative) / Math.sqrt(speedSquared);
 	};
 
 	const start = integrand(0);
-	const end = integrand(upper);
-	const middle = integrand(upper / 2);
-	const whole = (upper * (start + 4 * middle + end)) / 6;
-	return adaptiveSimpson(integrand, 0, upper, start, middle, end, whole, 1e-11, 14);
+	const end = integrand(Math.PI / 2);
+	const middle = integrand(Math.PI / 4);
+	const whole = ((Math.PI / 2) * (start + 4 * middle + end)) / 6;
+	return adaptiveSimpson(integrand, 0, Math.PI / 2, start, middle, end, whole, 1e-11, 14);
+}
+
+function endpointIntegrand(
+	segment: Pick<
+		CircularContactMotionSegment,
+		'centre' | 'contactRadius' | 'startAngle' | 'direction' | 'startTangentialSpeed' | 'gravity'
+	>,
+	angle: number,
+	angularDistance: number,
+	speedSquared: number,
+	slopeDirection: -1 | 1
+): number {
+	if (speedSquared > 1e-12) return 0;
+
+	const normal: Vec2 = [Math.cos(angle), Math.sin(angle)];
+	const directedTangent: Vec2 = [-normal[1] * segment.direction, normal[0] * segment.direction];
+	const speedSquaredSlope =
+		2 * segment.contactRadius * dotVec2(segment.gravity, directedTangent) * slopeDirection;
+	return speedSquaredSlope > 0
+		? 2 * segment.contactRadius * Math.sqrt(angularDistance / speedSquaredSlope)
+		: Number.POSITIVE_INFINITY;
 }
 
 function adaptiveSimpson(

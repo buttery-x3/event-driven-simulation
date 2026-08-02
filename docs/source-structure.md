@@ -90,10 +90,13 @@ src/lib/simulation/
                 types.ts
                 continuation.ts
                 linear-contact.ts
-                circular-contact.ts
-                angular-event-search.ts
                 contact-mode-results.ts
                 geometry.ts
+                circular/
+                    index.ts
+                    continuation.ts
+                    angular-event-search.ts
+                    results.ts
                 __tests__/
             __tests__/
         __tests__/

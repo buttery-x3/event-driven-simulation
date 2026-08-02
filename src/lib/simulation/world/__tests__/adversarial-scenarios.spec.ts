@@ -60,7 +60,7 @@ const requiredCoverage = [
 	'sustained.line-sliding',
 	'sustained.circular-detachment',
 	'sustained.unsupported-detachment',
-	'sustained.unresolved-continuation'
+	'sustained.circular-turning-point'
 ] as const satisfies readonly ScenarioCoverageId[];
 
 const completeCatalogue: readonly VerificationScenario[] = [

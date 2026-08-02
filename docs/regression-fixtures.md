@@ -53,3 +53,9 @@ which circular support loss was followed by a microscopic same-circle contact an
 `zero-time-loop`. The fixture remains unresolved forensic evidence. Its end-to-end regression test
 reruns the stored input and asserts certified release ownership, continuous retained history and a
 non-`zero-time-loop` authoritative continuation.
+
+`flame-43-circular-turning-point.json` is the complete minimal run for a ball that enters circular
+sliding uphill, reaches exact rest, reverses under tangential gravity, loses support downhill and
+escapes the board. Its focused test pins the original free-flight/contact prefix, the shared
+turning time and angle, zero velocity, continuous position, reversed velocity sign and deterministic
+rerun serialization.

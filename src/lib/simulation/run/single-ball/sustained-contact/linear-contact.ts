@@ -13,7 +13,7 @@ import { dotVec2 } from '../../../math';
 import { evaluateMotionSegmentPosition, evaluateMotionSegmentVelocity } from '../../../motion';
 import { toRunContactSearchDiagnostic } from '../diagnostics';
 import { findEarliestTerminationEntry } from '../termination-search';
-import { continueCircularContact } from './circular-contact';
+import { continueCircularContact } from './circular';
 import {
 	detachedContactResult,
 	entryTransition,

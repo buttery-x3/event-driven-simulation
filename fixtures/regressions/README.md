@@ -11,3 +11,5 @@ Each file must contain one complete `SimulationRunRecord` in the current public 
 - `flame-42-post-detachment-zero-time-loop.json` preserves the unresolved run that exposed a
   microscopic same-circle root after circular support loss; tests rerun its input without changing
   the forensic record.
+- `flame-43-circular-turning-point.json` preserves the complete certified run whose circular
+  contact reaches exact rest, reverses direction, and continues downhill to support loss.
