@@ -1,10 +1,12 @@
 import type {
+	DiagnosticEntry,
 	RunTerminalReason,
 	RunOutcome,
 	RunValidity,
 	SimulationRunRecord,
 	Vec2
 } from '$lib/simulation/contracts';
+import type { RunValidationResult } from '$lib/simulation/verification';
 
 export interface RepositoryRunFixture {
 	readonly id: string;
@@ -39,9 +41,25 @@ export interface SeverityCounts {
 	readonly error: number;
 }
 
-export function getInspectionMode(validity: RunValidity, outcome: RunOutcome): InspectionMode {
-	if (validity === 'invalid') return 'invalid-prefix';
+export function getInspectionMode(
+	validity: RunValidity,
+	outcome: RunOutcome,
+	independentValidationPassed = true
+): InspectionMode {
+	if (validity === 'invalid' || !independentValidationPassed) return 'invalid-prefix';
 	return outcome === 'exited' || outcome === 'settled' ? 'completed-replay' : 'recorded-prefix';
+}
+
+export function toRunValidationDiagnosticEntries(
+	validation: RunValidationResult
+): readonly DiagnosticEntry[] {
+	return validation.failures.map((failure) => ({
+		severity: 'error',
+		code: `RUN_VALIDATION_${failure.code}`,
+		message: `${failure.category}: ${failure.message} (${failure.reference.path}${failure.reference.colliderId ? `, collider ${failure.reference.colliderId}` : ''})`,
+		time: failure.reference.time ?? null,
+		bodyId: failure.reference.bodyId ?? null
+	}));
 }
 
 export function getInspectionModeLabel(mode: InspectionMode): string {

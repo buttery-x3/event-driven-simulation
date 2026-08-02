@@ -1,5 +1,6 @@
 import type { SimulationRunRecord } from '../../contracts';
 import type {
+	DiagnosticExportIndependentValidation,
 	DiagnosticExportMetadata,
 	DiagnosticExportRunSummary,
 	DiagnosticExportV1
@@ -7,7 +8,8 @@ import type {
 
 export function createDiagnosticExport(
 	run: SimulationRunRecord,
-	metadata: DiagnosticExportMetadata
+	metadata: DiagnosticExportMetadata,
+	independentValidation: DiagnosticExportIndependentValidation
 ): DiagnosticExportV1 {
 	const trajectorySegmentCount = run.trajectories.reduce(
 		(total, trajectory) => total + trajectory.segments.length,
@@ -19,7 +21,9 @@ export function createDiagnosticExport(
 	);
 	const simulatedUntilTime = run.diagnostics.simulatedUntilTime;
 	const summary: DiagnosticExportRunSummary = {
-		validity: run.validity,
+		validity: independentValidation.valid ? run.validity : 'invalid',
+		authoritativeValidity: run.validity,
+		independentValidationPassed: independentValidation.valid,
 		outcome: run.outcome,
 		terminalReason: run.terminalReason,
 		simulatedUntilTime,
@@ -67,9 +71,13 @@ export function createDiagnosticExport(
 		summary,
 		authoritativeRun: {
 			contractVersion: run.contractVersion,
+			validity: run.validity,
+			outcome: run.outcome,
+			terminalReason: run.terminalReason,
 			trajectories: run.trajectories,
 			events: run.events
 		},
+		independentValidation,
 		diagnostics: run.diagnostics
 	};
 }

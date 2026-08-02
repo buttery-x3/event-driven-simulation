@@ -15,6 +15,7 @@
 		serializeDiagnosticExport
 	} from '$lib/simulation/serialization/diagnostic-export';
 	import { constructSingleBallRun } from '$lib/simulation/run';
+	import { validateSimulationRun, type RunValidationResult } from '$lib/simulation/verification';
 	import ApplicationBar from './ApplicationBar.svelte';
 	import DiagnosticsConsole from './DiagnosticsConsole.svelte';
 	import EventTimeline from './EventTimeline.svelte';
@@ -26,6 +27,7 @@
 	import {
 		createDiagnosticExportFilename,
 		getInspectionMode,
+		toRunValidationDiagnosticEntries,
 		type LoadFeedback,
 		type RepositoryRunFixture,
 		type RunSource
@@ -50,6 +52,9 @@
 
 	const initialRun = parseSimulationRunFixture(initialFixture.json);
 	let currentRun = $state.raw<SimulationRunRecord>(initialRun);
+	let currentValidation = $state.raw<RunValidationResult>(
+		validateSimulationRun(initialRun.input, initialRun)
+	);
 	let currentSource = $state.raw<RunSource>({
 		kind: 'repository',
 		id: initialFixture.id,
@@ -70,7 +75,13 @@
 	let submittedInput = $state.raw<SimulationInput | null>(null);
 	let actualScenarioId = $state<string | null>(null);
 	let playback = $derived(toRendererPlaybackInput(currentRun));
-	let inspectionMode = $derived(getInspectionMode(currentRun.validity, currentRun.outcome));
+	let inspectionMode = $derived(
+		getInspectionMode(currentRun.validity, currentRun.outcome, currentValidation.valid)
+	);
+	let presentedDiagnosticEntries = $derived([
+		...currentRun.diagnostics.entries,
+		...toRunValidationDiagnosticEntries(currentValidation)
+	]);
 	let clock = new PlaybackClock(initialRun.diagnostics.simulatedUntilTime);
 	let replayTime = $state(0);
 	let playing = $state(false);
@@ -125,6 +136,7 @@
 		scenarioId: string | null = null
 	): void {
 		currentRun = run;
+		currentValidation = validateSimulationRun(run.input, run);
 		currentSource = source;
 		actualScenarioId = scenarioId;
 		clock = new PlaybackClock(run.diagnostics.simulatedUntilTime);
@@ -171,7 +183,7 @@
 		const scenarioName = getWorkbenchScenario(selectedScenarioId)?.name ?? 'Loaded custom scenario';
 		acceptRun(run, { kind: 'simulation', name: scenarioName }, selectedScenarioId);
 		inputErrors = [];
-		inputFeedback = `Run calculated · ${run.outcome} · ${run.events.length} events · ${run.diagnostics.simulationWallTimeMilliseconds} ms wall time.`;
+		inputFeedback = `Run calculated · ${currentValidation.valid ? run.outcome : 'independently invalid'} · ${run.events.length} events · ${run.diagnostics.simulationWallTimeMilliseconds} ms wall time.`;
 	}
 
 	async function loadScenarioFile(file: File): Promise<void> {
@@ -223,13 +235,17 @@
 
 		try {
 			const exportedAt = new Date().toISOString();
-			const bundle = createDiagnosticExport(currentRun, {
-				exportedAt,
-				runId: currentSource.kind === 'repository' ? currentSource.id : null,
-				scenarioId: actualScenarioId,
-				descriptiveName: currentSource.name,
-				source: currentSource
-			});
+			const bundle = createDiagnosticExport(
+				currentRun,
+				{
+					exportedAt,
+					runId: currentSource.kind === 'repository' ? currentSource.id : null,
+					scenarioId: actualScenarioId,
+					descriptiveName: currentSource.name,
+					source: currentSource
+				},
+				currentValidation
+			);
 			const blob = new Blob([serializeDiagnosticExport(bundle)], { type: 'application/json' });
 			objectUrl = URL.createObjectURL(blob);
 			const link = document.createElement('a');
@@ -349,6 +365,7 @@
 				input={playback}
 				time={replayTime}
 				mode={inspectionMode}
+				independentValidationPassed={currentValidation.valid}
 				{transportState}
 			/>
 			<PlaybackControls
@@ -364,6 +381,7 @@
 
 		<RunInspector
 			run={currentRun}
+			validation={currentValidation}
 			source={currentSource}
 			playableUntilTime={playback.playableUntilTime}
 		/>
@@ -376,7 +394,7 @@
 			canSeek={true}
 			onSelect={selectEvent}
 		/>
-		<DiagnosticsConsole entries={currentRun.diagnostics.entries} />
+		<DiagnosticsConsole entries={presentedDiagnosticEntries} />
 		<div class="metrics-slot">
 			<MetricsPanel run={currentRun} />
 		</div>

@@ -15,6 +15,10 @@ const canonicalFixturePath = path.resolve(
 	process.cwd(),
 	'fixtures/runs/canonical-event-driven-offset-drop.json'
 );
+const subToleranceReleaseFixturePath = path.resolve(
+	process.cwd(),
+	'fixtures/regressions/flame-45-sub-tolerance-circle-release.json'
+);
 
 test.describe.configure({ mode: 'serial' });
 
@@ -228,6 +232,12 @@ test('downloads accepted run diagnostics separately from the editable scenario',
 	});
 	expect(bundle.submittedInput.scene.id).toBe('canonical-plinko-board');
 	expect(bundle.summary.counts.events).toBe(bundle.authoritativeRun.events.length);
+	expect(bundle.summary).toMatchObject({
+		validity: 'valid',
+		authoritativeValidity: 'valid',
+		independentValidationPassed: true
+	});
+	expect(bundle.independentValidation).toMatchObject({ valid: true, failures: [] });
 	expect(bundle.summary.counts.trajectorySegments).toBeGreaterThan(0);
 	expect(bundle.diagnostics.contactSearches.length).toBeGreaterThan(0);
 	expect(bundle.diagnostics.entries.length).toBeGreaterThan(0);
@@ -391,6 +401,48 @@ test('loads a local saved run and retains it after typed validation failures', a
 		page.getByLabel('Current run source').getByText('Local file · local-run.json', { exact: true })
 	).toBeVisible();
 	await expect(page.getByRole('region', { name: 'Calculated run replay' })).toBeVisible();
+});
+
+test('labels independently invalid solver history as forensic evidence in playback and export', async ({
+	page
+}) => {
+	await page.goto('/');
+	await chooseFile(page, {
+		name: 'flame-45-sub-tolerance-circle-release.json',
+		mimeType: 'application/json',
+		buffer: await readFile(subToleranceReleaseFixturePath)
+	});
+
+	const prefix = page.getByRole('region', { name: 'Invalid-prefix inspection' });
+	await expect(prefix).toBeVisible();
+	await expect(prefix.getByText('Independent validation failed')).toBeVisible();
+	await expect(
+		page.getByLabel('Calculation outcome').getByText('Independent validation failed')
+	).toBeVisible();
+	await expect(
+		page.getByText('The authoritative solver result remains valid / exited.', { exact: false })
+	).toBeVisible();
+	await expect(page.getByText('RUN_VALIDATION_EARLY_GEOMETRY_CROSSING').first()).toBeVisible();
+
+	const downloadPromise = page.waitForEvent('download');
+	await page.getByRole('button', { name: 'Export diagnostics' }).click();
+	const download = await downloadPromise;
+	const downloadPath = await download.path();
+	if (!downloadPath) throw new Error('Expected Playwright to retain the diagnostic download.');
+	const bundle = JSON.parse((await readFile(downloadPath)).toString('utf8')) as DiagnosticExportV1;
+
+	expect(bundle.summary).toMatchObject({
+		validity: 'invalid',
+		authoritativeValidity: 'valid',
+		independentValidationPassed: false
+	});
+	expect(bundle.authoritativeRun).toMatchObject({ validity: 'valid', outcome: 'exited' });
+	expect(bundle.independentValidation.failures).toContainEqual(
+		expect.objectContaining({
+			code: 'EARLY_GEOMETRY_CROSSING',
+			reference: expect.objectContaining({ colliderId: 'peg-row-01-column-04' })
+		})
+	);
 });
 
 test('plays a zero-time-loop through its committed prefix and freezes at the boundary', async ({

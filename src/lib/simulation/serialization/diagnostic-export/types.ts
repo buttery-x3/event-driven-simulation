@@ -37,6 +37,8 @@ export interface DiagnosticExportCounts {
 
 export interface DiagnosticExportRunSummary {
 	readonly validity: RunValidity;
+	readonly authoritativeValidity: RunValidity;
+	readonly independentValidationPassed: boolean;
 	readonly outcome: RunOutcome;
 	readonly terminalReason: RunTerminalReason;
 	readonly simulatedUntilTime: number;
@@ -52,6 +54,22 @@ export interface DiagnosticExportRunSummary {
 		readonly trajectorySegmentCount: number;
 		readonly eventCount: number;
 	};
+}
+
+export interface DiagnosticExportIndependentValidation {
+	readonly valid: boolean;
+	readonly checkedCategories: readonly string[];
+	readonly failures: readonly {
+		readonly category: string;
+		readonly code: string;
+		readonly message: string;
+		readonly reference: {
+			readonly path: string;
+			readonly time?: number;
+			readonly bodyId?: string;
+			readonly colliderId?: string;
+		};
+	}[];
 }
 
 export interface DiagnosticExportV1 {
@@ -71,8 +89,12 @@ export interface DiagnosticExportV1 {
 	readonly summary: DiagnosticExportRunSummary;
 	readonly authoritativeRun: {
 		readonly contractVersion: SimulationRunRecord['contractVersion'];
+		readonly validity: RunValidity;
+		readonly outcome: RunOutcome;
+		readonly terminalReason: RunTerminalReason;
 		readonly trajectories: readonly BodyTrajectory[];
 		readonly events: readonly PhysicalEvent[];
 	};
+	readonly independentValidation: DiagnosticExportIndependentValidation;
 	readonly diagnostics: RunDiagnostics;
 }

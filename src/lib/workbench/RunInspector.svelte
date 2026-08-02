@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { SimulationRunRecord } from '$lib/simulation/contracts';
+	import type { RunValidationResult } from '$lib/simulation/verification';
 	import FailureBoundary from './FailureBoundary.svelte';
 	import {
 		formatRecordedSeconds,
@@ -12,10 +13,12 @@
 
 	let {
 		run,
+		validation,
 		source,
 		playableUntilTime
 	}: {
 		run: SimulationRunRecord;
+		validation: RunValidationResult;
 		source: RunSource;
 		playableUntilTime: number;
 	} = $props();
@@ -31,10 +34,19 @@
 	</header>
 
 	<section class="outcome" aria-label="Calculation outcome">
-		<strong class:failed={run.outcome !== 'exited' && run.outcome !== 'settled'}
-			>{getRunStatusLabel(run.terminalReason)}</strong
+		<strong
+			class:failed={!validation.valid || (run.outcome !== 'exited' && run.outcome !== 'settled')}
+			>{validation.valid
+				? getRunStatusLabel(run.terminalReason)
+				: 'Independent validation failed'}</strong
 		>
-		{#if run.outcome === 'exited' || run.outcome === 'settled'}
+		{#if !validation.valid}
+			<p>
+				{validation.failures.length} structured validation {validation.failures.length === 1
+					? 'failure'
+					: 'failures'} detected. The authoritative solver result remains {run.validity} / {run.outcome}.
+			</p>
+		{:else if run.outcome === 'exited' || run.outcome === 'settled'}
 			<p>Calculation completed before replay began.</p>
 		{:else}
 			<p>

@@ -7,7 +7,8 @@ import {
 	formatSource,
 	getInspectionMode,
 	getRunCounts,
-	getSeverityCounts
+	getSeverityCounts,
+	toRunValidationDiagnosticEntries
 } from './model';
 
 describe('workbench run presentation model', () => {
@@ -30,6 +31,37 @@ describe('workbench run presentation model', () => {
 			expect(getInspectionMode(validity, outcome)).toBe(expected);
 		}
 	);
+
+	it('marks independently rejected solver histories invalid and exposes structured failures', () => {
+		expect(getInspectionMode('valid', 'exited', false)).toBe('invalid-prefix');
+		expect(
+			toRunValidationDiagnosticEntries({
+				valid: false,
+				checkedCategories: ['collision-free-interval'],
+				failures: [
+					{
+						category: 'collision-free-interval',
+						code: 'EARLY_GEOMETRY_CROSSING',
+						message: 'A committed free-flight interval visibly crosses fixed-world geometry.',
+						reference: {
+							path: '$.trajectories[0].segments[1]',
+							time: 2,
+							bodyId: 'ball',
+							colliderId: 'peg'
+						}
+					}
+				]
+			})
+		).toEqual([
+			expect.objectContaining({
+				severity: 'error',
+				code: 'RUN_VALIDATION_EARLY_GEOMETRY_CROSSING',
+				time: 2,
+				bodyId: 'ball',
+				message: expect.stringContaining('collider peg')
+			})
+		]);
+	});
 
 	it('derives counts and severity totals without changing the run', () => {
 		const run = parseSimulationRunFixture(canonicalFixtureJson);

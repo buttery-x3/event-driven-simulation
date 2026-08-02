@@ -136,13 +136,16 @@ Diagnostic export is a separate versioned external representation under
 `simulation/serialization/diagnostic-export`. Version 1 uses the stable
 `simulation-diagnostic-export` discriminator and snapshots explicit provenance, the submitted
 `SimulationInput`, a derived run summary, authoritative trajectories and events, contact-search
-evidence, and structured diagnostic entries. It preserves raw contract numbers and the terminal
-search evidence already recorded by the solver; it does not scrape presentation text or add a
-solver-iteration trace.
+evidence, structured diagnostic entries and the workbench's independent run-validation result. It
+preserves the solver's validity and terminal result as authoritative evidence while presenting a
+failed independent validation as invalid for ordinary playback/export status; it does not rewrite
+the run, scrape presentation text or add a solver-iteration trace.
 
-The serialization capability depends only on plain simulation contracts. Workbench code supplies
-source metadata and owns `Blob`, object-URL and browser download lifecycle. Diagnostic exports are
-not accepted by the scenario-input or saved-run loaders, and neither existing format changes as a
+The serialization capability depends only on plain simulation contracts. Workbench code invokes
+the public verification entry point and supplies its structured result alongside source metadata;
+serialization records that evidence without importing verification or making it motion authority.
+The workbench owns `Blob`, object-URL and browser download lifecycle. Diagnostic exports are not
+accepted by the scenario-input or saved-run loaders, and neither existing format changes as a
 result of this boundary.
 
 ## Headless event-driven run
@@ -262,7 +265,10 @@ responsibilities by state ownership and independently evolving regions:
 Draft input, submitted input, returned run record and presentation clock are distinct state. Preset
 selection and field editing cannot mutate an accepted run. The explicit Run action is the only path
 from a simulation-input draft to simulation; renderer playback still receives only the returned run
-through `toRendererPlaybackInput`.
+through `toRendererPlaybackInput`. Every accepted calculated or loaded run is also checked through
+`validateSimulationRun`; a failed check switches the workbench to invalid-prefix inspection and
+adds structured verification failures to presentation/export evidence without mutating the
+authoritative run record.
 
 The workbench catalogue includes canonical launches, every named board-state verification world and
 the curated adversarial/physical-settings experiments. Its stable category vocabulary also reserves

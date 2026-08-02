@@ -7,11 +7,13 @@
 		input,
 		time,
 		mode,
+		independentValidationPassed,
 		transportState
 	}: {
 		input: RendererPlaybackInput;
 		time: number;
 		mode: InspectionMode;
+		independentValidationPassed: boolean;
 		transportState: 'playing' | 'paused' | 'ended';
 	} = $props();
 
@@ -44,8 +46,13 @@
 			<h2 id="viewport-heading">{getInspectionModeLabel(mode)}</h2>
 		</div>
 		<div class="badges" aria-label="Run and transport status">
-			<span class:danger={input.validity === 'invalid'} class:warning={mode === 'recorded-prefix'}>
-				{getRunStatusLabel(input.terminalReason)}
+			<span
+				class:danger={input.validity === 'invalid' || !independentValidationPassed}
+				class:warning={mode === 'recorded-prefix'}
+			>
+				{independentValidationPassed
+					? getRunStatusLabel(input.terminalReason)
+					: 'Independent validation failed'}
 			</span>
 			<span class:playing={transportState === 'playing'}>{transportState}</span>
 		</div>

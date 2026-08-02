@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { constructSingleBallRun } from '../../../run';
+import { validateSimulationRun } from '../../../verification';
 import { defaultCanonicalPlinkoScenario } from '../../../world';
 import { createDiagnosticExport, serializeDiagnosticExport } from '..';
 
@@ -8,13 +9,18 @@ const exportedAt = '2026-08-02T11:23:27.123Z';
 describe('diagnostic export v1', () => {
 	it('preserves a successful run and its raw contact-search evidence', () => {
 		const run = constructSingleBallRun(defaultCanonicalPlinkoScenario.input);
-		const bundle = createDiagnosticExport(run, {
-			exportedAt,
-			runId: 'run-123',
-			scenarioId: defaultCanonicalPlinkoScenario.id,
-			descriptiveName: defaultCanonicalPlinkoScenario.name,
-			source: { kind: 'simulation', name: defaultCanonicalPlinkoScenario.name }
-		});
+		const validation = validateSimulationRun(defaultCanonicalPlinkoScenario.input, run);
+		const bundle = createDiagnosticExport(
+			run,
+			{
+				exportedAt,
+				runId: 'run-123',
+				scenarioId: defaultCanonicalPlinkoScenario.id,
+				descriptiveName: defaultCanonicalPlinkoScenario.name,
+				source: { kind: 'simulation', name: defaultCanonicalPlinkoScenario.name }
+			},
+			validation
+		);
 		const parsed = JSON.parse(serializeDiagnosticExport(bundle));
 		const selectedSearch = run.diagnostics.contactSearches.find(
 			(search) => search.selectedColliderId !== null
@@ -49,6 +55,8 @@ describe('diagnostic export v1', () => {
 			},
 			summary: {
 				validity: run.validity,
+				authoritativeValidity: run.validity,
+				independentValidationPassed: true,
 				outcome: run.outcome,
 				simulatedUntilTime: run.diagnostics.simulatedUntilTime,
 				playableUntilTime: run.diagnostics.simulatedUntilTime
@@ -57,6 +65,7 @@ describe('diagnostic export v1', () => {
 		expect(parsed.submittedInput).toEqual(run.input);
 		expect(parsed.authoritativeRun.trajectories).toEqual(run.trajectories);
 		expect(parsed.authoritativeRun.events).toEqual(run.events);
+		expect(parsed.independentValidation).toEqual(validation);
 		expect(parsed.diagnostics.contactSearches).toEqual(run.diagnostics.contactSearches);
 		expect(parsed.diagnostics.entries).toEqual(run.diagnostics.entries);
 		expect(
@@ -76,7 +85,7 @@ describe('diagnostic export v1', () => {
 			}
 		};
 		const run = constructSingleBallRun(input);
-		const bundle = createDiagnosticExport(run, { exportedAt });
+		const bundle = createDiagnosticExport(run, { exportedAt }, validateSimulationRun(input, run));
 		const terminalSearch = run.diagnostics.contactSearches.at(-1);
 
 		expect(run.outcome).toBe('time-limit');
@@ -96,5 +105,34 @@ describe('diagnostic export v1', () => {
 			code: 'RUN_TIME_LIMIT',
 			time: 0.1
 		});
+	});
+
+	it('presents a failed independent validation as invalid without rewriting solver authority', () => {
+		const run = constructSingleBallRun(defaultCanonicalPlinkoScenario.input);
+		const failure = {
+			valid: false,
+			checkedCategories: ['collision-free-interval'],
+			failures: [
+				{
+					category: 'collision-free-interval',
+					code: 'EARLY_GEOMETRY_CROSSING',
+					message: 'A committed free-flight interval visibly crosses fixed-world geometry.',
+					reference: { path: '$.trajectories[0].segments[0]', time: 1, colliderId: 'peg' }
+				}
+			]
+		};
+		const bundle = createDiagnosticExport(run, { exportedAt }, failure);
+
+		expect(bundle.summary).toMatchObject({
+			validity: 'invalid',
+			authoritativeValidity: 'valid',
+			independentValidationPassed: false
+		});
+		expect(bundle.authoritativeRun).toMatchObject({
+			validity: run.validity,
+			outcome: run.outcome,
+			terminalReason: run.terminalReason
+		});
+		expect(bundle.independentValidation).toEqual(failure);
 	});
 });

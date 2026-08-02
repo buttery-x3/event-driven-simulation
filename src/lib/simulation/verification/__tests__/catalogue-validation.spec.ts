@@ -45,10 +45,14 @@ describe('named simulation-run validation', () => {
 		const scenario = canonicalPlinkoScenarios.find(({ id }) => id === 'offset-drop')!;
 		const run = constructSingleBallRun(scenario.input);
 		const before = validateSimulationRun(scenario.input, run);
-		const bundle = createDiagnosticExport(run, {
-			exportedAt: '2026-08-03T00:00:00.000Z',
-			scenarioId: scenario.id
-		});
+		const bundle = createDiagnosticExport(
+			run,
+			{
+				exportedAt: '2026-08-03T00:00:00.000Z',
+				scenarioId: scenario.id
+			},
+			before
+		);
 
 		expect(bundle.submittedInput).toBe(run.input);
 		expect(bundle.authoritativeRun.trajectories).toBe(run.trajectories);
