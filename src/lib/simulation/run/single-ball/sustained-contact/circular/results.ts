@@ -6,6 +6,7 @@ import type {
 import { dotVec2 } from '../../../../math';
 import { evaluateCircularContactState } from '../../../../motion';
 import { entryTransition, slidingTransition } from '../contact-mode-results';
+import { supportCandidate } from '../geometry';
 import type { SustainedContactRequest, SustainedContactResult } from '../types';
 import type { AngularEvent } from './angular-event-search';
 
@@ -54,6 +55,9 @@ export function circularBoundaryResult(
 		);
 	}
 	const isContact = boundary.type === 'contact';
+	const retained = isContact
+		? supportCandidate(request, leg.endTime, endState.position, endState.velocity)
+		: null;
 	return completedResult(
 		entryRequest,
 		segments,
@@ -72,6 +76,8 @@ export function circularBoundaryResult(
 			position: endState.position,
 			velocity: endState.velocity,
 			releasedContactColliderId: entryRequest.colliderId,
+			releasedContactColliderIds: [entryRequest.colliderId],
+			retainedSupportCandidates: retained ? [retained] : [],
 			acceptInitialContact: isContact
 		}
 	);
@@ -117,6 +123,7 @@ export function restingCircularResult(
 			colliderId: request.colliderId,
 			position,
 			normal,
+			contacts: request.manifoldContacts,
 			reason: 'zero-tangential-motion'
 		},
 		nextState: null

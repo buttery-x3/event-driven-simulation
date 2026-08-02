@@ -1,5 +1,7 @@
 import type { StaticCollider, Vec2 } from '../../../contracts';
+import type { FixedWorldContactCandidate } from '../../../collision';
 import { dotVec2 } from '../../../math';
+import type { SustainedContactRequest } from './types';
 
 export function circularPosition(centre: Vec2, contactRadius: number, angle: number): Vec2 {
 	return [centre[0] + contactRadius * Math.cos(angle), centre[1] + contactRadius * Math.sin(angle)];
@@ -48,4 +50,42 @@ export function outsideBounds(
 	if (position[1] < 0) return 'bottom';
 	if (position[1] > height) return 'top';
 	return null;
+}
+
+export function supportCandidate(
+	request: SustainedContactRequest,
+	time: number,
+	position: Vec2,
+	velocity: Vec2
+): FixedWorldContactCandidate | null {
+	const collider = request.input.scene.staticColliders.find(({ id }) => id === request.colliderId);
+	if (!collider) return null;
+	const feature = 'centre' in collider ? 'circle' : boundaryFeature(collider, request.normal);
+	return {
+		type: 'contact-candidate',
+		bodyId: request.body.id,
+		colliderId: collider.id,
+		colliderKind: 'centre' in collider ? 'circle' : 'boundary',
+		feature,
+		time,
+		position,
+		contactPoint: [
+			position[0] - request.normal[0] * request.body.physicalShape.radius,
+			position[1] - request.normal[1] * request.body.physicalShape.radius
+		],
+		normal: request.normal,
+		normalVelocity: dotVec2(velocity, request.normal),
+		response: 'non-impulsive-contact'
+	};
+}
+
+function boundaryFeature(collider: Exclude<StaticCollider, { centre: Vec2 }>, normal: Vec2) {
+	const delta: Vec2 = [
+		collider.physicalShape.end[0] - collider.physicalShape.start[0],
+		collider.physicalShape.end[1] - collider.physicalShape.start[1]
+	];
+	const positive: Vec2 = [-delta[1], delta[0]];
+	return dotVec2(positive, normal) >= 0
+		? ('segment-face-positive' as const)
+		: ('segment-face-negative' as const);
 }

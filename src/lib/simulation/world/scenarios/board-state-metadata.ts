@@ -35,10 +35,12 @@ const scenarioMetadata = {
 		'adversarial-contacts',
 		['board.close-contacts', 'launch.simultaneous-candidates'],
 		{
-			summary: 'The first search exposes exact near-simultaneous peg candidates.',
-			nearSimultaneousCandidate: true
-		},
-		'valid-prefix'
+			summary:
+				'The first impact couples both exact simultaneous peg contacts and settles after manifold collapse.',
+			minimumContactEvents: 1,
+			nearSimultaneousCandidate: true,
+			requiredTransitions: [{ from: 'impact', to: 'resting' }]
+		}
 	),
 	'no-reachable-exit-settled': metadata('board-layouts', ['board.no-reachable-exit']),
 	'no-future-event': metadata('physical-settings', []),

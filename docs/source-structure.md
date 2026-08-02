@@ -51,7 +51,12 @@ src/lib/simulation/
         boundary-contact.ts
         boundary-candidate.ts
         boundary-query-validation.ts
-        fixed-world-contact.ts
+        fixed-world/
+            index.ts
+            types.ts
+            query.ts
+            candidate-evaluation.ts
+            manifold.ts
         circle-circle/
             index.ts
             query.ts
@@ -73,6 +78,9 @@ src/lib/simulation/
             board-states.ts
             board-state-metadata.ts
             adversarial.ts
+            manifold/
+                index.ts
+                definitions.ts
         __tests__/
 
     run/
@@ -85,6 +93,13 @@ src/lib/simulation/
             termination-search.ts
             impact-response.ts
             diagnostics.ts
+            run-assembly.ts
+            manifold/
+                index.ts
+                types.ts
+                impulse-solver.ts
+                support-reactions.ts
+                __tests__/
             sustained-contact/
                 index.ts
                 types.ts

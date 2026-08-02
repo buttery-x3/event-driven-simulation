@@ -72,6 +72,13 @@ function validateTerminalReason(value: unknown, path: string): void {
 			requireString(reason.colliderId, `${path}.colliderId`);
 			validateVec2(reason.position, `${path}.position`);
 			validateVec2(reason.normal, `${path}.normal`);
+			if (reason.contacts !== undefined)
+				validateManifoldContacts(reason.contacts, `${path}.contacts`);
+			if (reason.supportReactions !== undefined) {
+				requireArray(reason.supportReactions, `${path}.supportReactions`).forEach(
+					(reaction, index) => requireFiniteNumber(reaction, `${path}.supportReactions[${index}]`)
+				);
+			}
 			requireOneOf(reason.reason, ['impact-collapse', 'zero-tangential-motion'], `${path}.reason`);
 			return;
 		case 'zero-time-loop':
@@ -145,6 +152,12 @@ function validateEvents(value: unknown, path: string): void {
 		requireString(record.colliderId, `${eventPath}.colliderId`);
 		validateVec2(record.position, `${eventPath}.position`);
 		validateVec2(record.normal, `${eventPath}.normal`);
+		if (record.contacts !== undefined)
+			validateManifoldContacts(record.contacts, `${eventPath}.contacts`);
+		if (record.preContactVelocity !== undefined)
+			validateVec2(record.preContactVelocity, `${eventPath}.preContactVelocity`);
+		if (record.postContactVelocity !== undefined)
+			validateVec2(record.postContactVelocity, `${eventPath}.postContactVelocity`);
 		if (record.type === 'contact-mode-transition') {
 			requireOneOf(
 				record.from,
@@ -203,6 +216,15 @@ function validateDiagnostics(value: unknown, path: string): void {
 			);
 			requireNullableString(record.reason, `${searchPath}.reason`);
 			requireNullableString(record.selectedColliderId, `${searchPath}.selectedColliderId`);
+			if (record.activeColliderIds !== undefined) {
+				requireArray(record.activeColliderIds, `${searchPath}.activeColliderIds`).forEach(
+					(id, index) => requireString(id, `${searchPath}.activeColliderIds[${index}]`)
+				);
+			}
+			if (record.preContactVelocity !== undefined)
+				validateVec2(record.preContactVelocity, `${searchPath}.preContactVelocity`);
+			if (record.postContactVelocity !== undefined)
+				validateVec2(record.postContactVelocity, `${searchPath}.postContactVelocity`);
 			requireArray(record.candidates, `${searchPath}.candidates`).forEach(
 				(candidate, candidateIndex) => {
 					const candidatePath = `${searchPath}.candidates[${candidateIndex}]`;
@@ -228,6 +250,16 @@ function validateDiagnostics(value: unknown, path: string): void {
 					if (candidateRecord.normalVelocity !== undefined) {
 						requireFiniteNumber(candidateRecord.normalVelocity, `${candidatePath}.normalVelocity`);
 					}
+					for (const field of ['impulse', 'postImpactNormalVelocity'] as const) {
+						if (candidateRecord[field] !== undefined)
+							requireFiniteNumber(candidateRecord[field], `${candidatePath}.${field}`);
+					}
+					if (
+						candidateRecord.activeInManifold !== undefined &&
+						typeof candidateRecord.activeInManifold !== 'boolean'
+					) {
+						invalidRunRecordField(`${candidatePath}.activeInManifold`, 'must be a boolean');
+					}
 					if (
 						candidateRecord.nearSimultaneous !== undefined &&
 						typeof candidateRecord.nearSimultaneous !== 'boolean'
@@ -247,5 +279,19 @@ function validateDiagnostics(value: unknown, path: string): void {
 		requireString(record.message, `${entryPath}.message`);
 		requireNullableFiniteNumber(record.time, `${entryPath}.time`);
 		requireNullableString(record.bodyId, `${entryPath}.bodyId`);
+	});
+}
+
+function validateManifoldContacts(value: unknown, path: string): void {
+	requireArray(value, path).forEach((contact, index) => {
+		const contactPath = `${path}[${index}]`;
+		const record = requireRecord(contact, contactPath);
+		requireString(record.colliderId, `${contactPath}.colliderId`);
+		requireString(record.feature, `${contactPath}.feature`);
+		validateVec2(record.contactPoint, `${contactPath}.contactPoint`);
+		validateVec2(record.normal, `${contactPath}.normal`);
+		requireFiniteNumber(record.preImpactNormalVelocity, `${contactPath}.preImpactNormalVelocity`);
+		requireFiniteNumber(record.postImpactNormalVelocity, `${contactPath}.postImpactNormalVelocity`);
+		requireFiniteNumber(record.impulse, `${contactPath}.impulse`);
 	});
 }

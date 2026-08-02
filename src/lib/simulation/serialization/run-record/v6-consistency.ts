@@ -103,6 +103,19 @@ function validateTerminalReference(record: SimulationRunRecord): void {
 		if (!collider) {
 			invalidRunRecordField('$.terminalReason.colliderId', 'must identify a fixed collider');
 		}
+		for (const [index, contact] of (reason.contacts ?? []).entries()) {
+			if (!record.input.scene.staticColliders.some(({ id }) => id === contact.colliderId)) {
+				invalidRunRecordField(
+					`$.terminalReason.contacts[${index}].colliderId`,
+					'must identify a fixed collider'
+				);
+			}
+			if (contact.impulse < 0)
+				invalidRunRecordField(
+					`$.terminalReason.contacts[${index}].impulse`,
+					'must be non-negative'
+				);
+		}
 		const lastEvent = [...record.events].reverse().find(({ type }) => type === 'contact');
 		if (
 			!lastEvent ||

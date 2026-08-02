@@ -7,6 +7,7 @@ export { prototypeSimulationInput } from './prototype-input';
 export {
 	boardStateScenarios,
 	adversarialScenarios,
+	manifoldContactScenarios,
 	canonicalPlinkoScenarios,
 	defaultCanonicalPlinkoScenario,
 	type BoardStateScenario,

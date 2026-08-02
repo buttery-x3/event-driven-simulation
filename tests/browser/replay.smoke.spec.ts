@@ -244,14 +244,30 @@ test('groups verification scenarios, replaces worlds on Run and reports authorit
 	await expect(selector.locator('optgroup[label="Canonical launches"] option')).toHaveCount(5);
 	await expect(selector.locator('optgroup[label="Board layouts"] option')).toHaveCount(8);
 	await expect(selector.locator('optgroup[label="Physical settings"] option')).toHaveCount(13);
-	await expect(selector.locator('optgroup[label="Adversarial contacts"] option')).toHaveCount(14);
+	await expect(selector.locator('optgroup[label="Adversarial contacts"] option')).toHaveCount(18);
 
 	const scenarios = [
 		{ id: 'no-pegs', sceneId: 'no-pegs-board', outcome: 'exited' },
 		{ id: 'dense', sceneId: 'dense-board', outcome: 'exited' },
 		{ id: 'mirrored-sparse', sceneId: 'mirrored-sparse-board', outcome: 'escaped' },
 		{ id: 'angled-ramp', sceneId: 'angled-ramp-board', outcome: 'escaped' },
-		{ id: 'close-contacts', sceneId: 'close-contact-board', outcome: 'unresolved' }
+		{ id: 'close-contacts', sceneId: 'close-contact-board', outcome: 'settled' },
+		{
+			id: 'circular-slide-second-peg',
+			sceneId: 'manifold-support-peg-impact-peg',
+			outcome: 'escaped'
+		},
+		{ id: 'sustained-two-support-rest', sceneId: 'manifold-left-v-right-v', outcome: 'settled' },
+		{
+			id: 'new-impact-releases-support',
+			sceneId: 'manifold-release-floor-lifting-circle',
+			outcome: 'exited'
+		},
+		{
+			id: 'circle-line-multi-support-rest',
+			sceneId: 'manifold-mixed-circle-mixed-line',
+			outcome: 'settled'
+		}
 	] as const;
 
 	for (const scenario of scenarios) {
@@ -289,8 +305,8 @@ test('groups verification scenarios, replaces worlds on Run and reports authorit
 		}
 	}
 
-	await expect(page.getByRole('region', { name: 'Recorded-prefix inspection' })).toBeVisible();
-	await expect(page.getByRole('heading', { name: 'Failure boundary' })).toBeVisible();
+	await expect(page.getByRole('region', { name: 'Recorded-prefix inspection' })).toHaveCount(0);
+	await expect(page.getByRole('heading', { name: 'Failure boundary' })).toHaveCount(0);
 });
 
 test('runs sustained, turning-point and invalid curated scenarios with declared replay evidence', async ({

@@ -8,6 +8,7 @@ import type {
 	SimulationRunRecord,
 	Vec2
 } from '../../contracts';
+import type { ContactManifoldMember } from '../../contracts';
 import type { FixedWorldContactDiagnostics, FixedWorldContactQueryResult } from '../../collision';
 import { dotVec2 } from '../../math';
 import { evaluateMotionSegmentVelocity } from '../../motion';
@@ -59,6 +60,43 @@ export function toRunContactSearchDiagnostic(
 		reason: 'reason' in result ? result.reason : null,
 		selectedColliderId: result.type === 'contact' ? result.event.colliderId : null,
 		candidates: [...accepted, ...rejected]
+	};
+}
+
+export function withManifoldEvidence(
+	diagnostic: RunContactSearchDiagnostic,
+	preContactVelocity: Vec2,
+	postContactVelocity: Vec2,
+	contacts: readonly ContactManifoldMember[]
+): RunContactSearchDiagnostic {
+	return {
+		...diagnostic,
+		activeColliderIds: contacts
+			.filter(({ impulse }) => impulse > 0)
+			.map(({ colliderId }) => colliderId),
+		preContactVelocity: normalizeDiagnosticVector(preContactVelocity),
+		postContactVelocity: normalizeDiagnosticVector(postContactVelocity),
+		candidates: diagnostic.candidates.map((candidate) => {
+			const contact = contacts.find(
+				(member) =>
+					member.colliderId === candidate.colliderId && member.feature === candidate.feature
+			);
+			return contact
+				? {
+						...candidate,
+						classification:
+							contact.impulse > 0
+								? 'active-manifold-contact'
+								: candidate.classification === 'accepted-non-impulsive'
+									? candidate.classification
+									: 'inactive-manifold-contact',
+						postContactVelocity: normalizeDiagnosticVector(postContactVelocity),
+						activeInManifold: contact.impulse > 0,
+						impulse: normalizeDiagnosticNumber(contact.impulse),
+						postImpactNormalVelocity: normalizeDiagnosticNumber(contact.postImpactNormalVelocity)
+					}
+				: candidate;
+		})
 	};
 }
 

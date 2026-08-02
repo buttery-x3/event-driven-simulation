@@ -140,6 +140,19 @@ export interface ContactEvent {
 	readonly colliderId: EntityId;
 	readonly position: Vec2;
 	readonly normal: Vec2;
+	readonly contacts?: readonly ContactManifoldMember[];
+	readonly preContactVelocity?: Vec2;
+	readonly postContactVelocity?: Vec2;
+}
+
+export interface ContactManifoldMember {
+	readonly colliderId: EntityId;
+	readonly feature: string;
+	readonly contactPoint: Vec2;
+	readonly normal: Vec2;
+	readonly preImpactNormalVelocity: number;
+	readonly postImpactNormalVelocity: number;
+	readonly impulse: number;
 }
 
 export type ContactMode = 'free-flight' | 'impact' | 'resting' | 'sliding';
@@ -163,6 +176,7 @@ export interface ContactModeTransitionEvent {
 		| 'unresolved';
 	readonly position: Vec2;
 	readonly normal: Vec2;
+	readonly contacts?: readonly ContactManifoldMember[];
 }
 
 export type PhysicalEvent = ContactEvent | ContactModeTransitionEvent;
@@ -212,6 +226,8 @@ export type RunTerminalReason =
 			readonly colliderId: EntityId;
 			readonly position: Vec2;
 			readonly normal: Vec2;
+			readonly contacts?: readonly ContactManifoldMember[];
+			readonly supportReactions?: readonly number[];
 			readonly reason: 'impact-collapse' | 'zero-tangential-motion';
 	  }
 	| {
@@ -257,6 +273,9 @@ export interface RunContactCandidateDiagnostic {
 	readonly preContactVelocity?: Vec2;
 	readonly postContactVelocity?: Vec2;
 	readonly nearSimultaneous?: boolean;
+	readonly activeInManifold?: boolean;
+	readonly impulse?: number;
+	readonly postImpactNormalVelocity?: number;
 }
 
 export interface RunContactSearchDiagnostic {
@@ -265,6 +284,9 @@ export interface RunContactSearchDiagnostic {
 	readonly outcome: 'contact' | 'no-event' | 'unresolved' | 'invalid-input';
 	readonly reason: string | null;
 	readonly selectedColliderId: EntityId | null;
+	readonly activeColliderIds?: readonly EntityId[];
+	readonly preContactVelocity?: Vec2;
+	readonly postContactVelocity?: Vec2;
 	readonly candidates: readonly RunContactCandidateDiagnostic[];
 }
 

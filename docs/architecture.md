@@ -90,6 +90,12 @@ ordinary objects, arrays, strings, numbers and `null`. This keeps them JSON-seri
 the calculation implementation replaceable by a future worker or Rust/Wasm module without adding
 either transport today.
 
+Version 6 run records may carry additive coupled-contact evidence on contact events, transitions,
+resting terminal reasons and contact-search diagnostics. Each member records geometry, incoming and
+outgoing normal velocity, and its non-negative impulse; resting manifolds additionally record the
+certified support reactions. Legacy version 6 fixtures without these optional forensic fields remain
+valid.
+
 ## Saved run boundary
 
 Saved run fixtures live under the repository-level `fixtures/` directory so headless tests and the
@@ -126,7 +132,9 @@ result of this boundary.
 `src/lib/simulation/run/single-ball/construct.ts` is the authoritative producer of single-ball run
 records. It sequences free flight, impact and sustained contact, commits only certified intervals,
 and continues from exact physical event times. `impact-response.ts` owns restitution and the
-conservative contracting-impact collapse policy. The named `sustained-contact` subdomain owns
+conservative manifold-level contracting-impact collapse policy. The private `manifold` subdomain
+owns deterministic active-set normal-impulse solving and non-negative support-reaction
+certification for one dynamic circle against fixed contacts. The named `sustained-contact` subdomain owns
 support-shape dispatch, line continuation, shared contact-mode result construction and
 constrained-path geometry. Its private `circular` subdomain owns changing-normal continuation,
 turning-point reversal and independently testable angular motion/scene-event ordering.
@@ -153,8 +161,10 @@ selection and result construction, `query-validation.ts` validates query invaria
 `root-topology.ts` owns entering, exiting, grazing, initial/release-owned and indeterminate policy.
 `types.ts` declares the local public query and result contracts.
 `boundary-contact.ts` orchestrates finite-segment root selection, `boundary-query-validation.ts`
-validates its query contract, `boundary-candidate.ts` classifies face and endpoint evidence, and
-`fixed-world-contact.ts` compares their common typed candidates.
+validates its query contract, and `boundary-candidate.ts` classifies face and endpoint evidence.
+The named `fixed-world` subdomain evaluates every collider, compares their common typed candidates,
+and certifies exact-time touching contacts at the common earliest state. Tolerance-near candidates
+whose ordering cannot be distinguished from simultaneity fail closed.
 `simulation/math/polynomial-roots.ts` contains the shared interval root isolation and exposes
 geometry-neutral isolating intervals and neighbouring polynomial samples to both geometry solvers.
 None of these modules advances state through fixed timesteps or imports rendering code. Renderer

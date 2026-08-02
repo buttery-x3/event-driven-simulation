@@ -54,7 +54,11 @@ export type ScenarioCoverageId =
 	| 'sustained.line-sliding'
 	| 'sustained.circular-detachment'
 	| 'sustained.unsupported-detachment'
-	| 'sustained.circular-turning-point';
+	| 'sustained.circular-turning-point'
+	| 'manifold.circular-acquisition'
+	| 'manifold.multi-support-rest'
+	| 'manifold.support-release'
+	| 'manifold.mixed-support';
 
 export type ScenarioMotionMode = 'free-flight' | 'linear-contact' | 'circular-contact';
 

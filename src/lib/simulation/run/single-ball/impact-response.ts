@@ -1,14 +1,18 @@
-import type { SimulationInput, Vec2 } from '../../contracts';
+import type { ContactManifoldMember, SimulationInput, Vec2 } from '../../contracts';
+import type { FixedWorldContactCandidate } from '../../collision';
 import { dotVec2 } from '../../math';
+import { solveImpactManifold } from './manifold';
 
 export interface ImpactObservation {
-	readonly colliderId: string;
+	readonly manifoldKey: string;
 	readonly time: number;
 	readonly incomingNormalSpeed: number;
 }
 
 export interface ImpactResponse {
 	readonly outgoingVelocity: Vec2;
+	readonly contacts: readonly ContactManifoldMember[];
+	readonly activeCandidates: readonly FixedWorldContactCandidate[];
 	readonly enterSustainedContact: boolean;
 	readonly collapseReason:
 		'zero-restitution' | 'contracting-impacts' | 'initial-supported-state' | null;
@@ -16,82 +20,106 @@ export interface ImpactResponse {
 
 export function resolveImpactResponse(
 	input: SimulationInput,
-	colliderId: string,
 	time: number,
-	normal: Vec2,
+	candidates: readonly FixedWorldContactCandidate[],
 	incomingVelocity: Vec2,
 	history: readonly ImpactObservation[]
 ): ImpactResponse | null {
-	const normalVelocity = dotVec2(incomingVelocity, normal);
-	const responseScale = (1 + input.settings.restitution) * normalVelocity;
-	const outgoingVelocity: Vec2 = [
-		incomingVelocity[0] - responseScale * normal[0],
-		incomingVelocity[1] - responseScale * normal[1]
-	];
-	if (!Number.isFinite(responseScale) || !outgoingVelocity.every(Number.isFinite)) return null;
-
-	const pressingAcceleration = -dotVec2(input.settings.gravity, normal);
-	if (pressingAcceleration <= 0 || normalVelocity > input.settings.tolerances.eventTime) {
-		return { outgoingVelocity, enterSustainedContact: false, collapseReason: null };
+	const tolerance = input.settings.tolerances.eventTime;
+	const solution = solveImpactManifold(
+		candidates,
+		incomingVelocity,
+		input.settings.restitution,
+		tolerance
+	);
+	if (!solution) return null;
+	const manifoldKey = contactManifoldKey(candidates);
+	const pressingAcceleration = Math.max(
+		0,
+		...candidates.map(({ normal }) => -dotVec2(input.settings.gravity, normal))
+	);
+	const incomingNormalSpeed = Math.max(
+		0,
+		...solution.contacts.map(({ preImpactNormalVelocity }) => -preImpactNormalVelocity)
+	);
+	const retainedConstraint = candidates.some(
+		(candidate, index) =>
+			candidate.response === 'non-impulsive-contact' &&
+			Math.abs(solution.contacts[index]?.postImpactNormalVelocity ?? Infinity) <= tolerance &&
+			dotVec2(input.settings.gravity, candidate.normal) < 0
+	);
+	if (pressingAcceleration <= 0) return response(solution, false, null);
+	if (time === 0 && incomingNormalSpeed <= tolerance && history.length === 0) {
+		return response(solution, true, 'initial-supported-state');
 	}
-	if (
-		time === 0 &&
-		Math.abs(normalVelocity) <= input.settings.tolerances.eventTime &&
-		history.length === 0
-	) {
-		return {
-			outgoingVelocity,
-			enterSustainedContact: true,
-			collapseReason: 'initial-supported-state'
-		};
-	}
+	if (input.settings.restitution === 0) return response(solution, true, 'zero-restitution');
 
-	if (input.settings.restitution === 0) {
-		return {
-			outgoingVelocity,
-			enterSustainedContact: true,
-			collapseReason: 'zero-restitution'
-		};
-	}
-
-	const sameCollider = history
-		.filter((observation) => observation.colliderId === colliderId)
+	const sameManifold = history
+		.filter((observation) => observation.manifoldKey === manifoldKey)
 		.slice(-2);
-	if (sameCollider.length < 2) {
-		return { outgoingVelocity, enterSustainedContact: false, collapseReason: null };
-	}
-
-	const previous = sameCollider[1]!;
-	const beforePrevious = sameCollider[0]!;
+	if (sameManifold.length < 2) return response(solution, retainedConstraint, null);
+	const previous = sameManifold[1]!;
+	const beforePrevious = sameManifold[0]!;
 	const previousInterval = previous.time - beforePrevious.time;
 	const currentInterval = time - previous.time;
-	const currentApproachSpeed = Math.max(0, -normalVelocity);
 	const speedThreshold = Math.sqrt(
 		2 * pressingAcceleration * input.settings.tolerances.contactDistance
 	);
 	const contracting =
-		previousInterval > input.settings.tolerances.eventTime &&
-		currentInterval > input.settings.tolerances.eventTime &&
+		previousInterval > tolerance &&
+		currentInterval > tolerance &&
 		currentInterval < previousInterval &&
-		currentApproachSpeed < previous.incomingNormalSpeed;
+		incomingNormalSpeed < previous.incomingNormalSpeed;
 	const ratio = contracting ? currentInterval / previousInterval : 1;
 	const predictedRemainingTime = ratio < 1 ? (currentInterval * ratio) / (1 - ratio) : Infinity;
+	const oneDimensional =
+		candidates.length === 1 &&
+		Math.abs(
+			incomingVelocity[0] * -candidates[0]!.normal[1] +
+				incomingVelocity[1] * candidates[0]!.normal[0]
+		) <= speedThreshold;
 	const nearbyWindow = Math.max(
-		64 * input.settings.tolerances.eventTime,
-		8 * Math.sqrt(input.settings.tolerances.contactDistance / pressingAcceleration)
+		64 * tolerance,
+		(oneDimensional ? 16 : 8) *
+			Math.sqrt(input.settings.tolerances.contactDistance / pressingAcceleration)
 	);
+	const collapse =
+		contracting &&
+		incomingNormalSpeed * input.settings.restitution <= 2 * speedThreshold &&
+		predictedRemainingTime <= nearbyWindow;
+	return response(
+		solution,
+		collapse || retainedConstraint,
+		collapse ? 'contracting-impacts' : null
+	);
+}
 
+export function impactObservation(
+	candidates: readonly FixedWorldContactCandidate[],
+	time: number,
+	contacts: readonly ContactManifoldMember[]
+): ImpactObservation {
 	return {
-		outgoingVelocity,
-		enterSustainedContact:
-			contracting &&
-			currentApproachSpeed * input.settings.restitution <= 2 * speedThreshold &&
-			predictedRemainingTime <= nearbyWindow,
-		collapseReason:
-			contracting &&
-			currentApproachSpeed * input.settings.restitution <= 2 * speedThreshold &&
-			predictedRemainingTime <= nearbyWindow
-				? 'contracting-impacts'
-				: null
+		manifoldKey: contactManifoldKey(candidates),
+		time,
+		incomingNormalSpeed: Math.max(
+			0,
+			...contacts.map(({ preImpactNormalVelocity }) => -preImpactNormalVelocity)
+		)
 	};
+}
+
+function response(
+	solution: NonNullable<ReturnType<typeof solveImpactManifold>>,
+	enterSustainedContact: boolean,
+	collapseReason: ImpactResponse['collapseReason']
+): ImpactResponse {
+	return { ...solution, enterSustainedContact, collapseReason };
+}
+
+function contactManifoldKey(candidates: readonly FixedWorldContactCandidate[]): string {
+	return candidates
+		.map(({ colliderId, feature }) => `${colliderId}:${feature}`)
+		.sort()
+		.join('|');
 }

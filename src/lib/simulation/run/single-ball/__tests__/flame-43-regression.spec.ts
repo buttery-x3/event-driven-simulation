@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { SimulationRunRecord } from '../../../contracts';
 import turningPointRunJson from '../../../../../../fixtures/regressions/flame-43-circular-turning-point.json?raw';
 import { dotVec2 } from '../../../math';
 import { evaluateMotionSegmentPosition, evaluateMotionSegmentVelocity } from '../../../motion';
@@ -52,7 +53,21 @@ describe('FLAME-43 circular turning-point regression', () => {
 		expect(rerun.outcome).toBe('escaped');
 		expect(rerun.terminalReason.type).not.toMatch(/unresolved|zero-time-loop/);
 		expect(rerun.trajectories).toEqual(fixture.trajectories);
-		expect(rerun.events).toEqual(fixture.events);
+		expect(rerun.events.map(legacyEvent)).toEqual(fixture.events.map(legacyEvent));
 		expect(parseSimulationRunFixture(JSON.stringify(rerun))).toEqual(rerun);
 	});
 });
+
+function legacyEvent(event: SimulationRunRecord['events'][number]) {
+	const common = {
+		type: event.type,
+		time: event.time,
+		bodyId: event.bodyId,
+		colliderId: event.colliderId,
+		position: event.position,
+		normal: event.normal
+	};
+	return event.type === 'contact'
+		? common
+		: { ...common, from: event.from, to: event.to, reason: event.reason };
+}

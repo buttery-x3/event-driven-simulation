@@ -21,7 +21,7 @@ export {
 	type FixedWorldContactQueryResult,
 	type FixedWorldContactTolerances,
 	type FixedWorldRejectedCandidateDiagnostic
-} from './fixed-world-contact';
+} from './fixed-world';
 export {
 	defaultCircleCircleContactTolerances,
 	findEarliestCircleCircleContact,

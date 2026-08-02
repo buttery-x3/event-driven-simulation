@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
 	adversarialScenarios,
 	boardStateScenarios,
-	canonicalPlinkoScenarios
+	canonicalPlinkoScenarios,
+	manifoldContactScenarios
 } from '$lib/simulation/world';
 import {
 	assessScenarioOutcome,
@@ -15,13 +16,17 @@ import {
 describe('workbench scenario catalogue', () => {
 	it('adapts every world scenario without copying its input', () => {
 		expect(workbenchScenarios).toHaveLength(
-			canonicalPlinkoScenarios.length + boardStateScenarios.length + adversarialScenarios.length
+			canonicalPlinkoScenarios.length +
+				boardStateScenarios.length +
+				manifoldContactScenarios.length +
+				adversarialScenarios.length
 		);
 		expect(new Set(workbenchScenarios.map(({ id }) => id)).size).toBe(workbenchScenarios.length);
 
 		for (const source of [
 			...canonicalPlinkoScenarios,
 			...boardStateScenarios,
+			...manifoldContactScenarios,
 			...adversarialScenarios
 		]) {
 			expect(getWorkbenchScenario(source.id)?.input).toBe(source.input);
@@ -50,7 +55,7 @@ describe('workbench scenario catalogue', () => {
 			actualOutcome: null
 		});
 		expect(assessScenarioOutcome(closeContacts, 'dense', 'unresolved').status).toBe('not-run');
-		expect(assessScenarioOutcome(closeContacts, closeContacts.id, 'unresolved').status).toBe(
+		expect(assessScenarioOutcome(closeContacts, closeContacts.id, 'settled').status).toBe(
 			'matched'
 		);
 		expect(assessScenarioOutcome(closeContacts, closeContacts.id, 'exited')).toEqual({

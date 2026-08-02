@@ -166,7 +166,7 @@ export const boardStateScenarios = [
 		'close-contacts',
 		'Closely spaced contacts',
 		'Creates an exact two-peg tie that must preserve deterministic diagnostics.',
-		['unresolved'],
+		['settled'],
 		simulationInput(
 			scene(
 				'close-contact-board',

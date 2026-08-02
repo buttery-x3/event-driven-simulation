@@ -14,6 +14,7 @@ import { evaluateMotionSegmentPosition, evaluateMotionSegmentVelocity } from '..
 import { toRunContactSearchDiagnostic } from '../diagnostics';
 import { findEarliestTerminationEntry } from '../termination-search';
 import { continueCircularContact } from './circular';
+import { supportCandidate } from './geometry';
 import {
 	detachedContactResult,
 	entryTransition,
@@ -112,6 +113,13 @@ export function continueLineContact(
 
 	if (contactResult.type === 'contact') {
 		const endSegment = { ...path, endTime: contactResult.event.time };
+		const endVelocity = evaluateMotionSegmentVelocity(endSegment, contactResult.event.time);
+		const retained = supportCandidate(
+			request,
+			contactResult.event.time,
+			contactResult.event.position,
+			endVelocity
+		);
 		return {
 			segments: [endSegment],
 			events: [
@@ -130,8 +138,10 @@ export function continueLineContact(
 			nextState: {
 				time: contactResult.event.time,
 				position: contactResult.event.position,
-				velocity: evaluateMotionSegmentVelocity(endSegment, contactResult.event.time),
+				velocity: endVelocity,
 				releasedContactColliderId: collider.id,
+				releasedContactColliderIds: [collider.id],
+				retainedSupportCandidates: retained ? [retained] : [],
 				acceptInitialContact: true
 			}
 		};
@@ -214,6 +224,8 @@ function leaveLineEndpoint(
 				position,
 				velocity,
 				releasedContactColliderId: collider.id,
+				releasedContactColliderIds: [collider.id],
+				retainedSupportCandidates: [],
 				acceptInitialContact: false
 			}
 		};

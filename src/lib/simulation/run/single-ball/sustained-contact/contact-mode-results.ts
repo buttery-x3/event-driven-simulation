@@ -16,10 +16,9 @@ export function restingContactResult(request: SustainedContactRequest): Sustaine
 			colliderId: request.colliderId,
 			position: request.position,
 			normal: request.normal,
+			contacts: request.manifoldContacts,
 			reason:
-				request.entryReason === 'supported-initial-state'
-					? 'zero-tangential-motion'
-					: 'impact-collapse'
+				request.entryReason === 'impact-collapse' ? 'impact-collapse' : 'zero-tangential-motion'
 		},
 		nextState: null
 	};
@@ -39,6 +38,8 @@ export function detachedContactResult(
 			position: request.position,
 			velocity,
 			releasedContactColliderId: request.colliderId,
+			releasedContactColliderIds: [request.colliderId],
+			retainedSupportCandidates: [],
 			acceptInitialContact: false
 		}
 	};
@@ -115,6 +116,7 @@ function transition(
 		to,
 		reason,
 		position,
-		normal
+		normal,
+		contacts: request.manifoldContacts
 	};
 }

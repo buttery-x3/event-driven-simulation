@@ -3,6 +3,7 @@ import {
 	adversarialScenarios,
 	boardStateScenarios,
 	canonicalPlinkoScenarios,
+	manifoldContactScenarios,
 	type ScenarioCategoryId,
 	type VerificationScenario
 } from '$lib/simulation/world';
@@ -31,6 +32,7 @@ export const workbenchScenarioCategories = [
 export const workbenchScenarios = [
 	...canonicalPlinkoScenarios,
 	...boardStateScenarios,
+	...manifoldContactScenarios,
 	...adversarialScenarios
 ] as const satisfies readonly WorkbenchScenarioDescriptor[];
 

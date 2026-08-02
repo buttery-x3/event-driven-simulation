@@ -6,7 +6,7 @@ import type {
 	StaticLineSegmentCollider,
 	Vec2
 } from '../../contracts';
-import { findEarliestFixedWorldContact } from '../fixed-world-contact';
+import { findEarliestFixedWorldContact } from '../fixed-world';
 
 function peg(id: string, centre: Vec2, radius = 0.5): StaticCircleCollider {
 	return {
@@ -74,15 +74,15 @@ describe('earliest fixed-world contact selection', () => {
 		expect(result.event.time).toBeCloseTo(0.5, 9);
 	});
 
-	it('reports near-simultaneous candidates but keeps the true earlier event', () => {
+	it('fails closed when eventTime cannot certify ordering versus simultaneity', () => {
 		const nearSimultaneousWallX = -0.5 + 0.5e-9;
 		const result = findEarliestFixedWorldContact(
 			query([wall('wall-near', nearSimultaneousWallX), peg('peg-earliest', [0, 0])])
 		);
 
-		expect(result.type).toBe('contact');
-		if (result.type !== 'contact') return;
-		expect(result.candidate.colliderId).toBe('peg-earliest');
+		expect(result.type).toBe('unresolved');
+		if (result.type !== 'unresolved') return;
+		expect(result.reason).toContain('not certified at the same time');
 		expect(
 			result.diagnostics.nearSimultaneousCandidates.map(({ colliderId }) => colliderId)
 		).toEqual(['peg-earliest', 'wall-near']);

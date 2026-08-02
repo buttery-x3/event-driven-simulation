@@ -150,9 +150,11 @@ Candidate ordering follows this numerical policy:
 2. collider ID using deterministic string ordering; then
 3. feature name using deterministic string ordering.
 
-The exact earliest timestamp always wins. Every candidate no later than `eventTime` after that
-timestamp is also reported as near-simultaneous, so a later tolerance-neighbour cannot win silently.
-The ID and feature keys resolve exact-time ties only. A `no-event` result is permitted only when
+The exact earliest timestamp defines the common event state. Every candidate no later than
+`eventTime` after that timestamp is reported as near-simultaneous, then re-evaluated at the common
+position and velocity. Exact-time touching, non-separating candidates form the contact set. A
+positive but tolerance-near time difference is unresolved because `eventTime` is not a physics rule
+for merging distinct impacts. ID and feature keys order diagnostics only. A `no-event` result is permitted only when
 every collider reports no contact. Any unresolved collider calculation makes the whole world query
 unresolved because it could conceal an earlier event; a valid later candidate remains diagnostic
 evidence but is not committed as the result.
@@ -164,13 +166,19 @@ evidence but is not committed as the result.
 collider continuously, and commits a segment only after the selected interval has been certified
 collision-free. It never advances collision state through renderer frames or physics timesteps.
 
-Each selected contact is evaluated directly on the incoming path. Restitution is applied only to a
-definite incoming impact. For outward unit normal `n`, incoming velocity `v` and restitution `e`,
-the outgoing velocity is:
+Each selected contact set is evaluated directly on the incoming path. For one contact, restitution
+reduces to the familiar outward-normal response:
 
 ```text
 v' = v - (1 + e)(v · n)n
 ```
+
+For several contacts the solver chooses non-negative normal impulses together. It enumerates the
+one- and two-constraint active bases available to a two-dimensional single-body system, solves the
+active equalities, rejects attractive impulses, verifies every candidate's target normal velocity,
+and chooses the minimum velocity change. Incoming contacts receive the configured restitution;
+existing zero-normal-speed supports receive a zero target and act as unilateral constraints.
+Candidate ordering and collider names cannot enter the velocity objective.
 
 Certified non-impulsive onset uses the unchanged incoming velocity and proceeds directly to
 sustained-contact support classification. The contact position becomes the next segment's exact
@@ -190,9 +198,10 @@ from the detailed `terminalReason`. Run `validity` records whether the retained 
 the public contract. Diagnostics retain each contact search's accepted and rejected candidates and
 record search iterations, event count, candidate count, segment count, simulated horizon and
 calculation wall time. Accepted contact candidates additionally preserve their proposed time delta,
-position, contact point, normal, pre- and proposed post-contact velocity, and near-simultaneous
-classification. These optional forensic fields remain diagnostic evidence only. They are
-diagnostic evidence only: instrumentation is written after selection and never participates in
+position, contact point, normal, pre- and coupled post-contact velocity, near-simultaneous and
+active-set classification, impulse, and outgoing normal velocity. Contact events preserve the same
+complete manifold evidence. These optional forensic fields remain diagnostic evidence only:
+instrumentation is written after selection and never participates in
 event selection or becomes authoritative trajectory motion.
 
 Supported scene-bounds crossings are solved continuously alongside explicit completion and escape
@@ -204,15 +213,17 @@ otherwise the body continues in a `linear-contact` or `circular-contact` segment
 
 The impact state machine distinguishes an ordinary separating restitution response from the
 inelastic-collapse limit. Zero restitution enters the limit immediately when support is available.
-For positive restitution, collapse requires repeated impacts with the same collider, contracting
+For positive restitution, collapse requires repeated impacts with the same geometric contact set, contracting
 impact intervals and approach speeds, a sufficiently small normal speed derived from contact
 distance and pressing acceleration, and a finite nearby predicted accumulation time. This policy
 never adds a position nudge, random direction, damping step or synthetic time advance.
 
-Every accepted impact remains a `contact` event. Entering or leaving sustained contact adds a
+Every accepted manifold remains one `contact` event. Entering or leaving sustained contact adds a
 `contact-mode-transition` event with the supporting collider, position, normal, source and target
 mode, and reason. A `linear-contact` or `circular-contact` motion segment is the authoritative
-continuation between those transitions. Resting contact is terminal for the current fixed-world,
+continuation between those transitions. Rest requires a separate non-negative reaction solve
+proving gravity can be balanced by the full contact set; small speed alone is insufficient.
+Resting contact is terminal for the current fixed-world,
 single-ball model because no supported future external event can change it.
 
 For a fixed straight segment, the constrained acceleration is

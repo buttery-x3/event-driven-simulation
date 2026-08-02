@@ -9,6 +9,7 @@ import {
 	adversarialScenarios,
 	boardStateScenarios,
 	canonicalPlinkoScenarios,
+	manifoldContactScenarios,
 	type ScenarioCoverageId,
 	type VerificationScenario
 } from '../scenarios';
@@ -60,12 +61,17 @@ const requiredCoverage = [
 	'sustained.line-sliding',
 	'sustained.circular-detachment',
 	'sustained.unsupported-detachment',
-	'sustained.circular-turning-point'
+	'sustained.circular-turning-point',
+	'manifold.circular-acquisition',
+	'manifold.multi-support-rest',
+	'manifold.support-release',
+	'manifold.mixed-support'
 ] as const satisfies readonly ScenarioCoverageId[];
 
 const completeCatalogue: readonly VerificationScenario[] = [
 	...canonicalPlinkoScenarios,
 	...boardStateScenarios,
+	...manifoldContactScenarios,
 	...adversarialScenarios
 ];
 
