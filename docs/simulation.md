@@ -46,8 +46,9 @@ collision calculations.
 ## Scenario catalogue
 
 Each scenario uses one `0.13 m` radius ball named `ball-primary`, gravity `(0, -9.81) m/s²`,
-restitution `0.78`, and the canonical board. Positions are metres and velocities are metres per
-second.
+restitution `0.78`, a maximum simulation time of `60 s`, and the canonical board. The extended
+horizon allows slow or contact-heavy canonical launches to reach a physical outcome instead of
+being cut off by the former `10 s` limit. Positions are metres and velocities are metres per second.
 
 | Scenario ID                | Initial position | Initial velocity | Intended verification purpose                                                               |
 | -------------------------- | ---------------- | ---------------- | ------------------------------------------------------------------------------------------- |

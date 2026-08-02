@@ -635,7 +635,7 @@
 			"gravity": [0, -9.81],
 			"restitution": 0.78,
 			"maximumEvents": 1000,
-			"maximumSimulationTime": 10,
+			"maximumSimulationTime": 60,
 			"tolerances": {
 				"contactDistance": 1e-9,
 				"eventTime": 1e-9

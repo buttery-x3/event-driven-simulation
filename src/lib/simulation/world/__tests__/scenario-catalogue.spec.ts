@@ -17,6 +17,7 @@ describe('canonical Plinko scenario catalogue', () => {
 			expect(scenario.verificationPurpose.length).toBeGreaterThan(20);
 			expect(scenario.input.scene).toBe(canonicalPlinkoBoard);
 			expect(scenario.input.initialDynamicBodies).toHaveLength(1);
+			expect(scenario.input.settings.maximumSimulationTime).toBe(60);
 		}
 	});
 

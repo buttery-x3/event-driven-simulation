@@ -13,7 +13,7 @@ const defaultSettings = {
 	gravity: [0, -9.81],
 	restitution: 0.78,
 	maximumEvents: 1_000,
-	maximumSimulationTime: 10,
+	maximumSimulationTime: 60,
 	tolerances: {
 		contactDistance: 1e-9,
 		eventTime: 1e-9
