@@ -21,6 +21,12 @@ performed.
 
 A production module has one primary reason to change.
 
+The simplest implementation is the simplest one that preserves coherent ownership, not the one
+with the smallest diff. The "smallest coherent extraction" is the smallest stable ownership
+boundary with reasonable headroom; it is not the minimum number of moved lines needed to satisfy a
+checker. The current source topology must evolve when observed responsibilities no longer match its
+boundaries.
+
 A feature area is not automatically one responsibility. For example, constructing a single-ball run
 involves several distinct responsibilities:
 
@@ -67,13 +73,15 @@ is true:
 - the file already combines orchestration with an independently testable algorithm, policy,
   validator, serializer or diagnostic builder;
 - a function exceeds 150 non-blank, non-comment lines; or
-- the proposed change would make a function exceed that threshold.
+- the proposed change would make a function exceed that threshold;
+- a directory contains six of its eight permitted implementation files; or
+- three or more implementation files serve one newly introduced state machine or domain concept.
 
 The check must identify:
 
 1. the file's current responsibilities;
 2. the new responsibility;
-3. the smallest coherent extraction;
+3. the smallest stable ownership boundary with reasonable headroom;
 4. the public API that must remain stable;
 5. the focused tests that protect the extraction.
 
@@ -91,6 +99,19 @@ documented exception where splitting would reduce clarity.
 
 The limits are smoke alarms, not design targets. A 490-line file that owns four policies is still
 poorly modularised.
+
+"The file remains below the hard limit" is never sufficient modularity justification. A threshold
+failure is evidence to reassess ownership, not permission to increase the threshold or shave lines
+until the file barely passes. If an implementation encounters file or function limits more than
+once, stop line-budget refactoring and restate the ownership plan before continuing.
+
+A newly created production file above 350 effective lines requires an explicit
+one-primary-reason-to-change justification and credible growth assessment in the completion report.
+Duplicated lifecycle, result or transition construction across domain modules is also an ownership
+signal even when each duplicated helper is small.
+
+Threshold increases and exceptions may not be made silently. They require repository-owner
+approval and a documented responsibility-based justification.
 
 An existing file above a hard limit may receive a minimal correctness fix. It must not receive a new
 independent responsibility without being decomposed in the same issue.
@@ -121,10 +142,17 @@ run/single-ball/
     input-validation.ts
     termination-search.ts
     impact-response.ts
-    sustained-contact.ts
-    circular-contact.ts
-    constrained-path-geometry.ts
     diagnostics.ts
+    sustained-contact/
+        index.ts
+        types.ts
+        continuation.ts
+        linear-contact.ts
+        circular-contact.ts
+        angular-event-search.ts
+        contact-mode-results.ts
+        geometry.ts
+        __tests__/
     __tests__/
 ```
 
@@ -134,9 +162,15 @@ The implemented ownership is:
 - `input-validation.ts` — semantic validation of a single-ball input;
 - `termination-search.ts` — continuous region entry and supported-bounds exit solving;
 - `impact-response.ts` — restitution response and conservative inelastic-collapse policy;
-- `sustained-contact.ts` — fixed-line constraint, resting classification and endpoint sequencing;
-- `circular-contact.ts` — changing-normal circular support and angular next-event selection;
-- `constrained-path-geometry.ts` — distance and containment evaluation for constrained paths;
+- `sustained-contact/index.ts` and `continuation.ts` — the named local capability and shape
+  dispatch;
+- `sustained-contact/linear-contact.ts` — fixed-line continuation and endpoint sequencing;
+- `sustained-contact/circular-contact.ts` — changing-normal circular continuation;
+- `sustained-contact/angular-event-search.ts` — independently testable detachment and angular
+  next-event search policy;
+- `sustained-contact/contact-mode-results.ts` — shared resting, detachment, unresolved and
+  transition-result construction;
+- `sustained-contact/geometry.ts` — distance and containment evaluation for constrained paths;
 - `diagnostics.ts` — translation of solver evidence and terminal outcomes into recorded
   diagnostics;
 - `index.ts` — explicit public exports only.
@@ -160,10 +194,11 @@ wrappers.
 
 ### Fixture validation
 
-`serialization/run-record/v6.ts` combines structural field validation with cross-field run
-consistency checks. FLAME-36 reassessed it while adding discriminated motion and transition-event
-validation: it remains below the hard file and function limits, and its shape checks produce the
-trusted record immediately consumed by its version-specific consistency checks.
+`serialization/simulation-input/v6.ts` owns standalone version 6 input shape validation.
+`serialization/run-record/v6-shape.ts` owns run-record structural validation, while
+`v6-consistency.ts` owns cross-field invariants and terminal references. `run-record/v6.ts` only
+orchestrates those two phases. Reusable unknown-data assertions and typed fixture failures live in
+the narrowly named `serialization/structural-validation` subdomain.
 
 ## Extraction rules
 
@@ -176,6 +211,11 @@ A decomposition should:
 - avoid temporary compatibility wrappers unless an existing consumer genuinely requires one;
 - delete obsolete aliases and dead modules when their compatibility purpose no longer exists;
 - update `architecture.md` when module ownership or public entry points change.
+
+An agent may introduce a clearly named internal subdomain and update documentation and mechanical
+checking in the same issue when the active work provides concrete evidence: current
+responsibilities, active near-term work, multiple consumers, repeated threshold encounters or a
+new state machine/domain concept. Do not add empty layers for hypothetical change.
 
 Do not create modules named `helpers`, `utils`, `common`, `shared`, `misc` or `core` as containers for
 unowned behaviour. Name modules after the concept or policy they own.
@@ -190,6 +230,10 @@ When a decomposition trigger applies, the implementation review must include:
 - focused tests run during extraction;
 - the full repository quality-gate result;
 - confirmation that no oversized file acquired a new independent responsibility.
+
+Every non-trivial completion report must also identify remaining structural pressure, evidence-based
+future split points, topology/dependency/threshold changes (or explicitly state that there were
+none), and headroom concerns for modified or new files above 350 effective lines.
 
 A review summary that only reports line movement is insufficient.
 

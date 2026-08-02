@@ -105,10 +105,11 @@ never evaluates motion beyond the committed segment boundary.
 `src/lib/simulation/run/single-ball/construct.ts` is the authoritative producer of single-ball run
 records. It sequences free flight, impact and sustained contact, commits only certified intervals,
 and continues from exact physical event times. `impact-response.ts` owns restitution and the
-conservative contracting-impact collapse policy. `sustained-contact.ts` owns line support,
-projected tangential acceleration and endpoint transitions; `circular-contact.ts` owns constrained
-peg and line-endpoint arcs, support-loss detection and angular next-event selection. Validation,
-termination search and diagnostic construction remain separate modules in the same subdomain. The
+conservative contracting-impact collapse policy. The named `sustained-contact` subdomain owns
+support-shape dispatch, line and circular continuation, shared contact-mode result construction,
+constrained-path geometry and independently testable detachment/angular scene-event search.
+Validation, termination search and diagnostic construction remain separate modules in the parent
+single-ball subdomain. The
 `run` entry point preserves both `constructSingleBallRun` and the old
 `generateSyntheticRun` compatibility name without retaining a forwarding implementation module.
 
@@ -201,9 +202,11 @@ from a launch draft to simulation; renderer playback still receives only the ret
 `toRendererPlaybackInput`.
 
 `simulation/serialization/simulation-input` provides the versioned JSON boundary for scenario
-inputs. It reuses the version 6 structural input validator and then applies the single-ball semantic
-validator. Saved run records continue to use the independent
-`simulation/serialization/run-record` boundary.
+inputs. It owns the version 6 structural input validator and then applies the single-ball semantic
+validator. Saved run records use the independent `simulation/serialization/run-record` boundary,
+where version-specific shape and cross-field consistency validation have separate owners. Shared
+unknown-data assertions and typed fixture failures live in the private
+`simulation/serialization/structural-validation` subdomain.
 
 The current styling policy is Svelte component-scoped CSS plus global CSS custom properties.
 `src/app.css` contains the reset, document defaults and shared tokens for colour, spacing,

@@ -11,7 +11,8 @@ remaining lightweight. Prefer simple, incremental improvements over speculative 
 
 ## Core Principles
 
-* Keep It Simple, Stupid (KISS).
+* Keep It Simple, Stupid (KISS): choose the simplest implementation that preserves coherent
+  ownership, not merely the smallest diff.
 * Build only what is required for the current issue.
 * Design modules so future capabilities have natural places to live.
 * Do not implement speculative systems or empty abstractions.
@@ -27,6 +28,11 @@ When unsure where functionality belongs, stop and ask rather than introducing co
 
 Detailed project architecture, subsystem responsibilities and dependency direction belong in
 `docs/architecture.md`.
+
+The documented internal source tree is a current architectural map, not an exhaustive frozen list.
+When concrete responsibility pressure shows that the map is stale, agents must introduce and
+document a clearer internal boundary in the active issue rather than forcing work into the old
+topology.
 
 ---
 
@@ -51,6 +57,24 @@ When implementation changes require documentation updates:
 ---
 
 ## Implementation
+
+Before editing production code for a non-trivial implementation, publish a concise architectural
+disposition in the implementation update. It must identify:
+
+1. affected public entry points, implementation modules, tests and local architecture documents;
+2. every responsibility introduced or materially changed;
+3. whether the change has no architectural impact, extends one existing responsibility,
+   introduces a new internal module, introduces a named subdomain or public boundary, or requires a
+   repository-rule or dependency-direction change;
+4. whether the current ownership structure can absorb the work coherently;
+5. credible near-term pressure from active planned work, multiple consumers, a new state machine or
+   domain concept, repeated growth, or independently changing policies;
+6. the proposed ownership split and public API to preserve; and
+7. affected file, function, directory-capacity, import-boundary and entry-point rules.
+
+Selecting "no architectural impact" still requires a one-sentence justification. Keep the
+disposition proportional; it is an implementation prerequisite, not a standalone design document
+or a reason to require a separate architecture-review agent.
 
 Agents may:
 
@@ -94,11 +118,23 @@ When a decomposition check is triggered:
 
 1. identify the file's current responsibilities;
 2. identify the responsibility introduced by the requested change;
-3. choose the smallest coherent extraction that preserves behaviour and public contracts;
+3. choose the smallest stable ownership boundary with reasonable headroom that preserves behaviour
+   and public contracts;
 4. perform that extraction before or alongside the feature work.
 
 Do not continue growing an oversized or multi-responsibility file merely because new helpers are
 used by only one caller.
+
+Thresholds are smoke alarms. Remaining below a hard limit is never sufficient modularity
+justification, and a threshold failure requires reassessing ownership rather than raising the limit
+or shaving lines until the file barely passes. If file or function limits are encountered more than
+once, stop line-budget refactoring and restate the ownership plan before continuing.
+
+Assess a named subdomain before a directory reaches saturation when it contains six of eight
+implementation-file slots, when three or more implementation files serve one new state machine or
+domain concept, or when lifecycle, result or transition construction is duplicated across domain
+modules. Any threshold increase or exception requires repository-owner approval and documented
+justification.
 
 Do not satisfy modularity rules by creating arbitrary fragments, thin forwarding wrappers or
 catch-all helper modules. Prefer a few substantial, well-named modules with explicit ownership.
@@ -126,6 +162,11 @@ documents a narrowly defined responsibility.
 
 Cross-subsystem consumers must use documented public entry points. Implementation files may use
 private sibling modules only within their own subsystem.
+
+An agent may and must introduce a clearly named internal subdomain, then update topology
+documentation and checking in the same issue, when current responsibilities, active near-term work,
+multiple consumers, repeated threshold pressure or a new state machine/domain concept provide
+concrete evidence. Speculative empty layers remain forbidden.
 
 Tests must follow the repository's documented local placement convention so production topology
 remains readable when test folders are collapsed.
@@ -183,6 +224,19 @@ Before requesting human review:
 6. present the completed work, test results and any relevant review notes to the user;
 7. explicitly request approval to integrate the issue branch into `main`, or request direction on
    further changes.
+
+The completion report for every non-trivial implementation must include a compact
+structural-pressure report covering:
+
+* responsibilities added or changed and the module or subdomain owning each;
+* boundaries or public entry points added, removed or changed;
+* threshold, dependency-rule and documented-topology changes, or an explicit statement that none
+  were required;
+* remaining structural pressure and likely future split points supported by concrete evidence; and
+* headroom concerns for every modified or newly created production file above 350 effective lines,
+  including an explicit one-primary-reason-to-change justification for a newly created file.
+
+This is implementation evidence, not permission for speculative architecture work.
 
 While an issue is in review:
 

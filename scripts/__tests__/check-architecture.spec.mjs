@@ -17,6 +17,17 @@ describe('simulation architecture checker', () => {
 		expect(checkArchitecture(process.cwd())).toEqual([]);
 	});
 
+	it('accepts a named internal subdomain without freezing its implementation filenames', () => {
+		const root = createFixture({
+			'src/lib/simulation/run/single-ball/sustained-contact/index.ts':
+				"export { continueContact } from './continuation';",
+			'src/lib/simulation/run/single-ball/sustained-contact/continuation.ts':
+				'export function continueContact() {}'
+		});
+
+		expect(checkArchitecture(root)).toEqual([]);
+	});
+
 	it.each([
 		{
 			name: 'root-level implementation',

@@ -12,17 +12,21 @@ It complements:
 - [`workflow.md`](workflow.md), which remains authoritative for quality-gate commands and review
   workflow.
 
-This document owns source placement, subsystem entry points, cross-subsystem import rules and the
-migration from the current flat simulation directory.
+This document owns stable top-level subsystem placement, subsystem entry points, cross-subsystem
+import rules, the current internal topology and the rules for evolving that topology.
 
-## Current state
+## Stable constraints and current state
 
 FLAME-35 replaced the former flat `src/lib/simulation` layout with the named subsystems below.
 Production implementation files belong to one of those subsystems, tests are in local `__tests__`
 directories, and cross-subsystem consumers use explicit entry points. The architecture checker
 prevents the former flat layout from returning.
 
-## Target topology
+Top-level subsystem ownership and the dependency direction in this document are architectural
+constraints. Internal folders and filenames are descriptive and evolvable: they record the current
+implementation, not every subdomain that may ever be permitted.
+
+## Current/reference topology
 
 ```text
 src/lib/simulation/
@@ -69,25 +73,37 @@ src/lib/simulation/
             input-validation.ts
             termination-search.ts
             impact-response.ts
-            sustained-contact.ts
-            circular-contact.ts
-            constrained-path-geometry.ts
             diagnostics.ts
+            sustained-contact/
+                index.ts
+                types.ts
+                continuation.ts
+                linear-contact.ts
+                circular-contact.ts
+                angular-event-search.ts
+                contact-mode-results.ts
+                geometry.ts
+                __tests__/
             __tests__/
         __tests__/
 
     serialization/
+        structural-validation/
+            assertions.ts
+            fixture-error.ts
         run-record/
             index.ts
-            error.ts
             fixture.ts
             json.ts
             version.ts
             v6.ts
+            v6-shape.ts
+            v6-consistency.ts
             __tests__/
         simulation-input/
             index.ts
             fixture.ts
+            v6.ts
             __tests__/
 ```
 
@@ -169,13 +185,35 @@ Tests may inspect private implementation modules inside the subsystem they test.
 another subsystem should use that subsystem's public entry point unless the test explicitly verifies
 an internal architectural invariant.
 
+## Evolving internal subdomains
+
+When concrete responsibility pressure shows that the current internal topology is stale, introduce
+or remove the genuine subdomain in the same issue that exposes the pressure. A new internal
+subdomain must have:
+
+- a specific domain name and stated responsibility;
+- a narrow `index.ts` entry point where sibling consumers need a local capability boundary;
+- a documented dependency relationship to its parent and sibling modules; and
+- production files whose primary reasons to change belong to that domain.
+
+Evidence may include current independently changing responsibilities, active near-term work,
+multiple consumers, repeated threshold encounters or a newly implemented state machine/domain
+concept. Do not create speculative empty layers. Introduce an evidenced named subdomain before its
+parent directory is saturated rather than waiting for a ninth implementation file.
+
+Update this reference topology and relevant ownership documentation in the same issue. The
+architecture checker must enforce stable subsystem membership, dependency direction, entry-point
+rules and prohibited catch-all directories without freezing every internal filename into a
+permanent schema.
+
 ## Directory growth
 
 A subsystem directory may contain at most eight production implementation files at one level,
 excluding `index.ts` and `__tests__`.
 
-When that limit would be exceeded, define a named subdomain with its own responsibility and entry
-point before adding more files.
+At six implementation files, perform a subdomain and headroom assessment. When responsibility
+pressure already makes a boundary apparent—or before the limit would be exceeded—define a named
+subdomain with its own responsibility and entry point before adding more files.
 
 Do not satisfy the limit with arbitrary nesting. Every directory must correspond to a concept that
 can be described without using words such as “other”, “miscellaneous” or “shared stuff”.
@@ -218,7 +256,8 @@ longer exist.
 
 ## Mechanical enforcement
 
-`scripts/check-architecture.mjs` enforces the migrated topology.
+`scripts/check-architecture.mjs` enforces the stable architecture rules while permitting documented,
+named internal subdomains.
 
 The checker should fail when it finds:
 
@@ -258,7 +297,8 @@ failure mode.
 
 The source-topology issue is complete when:
 
-- the target subsystems exist and every current simulation production file has an explicit home;
+- the stable top-level subsystems exist and every current simulation production file has an
+  explicit home;
 - `single-ball-run.ts` has been decomposed according to `modularity.md`;
 - all unit tests have moved rather than been duplicated;
 - public imports use subsystem entry points;
