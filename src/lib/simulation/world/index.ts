@@ -1,8 +1,4 @@
-export {
-	boardStateScenarios,
-	narrowFlatSettlementPolicy,
-	type BoardStateScenario
-} from './board-state-scenarios';
+export { boardStateScenarios, type BoardStateScenario } from './board-state-scenarios';
 export {
 	canonicalBoardDimensions,
 	canonicalPegDimensions,

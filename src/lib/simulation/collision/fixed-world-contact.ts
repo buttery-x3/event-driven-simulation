@@ -6,7 +6,7 @@ import {
 } from './boundary-contact';
 import type {
 	ContactEvent,
-	MotionSegment,
+	ConstantAccelerationMotionSegment,
 	StaticCircleCollider,
 	StaticCollider,
 	StaticLineSegmentCollider,
@@ -29,12 +29,13 @@ export const defaultFixedWorldContactTolerances = {
 } as const satisfies FixedWorldContactTolerances;
 
 export interface FixedWorldContactQuery {
-	readonly segment: MotionSegment;
+	readonly segment: ConstantAccelerationMotionSegment;
 	readonly ballRadius: number;
 	readonly colliders: readonly StaticCollider[];
 	readonly searchUntilTime: number;
 	readonly tolerances?: FixedWorldContactTolerances;
 	readonly maximumRefinementIterations?: number;
+	readonly ignoredInitialContactColliderId?: string | null;
 }
 
 export type FixedWorldContactFeature = 'circle' | BoundaryContactFeature;
@@ -260,7 +261,8 @@ function evaluatePeg(
 		peg,
 		searchUntilTime: query.searchUntilTime,
 		tolerances,
-		maximumRefinementIterations: query.maximumRefinementIterations
+		maximumRefinementIterations: query.maximumRefinementIterations,
+		ignoreInitialContact: query.ignoredInitialContactColliderId === peg.id
 	});
 	const rejectedCandidates = result.diagnostics.candidates
 		.filter((candidate) => candidate.classification !== 'accepted')
@@ -328,7 +330,8 @@ function evaluateBoundary(
 		boundary,
 		searchUntilTime: query.searchUntilTime,
 		tolerances,
-		maximumRefinementIterations: query.maximumRefinementIterations
+		maximumRefinementIterations: query.maximumRefinementIterations,
+		ignoreInitialContact: query.ignoredInitialContactColliderId === boundary.id
 	});
 	const rejectedCandidates = result.diagnostics.candidates
 		.filter((candidate) => candidate.classification !== 'accepted')

@@ -1,5 +1,5 @@
 {
-	"contractVersion": 5,
+	"contractVersion": 6,
 	"input": {
 		"scene": {
 			"id": "flame-27-high-speed-contact",
@@ -61,6 +61,7 @@
 			"bodyId": "ball-high-speed",
 			"segments": [
 				{
+					"type": "free-flight",
 					"bodyId": "ball-high-speed",
 					"startTime": 0,
 					"endTime": 0.0099,

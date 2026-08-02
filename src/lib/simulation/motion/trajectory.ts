@@ -1,6 +1,10 @@
 import type { BodyTrajectory, MotionSegment, Vec2 } from '../contracts';
+import { evaluateCircularContactState } from './circular-contact';
 
 export function evaluateMotionSegmentPosition(segment: MotionSegment, time: number): Vec2 {
+	if (segment.type === 'circular-contact') {
+		return evaluateCircularContactState(segment, time).position;
+	}
 	const elapsed = time - segment.startTime;
 	const elapsedSquared = elapsed * elapsed;
 
@@ -15,6 +19,9 @@ export function evaluateMotionSegmentPosition(segment: MotionSegment, time: numb
 }
 
 export function evaluateMotionSegmentVelocity(segment: MotionSegment, time: number): Vec2 {
+	if (segment.type === 'circular-contact') {
+		return evaluateCircularContactState(segment, time).velocity;
+	}
 	const elapsed = time - segment.startTime;
 
 	return [

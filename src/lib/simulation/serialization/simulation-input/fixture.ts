@@ -1,11 +1,11 @@
 import type { SimulationInput } from '../../contracts';
 import { parseRunFixtureJson } from '../run-record/json';
 import { RunFixtureError } from '../run-record/error';
-import { validateSimulationInputV5 } from '../run-record/v5';
+import { validateSimulationInputV6 } from '../run-record/v6';
 import { validateSingleBallInput } from '../../run';
 
 export interface SimulationInputFixture {
-	readonly contractVersion: 5;
+	readonly contractVersion: 6;
 	readonly documentType: 'simulation-input';
 	readonly input: SimulationInput;
 }
@@ -13,7 +13,7 @@ export interface SimulationInputFixture {
 export function serializeSimulationInputFixture(input: SimulationInput): string {
 	return JSON.stringify(
 		{
-			contractVersion: 5,
+			contractVersion: 6,
 			documentType: 'simulation-input',
 			input
 		} satisfies SimulationInputFixture,
@@ -27,10 +27,10 @@ export function parseSimulationInputFixture(json: string): SimulationInput {
 	if (!isRecord(value)) {
 		throw invalidInput('Scenario input fixture must be an object.', '$');
 	}
-	if (value.contractVersion !== 5) {
+	if (value.contractVersion !== 6) {
 		throw new RunFixtureError(
 			'UNSUPPORTED_CONTRACT_VERSION',
-			`Scenario input fixture uses unsupported contract version ${String(value.contractVersion)}; expected version 5.`,
+			`Scenario input fixture uses unsupported contract version ${String(value.contractVersion)}; expected version 6.`,
 			'$.contractVersion'
 		);
 	}
@@ -43,7 +43,7 @@ export function parseSimulationInputFixture(json: string): SimulationInput {
 
 	let input: SimulationInput;
 	try {
-		input = validateSimulationInputV5(value.input, '$.input');
+		input = validateSimulationInputV6(value.input, '$.input');
 	} catch (error) {
 		if (error instanceof RunFixtureError) {
 			throw invalidInput(error.message, error.path);

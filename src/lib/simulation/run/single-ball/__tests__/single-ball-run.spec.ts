@@ -128,33 +128,208 @@ describe('authoritative event-driven single-ball runs', () => {
 		}
 	});
 
-	it('terminates a zero-time repeated contact conservatively without adding unverified motion', () => {
+	it('turns a zero-restitution flat impact into explicit resting contact', () => {
 		const run = constructSingleBallRun(
 			input({ colliders: [floor()], restitution: 0, maximumSimulationTime: 2 })
 		);
 
 		expect(run.terminalReason).toMatchObject({
-			type: 'zero-time-loop',
+			type: 'resting-contact',
 			colliderId: 'floor'
 		});
-		expect(run.events).toHaveLength(1);
+		expect(run.events).toHaveLength(2);
+		expect(run.events[1]).toMatchObject({
+			type: 'contact-mode-transition',
+			from: 'impact',
+			to: 'resting',
+			reason: 'impact-collapse'
+		});
 		expect(run.trajectories[0]!.segments).toHaveLength(1);
 		expect(run.diagnostics.simulatedUntilTime).toBe(run.events[0]!.time);
-		const boundarySearch = run.diagnostics.contactSearches.at(-1)!;
-		const proposedContact = boundarySearch.candidates.find(
-			({ colliderId, classification }) => colliderId === 'floor' && classification === 'accepted'
-		)!;
-		expect(boundarySearch.eventTimeTolerance).toBe(input().settings.tolerances.eventTime);
-		expect(proposedContact).toMatchObject({
-			colliderId: 'floor',
-			timeDelta: 0,
-			normal: [0, 1],
-			nearSimultaneous: true
-		});
-		expect(proposedContact.preContactVelocity).toEqual(proposedContact.postContactVelocity);
 		expect(parseSimulationRunFixture(JSON.stringify(run)).diagnostics.contactSearches).toEqual(
 			run.diagnostics.contactSearches
 		);
+	});
+
+	it('slides along a sloped segment with projected gravity and leaves at its endpoint', () => {
+		const ramp: StaticCollider = {
+			id: 'ramp',
+			motionAuthority: 'static',
+			physicalShape: { type: 'line-segment', start: [-2, 0], end: [2, 1] }
+		};
+		const run = constructSingleBallRun(
+			input({
+				position: [-1, 2],
+				velocity: [0, 0],
+				colliders: [ramp],
+				restitution: 0,
+				maximumSimulationTime: 4
+			})
+		);
+		const sliding = run.trajectories[0]!.segments.find(
+			(segment) => segment.type === 'linear-contact'
+		);
+
+		expect(sliding).toMatchObject({
+			type: 'linear-contact',
+			supportingColliderId: 'ramp'
+		});
+		if (!sliding || sliding.type !== 'linear-contact') return;
+		expect(sliding.acceleration[0]).toBeLessThan(0);
+		expect(sliding.acceleration[1]).toBeLessThan(0);
+		expect(run.events).toContainEqual(
+			expect.objectContaining({
+				type: 'contact-mode-transition',
+				from: 'sliding',
+				to: 'free-flight',
+				reason: 'endpoint-reached'
+			})
+		);
+	});
+
+	it('records circular peg contact with a changing normal and deterministic detachment', () => {
+		const peg: StaticCollider = {
+			id: 'peg',
+			motionAuthority: 'static',
+			physicalShape: { type: 'circle', radius: 0.5 },
+			centre: [0, 0]
+		};
+		const run = constructSingleBallRun(
+			input({
+				position: [0.08, 2],
+				velocity: [0, 0],
+				colliders: [peg],
+				restitution: 0,
+				maximumSimulationTime: 3
+			})
+		);
+		const circular = run.trajectories[0]!.segments.find(
+			(segment) => segment.type === 'circular-contact'
+		);
+
+		expect(circular).toMatchObject({
+			type: 'circular-contact',
+			supportingColliderId: 'peg'
+		});
+		if (!circular || circular.type !== 'circular-contact') return;
+		expect(circular.endAngle).not.toBe(circular.startAngle);
+		expect(run.events).toContainEqual(
+			expect.objectContaining({
+				type: 'contact-mode-transition',
+				from: 'sliding',
+				to: 'free-flight',
+				reason: 'support-lost'
+			})
+		);
+	});
+
+	it('collapses repeated centred peg impacts into symmetric resting contact', () => {
+		const peg: StaticCollider = {
+			id: 'centre-peg',
+			motionAuthority: 'static',
+			physicalShape: { type: 'circle', radius: 0.5 },
+			centre: [0, 0]
+		};
+		const run = constructSingleBallRun(
+			input({
+				position: [0, 2],
+				velocity: [0, 0],
+				colliders: [peg],
+				restitution: 0.5,
+				maximumEvents: 100,
+				maximumSimulationTime: 5
+			})
+		);
+
+		expect(run).toMatchObject({
+			outcome: 'settled',
+			terminalReason: {
+				type: 'resting-contact',
+				colliderId: 'centre-peg'
+			}
+		});
+		expect(run.events.filter(({ type }) => type === 'contact').length).toBeLessThan(100);
+		expect(run.events.at(-1)).toMatchObject({
+			type: 'contact-mode-transition',
+			from: 'impact',
+			to: 'resting'
+		});
+		for (const segment of run.trajectories[0]!.segments) {
+			expect(segment.startPosition[0]).toBe(0);
+			expect(evaluateMotionSegmentPosition(segment, segment.endTime)[0]).toBe(0);
+		}
+	});
+
+	it('classifies exact initial support without requiring an impact or lateral nudge', () => {
+		const run = constructSingleBallRun(
+			input({
+				position: [0, 0.1],
+				velocity: [0, 0],
+				colliders: [floor()],
+				restitution: 0.8
+			})
+		);
+
+		expect(run).toMatchObject({
+			outcome: 'settled',
+			terminalReason: {
+				type: 'resting-contact',
+				position: [0, 0.1],
+				reason: 'zero-tangential-motion'
+			}
+		});
+		expect(run.events.at(-1)).toMatchObject({
+			type: 'contact-mode-transition',
+			from: 'free-flight',
+			to: 'resting',
+			reason: 'supported-initial-state'
+		});
+	});
+
+	it('does not classify contact as resting when the normal cannot supply support', () => {
+		const ceiling: StaticCollider = {
+			id: 'ceiling',
+			motionAuthority: 'static',
+			physicalShape: { type: 'line-segment', start: [5, 1], end: [-5, 1] }
+		};
+		const run = constructSingleBallRun(
+			input({ position: [0, 0.9], velocity: [0, 0], colliders: [ceiling], restitution: 0 })
+		);
+
+		expect(run.outcome).not.toBe('settled');
+		expect(run.events.some((event) => event.type === 'contact-mode-transition')).toBe(false);
+	});
+
+	it('fails closed when circular constrained motion reverses before a certified next event', () => {
+		const angle = 2;
+		const normal: Vec2 = [Math.cos(angle), Math.sin(angle)];
+		const clockwiseTangent: Vec2 = [normal[1], -normal[0]];
+		const peg: StaticCollider = {
+			id: 'turning-peg',
+			motionAuthority: 'static',
+			physicalShape: { type: 'circle', radius: 0.5 },
+			centre: [0, 0]
+		};
+		const run = constructSingleBallRun(
+			input({
+				position: [normal[0] * 0.6, normal[1] * 0.6],
+				velocity: [clockwiseTangent[0] * 0.1, clockwiseTangent[1] * 0.1],
+				colliders: [peg],
+				restitution: 0.8
+			})
+		);
+
+		expect(run).toMatchObject({
+			validity: 'valid',
+			outcome: 'unresolved',
+			terminalReason: { type: 'unresolved-collision-search', time: 0 }
+		});
+		expect(run.trajectories[0]!.segments).toEqual([]);
+		expect(run.events.at(-1)).toMatchObject({
+			type: 'contact-mode-transition',
+			from: 'sliding',
+			reason: 'unresolved'
+		});
 	});
 
 	it('keeps event and time limits as distinct terminal reasons', () => {

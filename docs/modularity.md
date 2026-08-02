@@ -29,7 +29,7 @@ involves several distinct responsibilities:
 - continuous termination and bounds searches;
 - numerical contact solving;
 - collision-response policy;
-- settlement classification;
+- sustained-contact classification and continuation;
 - run-record assembly; and
 - diagnostic evidence construction.
 
@@ -106,7 +106,7 @@ Before FLAME-35, `src/lib/simulation/single-ball-run.ts` owned too many responsi
 - termination-region intersection;
 - supported-bounds exit solving;
 - impact response;
-- settlement classification;
+- sustained-contact classification and continuation;
 - contact-search diagnostic conversion;
 - terminal diagnostic construction; and
 - run-record assembly.
@@ -120,7 +120,10 @@ run/single-ball/
     construct.ts
     input-validation.ts
     termination-search.ts
-    settlement.ts
+    impact-response.ts
+    sustained-contact.ts
+    circular-contact.ts
+    constrained-path-geometry.ts
     diagnostics.ts
     __tests__/
 ```
@@ -130,14 +133,16 @@ The implemented ownership is:
 - `construct.ts` — the event-to-event state machine and committed-history assembly;
 - `input-validation.ts` — semantic validation of a single-ball input;
 - `termination-search.ts` — continuous region entry and supported-bounds exit solving;
-- `settlement.ts` — the narrow supporting-flat settlement policy;
+- `impact-response.ts` — restitution response and conservative inelastic-collapse policy;
+- `sustained-contact.ts` — fixed-line constraint, resting classification and endpoint sequencing;
+- `circular-contact.ts` — changing-normal circular support and angular next-event selection;
+- `constrained-path-geometry.ts` — distance and containment evaluation for constrained paths;
 - `diagnostics.ts` — translation of solver evidence and terminal outcomes into recorded
   diagnostics;
 - `index.ts` — explicit public exports only.
 
-The existing restitution response may remain in `construct.ts` while it is one small linear policy.
-It should move into a dedicated response module when additional response modes, friction, spin or
-sustained contact are introduced.
+FLAME-36 moved restitution response out of `construct.ts` when sustained contact introduced a
+second response mode. The orchestrator retains only state sequencing and run assembly.
 
 The extraction must preserve `constructSingleBallRun` as the public capability and must not change
 the current physical model.
@@ -155,12 +160,10 @@ wrappers.
 
 ### Fixture validation
 
-`serialization/run-record/v5.ts` combines structural field validation with cross-field run
-consistency checks. FLAME-35 reviewed it without adding contract behaviour: it remains below the
-hard file and function limits, and its shape checks produce the trusted record immediately consumed
-by its version-specific consistency checks. Splitting that private validation vocabulary now would
-increase coordination without establishing independently changing policy. The next substantial
-contract expansion must reassess the boundary.
+`serialization/run-record/v6.ts` combines structural field validation with cross-field run
+consistency checks. FLAME-36 reassessed it while adding discriminated motion and transition-event
+validation: it remains below the hard file and function limits, and its shape checks produce the
+trusted record immediately consumed by its version-specific consistency checks.
 
 ## Extraction rules
 

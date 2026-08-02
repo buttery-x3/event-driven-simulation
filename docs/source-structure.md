@@ -39,6 +39,7 @@ src/lib/simulation/
     motion/
         index.ts
         trajectory.ts
+        circular-contact.ts
         __tests__/
 
     collision/
@@ -67,7 +68,10 @@ src/lib/simulation/
             construct.ts
             input-validation.ts
             termination-search.ts
-            settlement.ts
+            impact-response.ts
+            sustained-contact.ts
+            circular-contact.ts
+            constrained-path-geometry.ts
             diagnostics.ts
             __tests__/
         __tests__/
@@ -79,7 +83,7 @@ src/lib/simulation/
             fixture.ts
             json.ts
             version.ts
-            v5.ts
+            v6.ts
             __tests__/
         simulation-input/
             index.ts

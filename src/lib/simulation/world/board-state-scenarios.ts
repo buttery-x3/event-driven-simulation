@@ -1,5 +1,4 @@
 import type {
-	NarrowSettlementPolicy,
 	RunOutcome,
 	SceneDefinition,
 	SimulationInput,
@@ -18,13 +17,6 @@ export interface BoardStateScenario {
 	readonly expectedOutcomes: readonly RunOutcome[];
 	readonly input: SimulationInput;
 }
-
-export const narrowFlatSettlementPolicy = {
-	maximumNormalSeparationSpeed: 0.02,
-	maximumTangentialSpeed: 0.01,
-	contactDistance: 1e-8,
-	minimumPressingAcceleration: 1e-6
-} as const satisfies NarrowSettlementPolicy;
 
 const coordinateSystem = {
 	origin: 'centre-bottom',
@@ -152,33 +144,25 @@ export const boardStateScenarios = [
 	boardScenario(
 		'flat-support',
 		'Declared flat supporting surface',
-		'Exercises the narrow settlement policy on a horizontal supporting surface.',
+		'Exercises explicit resting contact on a horizontal supporting surface.',
 		['settled'],
 		simulationInput(
 			scene('flat-support-board', 6, 4, [supportingFloor('flat-support', -2, 2, 0.5)], []),
 			[0, 3],
 			[0, 0],
-			{
-				...defaultSettings,
-				restitution: 0,
-				settlement: narrowFlatSettlementPolicy
-			}
+			{ ...defaultSettings, restitution: 0 }
 		)
 	),
 	boardScenario(
 		'angled-ramp',
 		'Angled ramp',
-		'Ensures low-restitution ramp contact is not misclassified as resting.',
-		['unresolved'],
+		'Exercises continuous frictionless sliding under tangential gravity.',
+		['escaped'],
 		simulationInput(
 			scene('angled-ramp-board', 6, 4, [line('angled-ramp', [-2, 0.5], [2, 1.5])], []),
 			[-0.6, 3],
 			[0.8, 0],
-			{
-				...defaultSettings,
-				restitution: 0,
-				settlement: narrowFlatSettlementPolicy
-			}
+			{ ...defaultSettings, restitution: 0 }
 		)
 	),
 	boardScenario(
@@ -221,11 +205,7 @@ export const boardStateScenarios = [
 			),
 			[0, 3],
 			[0, 0],
-			{
-				...defaultSettings,
-				restitution: 0,
-				settlement: narrowFlatSettlementPolicy
-			}
+			{ ...defaultSettings, restitution: 0 }
 		)
 	),
 	boardScenario(
@@ -330,10 +310,7 @@ function supportingFloor(
 	endX: number,
 	y: number
 ): StaticLineSegmentCollider {
-	return {
-		...line(id, [startX, y], [endX, y]),
-		surfaceRole: 'supporting-flat'
-	};
+	return line(id, [startX, y], [endX, y]);
 }
 
 function wideBottomExit(id: string, boardWidth: number) {

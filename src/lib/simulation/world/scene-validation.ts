@@ -145,17 +145,6 @@ function validateCollider(
 					'Line-segment collider must have non-zero length.'
 				);
 			}
-			if (collider.surfaceRole !== undefined) {
-				requireLiteral(collider.surfaceRole, 'supporting-flat', `${path}.surfaceRole`, diagnostics);
-				if (start && end && start[1] !== end[1]) {
-					addDiagnostic(
-						diagnostics,
-						'INVALID_SCENE_STRUCTURE',
-						`${path}.surfaceRole`,
-						'A supporting-flat surface must be horizontal in board coordinates.'
-					);
-				}
-			}
 			return;
 		}
 		default:

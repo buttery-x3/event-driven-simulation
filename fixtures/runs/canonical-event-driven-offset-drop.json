@@ -1,5 +1,5 @@
 {
-	"contractVersion": 5,
+	"contractVersion": 6,
 	"input": {
 		"scene": {
 			"id": "canonical-plinko-board",
@@ -654,6 +654,7 @@
 			"bodyId": "ball-primary",
 			"segments": [
 				{
+					"type": "free-flight",
 					"bodyId": "ball-primary",
 					"startTime": 0,
 					"endTime": 0.38587644644228003,
@@ -662,6 +663,7 @@
 					"acceleration": [0, -9.81]
 				},
 				{
+					"type": "free-flight",
 					"bodyId": "ball-primary",
 					"startTime": 0.38587644644228003,
 					"endTime": 0.4510878955958154,
@@ -670,6 +672,7 @@
 					"acceleration": [0, -9.81]
 				},
 				{
+					"type": "free-flight",
 					"bodyId": "ball-primary",
 					"startTime": 0.4510878955958154,
 					"endTime": 0.5074851876019059,
@@ -678,6 +681,7 @@
 					"acceleration": [0, -9.81]
 				},
 				{
+					"type": "free-flight",
 					"bodyId": "ball-primary",
 					"startTime": 0.5074851876019059,
 					"endTime": 0.5760211065714895,
@@ -686,6 +690,7 @@
 					"acceleration": [0, -9.81]
 				},
 				{
+					"type": "free-flight",
 					"bodyId": "ball-primary",
 					"startTime": 0.5760211065714895,
 					"endTime": 0.7417479923174255,
@@ -694,6 +699,7 @@
 					"acceleration": [0, -9.81]
 				},
 				{
+					"type": "free-flight",
 					"bodyId": "ball-primary",
 					"startTime": 0.7417479923174255,
 					"endTime": 0.8143265213642464,
@@ -702,6 +708,7 @@
 					"acceleration": [0, -9.81]
 				},
 				{
+					"type": "free-flight",
 					"bodyId": "ball-primary",
 					"startTime": 0.8143265213642464,
 					"endTime": 1.1762237298983216,
@@ -710,6 +717,7 @@
 					"acceleration": [0, -9.81]
 				},
 				{
+					"type": "free-flight",
 					"bodyId": "ball-primary",
 					"startTime": 1.1762237298983216,
 					"endTime": 1.2243188733350265,
@@ -718,6 +726,7 @@
 					"acceleration": [0, -9.81]
 				},
 				{
+					"type": "free-flight",
 					"bodyId": "ball-primary",
 					"startTime": 1.2243188733350265,
 					"endTime": 1.2798012637062528,
@@ -726,6 +735,7 @@
 					"acceleration": [0, -9.81]
 				},
 				{
+					"type": "free-flight",
 					"bodyId": "ball-primary",
 					"startTime": 1.2798012637062528,
 					"endTime": 1.3553627559550727,
@@ -734,6 +744,7 @@
 					"acceleration": [0, -9.81]
 				},
 				{
+					"type": "free-flight",
 					"bodyId": "ball-primary",
 					"startTime": 1.3553627559550727,
 					"endTime": 1.4067598475290435,
@@ -742,6 +753,7 @@
 					"acceleration": [0, -9.81]
 				},
 				{
+					"type": "free-flight",
 					"bodyId": "ball-primary",
 					"startTime": 1.4067598475290435,
 					"endTime": 1.5156560270399717,
@@ -750,6 +762,7 @@
 					"acceleration": [0, -9.81]
 				},
 				{
+					"type": "free-flight",
 					"bodyId": "ball-primary",
 					"startTime": 1.5156560270399717,
 					"endTime": 1.5718853725301403,
@@ -758,6 +771,7 @@
 					"acceleration": [0, -9.81]
 				},
 				{
+					"type": "free-flight",
 					"bodyId": "ball-primary",
 					"startTime": 1.5718853725301403,
 					"endTime": 1.6146178123871346,
@@ -766,6 +780,7 @@
 					"acceleration": [0, -9.81]
 				},
 				{
+					"type": "free-flight",
 					"bodyId": "ball-primary",
 					"startTime": 1.6146178123871346,
 					"endTime": 1.6746592771949178,
@@ -774,6 +789,7 @@
 					"acceleration": [0, -9.81]
 				},
 				{
+					"type": "free-flight",
 					"bodyId": "ball-primary",
 					"startTime": 1.6746592771949178,
 					"endTime": 1.7575140816052826,
@@ -782,6 +798,7 @@
 					"acceleration": [0, -9.81]
 				},
 				{
+					"type": "free-flight",
 					"bodyId": "ball-primary",
 					"startTime": 1.7575140816052826,
 					"endTime": 1.8631172685384851,
@@ -790,6 +807,7 @@
 					"acceleration": [0, -9.81]
 				},
 				{
+					"type": "free-flight",
 					"bodyId": "ball-primary",
 					"startTime": 1.8631172685384851,
 					"endTime": 2.1069210856126728,
@@ -798,6 +816,7 @@
 					"acceleration": [0, -9.81]
 				},
 				{
+					"type": "free-flight",
 					"bodyId": "ball-primary",
 					"startTime": 2.1069210856126728,
 					"endTime": 2.1718879922296543,
@@ -806,6 +825,7 @@
 					"acceleration": [0, -9.81]
 				},
 				{
+					"type": "free-flight",
 					"bodyId": "ball-primary",
 					"startTime": 2.1718879922296543,
 					"endTime": 2.2694934573359107,
@@ -814,6 +834,7 @@
 					"acceleration": [0, -9.81]
 				},
 				{
+					"type": "free-flight",
 					"bodyId": "ball-primary",
 					"startTime": 2.2694934573359107,
 					"endTime": 2.65261212585585,
@@ -822,6 +843,7 @@
 					"acceleration": [0, -9.81]
 				},
 				{
+					"type": "free-flight",
 					"bodyId": "ball-primary",
 					"startTime": 2.65261212585585,
 					"endTime": 2.8493084356262384,
@@ -830,6 +852,7 @@
 					"acceleration": [0, -9.81]
 				},
 				{
+					"type": "free-flight",
 					"bodyId": "ball-primary",
 					"startTime": 2.8493084356262384,
 					"endTime": 2.918550860928569,
@@ -838,6 +861,7 @@
 					"acceleration": [0, -9.81]
 				},
 				{
+					"type": "free-flight",
 					"bodyId": "ball-primary",
 					"startTime": 2.918550860928569,
 					"endTime": 2.9803206078544835,
@@ -846,6 +870,7 @@
 					"acceleration": [0, -9.81]
 				},
 				{
+					"type": "free-flight",
 					"bodyId": "ball-primary",
 					"startTime": 2.9803206078544835,
 					"endTime": 3.2224554563640906,
@@ -854,6 +879,7 @@
 					"acceleration": [0, -9.81]
 				},
 				{
+					"type": "free-flight",
 					"bodyId": "ball-primary",
 					"startTime": 3.2224554563640906,
 					"endTime": 4.14479708431158,

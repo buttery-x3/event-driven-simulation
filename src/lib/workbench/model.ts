@@ -63,7 +63,7 @@ export function getRunStatusLabel(reason: RunTerminalReason): string {
 			return 'Escaped';
 		case 'bounds-escape':
 			return 'Escaped bounds';
-		case 'settled-supporting-surface':
+		case 'resting-contact':
 			return 'Settled';
 		case 'no-future-event':
 			return 'No future event';

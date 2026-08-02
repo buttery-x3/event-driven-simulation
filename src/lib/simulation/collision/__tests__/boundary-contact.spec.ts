@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import highSpeedRegressionJson from '../../../../../fixtures/regressions/flame-28-high-speed-wall-contact.json?raw';
 import { findEarliestBoundaryContact, type BoundaryContactQuery } from '../boundary-contact';
-import type { MotionSegment, StaticLineSegmentCollider, Vec2 } from '../../contracts';
+import type {
+	ConstantAccelerationMotionSegment,
+	StaticLineSegmentCollider,
+	Vec2
+} from '../../contracts';
 import { parseSimulationRunFixture } from '../../serialization/run-record';
 
 const verticalBoundary = boundary('wall-test', [0, -5], [0, 5]);
@@ -20,8 +24,9 @@ function segment(
 	acceleration: Vec2 = [0, 0],
 	startTime = 0,
 	endTime = 10
-): MotionSegment {
+): ConstantAccelerationMotionSegment {
 	return {
+		type: 'free-flight',
 		bodyId: 'ball-test',
 		startTime,
 		endTime,
@@ -32,7 +37,7 @@ function segment(
 }
 
 function query(
-	motionSegment: MotionSegment,
+	motionSegment: ConstantAccelerationMotionSegment,
 	targetBoundary = verticalBoundary,
 	searchUntilTime = motionSegment.endTime
 ): BoundaryContactQuery {
@@ -103,6 +108,8 @@ describe('continuous ballistic boundary contact solving', () => {
 		const run = parseSimulationRunFixture(highSpeedRegressionJson);
 		const body = run.input.initialDynamicBodies[0]!;
 		const motionSegment = run.trajectories[0]!.segments[0]!;
+		expect(motionSegment.type).toBe('free-flight');
+		if (motionSegment.type !== 'free-flight') return;
 		const targetBoundary = run.input.scene.staticColliders[0] as StaticLineSegmentCollider;
 		const expectedEvent = run.events[0]!;
 		const result = findEarliestBoundaryContact({

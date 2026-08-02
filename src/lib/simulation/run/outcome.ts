@@ -7,7 +7,7 @@ export function getRunOutcome(reason: RunTerminalReason): RunOutcome {
 		case 'escape-region':
 		case 'bounds-escape':
 			return 'escaped';
-		case 'settled-supporting-surface':
+		case 'resting-contact':
 			return 'settled';
 		case 'no-future-event':
 			return 'no-future-event';

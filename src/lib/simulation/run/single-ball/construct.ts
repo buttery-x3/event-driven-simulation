@@ -1,5 +1,7 @@
 import type {
+	ContactEvent,
 	DiagnosticEntry,
+	FreeFlightMotionSegment,
 	InitialDynamicCircleBodyState,
 	MotionSegment,
 	RunContactSearchDiagnostic,
@@ -9,17 +11,13 @@ import type {
 	SimulationRunRecord,
 	Vec2
 } from '../../contracts';
-import {
-	defaultFixedWorldContactTolerances,
-	findEarliestFixedWorldContact,
-	type FixedWorldContactQueryResult
-} from '../../collision';
-import { dotVec2 } from '../../math';
+import { defaultFixedWorldContactTolerances, findEarliestFixedWorldContact } from '../../collision';
 import { evaluateMotionSegmentPosition, evaluateMotionSegmentVelocity } from '../../motion';
 import { getRunOutcome } from '../outcome';
 import { bodyOrNull, toRunContactSearchDiagnostic, toTerminalDiagnostic } from './diagnostics';
+import { resolveImpactResponse, type ImpactObservation } from './impact-response';
 import { validateSingleBallInput } from './input-validation';
-import { classifySettlement } from './settlement';
+import { continueSustainedContact, type SustainedNextState } from './sustained-contact';
 import {
 	findContainingRegion,
 	findEarliestTerminationEntry,
@@ -30,6 +28,8 @@ interface EventState {
 	readonly time: number;
 	readonly position: Vec2;
 	readonly velocity: Vec2;
+	readonly ignoreInitialContactColliderId: string | null;
+	readonly acceptInitialContact: boolean;
 }
 
 interface RunAssembly {
@@ -39,18 +39,12 @@ interface RunAssembly {
 	readonly events: SimulationRunRecord['events'][number][];
 	readonly entries: DiagnosticEntry[];
 	readonly contactSearches: RunContactSearchDiagnostic[];
+	readonly impactHistory: ImpactObservation[];
 }
 
-type ContactResolution =
+type ImpactResolution =
 	| { readonly type: 'terminal'; readonly reason: RunTerminalReason; readonly time: number }
-	| {
-			readonly type: 'commit';
-			readonly segment: MotionSegment;
-			readonly event: SimulationRunRecord['events'][number];
-			readonly entry: DiagnosticEntry;
-			readonly terminalReason: RunTerminalReason | null;
-			readonly nextState: EventState | null;
-	  };
+	| { readonly type: 'continue'; readonly nextState: EventState };
 
 export function constructSingleBallRun(input: SimulationInput): SimulationRunRecord {
 	const assembly: RunAssembly = {
@@ -59,7 +53,8 @@ export function constructSingleBallRun(input: SimulationInput): SimulationRunRec
 		segments: [],
 		events: [],
 		entries: [],
-		contactSearches: []
+		contactSearches: [],
+		impactHistory: []
 	};
 	const finish = (validity: RunValidity, reason: RunTerminalReason, time: number) =>
 		finishRun(assembly, validity, reason, time);
@@ -78,7 +73,13 @@ export function constructSingleBallRun(input: SimulationInput): SimulationRunRec
 	}
 
 	const body = input.initialDynamicBodies[0]!;
-	let state: EventState = { time: 0, position: body.position, velocity: body.velocity };
+	let state: EventState = {
+		time: 0,
+		position: body.position,
+		velocity: body.velocity,
+		ignoreInitialContactColliderId: null,
+		acceptInitialContact: false
+	};
 	const initialTermination = findContainingRegion(
 		input.scene.terminationRegions,
 		state.position,
@@ -89,7 +90,7 @@ export function constructSingleBallRun(input: SimulationInput): SimulationRunRec
 	}
 
 	while (true) {
-		if (assembly.events.length >= input.settings.maximumEvents) {
+		if (contactEventCount(assembly) >= input.settings.maximumEvents) {
 			return finish(
 				'valid',
 				{ type: 'event-limit', time: state.time, limit: input.settings.maximumEvents },
@@ -106,14 +107,7 @@ export function constructSingleBallRun(input: SimulationInput): SimulationRunRec
 			);
 		}
 
-		const path: MotionSegment = {
-			bodyId: body.id,
-			startTime: state.time,
-			endTime: input.settings.maximumSimulationTime,
-			startPosition: state.position,
-			startVelocity: state.velocity,
-			acceleration: input.settings.gravity
-		};
+		const path = makeFreeFlightPath(input, body, state);
 		const terminationSearch = findEarliestTerminationEntry(
 			path,
 			input.scene.terminationRegions,
@@ -138,6 +132,7 @@ export function constructSingleBallRun(input: SimulationInput): SimulationRunRec
 			segment: path,
 			ballRadius: body.physicalShape.radius,
 			colliders: input.scene.staticColliders,
+			ignoredInitialContactColliderId: state.ignoreInitialContactColliderId,
 			searchUntilTime,
 			tolerances: {
 				...defaultFixedWorldContactTolerances,
@@ -165,18 +160,44 @@ export function constructSingleBallRun(input: SimulationInput): SimulationRunRec
 		}
 
 		if (contactResult.type === 'contact') {
-			const resolution = resolveContact(input, body, path, state, contactResult);
+			const elapsed = contactResult.event.time - state.time;
+			if (
+				elapsed <= input.settings.tolerances.eventTime &&
+				!state.acceptInitialContact &&
+				!(state.time === 0 && contactResult.event.time === 0)
+			) {
+				return finish(
+					'valid',
+					{
+						type: 'zero-time-loop',
+						time: state.time,
+						colliderId: contactResult.event.colliderId,
+						detail:
+							'The next selected contact did not establish a positive collision-free interval.'
+					},
+					state.time
+				);
+			}
+			if (elapsed > input.settings.tolerances.eventTime) {
+				const segment = { ...path, endTime: contactResult.event.time };
+				if (!hasFiniteEndState(segment)) {
+					return finish(
+						'valid',
+						{
+							type: 'numerical-failure',
+							time: state.time,
+							detail: 'The selected contact state could not be evaluated as finite numbers.'
+						},
+						state.time
+					);
+				}
+				assembly.segments.push(segment);
+			}
+			const resolution = resolveContact(input, body, path, contactResult.event, assembly);
 			if (resolution.type === 'terminal') {
 				return finish('valid', resolution.reason, resolution.time);
 			}
-
-			assembly.segments.push(resolution.segment);
-			assembly.events.push(resolution.event);
-			assembly.entries.push(resolution.entry);
-			if (resolution.terminalReason) {
-				return finish('valid', resolution.terminalReason, resolution.event.time);
-			}
-			state = resolution.nextState!;
+			state = resolution.nextState;
 			continue;
 		}
 
@@ -238,90 +259,107 @@ export function constructSingleBallRun(input: SimulationInput): SimulationRunRec
 function resolveContact(
 	input: SimulationInput,
 	body: InitialDynamicCircleBodyState,
-	path: MotionSegment,
-	state: EventState,
-	contactResult: Extract<FixedWorldContactQueryResult, { type: 'contact' }>
-): ContactResolution {
-	const elapsed = contactResult.event.time - state.time;
-	if (elapsed <= input.settings.tolerances.eventTime) {
-		return {
-			type: 'terminal',
-			time: state.time,
-			reason: {
-				type: 'zero-time-loop',
-				time: state.time,
-				colliderId: contactResult.event.colliderId,
-				detail: 'The next selected contact did not establish a positive collision-free interval.'
-			}
-		};
-	}
-
-	const segment = { ...path, endTime: contactResult.event.time };
-	const incomingVelocity = evaluateMotionSegmentVelocity(segment, contactResult.event.time);
-	const eventPosition = evaluateMotionSegmentPosition(segment, contactResult.event.time);
+	path: FreeFlightMotionSegment,
+	event: ContactEvent,
+	assembly: RunAssembly
+): ImpactResolution {
+	const incomingVelocity = evaluateMotionSegmentVelocity(path, event.time);
+	const eventPosition = evaluateMotionSegmentPosition(path, event.time);
 	if (!isFiniteVec2(incomingVelocity) || !isFiniteVec2(eventPosition)) {
 		return {
 			type: 'terminal',
-			time: state.time,
+			time: event.time,
 			reason: {
 				type: 'numerical-failure',
-				time: state.time,
+				time: event.time,
 				detail: 'The selected contact state could not be evaluated as finite numbers.'
 			}
 		};
 	}
-
-	const normalVelocity = dotVec2(incomingVelocity, contactResult.event.normal);
-	const responseScale = (1 + input.settings.restitution) * normalVelocity;
-	const outgoingVelocity: Vec2 = [
-		incomingVelocity[0] - responseScale * contactResult.event.normal[0],
-		incomingVelocity[1] - responseScale * contactResult.event.normal[1]
-	];
-	const entry: DiagnosticEntry = {
+	assembly.events.push(event);
+	assembly.entries.push({
 		severity: 'info',
 		code: 'CONTACT_COMMITTED',
-		message: `Committed contact with ${contactResult.event.colliderId}.`,
-		time: contactResult.event.time,
+		message: `Committed contact with ${event.colliderId}.`,
+		time: event.time,
 		bodyId: body.id
-	};
-	if (!Number.isFinite(responseScale) || !isFiniteVec2(outgoingVelocity)) {
+	});
+	const response = resolveImpactResponse(
+		input,
+		event.colliderId,
+		event.time,
+		event.normal,
+		incomingVelocity,
+		assembly.impactHistory
+	);
+	assembly.impactHistory.push({
+		colliderId: event.colliderId,
+		time: event.time,
+		incomingNormalSpeed: Math.max(
+			0,
+			-(incomingVelocity[0] * event.normal[0] + incomingVelocity[1] * event.normal[1])
+		)
+	});
+	if (!response) {
 		return {
-			type: 'commit',
-			segment,
-			event: contactResult.event,
-			entry,
-			terminalReason: {
+			type: 'terminal',
+			time: event.time,
+			reason: {
 				type: 'numerical-failure',
-				time: contactResult.event.time,
+				time: event.time,
 				detail: 'The restitution response did not produce a finite outgoing velocity.'
-			},
-			nextState: null
+			}
+		};
+	}
+	if (!response.enterSustainedContact) {
+		return {
+			type: 'continue',
+			nextState: {
+				time: event.time,
+				position: event.position,
+				velocity: response.outgoingVelocity,
+				ignoreInitialContactColliderId: null,
+				acceptInitialContact: false
+			}
 		};
 	}
 
-	const terminalReason = classifySettlement(
+	const continuation = continueSustainedContact({
 		input,
-		body.physicalShape.radius,
-		contactResult.event.colliderId,
-		contactResult.event.time,
-		eventPosition,
-		contactResult.event.normal,
-		contactResult.candidate.contactPoint,
-		outgoingVelocity
-	);
+		body,
+		colliderId: event.colliderId,
+		time: event.time,
+		position: event.position,
+		normal: event.normal,
+		outgoingVelocity: response.outgoingVelocity,
+		entryFrom: response.collapseReason === 'initial-supported-state' ? 'free-flight' : 'impact',
+		entryReason:
+			response.collapseReason === 'initial-supported-state'
+				? 'supported-initial-state'
+				: 'impact-collapse'
+	});
+	assembly.segments.push(...continuation.segments);
+	assembly.events.push(...continuation.events);
+	assembly.contactSearches.push(...continuation.contactSearches);
+	for (const transition of continuation.events) {
+		assembly.entries.push({
+			severity: transition.reason === 'unresolved' ? 'error' : 'info',
+			code: 'CONTACT_MODE_TRANSITION',
+			message: `${transition.from} -> ${transition.to} on ${transition.colliderId}: ${transition.reason}.`,
+			time: transition.time,
+			bodyId: transition.bodyId
+		});
+	}
+	if (continuation.terminalReason) {
+		return {
+			type: 'terminal',
+			time: continuation.terminalReason.time ?? event.time,
+			reason: continuation.terminalReason
+		};
+	}
 	return {
-		type: 'commit',
-		segment,
-		event: contactResult.event,
-		entry,
-		terminalReason,
-		nextState: terminalReason
-			? null
-			: {
-					time: contactResult.event.time,
-					position: contactResult.event.position,
-					velocity: outgoingVelocity
-				}
+		type: 'continue',
+		nextState: toEventState(continuation.nextState!)
 	};
 }
 
@@ -339,7 +377,7 @@ function finishRun(
 	);
 
 	return {
-		contractVersion: 5,
+		contractVersion: 6,
 		input: assembly.input,
 		validity,
 		outcome,
@@ -359,6 +397,30 @@ function finishRun(
 			contactSearches: assembly.contactSearches,
 			entries: assembly.entries
 		}
+	};
+}
+
+function toEventState(state: SustainedNextState): EventState {
+	return state;
+}
+
+function contactEventCount(assembly: RunAssembly): number {
+	return assembly.events.filter((event) => event.type === 'contact').length;
+}
+
+function makeFreeFlightPath(
+	input: SimulationInput,
+	body: InitialDynamicCircleBodyState,
+	state: EventState
+): FreeFlightMotionSegment {
+	return {
+		type: 'free-flight',
+		bodyId: body.id,
+		startTime: state.time,
+		endTime: input.settings.maximumSimulationTime,
+		startPosition: state.position,
+		startVelocity: state.velocity,
+		acceleration: input.settings.gravity
 	};
 }
 

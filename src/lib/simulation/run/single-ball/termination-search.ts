@@ -1,7 +1,7 @@
 import type {
 	AxisAlignedTerminationRegion,
 	BoardBounds,
-	MotionSegment,
+	ConstantAccelerationMotionSegment,
 	RunTerminalReason,
 	Vec2
 } from '../../contracts';
@@ -21,7 +21,7 @@ export type TerminationSearchResult =
 	| { readonly type: 'numerical-failure'; readonly detail: string };
 
 export function findEarliestTerminationEntry(
-	segment: MotionSegment,
+	segment: ConstantAccelerationMotionSegment,
 	regions: readonly AxisAlignedTerminationRegion[],
 	bounds: BoardBounds,
 	searchUntilTime: number,
@@ -157,7 +157,7 @@ function solveCoordinateCrossings(a: number, b: number, c: number): readonly num
 }
 
 function findBoundsExitCandidates(
-	segment: MotionSegment,
+	segment: ConstantAccelerationMotionSegment,
 	bounds: BoardBounds,
 	searchUntilTime: number,
 	eventTimeTolerance: number

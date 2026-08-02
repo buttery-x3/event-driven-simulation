@@ -39,7 +39,7 @@ Use these terms consistently in component names, labels, tests and accessible de
 | Term                     | Meaning                                                                                                                                                         | UI usage                                                                                  |
 | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
 | **Run**                  | A parsed, contract-valid `SimulationRunRecord`, including its input, trajectories, events, terminal status and diagnostics.                                     | “Current run”, “Run status”                                                               |
-| **Source**               | Workbench metadata identifying where the run was loaded from. It is not part of contract v5.                                                                    | `Repository fixture · canonical-event-driven-offset-drop.json` or `Local file · run.json` |
+| **Source**               | Workbench metadata identifying where the run was loaded from. It is not part of contract v6.                                                                    | `Repository fixture · canonical-event-driven-offset-drop.json` or `Local file · run.json` |
 | **Simulation time**      | Domain time recorded in trajectory segments, events and diagnostics, measured from run `t = 0`.                                                                 | Event and diagnostic timestamps                                                           |
 | **Simulated until**      | `run.diagnostics.simulatedUntilTime`: the end of the calculation’s recorded or validated horizon. It does not imply success.                                    | Run inspector                                                                             |
 | **Playable until**       | The greatest simulation time the presentation may seek to for the current inspection mode. For the current complete-run adapter it equals `simulatedUntilTime`. | Playback controls and run inspector                                                       |
@@ -92,7 +92,7 @@ immutable input snapshot, calls `constructSingleBallRun`, and atomically accepts
 record. Invalid draft input leaves the current run and transport untouched. A valid but unresolved
 calculation is accepted in recorded-prefix mode rather than ordinary playback.
 
-Scenario input files use a versioned JSON envelope with `contractVersion: 5`,
+Scenario input files use a versioned JSON envelope with `contractVersion: 6`,
 `documentType: "simulation-input"` and an `input` value conforming to `SimulationInput`. Loading
 passes through structural and single-ball semantic validation. Saved run files continue through
 the separate saved-run boundary.
@@ -172,11 +172,11 @@ The current source label is never replaced by the name of a rejected candidate. 
 attempt, feedback may say `Could not load candidate.json`, while the source continues to say
 `Repository fixture · canonical-event-driven-offset-drop.json`.
 
-Success feedback is short and non-sticky, for example `Loaded run.json · contract v5`. Rejection
+Success feedback is short and non-sticky, for example `Loaded run.json · contract v6`. Rejection
 feedback contains the typed error code, message and validation path when present:
 
 ```text
-UNSUPPORTED_CONTRACT_VERSION · expected version 5 · $.contractVersion
+UNSUPPORTED_CONTRACT_VERSION · expected version 6 · $.contractVersion
 ```
 
 The detailed run diagnostics console contains diagnostics from the current run only. Candidate file
@@ -265,15 +265,16 @@ diagnostics  = diagnostics.entries.length
 The timeline displays every `run.events` entry in source order. It is a table-like list with a
 sticky header on desktop and a stacked label/value layout on narrow screens.
 
-Each current contact event exposes:
+Each physical event exposes:
 
 - one-based display sequence, while preserving zero-based array index internally;
 - stored simulation timestamp with `s` unit;
-- type (`contact`);
+- type (`contact`) or, for contact-mode transitions, `from → to`;
 - `bodyId`;
 - `colliderId`;
 - contact position `(x, y)`; and
-- contact normal `(x, y)` in an optional detail row or disclosure.
+- contact normal `(x, y)` in an optional detail row or disclosure; and
+- the transition reason for `contact-mode-transition` entries.
 
 Each selectable entry is one keyboard-operable control, not a clickable collection of table cells.
 The selected entry uses `aria-current="true"` or equivalent and a non-colour-only selected

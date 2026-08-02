@@ -24,7 +24,6 @@ export interface StaticLineSegmentCollider {
 	readonly id: EntityId;
 	readonly motionAuthority: 'static';
 	readonly physicalShape: LineSegmentPhysicalShape;
-	readonly surfaceRole?: 'supporting-flat';
 }
 
 export type StaticCollider = StaticCircleCollider | StaticLineSegmentCollider;
@@ -70,20 +69,12 @@ export interface SimulationTolerances {
 	readonly eventTime: number;
 }
 
-export interface NarrowSettlementPolicy {
-	readonly maximumNormalSeparationSpeed: number;
-	readonly maximumTangentialSpeed: number;
-	readonly contactDistance: number;
-	readonly minimumPressingAcceleration: number;
-}
-
 export interface SimulationSettings {
 	readonly gravity: Vec2;
 	readonly restitution: number;
 	readonly maximumEvents: number;
 	readonly maximumSimulationTime: number;
 	readonly tolerances: SimulationTolerances;
-	readonly settlement?: NarrowSettlementPolicy;
 }
 
 export interface SimulationInput {
@@ -92,7 +83,8 @@ export interface SimulationInput {
 	readonly settings: SimulationSettings;
 }
 
-export interface MotionSegment {
+export interface FreeFlightMotionSegment {
+	readonly type: 'free-flight';
 	readonly bodyId: EntityId;
 	readonly startTime: number;
 	readonly endTime: number;
@@ -100,6 +92,41 @@ export interface MotionSegment {
 	readonly startVelocity: Vec2;
 	readonly acceleration: Vec2;
 }
+
+export interface LinearContactMotionSegment {
+	readonly type: 'linear-contact';
+	readonly bodyId: EntityId;
+	readonly startTime: number;
+	readonly endTime: number;
+	readonly startPosition: Vec2;
+	readonly startVelocity: Vec2;
+	readonly acceleration: Vec2;
+	readonly supportingColliderId: EntityId;
+	readonly contactNormal: Vec2;
+}
+
+export interface CircularContactMotionSegment {
+	readonly type: 'circular-contact';
+	readonly bodyId: EntityId;
+	readonly startTime: number;
+	readonly endTime: number;
+	readonly startPosition: Vec2;
+	readonly startVelocity: Vec2;
+	readonly supportingColliderId: EntityId;
+	readonly centre: Vec2;
+	readonly contactRadius: number;
+	readonly startAngle: number;
+	readonly endAngle: number;
+	readonly direction: -1 | 1;
+	readonly startTangentialSpeed: number;
+	readonly gravity: Vec2;
+}
+
+export type MotionSegment =
+	FreeFlightMotionSegment | LinearContactMotionSegment | CircularContactMotionSegment;
+
+export type ConstantAccelerationMotionSegment =
+	FreeFlightMotionSegment | LinearContactMotionSegment;
 
 export interface BodyTrajectory {
 	readonly bodyId: EntityId;
@@ -115,7 +142,30 @@ export interface ContactEvent {
 	readonly normal: Vec2;
 }
 
-export type PhysicalEvent = ContactEvent;
+export type ContactMode = 'free-flight' | 'impact' | 'resting' | 'sliding';
+
+export interface ContactModeTransitionEvent {
+	readonly type: 'contact-mode-transition';
+	readonly time: number;
+	readonly bodyId: EntityId;
+	readonly colliderId: EntityId;
+	readonly from: ContactMode;
+	readonly to: ContactMode;
+	readonly reason:
+		| 'impact-collapse'
+		| 'supported-initial-state'
+		| 'resting'
+		| 'sliding'
+		| 'endpoint-reached'
+		| 'support-lost'
+		| 'collider-contact'
+		| 'terminal-region'
+		| 'unresolved';
+	readonly position: Vec2;
+	readonly normal: Vec2;
+}
+
+export type PhysicalEvent = ContactEvent | ContactModeTransitionEvent;
 
 export type RunValidity = 'valid' | 'invalid';
 
@@ -157,12 +207,12 @@ export type RunTerminalReason =
 			readonly limit: number;
 	  }
 	| {
-			readonly type: 'settled-supporting-surface';
+			readonly type: 'resting-contact';
 			readonly time: number;
 			readonly colliderId: EntityId;
 			readonly position: Vec2;
-			readonly normalSeparationSpeed: number;
-			readonly tangentialSpeed: number;
+			readonly normal: Vec2;
+			readonly reason: 'impact-collapse' | 'zero-tangential-motion';
 	  }
 	| {
 			readonly type: 'unresolved-collision-search';
@@ -230,7 +280,7 @@ export interface RunDiagnostics {
 }
 
 export interface SimulationRunRecord {
-	readonly contractVersion: 5;
+	readonly contractVersion: 6;
 	readonly input: SimulationInput;
 	readonly validity: RunValidity;
 	readonly outcome: RunOutcome;
@@ -241,7 +291,7 @@ export interface SimulationRunRecord {
 }
 
 export interface RendererPlaybackInput {
-	readonly contractVersion: 5;
+	readonly contractVersion: 6;
 	readonly scene: SceneDefinition;
 	readonly initialDynamicBodies: readonly InitialDynamicCircleBodyState[];
 	readonly validity: RunValidity;

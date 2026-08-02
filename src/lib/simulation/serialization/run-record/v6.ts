@@ -7,11 +7,11 @@ import {
 } from '../../run';
 import { validateSceneDefinition } from '../../world';
 
-export function validateRunFixtureV5(value: unknown): SimulationRunRecord {
+export function validateRunFixtureV6(value: unknown): SimulationRunRecord {
 	const run = requireRecord(value, '$');
 
-	requireLiteral(run.contractVersion, 5, '$.contractVersion');
-	validateSimulationInputV5(run.input, '$.input');
+	requireLiteral(run.contractVersion, 6, '$.contractVersion');
+	validateSimulationInputV6(run.input, '$.input');
 	requireOneOf(run.validity, ['valid', 'invalid'], '$.validity');
 	requireOneOf(
 		run.outcome,
@@ -36,7 +36,7 @@ export function validateRunFixtureV5(value: unknown): SimulationRunRecord {
 	return value as SimulationRunRecord;
 }
 
-export function validateSimulationInputV5(
+export function validateSimulationInputV6(
 	value: unknown,
 	path = '$'
 ): SimulationRunRecord['input'] {
@@ -70,23 +70,6 @@ export function validateSimulationInputV5(
 	const tolerances = requireRecord(settings.tolerances, `${path}.settings.tolerances`);
 	requireFiniteNumber(tolerances.contactDistance, `${path}.settings.tolerances.contactDistance`);
 	requireFiniteNumber(tolerances.eventTime, `${path}.settings.tolerances.eventTime`);
-
-	if (settings.settlement !== undefined) {
-		const settlement = requireRecord(settings.settlement, `${path}.settings.settlement`);
-		requireFiniteNumber(
-			settlement.maximumNormalSeparationSpeed,
-			`${path}.settings.settlement.maximumNormalSeparationSpeed`
-		);
-		requireFiniteNumber(
-			settlement.maximumTangentialSpeed,
-			`${path}.settings.settlement.maximumTangentialSpeed`
-		);
-		requireFiniteNumber(settlement.contactDistance, `${path}.settings.settlement.contactDistance`);
-		requireFiniteNumber(
-			settlement.minimumPressingAcceleration,
-			`${path}.settings.settlement.minimumPressingAcceleration`
-		);
-	}
 
 	return value as SimulationRunRecord['input'];
 }
@@ -122,12 +105,12 @@ function validateTerminalReason(value: unknown, path: string): void {
 			requireFiniteNumber(reason.time, `${path}.time`);
 			requireFiniteNumber(reason.limit, `${path}.limit`);
 			return;
-		case 'settled-supporting-surface':
+		case 'resting-contact':
 			requireFiniteNumber(reason.time, `${path}.time`);
 			requireString(reason.colliderId, `${path}.colliderId`);
 			validateVec2(reason.position, `${path}.position`);
-			requireFiniteNumber(reason.normalSeparationSpeed, `${path}.normalSeparationSpeed`);
-			requireFiniteNumber(reason.tangentialSpeed, `${path}.tangentialSpeed`);
+			validateVec2(reason.normal, `${path}.normal`);
+			requireOneOf(reason.reason, ['impact-collapse', 'zero-tangential-motion'], `${path}.reason`);
 			return;
 		case 'zero-time-loop':
 			requireFiniteNumber(reason.time, `${path}.time`);
@@ -218,40 +201,19 @@ function validateTerminalReference(record: SimulationRunRecord): void {
 			);
 		}
 	}
-	if (reason.type === 'settled-supporting-surface') {
-		const policy = record.input.settings.settlement;
-		if (!policy) {
-			fail('$.input.settings.settlement', 'must be present for a settled outcome');
-		}
+	if (reason.type === 'resting-contact') {
 		const collider = record.input.scene.staticColliders.find(({ id }) => id === reason.colliderId);
-		if (
-			!collider ||
-			collider.physicalShape.type !== 'line-segment' ||
-			!('surfaceRole' in collider) ||
-			collider.surfaceRole !== 'supporting-flat'
-		) {
-			fail('$.terminalReason.colliderId', 'must identify a declared supporting-flat line segment');
-		}
-		if (
-			reason.normalSeparationSpeed < 0 ||
-			reason.normalSeparationSpeed > policy.maximumNormalSeparationSpeed ||
-			reason.tangentialSpeed < 0 ||
-			reason.tangentialSpeed > policy.maximumTangentialSpeed
-		) {
-			fail('$.terminalReason', 'must satisfy the configured settlement speed thresholds');
-		}
-		const lastEvent = record.events.at(-1);
+		if (!collider) fail('$.terminalReason.colliderId', 'must identify a fixed collider');
+		const lastEvent = [...record.events].reverse().find(({ type }) => type === 'contact');
 		if (
 			!lastEvent ||
+			lastEvent.type !== 'contact' ||
 			lastEvent.colliderId !== reason.colliderId ||
 			lastEvent.time !== reason.time ||
 			lastEvent.position[0] !== reason.position[0] ||
 			lastEvent.position[1] !== reason.position[1]
 		) {
-			fail(
-				'$.terminalReason',
-				'must agree with the final recorded contact on its supporting surface'
-			);
+			fail('$.terminalReason', 'must agree with the final recorded contact');
 		}
 	}
 }
@@ -266,12 +228,38 @@ function validateTrajectories(value: unknown, path: string): void {
 			const segmentPath = `${trajectoryPath}.segments[${segmentIndex}]`;
 			const segmentRecord = requireRecord(segment, segmentPath);
 
+			requireOneOf(
+				segmentRecord.type,
+				['free-flight', 'linear-contact', 'circular-contact'],
+				`${segmentPath}.type`
+			);
 			requireString(segmentRecord.bodyId, `${segmentPath}.bodyId`);
 			requireFiniteNumber(segmentRecord.startTime, `${segmentPath}.startTime`);
 			requireFiniteNumber(segmentRecord.endTime, `${segmentPath}.endTime`);
 			validateVec2(segmentRecord.startPosition, `${segmentPath}.startPosition`);
 			validateVec2(segmentRecord.startVelocity, `${segmentPath}.startVelocity`);
-			validateVec2(segmentRecord.acceleration, `${segmentPath}.acceleration`);
+			if (segmentRecord.type === 'free-flight' || segmentRecord.type === 'linear-contact') {
+				validateVec2(segmentRecord.acceleration, `${segmentPath}.acceleration`);
+			}
+			if (segmentRecord.type === 'linear-contact') {
+				requireString(segmentRecord.supportingColliderId, `${segmentPath}.supportingColliderId`);
+				validateVec2(segmentRecord.contactNormal, `${segmentPath}.contactNormal`);
+			}
+			if (segmentRecord.type === 'circular-contact') {
+				requireString(segmentRecord.supportingColliderId, `${segmentPath}.supportingColliderId`);
+				validateVec2(segmentRecord.centre, `${segmentPath}.centre`);
+				requireFiniteNumber(segmentRecord.contactRadius, `${segmentPath}.contactRadius`);
+				requireFiniteNumber(segmentRecord.startAngle, `${segmentPath}.startAngle`);
+				requireFiniteNumber(segmentRecord.endAngle, `${segmentPath}.endAngle`);
+				if (segmentRecord.direction !== -1 && segmentRecord.direction !== 1) {
+					fail(`${segmentPath}.direction`, 'must be -1 or 1');
+				}
+				requireFiniteNumber(
+					segmentRecord.startTangentialSpeed,
+					`${segmentPath}.startTangentialSpeed`
+				);
+				validateVec2(segmentRecord.gravity, `${segmentPath}.gravity`);
+			}
 		});
 	});
 }
@@ -281,12 +269,35 @@ function validateEvents(value: unknown, path: string): void {
 		const eventPath = `${path}[${index}]`;
 		const record = requireRecord(event, eventPath);
 
-		requireLiteral(record.type, 'contact', `${eventPath}.type`);
+		requireOneOf(record.type, ['contact', 'contact-mode-transition'], `${eventPath}.type`);
 		requireFiniteNumber(record.time, `${eventPath}.time`);
 		requireString(record.bodyId, `${eventPath}.bodyId`);
 		requireString(record.colliderId, `${eventPath}.colliderId`);
 		validateVec2(record.position, `${eventPath}.position`);
 		validateVec2(record.normal, `${eventPath}.normal`);
+		if (record.type === 'contact-mode-transition') {
+			requireOneOf(
+				record.from,
+				['free-flight', 'impact', 'resting', 'sliding'],
+				`${eventPath}.from`
+			);
+			requireOneOf(record.to, ['free-flight', 'impact', 'resting', 'sliding'], `${eventPath}.to`);
+			requireOneOf(
+				record.reason,
+				[
+					'impact-collapse',
+					'supported-initial-state',
+					'resting',
+					'sliding',
+					'endpoint-reached',
+					'support-lost',
+					'collider-contact',
+					'terminal-region',
+					'unresolved'
+				],
+				`${eventPath}.reason`
+			);
+		}
 	});
 }
 

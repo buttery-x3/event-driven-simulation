@@ -1,6 +1,8 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
+import type { SimulationInput } from '../../src/lib/simulation/contracts';
+import { constructSingleBallRun } from '../../src/lib/simulation/run';
 
 interface FilePayload {
 	readonly name: string;
@@ -103,7 +105,7 @@ test('loads a local saved run and retains it after typed validation failures', a
 		page.getByLabel('Current run source').getByText('Local file · local-run.json', { exact: true })
 	).toBeVisible();
 	await expect(
-		page.getByText('Loaded local-run.json · contract v5', { exact: true })
+		page.getByText('Loaded local-run.json · contract v6', { exact: true })
 	).toBeVisible();
 
 	await expectRejectedCandidate(page, {
@@ -118,7 +120,7 @@ test('loads a local saved run and retains it after typed validation failures', a
 	});
 	await expectRejectedCandidate(page, {
 		name: 'invalid-record.json',
-		content: JSON.stringify({ contractVersion: 5 }),
+		content: JSON.stringify({ contractVersion: 6 }),
 		code: 'INVALID_RUN_RECORD'
 	});
 
@@ -211,6 +213,44 @@ test('renders and replays an invalid saved prefix as distinct forensic evidence'
 	await expect(page.getByRole('button', { name: 'Play' })).toBeEnabled();
 });
 
+test('loads and seeks authoritative sustained circular contact with explicit mode transitions', async ({
+	page
+}) => {
+	const run = constructSingleBallRun(sustainedPegInput());
+	const circular = run.trajectories[0]!.segments.find(
+		(segment) => segment.type === 'circular-contact'
+	);
+	if (!circular) throw new Error('Expected the browser fixture to contain circular contact.');
+
+	await page.goto('/');
+	await chooseFile(page, {
+		name: 'sustained-peg-run.json',
+		mimeType: 'application/json',
+		buffer: Buffer.from(JSON.stringify(run))
+	});
+
+	await expect(page.getByText('Loaded sustained-peg-run.json · contract v6')).toBeVisible();
+	const entry = page.getByRole('button', { name: /impact to sliding/ });
+	const exit = page.getByRole('button', { name: /sliding to free-flight/ });
+	await expect(entry).toBeVisible();
+	await expect(exit).toBeVisible();
+	await entry.click();
+	await expect(entry).toHaveAttribute('aria-current', 'true');
+	await expect(page.getByText('impact → sliding', { exact: true })).toBeVisible();
+	await expect(page.getByText('sliding → free-flight', { exact: true })).toBeVisible();
+
+	const seek = page.getByRole('slider', { name: 'Seek recorded simulation time' });
+	await seek.evaluate(
+		(element, time) => {
+			const input = element as HTMLInputElement;
+			input.value = String(time);
+			input.dispatchEvent(new Event('input', { bubbles: true }));
+		},
+		(circular.startTime + circular.endTime) / 2
+	);
+	await expect(page.locator('canvas')).toBeVisible();
+});
+
 interface MutableRunFixture {
 	validity: string;
 	outcome: string;
@@ -299,4 +339,44 @@ async function chooseFile(page: Page, file: FilePayload): Promise<void> {
 	await page.getByRole('button', { name: 'Load saved run' }).click();
 	const chooser = await chooserPromise;
 	await chooser.setFiles(file);
+}
+
+function sustainedPegInput(): SimulationInput {
+	return {
+		scene: {
+			id: 'browser-sustained-contact',
+			coordinateSystem: {
+				origin: 'centre-bottom',
+				horizontalAxis: 'right',
+				verticalAxis: 'up',
+				lengthUnit: 'metre'
+			},
+			bounds: { width: 6, height: 4 },
+			staticColliders: [
+				{
+					id: 'peg',
+					motionAuthority: 'static',
+					physicalShape: { type: 'circle', radius: 0.5 },
+					centre: [0, 1]
+				}
+			],
+			terminationRegions: []
+		},
+		initialDynamicBodies: [
+			{
+				id: 'ball',
+				motionAuthority: 'dynamic',
+				physicalShape: { type: 'circle', radius: 0.1 },
+				position: [0.08, 3],
+				velocity: [0, 0]
+			}
+		],
+		settings: {
+			gravity: [0, -10],
+			restitution: 0,
+			maximumEvents: 20,
+			maximumSimulationTime: 3,
+			tolerances: { contactDistance: 1e-9, eventTime: 1e-9 }
+		}
+	};
 }

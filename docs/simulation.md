@@ -68,18 +68,19 @@ they deterministically produce `(speed × cos(angle), speed × sin(angle))`. Dir
 components remain available for exact regression reproduction. An explicit Run action validates
 and snapshots the resulting `SimulationInput` before invoking the headless solver.
 
-Scenario input JSON uses a version 5 `simulation-input` envelope. Its loader applies the same
+Scenario input JSON uses a version 6 `simulation-input` envelope. Its loader applies the same
 structural input validation used by saved-run contract validation, followed by the authoritative
 single-ball semantic validator. A loaded scenario never becomes renderer state directly: only the
 run record returned by the simulator can be adapted for replay.
 
 ## Ballistic motion and fixed-world contacts
 
-`MotionSegment` is the canonical ballistic-path representation. Its start position, start velocity
-and constant acceleration are immutable initial conditions at `startTime`;
-`evaluateMotionSegmentPosition` and `evaluateMotionSegmentVelocity` evaluate them directly at any
-requested time. Simulation code must not mutate the segment or advance it through sampled
-timesteps.
+`MotionSegment` is the canonical continuous-path representation. `free-flight` and
+`linear-contact` segments have immutable position, velocity and constant-acceleration conditions at
+`startTime`. `circular-contact` segments record the supporting collider, expanded contact radius,
+angular interval, direction, entry tangential speed and gravity. The shared motion evaluator uses
+those records directly at any requested time. Simulation code must not mutate a segment or advance
+it through sampled timesteps.
 
 `findEarliestPegContact` performs continuous ball-versus-fixed-circle discovery over a declared
 future interval inside one motion segment. It substitutes normalized interval time into the
@@ -164,22 +165,55 @@ exactly at the region boundary. Event and time limits, unresolved fixed-world se
 state, numerical failure and permanently stationary no-future-event states remain distinct typed
 terminal reasons.
 
-Contract version 5 records the stable top-level `outcome` vocabulary (`exited`, `escaped`,
+Contract version 6 records the stable top-level `outcome` vocabulary (`exited`, `escaped`,
 `settled`, `no-future-event`, `time-limit`, `event-limit`, `unresolved`, or `invalid`) separately
 from the detailed `terminalReason`. Run `validity` records whether the retained prefix conforms to
 the public contract. Diagnostics retain each contact search's accepted and rejected candidates and
 record search iterations, event count, candidate count, segment count, simulated horizon and
 calculation wall time. Accepted contact candidates additionally preserve their proposed time delta,
 position, contact point, normal, pre- and proposed post-contact velocity, and near-simultaneous
-classification. These optional forensic fields keep earlier version 5 fixtures readable. They are
+classification. These optional forensic fields remain diagnostic evidence only. They are
 diagnostic evidence only: instrumentation is written after selection and never participates in
 event selection or becomes authoritative trajectory motion.
 
 Supported scene-bounds crossings are solved continuously alongside explicit completion and escape
-regions. A declared horizontal `supporting-flat` line may produce `settled` only when the optional
-named settlement policy certifies pressing acceleration, low post-response normal and tangential
-speed, and contact geometry. See [the board-state matrix](./board-state-matrix.md) for the complete
-scenario catalogue and threshold policy.
+regions. A non-penetrating contact may enter sustained contact only when the contact normal can
+supply the required support. Zero tangential velocity and acceleration produce `resting-contact`;
+otherwise the body continues in a `linear-contact` or `circular-contact` segment.
+
+## Sustained contact and impact collapse
+
+The impact state machine distinguishes an ordinary separating restitution response from the
+inelastic-collapse limit. Zero restitution enters the limit immediately when support is available.
+For positive restitution, collapse requires repeated impacts with the same collider, contracting
+impact intervals and approach speeds, a sufficiently small normal speed derived from contact
+distance and pressing acceleration, and a finite nearby predicted accumulation time. This policy
+never adds a position nudge, random direction, damping step or synthetic time advance.
+
+Every accepted impact remains a `contact` event. Entering or leaving sustained contact adds a
+`contact-mode-transition` event with the supporting collider, position, normal, source and target
+mode, and reason. A `linear-contact` or `circular-contact` motion segment is the authoritative
+continuation between those transitions. Resting contact is terminal for the current fixed-world,
+single-ball model because no supported future external event can change it.
+
+For a fixed straight segment, the constrained acceleration is
+
+```text
+a_t = g - (g · n)n
+```
+
+The solver selects the earliest endpoint, other collider, termination region, bounds crossing or
+time limit along that quadratic path. Reaching an endpoint detaches when the free radial
+acceleration loses support; otherwise continuation changes to a circular arc around the physical
+endpoint.
+
+For a circular peg or supported line endpoint, the centre remains on the expanded circular contact
+boundary. The evaluator conserves energy to obtain tangential speed as a function of angle and
+uses adaptive quadrature plus bisection to map simulation time to angle. Angular root isolation
+selects detachment when the required outward normal reaction reaches zero and also checks for an
+earlier collider, terminal region or bounds event. The changing normal and resulting path are
+shared by headless simulation and renderer replay; no chain of micro-impacts or renderer-only path
+exists.
 
 ## Scene validation
 

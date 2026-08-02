@@ -1,4 +1,9 @@
-import type { ContactEvent, MotionSegment, StaticLineSegmentCollider, Vec2 } from '../contracts';
+import type {
+	ConstantAccelerationMotionSegment,
+	ContactEvent,
+	StaticLineSegmentCollider,
+	Vec2
+} from '../contracts';
 import { isolatePolynomialRoots, type IsolatedPolynomialRoot } from '../math';
 import { evaluateMotionSegmentPosition, evaluateMotionSegmentVelocity } from '../motion';
 import { dotVec2 } from '../math';
@@ -20,12 +25,13 @@ export const defaultBoundaryContactTolerances = {
 } as const satisfies BoundaryContactTolerances;
 
 export interface BoundaryContactQuery {
-	readonly segment: MotionSegment;
+	readonly segment: ConstantAccelerationMotionSegment;
 	readonly ballRadius: number;
 	readonly boundary: StaticLineSegmentCollider;
 	readonly searchUntilTime: number;
 	readonly tolerances?: BoundaryContactTolerances;
 	readonly maximumRefinementIterations?: number;
+	readonly ignoreInitialContact?: boolean;
 }
 
 export type BoundaryContactFeature =
@@ -34,6 +40,7 @@ export type BoundaryContactFeature =
 export type BoundaryContactCandidateClassification =
 	| 'accepted'
 	| 'rejected-separating'
+	| 'rejected-initial-contact'
 	| 'rejected-outside-extent'
 	| 'rejected-shadowed-by-face'
 	| 'rejected-outside-contact-tolerance';
@@ -237,7 +244,13 @@ export function findEarliestBoundaryContact(
 			tolerances
 		);
 
-		candidateDiagnostics.push(candidateResult.diagnostic);
+		const diagnostic =
+			query.ignoreInitialContact &&
+			candidateResult.diagnostic.classification === 'accepted' &&
+			time - query.segment.startTime <= tolerances.eventTime
+				? { ...candidateResult.diagnostic, classification: 'rejected-initial-contact' as const }
+				: candidateResult.diagnostic;
+		candidateDiagnostics.push(diagnostic);
 		diagnostics = { ...diagnostics, candidates: candidateDiagnostics };
 
 		if (candidateResult.type === 'unresolved') {
@@ -248,9 +261,9 @@ export function findEarliestBoundaryContact(
 			};
 		}
 
-		if (candidateResult.diagnostic.classification === 'accepted') {
-			const normal = candidateResult.diagnostic.normal!;
-			const normalVelocity = candidateResult.diagnostic.normalVelocity!;
+		if (diagnostic.classification === 'accepted') {
+			const normal = diagnostic.normal!;
+			const normalVelocity = diagnostic.normalVelocity!;
 			return {
 				type: 'contact',
 				event: {
@@ -265,7 +278,7 @@ export function findEarliestBoundaryContact(
 					time,
 					position,
 					velocity,
-					contactPoint: candidateResult.diagnostic.contactPoint,
+					contactPoint: diagnostic.contactPoint,
 					normal,
 					normalVelocity,
 					feature: root.feature

@@ -154,31 +154,7 @@ export function validateSingleBallInput(
 			}
 		];
 	}
-	if (settings.settlement && !isValidSettlementPolicy(settings.settlement)) {
-		return [
-			{
-				code: 'INVALID_SETTLEMENT_POLICY',
-				path: '$.settings.settlement',
-				message:
-					'Settlement thresholds must be finite, with non-negative speed thresholds and positive distance and pressing-acceleration thresholds.'
-			}
-		];
-	}
-
 	return [];
-}
-
-function isValidSettlementPolicy(policy: NonNullable<SimulationInput['settings']['settlement']>) {
-	return (
-		Number.isFinite(policy.maximumNormalSeparationSpeed) &&
-		policy.maximumNormalSeparationSpeed >= 0 &&
-		Number.isFinite(policy.maximumTangentialSpeed) &&
-		policy.maximumTangentialSpeed >= 0 &&
-		Number.isFinite(policy.contactDistance) &&
-		policy.contactDistance > 0 &&
-		Number.isFinite(policy.minimumPressingAcceleration) &&
-		policy.minimumPressingAcceleration > 0
-	);
 }
 
 function isInsideBounds(position: Vec2, bounds: BoardBounds): boolean {

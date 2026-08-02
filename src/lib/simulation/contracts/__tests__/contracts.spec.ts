@@ -26,6 +26,7 @@ const trajectories = [
 		bodyId: 'ball',
 		segments: [
 			{
+				type: 'free-flight',
 				bodyId: 'ball',
 				startTime: 0,
 				endTime: 0.5,
@@ -40,7 +41,7 @@ const trajectories = [
 describe('simulation and replay contracts', () => {
 	it('round-trips a representative run record as plain JSON data', () => {
 		const run = {
-			contractVersion: 5,
+			contractVersion: 6,
 			input: prototypeSimulationInput,
 			validity: 'valid',
 			outcome: 'exited',
@@ -64,12 +65,12 @@ describe('simulation and replay contracts', () => {
 			{ type: 'escape-region', regionId: 'escape', time: 1 },
 			{ type: 'bounds-escape', boundary: 'right', time: 1 },
 			{
-				type: 'settled-supporting-surface',
+				type: 'resting-contact',
 				time: 1,
 				colliderId: 'floor',
 				position: [0, 0.1],
-				normalSeparationSpeed: 0,
-				tangentialSpeed: 0
+				normal: [0, 1],
+				reason: 'impact-collapse'
 			},
 			{ type: 'event-limit', time: 1, limit: 10 },
 			{ type: 'time-limit', time: 1, limit: 1 },
@@ -83,7 +84,7 @@ describe('simulation and replay contracts', () => {
 
 	it('keeps renderer playback input serialisable and explicit about incomplete runs', () => {
 		const playback = {
-			contractVersion: 5,
+			contractVersion: 6,
 			scene: prototypeSimulationInput.scene,
 			initialDynamicBodies: prototypeSimulationInput.initialDynamicBodies,
 			validity: 'valid',

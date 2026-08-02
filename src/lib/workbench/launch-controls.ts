@@ -161,8 +161,7 @@ export function prepareLaunchSubmission(
 		settings: {
 			...baseInput.settings,
 			gravity: [...baseInput.settings.gravity],
-			tolerances: { ...baseInput.settings.tolerances },
-			...(baseInput.settings.settlement ? { settlement: { ...baseInput.settings.settlement } } : {})
+			tolerances: { ...baseInput.settings.tolerances }
 		}
 	};
 	const diagnostics = validateSingleBallInput(candidate);

@@ -33,11 +33,14 @@ describe('varied serialisable board-state scenarios', () => {
 				}
 
 				const certifiedUntil = segment.endTime - 1e-6;
-				if (certifiedUntil > segment.startTime) {
+				if (certifiedUntil > segment.startTime && segment.type === 'free-flight') {
+					const previous = index > 0 ? segments[index - 1]! : null;
 					const search = findEarliestFixedWorldContact({
 						segment,
 						ballRadius: scenario.input.initialDynamicBodies[0]!.physicalShape.radius,
 						colliders: scenario.input.scene.staticColliders,
+						ignoredInitialContactColliderId:
+							previous && previous.type !== 'free-flight' ? previous.supportingColliderId : null,
 						searchUntilTime: certifiedUntil,
 						tolerances: {
 							...defaultFixedWorldContactTolerances,
@@ -96,7 +99,7 @@ describe('varied serialisable board-state scenarios', () => {
 		expect(reversed.events).toEqual(sparse.events);
 	});
 
-	it('settles only on an explicitly declared flat support under the narrow policy', () => {
+	it('distinguishes resting support from sustained ramp sliding', () => {
 		const flat = constructSingleBallRun(scenario('flat-support').input);
 		const noExit = constructSingleBallRun(scenario('no-reachable-exit-settled').input);
 		const ramp = constructSingleBallRun(scenario('angled-ramp').input);
@@ -104,14 +107,18 @@ describe('varied serialisable board-state scenarios', () => {
 		expect(flat).toMatchObject({
 			outcome: 'settled',
 			terminalReason: {
-				type: 'settled-supporting-surface',
+				type: 'resting-contact',
 				colliderId: 'flat-support',
-				normalSeparationSpeed: 0,
-				tangentialSpeed: 0
+				normal: expect.any(Array)
 			}
 		});
 		expect(noExit.outcome).toBe('settled');
+		if (flat.terminalReason.type === 'resting-contact') {
+			expect(flat.terminalReason.normal[0]).toBeCloseTo(0, 12);
+			expect(flat.terminalReason.normal[1]).toBeCloseTo(1, 12);
+		}
 		expect(ramp.outcome).not.toBe('settled');
+		expect(ramp.trajectories[0]!.segments.some(({ type }) => type === 'linear-contact')).toBe(true);
 	});
 
 	it('keeps no-future-event and explicit limits distinct from completion', () => {

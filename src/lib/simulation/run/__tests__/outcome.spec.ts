@@ -9,12 +9,12 @@ describe('terminal outcome contract', () => {
 			[{ type: 'bounds-escape', boundary: 'right', time: 1 }, 'escaped'],
 			[
 				{
-					type: 'settled-supporting-surface',
+					type: 'resting-contact',
 					colliderId: 'floor',
 					time: 1,
 					position: [0, 1],
-					normalSeparationSpeed: 0,
-					tangentialSpeed: 0
+					normal: [0, 1],
+					reason: 'impact-collapse'
 				},
 				'settled'
 			],

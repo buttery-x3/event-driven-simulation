@@ -33,8 +33,9 @@ or retain affected fixtures as part of that contract change.
 
 FLAME-33 advanced the contract to version 5 so saved records expose the stable terminal outcome
 vocabulary and validate its agreement with validity, detailed terminal reason and diagnostics. The
-pre-release canonical and regression fixtures were updated in place; earlier data is intentionally
-rejected rather than guessed or migrated.
+FLAME-36 advanced it to version 6 for discriminated free-flight and constrained-contact segments,
+explicit contact-mode transitions and resting-contact terminal data. Pre-release fixtures were
+updated in place; earlier data is intentionally rejected rather than guessed or migrated.
 
 `flame-27-high-speed-peg-contact.json` is a complete, minimal run record whose incoming motion
 segment crosses a fixed peg at 10,000 m/s. The focused peg-contact test loads that public fixture

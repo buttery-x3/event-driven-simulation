@@ -1,4 +1,9 @@
-import type { ContactEvent, MotionSegment, StaticCircleCollider, Vec2 } from '../contracts';
+import type {
+	ConstantAccelerationMotionSegment,
+	ContactEvent,
+	StaticCircleCollider,
+	Vec2
+} from '../contracts';
 import { evaluatePolynomial, isolatePolynomialRoots } from '../math';
 import { evaluateMotionSegmentPosition, evaluateMotionSegmentVelocity } from '../motion';
 import { dotVec2, normaliseVec2 } from '../math';
@@ -18,16 +23,20 @@ export const defaultPegContactTolerances = {
 } as const satisfies PegContactTolerances;
 
 export interface PegContactQuery {
-	readonly segment: MotionSegment;
+	readonly segment: ConstantAccelerationMotionSegment;
 	readonly ballRadius: number;
 	readonly peg: StaticCircleCollider;
 	readonly searchUntilTime: number;
 	readonly tolerances?: PegContactTolerances;
 	readonly maximumRefinementIterations?: number;
+	readonly ignoreInitialContact?: boolean;
 }
 
 export type PegContactCandidateClassification =
-	'accepted' | 'rejected-separating' | 'rejected-outside-contact-tolerance';
+	| 'accepted'
+	| 'rejected-separating'
+	| 'rejected-initial-contact'
+	| 'rejected-outside-contact-tolerance';
 
 export interface PegContactCandidateDiagnostic {
 	readonly time: number;
@@ -225,7 +234,11 @@ export function findEarliestPegContact(query: PegContactQuery): PegContactQueryR
 		}
 
 		const classification =
-			normalVelocity > tolerances.normalVelocity ? 'rejected-separating' : 'accepted';
+			query.ignoreInitialContact && time - query.segment.startTime <= tolerances.eventTime
+				? 'rejected-initial-contact'
+				: normalVelocity > tolerances.normalVelocity
+					? 'rejected-separating'
+					: 'accepted';
 		candidateDiagnostics.push({
 			time,
 			polynomialResidual,
@@ -286,7 +299,11 @@ function resolveDegenerateContact(
 		normalVelocity,
 		source: 'boundary',
 		refinementIterations: 0,
-		classification: normalVelocity > tolerances.normalVelocity ? 'rejected-separating' : 'accepted'
+		classification: query.ignoreInitialContact
+			? 'rejected-initial-contact'
+			: normalVelocity > tolerances.normalVelocity
+				? 'rejected-separating'
+				: 'accepted'
 	};
 	const degenerateDiagnostics = { ...diagnostics, polynomialScale, candidates: [candidate] };
 

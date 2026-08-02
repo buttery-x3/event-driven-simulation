@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import highSpeedRegressionJson from '../../../../../fixtures/regressions/flame-27-high-speed-peg-contact.json?raw';
-import type { MotionSegment, StaticCircleCollider, Vec2 } from '../../contracts';
+import type {
+	ConstantAccelerationMotionSegment,
+	StaticCircleCollider,
+	Vec2
+} from '../../contracts';
 import {
 	defaultPegContactTolerances,
 	findEarliestPegContact,
@@ -21,8 +25,9 @@ function segment(
 	acceleration: Vec2 = [0, 0],
 	startTime = 0,
 	endTime = 10
-): MotionSegment {
+): ConstantAccelerationMotionSegment {
 	return {
+		type: 'free-flight',
 		bodyId: 'ball-test',
 		startTime,
 		endTime,
@@ -33,7 +38,7 @@ function segment(
 }
 
 function query(
-	motionSegment: MotionSegment,
+	motionSegment: ConstantAccelerationMotionSegment,
 	searchUntilTime = motionSegment.endTime
 ): PegContactQuery {
 	return {
@@ -68,6 +73,8 @@ describe('continuous ballistic peg contact solving', () => {
 		const run = parseSimulationRunFixture(highSpeedRegressionJson);
 		const body = run.input.initialDynamicBodies[0]!;
 		const motionSegment = run.trajectories[0]!.segments[0]!;
+		expect(motionSegment.type).toBe('free-flight');
+		if (motionSegment.type !== 'free-flight') return;
 		const collider = run.input.scene.staticColliders[0] as StaticCircleCollider;
 		const expectedEvent = run.events[0]!;
 		const result = findEarliestPegContact({

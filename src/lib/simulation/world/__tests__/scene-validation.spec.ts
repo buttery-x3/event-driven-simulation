@@ -65,33 +65,4 @@ describe('scene validation', () => {
 			})
 		);
 	});
-
-	it('rejects an angled collider misdeclared as a flat supporting surface', () => {
-		const malformed = {
-			...canonicalPlinkoBoard,
-			staticColliders: [
-				{
-					id: 'misclassified-ramp',
-					motionAuthority: 'static',
-					physicalShape: {
-						type: 'line-segment',
-						start: [-1, 0],
-						end: [1, 1]
-					},
-					surfaceRole: 'supporting-flat'
-				}
-			]
-		};
-		const result = validateSceneDefinition(malformed);
-
-		expect(result).toMatchObject({
-			valid: false,
-			diagnostics: [
-				{
-					code: 'INVALID_SCENE_STRUCTURE',
-					path: '$.staticColliders[0].surfaceRole'
-				}
-			]
-		});
-	});
 });

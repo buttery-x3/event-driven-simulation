@@ -41,14 +41,22 @@
 						onclick={() => onSelect(index, event.time)}
 						disabled={!canSeek}
 						aria-current={selectedIndex === index ? 'true' : undefined}
-						aria-label={`Event ${index + 1}, ${event.type} at ${formatRecordedSeconds(event.time)}`}
+						aria-label={`Event ${index + 1}, ${event.type === 'contact-mode-transition' ? `${event.from} to ${event.to}` : event.type} at ${formatRecordedSeconds(event.time)}`}
 					>
 						<span data-label="Sequence">{index + 1}</span>
 						<time data-label="Simulation time">{formatRecordedSeconds(event.time)}</time>
-						<strong data-label="Type">{event.type}</strong>
+						<strong data-label="Type"
+							>{event.type === 'contact-mode-transition'
+								? `${event.from} → ${event.to}`
+								: event.type}</strong
+						>
 						<span data-label="Participants">{event.bodyId} → {event.colliderId}</span>
 						<span data-label="Contact">{formatVector(event.position)}</span>
-						<small>normal {formatVector(event.normal)}</small>
+						<small
+							>{event.type === 'contact-mode-transition' ? `${event.reason} · ` : ''}normal {formatVector(
+								event.normal
+							)}</small
+						>
 					</button>
 				</li>
 			{/each}

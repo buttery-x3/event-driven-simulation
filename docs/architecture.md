@@ -56,7 +56,9 @@ diagnostics for unsupported geometry, duplicate IDs, malformed coordinates and i
 - `SimulationInput` groups the scene's `staticColliders`, `initialDynamicBodies` and all current
   behavioural settings and numerical tolerances.
 - `MotionSegment`, `BodyTrajectory` and `PhysicalEvent` describe the calculated history without
-  requiring frame-by-frame simulation during playback.
+  requiring frame-by-frame simulation during playback. Segment discriminants distinguish
+  `free-flight`, `linear-contact` and `circular-contact`; contact-mode transition events make entry
+  to and exit from resting or sliding states explicit.
 - `SimulationRunRecord` preserves the input, prefix validity, typed terminal reason, physical
   events, trajectory prefix and diagnostics needed for saved runs and regression fixtures.
 - `RendererPlaybackInput` contains only plain data needed to present a run. It carries the same
@@ -75,10 +77,9 @@ Run validity is `valid` or `invalid` and is deliberately separate from the stabl
 `no-future-event`, `time-limit`, `event-limit`, `unresolved`, and `invalid`. Detailed reasons retain
 the specific region, bounds edge, support collider, collision-search failure or explicit limit.
 
-`contractVersion` is `5` after FLAME-33 added the stable outcome vocabulary, continuous supported
-bounds exits, narrow settlement details and cross-field validation. Earlier fixtures are rejected
-rather than silently interpreted as version 5; the prototype has no external compatibility
-requirement. The contracts intentionally use
+`contractVersion` is `6` after FLAME-36 added first-class sustained-contact motion and transition
+events. Earlier fixtures are rejected rather than silently interpreted as version 6; the prototype
+has no external compatibility requirement. The contracts intentionally use
 ordinary objects, arrays, strings, numbers and `null`. This keeps them JSON-serialisable and leaves
 the calculation implementation replaceable by a future worker or Rust/Wasm module without adding
 either transport today.
@@ -88,7 +89,7 @@ either transport today.
 Saved run fixtures live under the repository-level `fixtures/` directory so headless tests and the
 browser renderer consume the same files. `src/lib/simulation/serialization/run-record/index.ts` is
 the narrow runtime entry point from unknown JSON data to `SimulationRunRecord`. JSON parsing, typed
-fixture errors, contract-version recognition and version 5 structural and consistency validation
+fixture errors, contract-version recognition and version 6 structural and consistency validation
 live in separate implementation modules behind that entry point. Version dispatch is intentionally
 explicit rather than a general schema registry.
 
@@ -102,16 +103,21 @@ never evaluates motion beyond the committed segment boundary.
 ## Headless event-driven run
 
 `src/lib/simulation/run/single-ball/construct.ts` is the authoritative producer of single-ball run
-records. It repeatedly constructs one continuous constant-acceleration path, selects the earliest
-supported fixed-world contact or termination-region entry, commits only the certified interval,
-resolves the contact from its evaluated event state and continues from the exact event time.
-Validation, termination search, settlement and diagnostic construction are separate modules in the
-same subdomain. The `run` entry point preserves both `constructSingleBallRun` and the old
+records. It sequences free flight, impact and sustained contact, commits only certified intervals,
+and continues from exact physical event times. `impact-response.ts` owns restitution and the
+conservative contracting-impact collapse policy. `sustained-contact.ts` owns line support,
+projected tangential acceleration and endpoint transitions; `circular-contact.ts` owns constrained
+peg and line-endpoint arcs, support-loss detection and angular next-event selection. Validation,
+termination search and diagnostic construction remain separate modules in the same subdomain. The
+`run` entry point preserves both `constructSingleBallRun` and the old
 `generateSyntheticRun` compatibility name without retaining a forwarding implementation module.
 
 Canonical recorded-segment position and velocity evaluation lives in the `simulation/motion`
-subsystem. Run construction and renderer playback both consume this framework-independent
-evaluator, so rendering cannot acquire a duplicate motion equation. Low-level vector and
+subsystem. Constant-acceleration segments use their immutable initial conditions. Circular-contact
+segments use the conserved-energy relation on the expanded peg boundary and adaptive quadrature to
+invert angular travel time; they are not renderer samples or fixed timesteps. Run construction and
+renderer playback both consume this framework-independent evaluator, so rendering cannot acquire a
+duplicate motion equation. Low-level vector and
 polynomial operations live in `simulation/math`. These modules import only allowed lower-level
 simulation entry points and are exercised in Vitest's Node environment, so they do not depend on
 Svelte, Three.js, a renderer or browser globals.
@@ -195,7 +201,7 @@ from a launch draft to simulation; renderer playback still receives only the ret
 `toRendererPlaybackInput`.
 
 `simulation/serialization/simulation-input` provides the versioned JSON boundary for scenario
-inputs. It reuses the version 5 structural input validator and then applies the single-ball semantic
+inputs. It reuses the version 6 structural input validator and then applies the single-ball semantic
 validator. Saved run records continue to use the independent
 `simulation/serialization/run-record` boundary.
 

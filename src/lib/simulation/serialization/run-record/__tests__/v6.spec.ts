@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import canonicalFixtureJson from '../../../../../../fixtures/runs/canonical-event-driven-offset-drop.json?raw';
 import { RunFixtureError } from '../error';
-import { validateRunFixtureV5 } from '../v5';
+import { validateRunFixtureV6 } from '../v6';
 
-describe('version 5 run fixture validation', () => {
-	it('accepts the complete version 5 saved-run shape', () => {
-		expect(validateRunFixtureV5(JSON.parse(canonicalFixtureJson)).terminalReason.type).toBe(
+describe('version 6 run fixture validation', () => {
+	it('accepts the complete version 6 saved-run shape', () => {
+		expect(validateRunFixtureV6(JSON.parse(canonicalFixtureJson)).terminalReason.type).toBe(
 			'completion-region'
 		);
 	});
@@ -18,7 +18,7 @@ describe('version 5 run fixture validation', () => {
 		};
 		delete incompatible.input.initialDynamicBodies[0]!.physicalShape.radius;
 
-		expect(() => validateRunFixtureV5(incompatible)).toThrowError(
+		expect(() => validateRunFixtureV6(incompatible)).toThrowError(
 			expect.objectContaining<Partial<RunFixtureError>>({
 				code: 'INVALID_RUN_RECORD',
 				path: '$.input.initialDynamicBodies[0].physicalShape.radius'
@@ -30,7 +30,7 @@ describe('version 5 run fixture validation', () => {
 		const mislabelled = JSON.parse(canonicalFixtureJson) as { outcome: string };
 		mislabelled.outcome = 'settled';
 
-		expect(() => validateRunFixtureV5(mislabelled)).toThrowError(
+		expect(() => validateRunFixtureV6(mislabelled)).toThrowError(
 			expect.objectContaining<Partial<RunFixtureError>>({
 				code: 'INVALID_RUN_RECORD',
 				path: '$.outcome'
@@ -44,7 +44,7 @@ describe('version 5 run fixture validation', () => {
 		};
 		misdiagnosed.diagnostics.entries.at(-1)!.code = 'RUN_SETTLED';
 
-		expect(() => validateRunFixtureV5(misdiagnosed)).toThrowError(
+		expect(() => validateRunFixtureV6(misdiagnosed)).toThrowError(
 			expect.objectContaining<Partial<RunFixtureError>>({
 				code: 'INVALID_RUN_RECORD',
 				path: '$.diagnostics.entries'

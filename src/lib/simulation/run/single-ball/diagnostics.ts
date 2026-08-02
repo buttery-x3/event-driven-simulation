@@ -1,7 +1,7 @@
 import type {
 	DiagnosticEntry,
 	InitialDynamicCircleBodyState,
-	MotionSegment,
+	ConstantAccelerationMotionSegment,
 	RunContactSearchDiagnostic,
 	RunTerminalReason,
 	SimulationInput,
@@ -15,7 +15,7 @@ import { getTerminalDiagnosticCode } from '../outcome';
 
 export function toRunContactSearchDiagnostic(
 	result: FixedWorldContactQueryResult,
-	path: MotionSegment,
+	path: ConstantAccelerationMotionSegment,
 	restitution: number
 ): RunContactSearchDiagnostic {
 	const diagnostics: FixedWorldContactDiagnostics = result.diagnostics;
@@ -78,8 +78,8 @@ export function toTerminalDiagnostic(
 			? reason.detail
 			: reason.type === 'completion-region' || reason.type === 'escape-region'
 				? `Run reached ${reason.regionId}.`
-				: reason.type === 'settled-supporting-surface'
-					? `Run settled on ${reason.colliderId}.`
+				: reason.type === 'resting-contact'
+					? `Run entered resting contact on ${reason.colliderId}.`
 					: `Run reached the configured ${reason.type}.`;
 
 	return {

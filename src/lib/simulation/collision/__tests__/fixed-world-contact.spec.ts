@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type {
-	MotionSegment,
+	ConstantAccelerationMotionSegment,
 	StaticCircleCollider,
 	StaticCollider,
 	StaticLineSegmentCollider,
@@ -30,8 +30,9 @@ function segment(
 	startVelocity: Vec2 = [1, 0],
 	acceleration: Vec2 = [0, 0],
 	endTime = 10
-): MotionSegment {
+): ConstantAccelerationMotionSegment {
 	return {
+		type: 'free-flight',
 		bodyId: 'ball-test',
 		startTime: 0,
 		endTime,
