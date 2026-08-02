@@ -1,0 +1,2620 @@
+{
+	"contractVersion": 6,
+	"input": {
+		"scene": {
+			"id": "canonical-plinko-board",
+			"coordinateSystem": {
+				"origin": "centre-bottom",
+				"horizontalAxis": "right",
+				"verticalAxis": "up",
+				"lengthUnit": "metre"
+			},
+			"bounds": {
+				"width": 5.4,
+				"height": 7
+			},
+			"staticColliders": [
+				{
+					"id": "peg-row-01-column-01",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-1.8, 5.75]
+				},
+				{
+					"id": "peg-row-01-column-02",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-1.2, 5.75]
+				},
+				{
+					"id": "peg-row-01-column-03",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-0.6, 5.75]
+				},
+				{
+					"id": "peg-row-01-column-04",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0, 5.75]
+				},
+				{
+					"id": "peg-row-01-column-05",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0.6, 5.75]
+				},
+				{
+					"id": "peg-row-01-column-06",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [1.2, 5.75]
+				},
+				{
+					"id": "peg-row-01-column-07",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [1.8, 5.75]
+				},
+				{
+					"id": "peg-row-02-column-01",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-2.1, 5.15]
+				},
+				{
+					"id": "peg-row-02-column-02",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-1.5, 5.15]
+				},
+				{
+					"id": "peg-row-02-column-03",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-0.9, 5.15]
+				},
+				{
+					"id": "peg-row-02-column-04",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-0.3, 5.15]
+				},
+				{
+					"id": "peg-row-02-column-05",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0.3, 5.15]
+				},
+				{
+					"id": "peg-row-02-column-06",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0.9, 5.15]
+				},
+				{
+					"id": "peg-row-02-column-07",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [1.5, 5.15]
+				},
+				{
+					"id": "peg-row-02-column-08",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [2.1, 5.15]
+				},
+				{
+					"id": "peg-row-03-column-01",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-1.8, 4.55]
+				},
+				{
+					"id": "peg-row-03-column-02",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-1.2, 4.55]
+				},
+				{
+					"id": "peg-row-03-column-03",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-0.6, 4.55]
+				},
+				{
+					"id": "peg-row-03-column-04",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0, 4.55]
+				},
+				{
+					"id": "peg-row-03-column-05",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0.6, 4.55]
+				},
+				{
+					"id": "peg-row-03-column-06",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [1.2, 4.55]
+				},
+				{
+					"id": "peg-row-03-column-07",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [1.8, 4.55]
+				},
+				{
+					"id": "peg-row-04-column-01",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-2.1, 3.95]
+				},
+				{
+					"id": "peg-row-04-column-02",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-1.5, 3.95]
+				},
+				{
+					"id": "peg-row-04-column-03",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-0.9, 3.95]
+				},
+				{
+					"id": "peg-row-04-column-04",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-0.3, 3.95]
+				},
+				{
+					"id": "peg-row-04-column-05",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0.3, 3.95]
+				},
+				{
+					"id": "peg-row-04-column-06",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0.9, 3.95]
+				},
+				{
+					"id": "peg-row-04-column-07",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [1.5, 3.95]
+				},
+				{
+					"id": "peg-row-04-column-08",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [2.1, 3.95]
+				},
+				{
+					"id": "peg-row-05-column-01",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-1.8, 3.35]
+				},
+				{
+					"id": "peg-row-05-column-02",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-1.2, 3.35]
+				},
+				{
+					"id": "peg-row-05-column-03",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-0.6, 3.35]
+				},
+				{
+					"id": "peg-row-05-column-04",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0, 3.35]
+				},
+				{
+					"id": "peg-row-05-column-05",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0.6, 3.35]
+				},
+				{
+					"id": "peg-row-05-column-06",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [1.2, 3.35]
+				},
+				{
+					"id": "peg-row-05-column-07",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [1.8, 3.35]
+				},
+				{
+					"id": "peg-row-06-column-01",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-2.1, 2.75]
+				},
+				{
+					"id": "peg-row-06-column-02",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-1.5, 2.75]
+				},
+				{
+					"id": "peg-row-06-column-03",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-0.9, 2.75]
+				},
+				{
+					"id": "peg-row-06-column-04",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-0.3, 2.75]
+				},
+				{
+					"id": "peg-row-06-column-05",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0.3, 2.75]
+				},
+				{
+					"id": "peg-row-06-column-06",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0.9, 2.75]
+				},
+				{
+					"id": "peg-row-06-column-07",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [1.5, 2.75]
+				},
+				{
+					"id": "peg-row-06-column-08",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [2.1, 2.75]
+				},
+				{
+					"id": "peg-row-07-column-01",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-1.8, 2.15]
+				},
+				{
+					"id": "peg-row-07-column-02",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-1.2, 2.15]
+				},
+				{
+					"id": "peg-row-07-column-03",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-0.6, 2.15]
+				},
+				{
+					"id": "peg-row-07-column-04",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0, 2.15]
+				},
+				{
+					"id": "peg-row-07-column-05",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0.6, 2.15]
+				},
+				{
+					"id": "peg-row-07-column-06",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [1.2, 2.15]
+				},
+				{
+					"id": "peg-row-07-column-07",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [1.8, 2.15]
+				},
+				{
+					"id": "peg-row-08-column-01",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-2.1, 1.55]
+				},
+				{
+					"id": "peg-row-08-column-02",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-1.5, 1.55]
+				},
+				{
+					"id": "peg-row-08-column-03",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-0.9, 1.55]
+				},
+				{
+					"id": "peg-row-08-column-04",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [-0.3, 1.55]
+				},
+				{
+					"id": "peg-row-08-column-05",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0.3, 1.55]
+				},
+				{
+					"id": "peg-row-08-column-06",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [0.9, 1.55]
+				},
+				{
+					"id": "peg-row-08-column-07",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [1.5, 1.55]
+				},
+				{
+					"id": "peg-row-08-column-08",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.09
+					},
+					"centre": [2.1, 1.55]
+				},
+				{
+					"id": "boundary-left-wall",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "line-segment",
+						"start": [-2.55, 0.45],
+						"end": [-2.55, 6.25]
+					}
+				},
+				{
+					"id": "boundary-right-wall",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "line-segment",
+						"start": [2.55, 0.45],
+						"end": [2.55, 6.25]
+					}
+				},
+				{
+					"id": "boundary-left-entry-guide",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "line-segment",
+						"start": [-2.55, 6.25],
+						"end": [-2.05, 6.72]
+					}
+				},
+				{
+					"id": "boundary-right-entry-guide",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "line-segment",
+						"start": [2.05, 6.72],
+						"end": [2.55, 6.25]
+					}
+				},
+				{
+					"id": "boundary-left-exit-floor",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "line-segment",
+						"start": [-2.55, 0.45],
+						"end": [-0.5, 0.12]
+					}
+				},
+				{
+					"id": "boundary-right-exit-floor",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "line-segment",
+						"start": [0.5, 0.12],
+						"end": [2.55, 0.45]
+					}
+				}
+			],
+			"terminationRegions": [
+				{
+					"id": "termination-centre-exit",
+					"type": "axis-aligned-box",
+					"purpose": "complete",
+					"minimum": [-0.5, -0.3],
+					"maximum": [0.5, 0.12]
+				}
+			]
+		},
+		"initialDynamicBodies": [
+			{
+				"id": "ball-primary",
+				"motionAuthority": "dynamic",
+				"physicalShape": {
+					"type": "circle",
+					"radius": 0.15
+				},
+				"position": [0.43, 6.6],
+				"velocity": [0, 0]
+			}
+		],
+		"settings": {
+			"gravity": [0, -9.81],
+			"restitution": 0.3,
+			"maximumEvents": 1000,
+			"maximumSimulationTime": 60,
+			"tolerances": {
+				"contactDistance": 1e-9,
+				"eventTime": 1e-9
+			}
+		}
+	},
+	"validity": "valid",
+	"outcome": "unresolved",
+	"terminalReason": {
+		"type": "zero-time-loop",
+		"time": 1.497795771846802,
+		"colliderId": "peg-row-03-column-05",
+		"detail": "The next selected contact did not establish a positive collision-free interval."
+	},
+	"trajectories": [
+		{
+			"bodyId": "ball-primary",
+			"segments": [
+				{
+					"type": "free-flight",
+					"bodyId": "ball-primary",
+					"startTime": 0,
+					"endTime": 0.37249722246199535,
+					"startPosition": [0.43, 6.6],
+					"startVelocity": [0, 0],
+					"acceleration": [0, -9.81]
+				},
+				{
+					"type": "free-flight",
+					"bodyId": "ball-primary",
+					"startTime": 0.37249722246199535,
+					"endTime": 0.4534530448026474,
+					"startPosition": [0.43, 5.919410743460974],
+					"startVelocity": [-2.3752142207195828, -1.2872165346393394],
+					"acceleration": [0, -9.81]
+				},
+				{
+					"type": "free-flight",
+					"bodyId": "ball-primary",
+					"startTime": 0.4534530448026474,
+					"endTime": 0.6254042516655729,
+					"startPosition": [0.2377125795264351, 5.783056459805737],
+					"startVelocity": [1.023119553980162, -1.6088187341845568],
+					"acceleration": [0, -9.81]
+				},
+				{
+					"type": "free-flight",
+					"bodyId": "ball-primary",
+					"startTime": 0.6254042516655729,
+					"endTime": 0.7320716429718122,
+					"startPosition": [0.41363922159838196, 5.361390934797389],
+					"startVelocity": [2.5117302244057083, -0.5265562663512191],
+					"acceleration": [0, -9.81]
+				},
+				{
+					"type": "free-flight",
+					"bodyId": "ball-primary",
+					"startTime": 0.7320716429718122,
+					"endTime": 0.8789429028776223,
+					"startPosition": [0.6815589323007738, 5.249415793224326],
+					"startVelocity": [-0.9641949243768568, 0.008982087362038094],
+					"acceleration": [0, -9.81]
+				},
+				{
+					"type": "free-flight",
+					"bodyId": "ball-primary",
+					"startTime": 0.8789429028776223,
+					"endTime": 1.0379611331473064,
+					"startPosition": [0.5399464089627575, 5.144928429643873],
+					"startVelocity": [0.2493738680877473, -1.4574752812291496],
+					"acceleration": [0, -9.81]
+				},
+				{
+					"type": "free-flight",
+					"bodyId": "ball-primary",
+					"startTime": 1.0379611331473064,
+					"endTime": 1.224399963716621,
+					"startPosition": [0.5796014001415767, 4.789131547738512],
+					"startVelocity": [-0.08516630323632474, 0.904349998277838],
+					"acceleration": [0, -9.81]
+				},
+				{
+					"type": "free-flight",
+					"bodyId": "ball-primary",
+					"startTime": 1.224399963716621,
+					"endTime": 1.2819128640977653,
+					"startPosition": [0.5637230941622847, 4.7872424626892105],
+					"startVelocity": [-0.2622359330900055, 0.2333789533849493],
+					"acceleration": [0, -9.81]
+				},
+				{
+					"type": "free-flight",
+					"bodyId": "ball-primary",
+					"startTime": 1.2819128640977653,
+					"endTime": 1.2995483297757204,
+					"startPosition": [0.5486411450661228, 4.784440329337512],
+					"startVelocity": [-0.3365252938301984, 0.008289754701074403],
+					"acceleration": [0, -9.81]
+				},
+				{
+					"type": "free-flight",
+					"bodyId": "ball-primary",
+					"startTime": 1.2995483297757204,
+					"endTime": 1.304886497471188,
+					"startPosition": [0.5427063647970166, 4.783061020690349],
+					"startVelocity": [-0.36123317577230385, -0.06420659126423311],
+					"acceleration": [0, -9.81]
+				},
+				{
+					"type": "free-flight",
+					"bodyId": "ball-primary",
+					"startTime": 1.304886497471188,
+					"endTime": 1.3064926908568688,
+					"startPosition": [0.5407780415275777, 4.782578502090565],
+					"startVelocity": [-0.36887813033509853, -0.08655048916130928],
+					"acceleration": [0, -9.81]
+				},
+				{
+					"type": "free-flight",
+					"bodyId": "ball-primary",
+					"startTime": 1.3064926908568688,
+					"endTime": 1.3069749894906406,
+					"startPosition": [0.5401855519145111, 4.782426831067819],
+					"startVelocity": [-0.3711929489060822, -0.09331233012712556],
+					"acceleration": [0, -9.81]
+				},
+				{
+					"type": "free-flight",
+					"bodyId": "ball-primary",
+					"startTime": 1.3069749894906406,
+					"endTime": 1.3071197191180173,
+					"startPosition": [0.540006526062388, 4.7823806856967614],
+					"startVelocity": [-0.37188932515620543, -0.0953463131629429],
+					"acceleration": [0, -9.81]
+				},
+				{
+					"type": "circular-contact",
+					"bodyId": "ball-primary",
+					"startTime": 1.3071197191180173,
+					"endTime": 1.4977936285603186,
+					"startPosition": [0.5399527026589328, 4.782366783516993],
+					"startVelocity": [-0.3720501612543435, -0.09614371865244568],
+					"supportingColliderId": "peg-row-03-column-05",
+					"centre": [0.6, 4.55],
+					"contactRadius": 0.24,
+					"startAngle": 1.8236801226360106,
+					"endAngle": 2.412263583561204,
+					"direction": 1,
+					"startTangentialSpeed": 0.38427195724604163,
+					"gravity": [0, -9.81]
+				},
+				{
+					"type": "free-flight",
+					"bodyId": "ball-primary",
+					"startTime": 1.4977936285603186,
+					"endTime": 1.497795771846802,
+					"startPosition": [0.42105080221981533, 4.709928686025454],
+					"startVelocity": [-0.8346661781249773, -0.9339340346105559],
+					"acceleration": [0, -9.81]
+				}
+			]
+		}
+	],
+	"events": [
+		{
+			"type": "contact",
+			"time": 0.37249722246199535,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-01-column-05",
+			"position": [0.43, 5.919410743460974],
+			"normal": [-0.7083333333333341, 0.7058780977540582]
+		},
+		{
+			"type": "contact",
+			"time": 0.4534530448026474,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-01-column-04",
+			"position": [0.2377125795264351, 5.783056459805737],
+			"normal": [0.990469081360146, 0.13773524919056995]
+		},
+		{
+			"type": "contact",
+			"time": 0.6254042516655729,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-02-column-05",
+			"position": [0.41363922159838196, 5.361390934797389],
+			"normal": [0.4734967566599251, 0.8807955616557862]
+		},
+		{
+			"type": "contact",
+			"time": 0.7320716429718122,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-02-column-06",
+			"position": [0.6815589323007738, 5.249415793224326],
+			"normal": [-0.9101711154134438, 0.41423247176802475]
+		},
+		{
+			"type": "contact",
+			"time": 0.8789429028776223,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-02-column-05",
+			"position": [0.5399464089627575, 5.144928429643873],
+			"normal": [0.9997767040114893, -0.021131543150532114]
+		},
+		{
+			"type": "contact",
+			"time": 1.0379611331473064,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-03-column-05",
+			"position": [0.5796014001415767, 4.789131547738512],
+			"normal": [-0.08499416607676354, 0.996381448910464]
+		},
+		{
+			"type": "contact",
+			"time": 1.224399963716621,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-03-column-05",
+			"position": [0.5637230941622847, 4.7872424626892105],
+			"normal": [-0.15115377432381358, 0.9885102612050446]
+		},
+		{
+			"type": "contact",
+			"time": 1.2819128640977653,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-03-column-05",
+			"position": [0.5486411450661228, 4.784440329337512],
+			"normal": [-0.21399522889115444, 0.9768347055729656]
+		},
+		{
+			"type": "contact",
+			"time": 1.2995483297757204,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-03-column-05",
+			"position": [0.5427063647970166, 4.783061020690349],
+			"normal": [-0.23872348001243085, 0.971087586209789]
+		},
+		{
+			"type": "contact",
+			"time": 1.304886497471188,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-03-column-05",
+			"position": [0.5407780415275777, 4.782578502090565],
+			"normal": [-0.24675816030175918, 0.9690770920440188]
+		},
+		{
+			"type": "contact",
+			"time": 1.3064926908568688,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-03-column-05",
+			"position": [0.5401855519145111, 4.782426831067819],
+			"normal": [-0.24922686702286972, 0.9684451294492449]
+		},
+		{
+			"type": "contact",
+			"time": 1.3069749894906406,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-03-column-05",
+			"position": [0.540006526062388, 4.7823806856967614],
+			"normal": [-0.24997280807338326, 0.9682528570698397]
+		},
+		{
+			"type": "contact",
+			"time": 1.3071197191180173,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-03-column-05",
+			"position": [0.5399527026589328, 4.782366783516993],
+			"normal": [-0.250197072254447, 0.9681949313208074]
+		},
+		{
+			"type": "contact-mode-transition",
+			"time": 1.3071197191180173,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-03-column-05",
+			"from": "impact",
+			"to": "sliding",
+			"reason": "impact-collapse",
+			"position": [0.5399527026589328, 4.782366783516993],
+			"normal": [-0.250197072254447, 0.9681949313208074]
+		},
+		{
+			"type": "contact-mode-transition",
+			"time": 1.4977936285603186,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-03-column-05",
+			"from": "sliding",
+			"to": "free-flight",
+			"reason": "support-lost",
+			"position": [0.42105080221981533, 4.709928686025454],
+			"normal": [-0.745621657417436, 0.6663695251060597]
+		},
+		{
+			"type": "contact",
+			"time": 1.497795771846802,
+			"bodyId": "ball-primary",
+			"colliderId": "peg-row-03-column-05",
+			"position": [0.4210490132910776, 4.709926684314729],
+			"normal": [-0.7456291112871775, 0.6663611846447044]
+		}
+	],
+	"diagnostics": {
+		"iterations": 16,
+		"simulatedUntilTime": 1.497795771846802,
+		"eventCount": 16,
+		"candidateCount": 120,
+		"segmentCount": 15,
+		"simulationWallTimeMilliseconds": 35,
+		"contactSearches": [
+			{
+				"searchInterval": [0, 1.1493915422653815],
+				"eventTimeTolerance": 1e-9,
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-01-column-05",
+				"candidates": [
+					{
+						"colliderId": "peg-row-01-column-05",
+						"feature": "circle",
+						"time": 0.37249722246199535,
+						"classification": "accepted",
+						"timeDelta": 0.37249722246199535,
+						"position": [0.43, 5.919410743460974],
+						"contactPoint": [0.5362500000000001, 5.813529028797865],
+						"normal": [-0.7083333333333341, 0.7058780977540582],
+						"normalVelocity": -2.579418158247508,
+						"preContactVelocity": [0, -3.6541977523521747],
+						"postContactVelocity": [-2.3752142207195828, -1.2872165346393394],
+						"nearSimultaneous": true
+					},
+					{
+						"colliderId": "peg-row-02-column-05",
+						"feature": "circle",
+						"time": 0.5044668141325002,
+						"classification": "accepted",
+						"timeDelta": 0.5044668141325002,
+						"position": [0.43, 5.351742410018321],
+						"contactPoint": [0.3487500000000002, 5.225653403756871],
+						"normal": [0.5416666666666652, 0.8405933750763348],
+						"normalVelocity": -4.159944841294371,
+						"preContactVelocity": [0, -4.948819446639827],
+						"postContactVelocity": [2.929294492411445, -0.4029507500822964],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-03-column-05",
+						"feature": "circle",
+						"time": 0.6191950409884721,
+						"classification": "accepted",
+						"timeDelta": 0.6191950409884721,
+						"position": [0.43, 4.719410743460969],
+						"contactPoint": [0.5362500000000016, 4.613529028797862],
+						"normal": [-0.7083333333333435, 0.7058780977540489],
+						"normalVelocity": -4.287717695359211,
+						"preContactVelocity": [0, -6.074303352096912],
+						"postContactVelocity": [-3.9482733778099965, -2.1397155384384177],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-04-column-05",
+						"feature": "circle",
+						"time": 0.7064949289300015,
+						"classification": "accepted",
+						"timeDelta": 0.7064949289300015,
+						"position": [0.43, 4.151742410018322],
+						"contactPoint": [0.3487500000000005, 4.025653403756872],
+						"normal": [0.5416666666666634, 0.8405933750763359],
+						"normalVelocity": -5.8259133260469795,
+						"preContactVelocity": [0, -6.930715252803315],
+						"postContactVelocity": [4.10241396709139, -0.5643238634660728],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-05-column-05",
+						"feature": "circle",
+						"time": 0.7924965721235191,
+						"classification": "accepted",
+						"timeDelta": 0.7924965721235191,
+						"position": [0.43, 3.5194107434609743],
+						"contactPoint": [0.53625, 3.4135290287978655],
+						"normal": [-0.7083333333333333, 0.7058780977540591],
+						"normalVelocity": -5.487772593238261,
+						"preContactVelocity": [0, -7.774391372531722],
+						"postContactVelocity": [-5.053323929606898, -2.7385833498032737],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-06-column-05",
+						"feature": "circle",
+						"time": 0.8624287812026102,
+						"classification": "accepted",
+						"timeDelta": 0.8624287812026102,
+						"position": [0.43, 2.9517424100183294],
+						"contactPoint": [0.3487500000000026, 2.8256534037568777],
+						"normal": [0.5416666666666492, 0.8405933750763452],
+						"normalVelocity": -7.111778334749536,
+						"preContactVelocity": [0, -8.460426343597607],
+						"postContactVelocity": [5.0078772440526365, -0.6888784644350823],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-07-column-05",
+						"feature": "circle",
+						"time": 0.9341836729842485,
+						"classification": "accepted",
+						"timeDelta": 0.9341836729842485,
+						"position": [0.43, 2.319410743460975],
+						"contactPoint": [0.5362499999999997, 2.2135290287978657],
+						"normal": [-0.7083333333333315, 0.705878097754061],
+						"normalVelocity": -6.468908179522817,
+						"preContactVelocity": [0, -9.164341831975479],
+						"postContactVelocity": [-5.956786281977244, -3.2282030515760525],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-08-column-05",
+						"feature": "circle",
+						"time": 0.9941990347457771,
+						"classification": "accepted",
+						"timeDelta": 0.9941990347457771,
+						"position": [0.43, 1.7517424100183216],
+						"contactPoint": [0.3487500000000004, 1.6256534037568713],
+						"normal": [0.541666666666664, 0.8405933750763358],
+						"normalVelocity": -8.19838496794411,
+						"preContactVelocity": [0, -9.753092530856074],
+						"postContactVelocity": [5.773029414927282, -0.7941320133630665],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "start-endpoint",
+						"time": 1.1375649556017473,
+						"classification": "accepted",
+						"timeDelta": 1.1375649556017473,
+						"position": [0.43, 0.2526649916142274],
+						"contactPoint": [0.5, 0.12],
+						"normal": [-0.4666666666666353, 0.8844332774281232],
+						"normalVelocity": -9.869843962327964,
+						"preContactVelocity": [0, -11.159512214453141],
+						"postContactVelocity": [-5.98770533714523, 0.1884717618445233],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 1.1491943072235558,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 1.1368480521590798,
+						"classification": "rejected-outside-extent"
+					}
+				]
+			},
+			{
+				"searchInterval": [0.37249722246199535, 1.3476408734735386],
+				"eventTimeTolerance": 1e-9,
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-01-column-04",
+				"candidates": [
+					{
+						"colliderId": "peg-row-01-column-04",
+						"feature": "circle",
+						"time": 0.4534530448026474,
+						"classification": "accepted",
+						"timeDelta": 0.08095582234065207,
+						"position": [0.2377125795264351, 5.783056459805737],
+						"contactPoint": [0.0891422173224132, 5.7623961724271515],
+						"normal": [0.990469081360146, 0.13773524919056995],
+						"normalVelocity": -2.6392574516565555,
+						"preContactVelocity": [-2.3752142207195828, -2.0813931518011364],
+						"postContactVelocity": [1.023119553980162, -1.6088187341845568],
+						"nearSimultaneous": true
+					},
+					{
+						"colliderId": "peg-row-02-column-04",
+						"feature": "circle",
+						"time": 0.6123272342761709,
+						"classification": "accepted",
+						"timeDelta": 0.23983001181417551,
+						"position": [-0.13964765461637524, 5.328569665200926],
+						"contactPoint": [-0.23986787048114067, 5.216963624450347],
+						"normal": [0.6681347724317696, 0.7440402716705242],
+						"normalVelocity": -4.295231818861125,
+						"preContactVelocity": [-2.3752142207195828, -3.639948950536401],
+						"postContactVelocity": [1.3555176332678327, 0.5146241336749036],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-03-column-03",
+						"feature": "circle",
+						"time": 0.7477223750596844,
+						"classification": "accepted",
+						"timeDelta": 0.37522515259768907,
+						"position": [-0.4612401184217066, 4.7458205690533495],
+						"contactPoint": [-0.5479650444081402, 4.6234327133950055],
+						"normal": [0.5781661732428907, 0.8159190377222925],
+						"normalVelocity": -5.426897311642783,
+						"preContactVelocity": [-2.3752142207195828, -4.968175281622669],
+						"postContactVelocity": [1.703728765911448, 0.7881062004105894],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-04-column-03",
+						"feature": "circle",
+						"time": 0.8610458281185447,
+						"classification": "accepted",
+						"timeDelta": 0.48854860565654934,
+						"position": [-0.7304075956681597, 4.119818775148527],
+						"contactPoint": [-0.8364028483755596, 4.013682040680698],
+						"normal": [0.7066350180493324, 0.7075782297855266],
+						"normalVelocity": -5.980399108271079,
+						"preContactVelocity": [-2.3752142207195828, -6.079878356130088],
+						"postContactVelocity": [3.118533040640366, -0.5787980773562786],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-05-column-02",
+						"feature": "circle",
+						"time": 0.9646381200012911,
+						"classification": "accepted",
+						"timeDelta": 0.5921408975392958,
+						"position": [-0.9764614805049927, 3.43735290666017],
+						"contactPoint": [-1.1161730551893723, 3.3827573399975637],
+						"normal": [0.9314104978958632, 0.36397044441737364],
+						"normalVelocity": -4.795076951183968,
+						"preContactVelocity": [-2.3752142207195828, -7.096118739499831],
+						"postContactVelocity": [3.4308262929970255, -4.827272563880516],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-07-column-02",
+						"feature": "circle",
+						"time": 1.1024325152358818,
+						"classification": "accepted",
+						"timeDelta": 0.7299352927738865,
+						"position": [-1.3037526876016472, 2.366414832706629],
+						"contactPoint": [-1.2389072578506195, 2.2311555622649895],
+						"normal": [-0.4323028650068516, 0.9017284696109288],
+						"normalVelocity": -6.590883575347221,
+						"preContactVelocity": [-2.3752142207195828, -8.447881756751165],
+						"postContactVelocity": [-6.079249429033549, -0.7217381890350119],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-08-column-02",
+						"feature": "circle",
+						"time": 1.1685124323778433,
+						"classification": "accepted",
+						"timeDelta": 0.796015209915848,
+						"position": [-1.460706646501206, 1.7867615517156823],
+						"contactPoint": [-1.4852649924379524, 1.6387855818933794],
+						"normal": [0.1637223062449768, 0.9865064654820193],
+						"normalVelocity": -9.362262407250489,
+						"preContactVelocity": [-2.3752142207195828, -9.096125743913808],
+						"postContactVelocity": [-0.382559669838175, 2.9105863712656124],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 1.3026967971609538,
+						"classification": "accepted",
+						"timeDelta": 0.9301995746989584,
+						"position": [-1.779423257932274, 0.4778869951765383],
+						"contactPoint": [-1.803262697429445, 0.32979350739108143],
+						"normal": [0.15892959664780545, 0.9872899185697005],
+						"normalVelocity": -10.657622803449748,
+						"preContactVelocity": [-2.3752142207195828, -10.412474362436122],
+						"postContactVelocity": [-0.17325901932984422, 3.266338252257709],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-01-column-05",
+						"feature": "circle",
+						"time": 0.37249722246199535,
+						"classification": "rejected-separating"
+					}
+				]
+			},
+			{
+				"searchInterval": [0.4534530448026474, 1.3875935549532044],
+				"eventTimeTolerance": 1e-9,
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-02-column-05",
+				"candidates": [
+					{
+						"colliderId": "peg-row-02-column-05",
+						"feature": "circle",
+						"time": 0.6254042516655729,
+						"classification": "accepted",
+						"timeDelta": 0.17195120686292548,
+						"position": [0.41363922159838196, 5.361390934797389],
+						"contactPoint": [0.3426147080993932, 5.229271600549021],
+						"normal": [0.4734967566599251, 0.8807955616557862],
+						"normalVelocity": -2.418358974988707,
+						"preContactVelocity": [1.023119553980162, -3.295660073509856],
+						"postContactVelocity": [2.5117302244057083, -0.5265562663512191],
+						"nearSimultaneous": true
+					},
+					{
+						"colliderId": "peg-row-03-column-05",
+						"feature": "circle",
+						"time": 0.7690558022111392,
+						"classification": "accepted",
+						"timeDelta": 0.3156027574084918,
+						"position": [0.5606119319211205, 4.7867458132533995],
+						"contactPoint": [0.5852294744704202, 4.638779679970025],
+						"normal": [-0.16411695032866455, 0.9864408885558318],
+						"normalVelocity": -4.808999028936911,
+						"preContactVelocity": [1.023119553980162, -4.704881784361862],
+						"postContactVelocity": [-0.0028901772112635005, 1.4620494733573937],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-04-column-06",
+						"feature": "circle",
+						"time": 0.9016244768476784,
+						"classification": "accepted",
+						"timeDelta": 0.448171432045031,
+						"position": [0.6962455351869977, 4.076823176386524],
+						"contactPoint": [0.8235920756951238, 3.9975586911449468],
+						"normal": [-0.8489769367208403, 0.5284299016105148],
+						"normalVelocity": -4.042027522362924,
+						"preContactVelocity": [1.023119553980162, -6.005380482546311],
+						"postContactVelocity": [-3.437945033319942, -3.228673814812308],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-05-column-05",
+						"feature": "circle",
+						"time": 0.991237705685786,
+						"classification": "accepted",
+						"timeDelta": 0.5377846608831385,
+						"position": [0.7879305819065644, 3.4992718874546065],
+						"contactPoint": [0.6704739682149623, 3.405976957795478],
+						"normal": [0.7830440912773478, 0.6219661977275235],
+						"normalVelocity": -3.48077001943793,
+						"preContactVelocity": [1.023119553980162, -6.884486257448145],
+						"postContactVelocity": [4.566394869841234, -4.070088575048247],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-06-column-06",
+						"feature": "circle",
+						"time": 1.062109733475305,
+						"classification": "accepted",
+						"timeDelta": 0.6086566886726574,
+						"position": [0.8604411393682467, 2.9867173346958737],
+						"contactPoint": [0.8851654272630923, 2.8387690005109536],
+						"normal": [-0.16482858596563757, 0.9863222278994671],
+						"normalVelocity": -7.644706231491405,
+						"preContactVelocity": [1.023119553980162, -7.5797408500633265],
+						"postContactVelocity": [-0.614966399757092, 2.2224459363826776],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-07-column-06",
+						"feature": "circle",
+						"time": 1.1616880836046684,
+						"classification": "accepted",
+						"timeDelta": 0.7082350388020209,
+						"position": [0.9623216965386815, 2.183302012908374],
+						"contactPoint": [1.1108706362020053, 2.1624882548406403],
+						"normal": [-0.9903262644221595, 0.13875838711822433],
+						"normalVelocity": -2.2005228006991784,
+						"preContactVelocity": [1.023119553980162, -8.556604464832382],
+						"postContactVelocity": [-1.8098866285097053, -8.159661171797918],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-08-column-06",
+						"feature": "circle",
+						"time": 1.2095374351869543,
+						"classification": "accepted",
+						"timeDelta": 0.7560843903843069,
+						"position": [1.0112773037877898, 1.7626437435282765],
+						"contactPoint": [0.9417289889204209, 1.629741403823103],
+						"normal": [0.46365543244912627, 0.8860155980344893],
+						"normalVelocity": -7.522807699729661,
+						"preContactVelocity": [1.023119553980162, -9.026006603854608],
+						"postContactVelocity": [5.557507408404867, -0.36108415198784094],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 1.3519554620657588,
+						"classification": "accepted",
+						"timeDelta": 0.8985024172631113,
+						"position": [1.156987971926767, 0.3776900954780902],
+						"contactPoint": [1.1808274114239379, 0.2295966076926339],
+						"normal": [-0.15892959664780545, 0.9872899185697005],
+						"normalVelocity": -10.453252626955662,
+						"preContactVelocity": [1.023119553980162, -10.423127447535679],
+						"postContactVelocity": [-1.136611036777417, 2.9933807677765536],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-01-column-04",
+						"feature": "circle",
+						"time": 0.4534530448026474,
+						"classification": "rejected-separating"
+					}
+				]
+			},
+			{
+				"searchInterval": [0.6254042516655729, 1.5356774793337973],
+				"eventTimeTolerance": 1e-9,
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-02-column-06",
+				"candidates": [
+					{
+						"colliderId": "peg-row-02-column-06",
+						"feature": "circle",
+						"time": 0.7320716429718122,
+						"classification": "accepted",
+						"timeDelta": 0.10666739130623926,
+						"position": [0.6815589323007738, 5.249415793224326],
+						"contactPoint": [0.8180845996127903, 5.187280922459123],
+						"normal": [-0.9101711154134438, 0.41423247176802475],
+						"normalVelocity": -2.937676806818929,
+						"preContactVelocity": [2.5117302244057083, -1.5729633750654262],
+						"postContactVelocity": [-0.9641949243768568, 0.008982087362038094],
+						"nearSimultaneous": true
+					},
+					{
+						"colliderId": "peg-row-03-column-06",
+						"feature": "circle",
+						"time": 0.9187540695876006,
+						"classification": "accepted",
+						"timeDelta": 0.29334981792202774,
+						"position": [1.1504548255970504, 4.784830312552236],
+						"contactPoint": [1.181420559598894, 4.638061367207088],
+						"normal": [-0.20643822667895725, 0.9784596356343206],
+						"normalVelocity": -3.849504863879149,
+						"preContactVelocity": [2.5117302244057083, -3.4043179801663115],
+						"postContactVelocity": [1.4786397794071062, 1.4922426842625471],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-04-column-07",
+						"feature": "circle",
+						"time": 1.0634384985497862,
+						"classification": "accepted",
+						"timeDelta": 0.43803424688421333,
+						"position": [1.5138630788222525, 4.189599280144094],
+						"contactPoint": [1.5051986545583447, 4.039849730054035],
+						"normal": [0.05776282842605196, 0.9983303339337248],
+						"normalVelocity": -4.670533664446074,
+						"preContactVelocity": [2.5117302244057083, -4.823672228285352],
+						"postContactVelocity": [2.862448429538456, 1.2378838344523464],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-05-column-07",
+						"feature": "circle",
+						"time": 1.1750817508222289,
+						"classification": "accepted",
+						"timeDelta": 0.549677499156656,
+						"position": [1.794280809905898, 3.589931846291123],
+						"contactPoint": [1.7978553037147118, 3.4399744423591705],
+						"normal": [-0.02382995872542529, 0.9997160262130164],
+						"normalVelocity": -5.977066150327639,
+						"preContactVelocity": [2.5117302244057083, -5.918892533078015],
+						"postContactVelocity": [2.326567012845831, 1.8490869332052275],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-06-column-08",
+						"feature": "circle",
+						"time": 1.270469915976541,
+						"classification": "accepted",
+						"timeDelta": 0.645065664310968,
+						"position": [2.0338701473745866, 2.9807094332526143],
+						"contactPoint": [2.0752013052654696, 2.8365160374697322],
+						"normal": [-0.27554105260588624, 0.9612893052192146],
+						"normalVelocity": -7.281386942386381,
+						"preContactVelocity": [2.5117302244057083, -6.854650433241815],
+						"postContactVelocity": [-0.09648710489096013, 2.244724780100709],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "boundary-right-wall",
+						"feature": "segment-face-positive",
+						"time": 1.41623790055858,
+						"classification": "accepted",
+						"timeDelta": 0.790833648893007,
+						"position": [2.3999999999999995, 1.8772979169452721],
+						"contactPoint": [2.55, 1.8772979169452721],
+						"normal": [-1, 0],
+						"normalVelocity": -2.5117302244057083,
+						"preContactVelocity": [2.5117302244057083, -8.284634361991618],
+						"postContactVelocity": [-0.7535190673217125, -8.284634361991618],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-02-column-05",
+						"feature": "circle",
+						"time": 0.6254042516655729,
+						"classification": "rejected-separating"
+					}
+				]
+			},
+			{
+				"searchInterval": [0.7320716429718122, 1.755608044802413],
+				"eventTimeTolerance": 1e-9,
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-02-column-05",
+				"candidates": [
+					{
+						"colliderId": "peg-row-02-column-05",
+						"feature": "circle",
+						"time": 0.8789429028776223,
+						"classification": "accepted",
+						"timeDelta": 0.14687125990581018,
+						"position": [0.5399464089627575, 5.144928429643873],
+						"contactPoint": [0.38997990336103405, 5.148098161116453],
+						"normal": [0.9997767040114893, -0.021131543150532114],
+						"normalVelocity": -0.9337229523316393,
+						"preContactVelocity": [-0.9641949243768568, -1.4318249723139598],
+						"postContactVelocity": [0.2493738680877473, -1.4574752812291496],
+						"nearSimultaneous": true
+					},
+					{
+						"colliderId": "peg-row-04-column-05",
+						"feature": "circle",
+						"time": 1.1999890784294005,
+						"classification": "accepted",
+						"timeDelta": 0.46791743545758835,
+						"position": [0.23039531600513163, 4.17968497549029],
+						"contactPoint": [0.2738982435019241, 4.036131865808859],
+						"normal": [-0.2900195166452832, 0.9570207312095368],
+						"normalVelocity": -4.104752202155318,
+						"preContactVelocity": [-0.9641949243768568, -4.581287954476903],
+						"postContactVelocity": [-2.511790648879928, 0.5255448856459273],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-05-column-04",
+						"feature": "circle",
+						"time": 1.3197466261510475,
+						"classification": "accepted",
+						"timeDelta": 0.5876749831792354,
+						"position": [0.11492569633610028, 3.5606942911463513],
+						"contactPoint": [0.0430971361260382, 3.429010359179883],
+						"normal": [0.47885706806708056, 0.8778928797764561],
+						"normalVelocity": -5.514959097711991,
+						"preContactVelocity": [-0.9641949243768568, -5.7561094976262615],
+						"postContactVelocity": [2.46894536287545, 0.5378968237554078],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-07-column-04",
+						"feature": "circle",
+						"time": 1.4974013438313634,
+						"classification": "accepted",
+						"timeDelta": 0.7653297008595512,
+						"position": [-0.05636808074286359, 2.3832866037160465],
+						"contactPoint": [-0.021138030278574388, 2.2374824763935197],
+						"normal": [-0.23486700309526137, 0.9720275154835126],
+						"normalVelocity": -7.062681777918137,
+						"preContactVelocity": [-0.9641949243768568, -7.49890227807016],
+						"postContactVelocity": [-3.120623098270545, 1.425755049542417],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-08-column-04",
+						"feature": "circle",
+						"time": 1.5805632686000908,
+						"classification": "accepted",
+						"timeDelta": 0.8484916256282786,
+						"position": [-0.13655238650628065, 1.7257409390074079],
+						"contactPoint": [-0.23870714493985729, 1.6159028521277758],
+						"normal": [0.6810317228905108, 0.7322539125308807],
+						"normalVelocity": -6.745134138700014,
+						"preContactVelocity": [-0.9641949243768568, -8.314720760051376],
+						"postContactVelocity": [5.007550496311557, -1.8938246373600691],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-02-column-06",
+						"feature": "circle",
+						"time": 0.7320716429718122,
+						"classification": "rejected-separating"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 1.7437019151366684,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 1.7533484165937843,
+						"classification": "rejected-outside-extent"
+					}
+				]
+			},
+			{
+				"searchInterval": [0.8789429028776223, 1.7652581477660318],
+				"eventTimeTolerance": 1e-9,
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-03-column-05",
+				"candidates": [
+					{
+						"colliderId": "peg-row-03-column-05",
+						"feature": "circle",
+						"time": 1.0379611331473064,
+						"classification": "accepted",
+						"timeDelta": 0.1590182302696841,
+						"position": [0.5796014001415767, 4.789131547738512],
+						"contactPoint": [0.5923505250530912, 4.639674330401942],
+						"normal": [-0.08499416607676354, 0.996381448910464],
+						"normalVelocity": -3.027720668425533,
+						"preContactVelocity": [0.2493738680877473, -3.0174441201747504],
+						"postContactVelocity": [-0.08516630323632474, 0.904349998277838],
+						"nearSimultaneous": true
+					},
+					{
+						"colliderId": "peg-row-05-column-05",
+						"feature": "circle",
+						"time": 1.3135398367390376,
+						"classification": "accepted",
+						"timeDelta": 0.4345969338614153,
+						"position": [0.6483235274188535, 3.5850847436517292],
+						"contactPoint": [0.61812132278207, 3.4381567788693985],
+						"normal": [0.2013480309118897, 0.9795197652155391],
+						"normalVelocity": -5.553495479712274,
+						"preContactVelocity": [0.2493738680877473, -5.720871202409634],
+						"postContactVelocity": [1.703014861461338, 1.3508149625276884],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-06-column-06",
+						"feature": "circle",
+						"time": 1.4316926241891585,
+						"classification": "accepted",
+						"timeDelta": 0.5527497213115362,
+						"position": [0.6777877450506395, 2.840673666245051],
+						"contactPoint": [0.8166704043939916, 2.7840026248418934],
+						"normal": [-0.9258843956223477, 0.37780694268771714],
+						"normalVelocity": -2.830184266351291,
+						"preContactVelocity": [0.2493738680877473, -6.879950047295321],
+						"postContactVelocity": [-3.1571766155479577, -5.489907802908341],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-07-column-05",
+						"feature": "circle",
+						"time": 1.4969524906597074,
+						"classification": "accepted",
+						"timeDelta": 0.618009587782085,
+						"position": [0.6940618503832903, 2.370799384742059],
+						"contactPoint": [0.635273193893734, 2.2327997692782726],
+						"normal": [0.3919243765970418, 0.9199974364252436],
+						"normalVelocity": -6.820782414126803,
+						"preContactVelocity": [0.2493738680877473, -7.520149337371405],
+						"postContactVelocity": [3.724574032316675, 0.637483698662952],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-08-column-06",
+						"feature": "circle",
+						"time": 1.5811371981850244,
+						"classification": "accepted",
+						"timeDelta": 0.7021942953074021,
+						"position": [0.7150553165327143, 1.7029557584963322],
+						"contactPoint": [0.8306457436997651, 1.6073584094361268],
+						"normal": [-0.7706028477803386, 0.6373156604013683],
+						"normalVelocity": -5.511205554726404,
+						"preContactVelocity": [0.2493738680877473, -8.346001318194764],
+						"postContactVelocity": [-5.271662035639736, -3.7799104281611724],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 1.7339859589990583,
+						"classification": "accepted",
+						"timeDelta": 0.8550430561214359,
+						"position": [0.7531718032493288, 0.31268554149586647],
+						"contactPoint": [0.7770112427464995, 0.1645920537104121],
+						"normal": [-0.15892959664780545, 0.9872899185697005],
+						"normalVelocity": -9.759944108551144,
+						"preContactVelocity": [0.2493738680877473, -9.845447661780437],
+						"postContactVelocity": [-1.767113306532559, 2.681215089648738],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-02-column-05",
+						"feature": "circle",
+						"time": 0.8789429028776223,
+						"classification": "rejected-separating"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 1.7584173093501374,
+						"classification": "rejected-outside-extent"
+					}
+				]
+			},
+			{
+				"searchInterval": [1.0379611331473064, 2.11015329404366],
+				"eventTimeTolerance": 1e-9,
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-03-column-05",
+				"candidates": [
+					{
+						"colliderId": "peg-row-03-column-05",
+						"feature": "circle",
+						"time": 1.224399963716621,
+						"classification": "accepted",
+						"timeDelta": 0.18643883056931454,
+						"position": [0.5637230941622847, 4.7872424626892105],
+						"contactPoint": [0.5863961603108567, 4.6389659235084535],
+						"normal": [-0.15115377432381358, 0.9885102612050446],
+						"normalVelocity": -0.9011181374006588,
+						"preContactVelocity": [-0.08516630323632474, -0.9246149296071378],
+						"postContactVelocity": [-0.2622359330900055, 0.2333789533849493],
+						"nearSimultaneous": true
+					},
+					{
+						"colliderId": "peg-row-04-column-05",
+						"feature": "circle",
+						"time": 1.543978699431496,
+						"classification": "accepted",
+						"timeDelta": 0.5060175662841895,
+						"position": [0.5365057546485104, 3.9908047548471806],
+						"contactPoint": [0.3886896579931912, 3.9653017830676927],
+						"normal": [0.9854406443687943, 0.17001981186325177],
+						"normalVelocity": -0.7741527621957299,
+						"preContactVelocity": [-0.08516630323632474, -4.059682326970061],
+						"postContactVelocity": [0.9065797726271301, -3.8885746278935462],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-05-column-05",
+						"feature": "circle",
+						"time": 1.6352980690420913,
+						"classification": "accepted",
+						"timeDelta": 0.5973369358947849,
+						"position": [0.5287284215249044, 3.5791732141888937],
+						"contactPoint": [0.5732731580718391, 3.4359399553208356],
+						"normal": [-0.29696491031289773, 0.9548883924537216],
+						"normalVelocity": -4.706682224795459,
+						"preContactVelocity": [-0.08516630323632474, -4.9555253428500015],
+						"postContactVelocity": [-1.9022016074213266, 0.8871377476030737],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-06-column-05",
+						"feature": "circle",
+						"time": 1.7654444679109371,
+						"classification": "accepted",
+						"timeDelta": 0.7274833347636307,
+						"position": [0.5176443338537245, 2.85114812870918],
+						"contactPoint": [0.38161662519514716, 2.7879305482659427],
+						"normal": [0.9068513910571827, 0.42145053628824863],
+						"normalVelocity": -2.7038231386639344,
+						"preContactVelocity": [-0.08516630323632474, -6.23226151575338],
+						"postContactVelocity": [3.102389203574658, -4.750875490389342],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-07-column-05",
+						"feature": "circle",
+						"time": 1.8380099364635099,
+						"classification": "accepted",
+						"timeDelta": 0.8000488033162034,
+						"position": [0.5114642011544902, 2.3730726615315914],
+						"contactPoint": [0.5667990754329335, 2.2336522480743475],
+						"normal": [-0.36889916185628907, 0.9294694230482935],
+						"normalVelocity": -6.4229375763431165,
+						"preContactVelocity": [-0.08516630323632474, -6.944128762254118],
+						"postContactVelocity": [-3.1654074783750374, 0.816772546112376],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-08-column-05",
+						"feature": "circle",
+						"time": 1.9319707779209196,
+						"classification": "accepted",
+						"timeDelta": 0.8940096447736132,
+						"position": [0.5034619036385882, 1.677292001978771],
+						"contactPoint": [0.3762982138644723, 1.5977345007420403],
+						"normal": [0.8477579318274394, 0.5303833415782048],
+						"normalVelocity": -4.244134576700247,
+						"preContactVelocity": [-0.08516630323632474, -7.865884616951308],
+						"postContactVelocity": [4.59223207324662, -4.939560854384068],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 2.0943969454621887,
+						"classification": "accepted",
+						"timeDelta": 1.0564358123148823,
+						"position": [0.48962866740025435, 0.2702615245055302],
+						"contactPoint": [0.5134681068974255, 0.12216803672007336],
+						"normal": [-0.15892959664780545, 0.9872899185697005],
+						"normalVelocity": -9.325521587613435,
+						"preContactVelocity": [-0.08516630323632474, -9.459285320531158],
+						"postContactVelocity": [-2.011898103021072, 2.5098061629801496],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-03-column-05",
+						"feature": "circle",
+						"time": 1.0379611331473064,
+						"classification": "rejected-separating"
+					}
+				]
+			},
+			{
+				"searchInterval": [1.224399963716621, 2.223942640642253],
+				"eventTimeTolerance": 1e-9,
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-03-column-05",
+				"candidates": [
+					{
+						"colliderId": "peg-row-03-column-05",
+						"feature": "circle",
+						"time": 1.2819128640977653,
+						"classification": "accepted",
+						"timeDelta": 0.057512900381144316,
+						"position": [0.5486411450661228, 4.784440329337512],
+						"contactPoint": [0.580740429399796, 4.637915123501567],
+						"normal": [-0.21399522889115444, 0.9768347055729656],
+						"normalVelocity": -0.26704175791184126,
+						"preContactVelocity": [-0.2622359330900055, -0.33082259935407643],
+						"postContactVelocity": [-0.3365252938301984, 0.008289754701074403],
+						"nearSimultaneous": true
+					},
+					{
+						"colliderId": "peg-row-04-column-05",
+						"feature": "circle",
+						"time": 1.6156075606871272,
+						"classification": "accepted",
+						"timeDelta": 0.3912075969705062,
+						"position": [0.46113440493882524, 4.127864284062345],
+						"contactPoint": [0.3604254018520593, 4.0166991065233795],
+						"normal": [0.6713933539117731, 0.7411011835931046],
+						"normalVelocity": -2.847264537011104,
+						"preContactVelocity": [-0.2622359330900055, -3.604367572895717],
+						"postContactVelocity": [2.222888899981313, -0.861223118999634],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-05-column-05",
+						"feature": "circle",
+						"time": 1.7584728220815187,
+						"classification": "accepted",
+						"timeDelta": 0.5340728583648977,
+						"position": [0.42366999981091946, 3.512811949909453],
+						"contactPoint": [0.5338762499290954, 3.4110544812160444],
+						"normal": [-0.734708334121173, 0.6783831246227243],
+						"normalVelocity": -3.2032347324295407,
+						"preContactVelocity": [-0.2622359330900055, -5.005875787174697],
+						"postContactVelocity": [-3.321712163371111, -2.180949284483432],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-06-column-05",
+						"feature": "circle",
+						"time": 1.8574640179830717,
+						"classification": "accepted",
+						"timeDelta": 0.6330640542664507,
+						"position": [0.39771095118598015, 2.969208964274575],
+						"contactPoint": [0.336641606694743, 2.8322033616029665],
+						"normal": [0.40712896327491427, 0.9133706844773886],
+						"normalVelocity": -5.565961626583282,
+						"preContactVelocity": [-0.2622359330900055, -5.9769794189689325],
+						"postContactVelocity": [2.683647509566444, 0.6319426158724939],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-07-column-05",
+						"feature": "circle",
+						"time": 1.9736563414140333,
+						"classification": "accepted",
+						"timeDelta": 0.7492563776974124,
+						"position": [0.3672411488331662, 2.2085091206864162],
+						"contactPoint": [0.5127154308124349, 2.1719409202574065],
+						"normal": [-0.969828546528458, 0.24378800286006405],
+						"normalVelocity": -1.480672930668364,
+						"preContactVelocity": [-0.2622359330900055, -7.116826111826667],
+						"postContactVelocity": [-2.129034472194377, -6.647564726173089],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-08-column-05",
+						"feature": "circle",
+						"time": 2.0310027794711596,
+						"classification": "accepted",
+						"timeDelta": 0.8066028157545386,
+						"position": [0.3522028521398675, 1.7842538414380065],
+						"contactPoint": [0.3195760695524502, 1.637845190539252],
+						"normal": [0.21751188391611556, 0.976057672658364],
+						"normalVelocity": -7.55257152004917,
+						"preContactVelocity": [-0.2622359330900055, -7.679394669167076],
+						"postContactVelocity": [1.873370344568219, 1.903874325411472],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-03-column-05",
+						"feature": "circle",
+						"time": 1.224399963716621,
+						"classification": "rejected-separating"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 2.22155873058173,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 2.211268607969523,
+						"classification": "rejected-outside-extent"
+					}
+				]
+			},
+			{
+				"searchInterval": [1.2819128640977653, 2.257928110247192],
+				"eventTimeTolerance": 1e-9,
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-03-column-05",
+				"candidates": [
+					{
+						"colliderId": "peg-row-03-column-05",
+						"feature": "circle",
+						"time": 1.2995483297757204,
+						"classification": "accepted",
+						"timeDelta": 0.017635465677955153,
+						"position": [0.5427063647970166, 4.783061020690349],
+						"contactPoint": [0.5785148867988812, 4.637397882758881],
+						"normal": [-0.23872348001243085, 0.971087586209789],
+						"normalVelocity": -0.07961539028921281,
+						"preContactVelocity": [-0.3365252938301984, -0.16471416359966565],
+						"postContactVelocity": [-0.36123317577230385, -0.06420659126423311],
+						"nearSimultaneous": true
+					},
+					{
+						"colliderId": "peg-row-04-column-05",
+						"feature": "circle",
+						"time": 1.6414841890316025,
+						"classification": "accepted",
+						"timeDelta": 0.35957132493383726,
+						"position": [0.4276362992898495, 4.153246094928273],
+						"contactPoint": [0.3478636122336938, 4.026217285598102],
+						"normal": [0.5318179137077046, 0.846858728867799],
+						"normalVelocity": -3.1591549183712204,
+						"preContactVelocity": [-0.3365252938301984, -3.5191049428998693],
+						"postContactVelocity": [1.847598437267703, -0.041139648891070024],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-05-column-05",
+						"feature": "circle",
+						"time": 1.809838830414299,
+						"classification": "accepted",
+						"timeDelta": 0.5279259663165337,
+						"position": [0.37098070413085993, 3.421764630003943],
+						"contactPoint": [0.5141177640490731, 3.3769117362514782],
+						"normal": [-0.954247066121421, 0.299019291683096],
+						"normalVelocity": -1.2250000049820553,
+						"preContactVelocity": [-0.3365252938301984, -5.170663974864121],
+						"postContactVelocity": [-1.8561637528089063, -4.694475750922141],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-06-column-05",
+						"feature": "circle",
+						"time": 1.8883080616588184,
+						"classification": "accepted",
+						"timeDelta": 0.6063951975610531,
+						"position": [0.3445738230296682, 2.9858244565360446],
+						"contactPoint": [0.31671518363612583, 2.838434171201018],
+						"normal": [0.18572426262361608, 0.9826019022335108],
+						"normalVelocity": -5.899595565420585,
+						"preContactVelocity": [-0.3365252938301984, -5.940447133372857],
+						"postContactVelocity": [1.0878821531846832, 1.5955928391149898],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-08-column-05",
+						"feature": "circle",
+						"time": 2.06415324408692,
+						"classification": "accepted",
+						"timeDelta": 0.7822403799891549,
+						"position": [0.28539747134442645, 1.78955535092514],
+						"contactPoint": [0.29452405175415963, 1.6398332565969325],
+						"normal": [-0.060843869398221076, 0.9981472955213836],
+						"normalVelocity": -7.630810987326107,
+						"preContactVelocity": [-0.3365252938301984, -7.665488372992535],
+						"postContactVelocity": [-0.9400997810801925, 2.236186981532202],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-03-column-05",
+						"feature": "circle",
+						"time": 1.2819128640977653,
+						"classification": "rejected-separating"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 2.2541791309468646,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 2.2466253485414667,
+						"classification": "rejected-outside-extent"
+					}
+				]
+			},
+			{
+				"searchInterval": [1.2995483297757204, 2.2680509382720926],
+				"eventTimeTolerance": 1e-9,
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-03-column-05",
+				"candidates": [
+					{
+						"colliderId": "peg-row-03-column-05",
+						"feature": "circle",
+						"time": 1.304886497471188,
+						"classification": "accepted",
+						"timeDelta": 0.005338167695467577,
+						"position": [0.5407780415275777, 4.782578502090565],
+						"contactPoint": [0.5777917655728415, 4.637216938283962],
+						"normal": [-0.24675816030175918, 0.9690770920440188],
+						"normalVelocity": -0.023831974885374904,
+						"preContactVelocity": [-0.36123317577230385, -0.11657401635677005],
+						"postContactVelocity": [-0.36887813033509853, -0.08655048916130928],
+						"nearSimultaneous": true
+					},
+					{
+						"colliderId": "peg-row-04-column-05",
+						"feature": "circle",
+						"time": 1.6494870463542077,
+						"classification": "accepted",
+						"timeDelta": 0.3499387165784873,
+						"position": [0.41629689088168553, 4.1599405467537265],
+						"contactPoint": [0.3436113340806322, 4.028727705032648],
+						"normal": [0.48457037867368885, 0.8747522781405246],
+						"normalVelocity": -3.2341438131075866,
+						"preContactVelocity": [-0.36123317577230385, -3.4971054008991938],
+						"postContactVelocity": [1.6760882040912208, 0.18069166795573421],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-06-column-05",
+						"feature": "circle",
+						"time": 1.8979010098612226,
+						"classification": "accepted",
+						"timeDelta": 0.5983526800855021,
+						"position": [0.32656152593786136, 2.9885256492284475],
+						"contactPoint": [0.30996057222669804, 2.8394471184606678],
+						"normal": [0.11067302474108899, 0.9938568717851974],
+						"normalVelocity": -5.937571543339802,
+						"preContactVelocity": [-0.36123317577230385, -5.934046382903009],
+						"postContactVelocity": [0.4930345272411376, 1.737378781180844],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-08-column-05",
+						"feature": "circle",
+						"time": 2.074567193995031,
+						"classification": "accepted",
+						"timeDelta": 0.7750188642193108,
+						"position": [0.262743839191631, 1.787090654564497],
+						"contactPoint": [0.2860289396968615, 1.6389089954616871],
+						"normal": [-0.15523400336820317, 0.9878777273520649],
+						"normalVelocity": -7.518122795728512,
+						"preContactVelocity": [-0.36123317577230385, -7.667141649255672],
+						"postContactVelocity": [-1.8784219649853942, 1.9879402305617742],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-03-column-05",
+						"feature": "circle",
+						"time": 1.2995483297757204,
+						"classification": "rejected-separating"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 2.2638439134985346,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 2.2572101588511657,
+						"classification": "rejected-outside-extent"
+					}
+				]
+			},
+			{
+				"searchInterval": [1.304886497471188, 2.2710789439714754],
+				"eventTimeTolerance": 1e-9,
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-03-column-05",
+				"candidates": [
+					{
+						"colliderId": "peg-row-03-column-05",
+						"feature": "circle",
+						"time": 1.3064926908568688,
+						"classification": "accepted",
+						"timeDelta": 0.0016061933856807986,
+						"position": [0.5401855519145111, 4.782426831067819],
+						"contactPoint": [0.5775695819679416, 4.637160061650432],
+						"normal": [-0.24922686702286972, 0.9684451294492449],
+						"normalVelocity": -0.007144613625560778,
+						"preContactVelocity": [-0.36887813033509853, -0.10230724627483792],
+						"postContactVelocity": [-0.3711929489060822, -0.09331233012712556],
+						"nearSimultaneous": true
+					},
+					{
+						"colliderId": "peg-row-04-column-05",
+						"feature": "circle",
+						"time": 1.6519101823000906,
+						"classification": "accepted",
+						"timeDelta": 0.34702368482890256,
+						"position": [0.4127685934858956, 4.161856659850978],
+						"contactPoint": [0.3422882225572108, 4.029446247444117],
+						"normal": [0.46986913952456544, 0.8827360827124067],
+						"normalVelocity": -3.2548262086426676,
+						"preContactVelocity": [-0.36887813033509853, -3.4908528373328434],
+						"postContactVelocity": [1.6192669766089156, 0.24424546119213053],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-06-column-05",
+						"feature": "circle",
+						"time": 1.900815086867395,
+						"classification": "accepted",
+						"timeDelta": 0.595928589396207,
+						"position": [0.3209530176578722, 2.9890836068220255],
+						"contactPoint": [0.30785738162170206, 2.8396563525582597],
+						"normal": [0.08730424024113428, 0.9961816950917731],
+						"normalVelocity": -5.94216206235355,
+						"preContactVelocity": [-0.36887813033509853, -5.9326099511381],
+						"postContactVelocity": [0.3055305971814102, 1.7627050473829016],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-08-column-05",
+						"feature": "circle",
+						"time": 2.077745879333334,
+						"classification": "accepted",
+						"timeDelta": 0.7728593818621459,
+						"position": [0.25568711773432934, 1.7858736281683698],
+						"contactPoint": [0.28338266915037313, 1.6384526105631407],
+						"normal": [-0.1846370094402919, 0.9828067840348609],
+						"normalVelocity": -7.4683497147835025,
+						"preContactVelocity": [-0.36887813033509853, -7.668301025228961],
+						"postContactVelocity": [-2.1614920141645464, 1.8736271695752977],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-03-column-05",
+						"feature": "circle",
+						"time": 1.304886497471188,
+						"classification": "rejected-separating"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 2.266729856661218,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 2.2603816054661436,
+						"classification": "rejected-outside-extent"
+					}
+				]
+			},
+			{
+				"searchInterval": [1.3064926908568688, 2.2719864806181858],
+				"eventTimeTolerance": 1e-9,
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-03-column-05",
+				"candidates": [
+					{
+						"colliderId": "peg-row-03-column-05",
+						"feature": "circle",
+						"time": 1.3069749894906406,
+						"classification": "accepted",
+						"timeDelta": 0.00048229863377180493,
+						"position": [0.540006526062388, 4.7823806856967614],
+						"contactPoint": [0.5775024472733955, 4.637142757136285],
+						"normal": [-0.24997280807338326, 0.9682528570698397],
+						"normalVelocity": -0.002142929235723484,
+						"preContactVelocity": [-0.3711929489060822, -0.09804367972442697],
+						"postContactVelocity": [-0.37188932515620543, -0.0953463131629429],
+						"nearSimultaneous": true
+					},
+					{
+						"colliderId": "peg-row-04-column-05",
+						"feature": "circle",
+						"time": 1.6526391653125327,
+						"classification": "accepted",
+						"timeDelta": 0.34614647445566393,
+						"position": [0.4116984213078694, 4.162422839349562],
+						"contactPoint": [0.34188690799045096, 4.029658564756086],
+						"normal": [0.46541008878278944, 0.885095163956507],
+						"normalVelocity": -3.260862152645337,
+						"preContactVelocity": [-0.3711929489060822, -3.489009244537189],
+						"postContactVelocity": [1.6017366382563536, 0.26301607358856227],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-06-column-05",
+						"feature": "circle",
+						"time": 1.901692773588345,
+						"classification": "accepted",
+						"timeDelta": 0.5952000827314763,
+						"position": [0.31925147801627035, 2.9892266301944437],
+						"contactPoint": [0.3072193042561014, 2.8397099863229163],
+						"normal": [0.08021449173445981, 0.9967776258101816],
+						"normalVelocity": -5.9428843462699446,
+						"preContactVelocity": [-0.3711929489060822, -5.932225141722908],
+						"postContactVelocity": [0.24852413254845523, 1.7686292521583749],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-08-column-05",
+						"feature": "circle",
+						"time": 2.0787048699791737,
+						"classification": "accepted",
+						"timeDelta": 0.7722121791223049,
+						"position": [0.25354583596491104, 1.785461272067836],
+						"contactPoint": [0.282579688486841, 1.6382979770254416],
+						"normal": [-0.19355901681286655, 0.9810886336159625],
+						"normalVelocity": -7.4518402085743105,
+						"preContactVelocity": [-0.3711929489060822, -7.668713807316937],
+						"postContactVelocity": [-2.2462750723897815, 1.8354766392841206],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-03-column-05",
+						"feature": "circle",
+						"time": 1.3064926908568688,
+						"classification": "rejected-separating"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 2.2675943486168704,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 2.261332618380308,
+						"classification": "rejected-outside-extent"
+					}
+				]
+			},
+			{
+				"searchInterval": [1.3069749894906406, 2.2722586618222724],
+				"eventTimeTolerance": 1e-9,
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-03-column-05",
+				"candidates": [
+					{
+						"colliderId": "peg-row-03-column-05",
+						"feature": "circle",
+						"time": 1.3071197191180173,
+						"classification": "accepted",
+						"timeDelta": 0.00014472962737666073,
+						"position": [0.5399527026589328, 4.782366783516993],
+						"contactPoint": [0.5774822634970999, 4.637137543818872],
+						"normal": [-0.250197072254447, 0.9681949313208074],
+						"normalVelocity": -0.0006428376506921324,
+						"preContactVelocity": [-0.37188932515620543, -0.09676611080750794],
+						"postContactVelocity": [-0.37209841208378497, -0.09595700100592695],
+						"nearSimultaneous": true
+					},
+					{
+						"colliderId": "peg-row-04-column-05",
+						"feature": "circle",
+						"time": 1.6528580451776373,
+						"classification": "accepted",
+						"timeDelta": 0.34588305568699673,
+						"position": [0.4113763098999845, 4.1625919038746835],
+						"contactPoint": [0.3417661162124942, 4.029721963953007],
+						"normal": [0.4640679579166024, 0.8857995994778473],
+						"normalVelocity": -3.2626575839279983,
+						"preContactVelocity": [-0.37188932515620543, -3.488459089452381],
+						"postContactVelocity": [1.596433969904751, 0.26861992594743533],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-06-column-05",
+						"feature": "circle",
+						"time": 1.9019563974744131,
+						"classification": "accepted",
+						"timeDelta": 0.5949814079837725,
+						"position": [0.31873929176681387, 2.989267296018653],
+						"contactPoint": [0.30702723441255514, 2.8397252360069944],
+						"normal": [0.07808038236172482, 0.9969470667443917],
+						"normalVelocity": -5.943040838309026,
+						"preContactVelocity": [-0.37188932515620543, -5.932113925483752],
+						"postContactVelocity": [0.2313560462042632, 1.7702523451988563],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-08-column-05",
+						"feature": "circle",
+						"time": 2.0789930665468024,
+						"classification": "accepted",
+						"timeDelta": 0.7720180770561618,
+						"position": [0.25290124437758055, 1.7853331834204842],
+						"contactPoint": [0.2823379666415928, 1.6382499437826812],
+						"normal": [-0.19624481509341496, 0.9805549309186871],
+						"normalVelocity": -7.4467411027031725,
+						"preContactVelocity": [-0.37188932515620543, -7.6688436490838905],
+						"postContactVelocity": [-2.271688955129278, 1.8236766707057042],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-03-column-05",
+						"feature": "circle",
+						"time": 1.3069749894906406,
+						"classification": "rejected-separating"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 2.2678535778777906,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 2.2616178826344577,
+						"classification": "rejected-outside-extent"
+					}
+				]
+			},
+			{
+				"searchInterval": [1.3071197191180173, 1.4977936285603186],
+				"eventTimeTolerance": 1e-9,
+				"outcome": "no-event",
+				"reason": null,
+				"selectedColliderId": null,
+				"candidates": []
+			},
+			{
+				"searchInterval": [1.4977936285603186, 2.3746143992009614],
+				"eventTimeTolerance": 1e-9,
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-03-column-05",
+				"candidates": [
+					{
+						"colliderId": "peg-row-03-column-05",
+						"feature": "circle",
+						"time": 1.497795771846802,
+						"classification": "accepted",
+						"timeDelta": 0.0000021432864834025622,
+						"position": [0.4210490132910776, 4.709926684314729],
+						"contactPoint": [0.5328933799841542, 4.609972506618023],
+						"normal": [-0.7456291112871775, 0.6663611846447044],
+						"normalVelocity": 2.6304713962588266e-10,
+						"preContactVelocity": [-0.8346661781249773, -0.9339550602509581],
+						"postContactVelocity": [-0.8346661778700011, -0.9339550604788278],
+						"nearSimultaneous": true
+					},
+					{
+						"colliderId": "peg-row-04-column-05",
+						"feature": "circle",
+						"time": 1.7466308302670521,
+						"classification": "accepted",
+						"timeDelta": 0.2488372017067335,
+						"position": [0.21335480609594198, 4.173813785038654],
+						"contactPoint": [0.26750805228597807, 4.033930169389496],
+						"normal": [-0.3610216412669071, 0.9325574376610529],
+						"normalVelocity": -2.8460739620965017,
+						"preContactVelocity": [-0.8346661781249773, -3.375026983353612],
+						"postContactVelocity": [-2.170408758976992, 0.07533869057890863],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-05-column-04",
+						"feature": "circle",
+						"time": 1.8935289135945217,
+						"classification": "accepted",
+						"timeDelta": 0.3957352850342031,
+						"position": [0.09074394431111849, 3.572183565033197],
+						"contactPoint": [0.03402897911666955, 3.433318836887449],
+						"normal": [0.37809976796299294, 0.9257648543049853],
+						"normalVelocity": -4.774160593173954,
+						"preContactVelocity": [-0.8346661781249773, -4.816097180796088],
+						"postContactVelocity": [1.5119755381213005, 0.9295779309626857],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-07-column-04",
+						"feature": "circle",
+						"time": 2.0989277896947156,
+						"classification": "accepted",
+						"timeDelta": 0.601134161134397,
+						"position": [-0.08069555059459604, 2.37602705173106],
+						"contactPoint": [-0.030260831472973662, 2.234760144399148],
+						"normal": [-0.3362314608108159, 0.9417793822127476],
+						"normalVelocity": -6.152710584592929,
+						"preContactVelocity": [-0.8346661781249773, -6.8310601553389905],
+						"postContactVelocity": [-3.524021506269982, 0.7017846099403],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-08-column-04",
+						"feature": "circle",
+						"time": 2.1864853959790405,
+						"classification": "accepted",
+						"timeDelta": 0.6886917674187218,
+						"position": [-0.15377692319770503, 1.7403124058238784],
+						"contactPoint": [-0.24516634619913746, 1.621367152183957],
+						"normal": [0.6092628200095497, 0.7929683575994765],
+						"normalVelocity": -6.60645795586201,
+						"preContactVelocity": [-0.8346661781249773, -7.690000272988217],
+						"postContactVelocity": [4.39792378767694, -0.8796745237353569],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-03-column-05",
+						"feature": "circle",
+						"time": 1.4977936285603186,
+						"classification": "rejected-initial-contact"
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 2.361971170993648,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 2.3723341292089457,
+						"classification": "rejected-outside-extent"
+					}
+				]
+			},
+			{
+				"searchInterval": [1.497795771846802, 2.374614399180008],
+				"eventTimeTolerance": 1e-9,
+				"outcome": "contact",
+				"reason": null,
+				"selectedColliderId": "peg-row-03-column-05",
+				"candidates": [
+					{
+						"colliderId": "peg-row-03-column-05",
+						"feature": "circle",
+						"time": 1.497795771846802,
+						"classification": "accepted",
+						"timeDelta": 0,
+						"position": [0.4210490132910776, 4.709926684314729],
+						"contactPoint": [0.5328933799841542, 4.609972506618023],
+						"normal": [-0.7456291112871775, 0.6663611846447044],
+						"normalVelocity": -7.891409747884381e-11,
+						"preContactVelocity": [-0.8346661778700011, -0.9339550604788278],
+						"postContactVelocity": [-0.8346661779464939, -0.9339550604104669],
+						"nearSimultaneous": true
+					},
+					{
+						"colliderId": "peg-row-04-column-05",
+						"feature": "circle",
+						"time": 1.7466308302404248,
+						"classification": "accepted",
+						"timeDelta": 0.24883505839362274,
+						"position": [0.21335480618161395, 4.173813785071819],
+						"contactPoint": [0.2675080523181052, 4.033930169401932],
+						"normal": [-0.36102164090994177, 0.9325574377992454],
+						"normalVelocity": -2.8460739629218073,
+						"preContactVelocity": [-0.8346661778700011, -3.375026983320267],
+						"postContactVelocity": [-2.1704087577886204, 0.07533869212408995],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-05-column-04",
+						"feature": "circle",
+						"time": 1.8935289135850266,
+						"classification": "accepted",
+						"timeDelta": 0.3957331417382246,
+						"position": [0.09074394441994627, 3.572183564988751],
+						"contactPoint": [0.034028979157480196, 3.4333188368707823],
+						"normal": [0.3780997684164405, 0.9257648541197889],
+						"normalVelocity": -4.774160592688822,
+						"preContactVelocity": [-0.8346661778700011, -4.816097180930811],
+						"postContactVelocity": [1.5119755409521007, 0.9295779290947053],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-07-column-04",
+						"feature": "circle",
+						"time": 2.0989277896653724,
+						"classification": "accepted",
+						"timeDelta": 0.6011320178185704,
+						"position": [-0.08069555041682996, 2.376027051794525],
+						"contactPoint": [-0.03026083140631123, 2.2347601444229466],
+						"normal": [-0.3362314600701249, 0.9417793824771871],
+						"normalVelocity": -6.152710587046796,
+						"preContactVelocity": [-0.8346661778700011, -6.831060155279003],
+						"postContactVelocity": [-3.5240215011631584, 0.7017846151197151],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "peg-row-08-column-04",
+						"feature": "circle",
+						"time": 2.1864853959763986,
+						"classification": "accepted",
+						"timeDelta": 0.6886896241295966,
+						"position": [-0.15377692301990042, 1.7403124056872632],
+						"contactPoint": [-0.2451663461324614, 1.6213671521327253],
+						"normal": [0.6092628207504066, 0.7929683570302525],
+						"normalVelocity": -6.6064579521078395,
+						"preContactVelocity": [-0.8346661778700011, -7.69000027319017],
+						"postContactVelocity": [4.3979237913212295, -0.8796745326960504],
+						"nearSimultaneous": false
+					},
+					{
+						"colliderId": "boundary-left-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 2.3619711709767355,
+						"classification": "rejected-outside-extent"
+					},
+					{
+						"colliderId": "boundary-right-exit-floor",
+						"feature": "segment-face-positive",
+						"time": 2.3723341291838707,
+						"classification": "rejected-outside-extent"
+					}
+				]
+			}
+		],
+		"entries": [
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with peg-row-01-column-05.",
+				"time": 0.37249722246199535,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with peg-row-01-column-04.",
+				"time": 0.4534530448026474,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with peg-row-02-column-05.",
+				"time": 0.6254042516655729,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with peg-row-02-column-06.",
+				"time": 0.7320716429718122,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with peg-row-02-column-05.",
+				"time": 0.8789429028776223,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with peg-row-03-column-05.",
+				"time": 1.0379611331473064,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with peg-row-03-column-05.",
+				"time": 1.224399963716621,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with peg-row-03-column-05.",
+				"time": 1.2819128640977653,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with peg-row-03-column-05.",
+				"time": 1.2995483297757204,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with peg-row-03-column-05.",
+				"time": 1.304886497471188,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with peg-row-03-column-05.",
+				"time": 1.3064926908568688,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with peg-row-03-column-05.",
+				"time": 1.3069749894906406,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with peg-row-03-column-05.",
+				"time": 1.3071197191180173,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_MODE_TRANSITION",
+				"message": "impact -> sliding on peg-row-03-column-05: impact-collapse.",
+				"time": 1.3071197191180173,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_MODE_TRANSITION",
+				"message": "sliding -> free-flight on peg-row-03-column-05: support-lost.",
+				"time": 1.4977936285603186,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "info",
+				"code": "CONTACT_COMMITTED",
+				"message": "Committed contact with peg-row-03-column-05.",
+				"time": 1.497795771846802,
+				"bodyId": "ball-primary"
+			},
+			{
+				"severity": "error",
+				"code": "RUN_UNRESOLVED",
+				"message": "The next selected contact did not establish a positive collision-free interval.",
+				"time": 1.497795771846802,
+				"bodyId": "ball-primary"
+			}
+		]
+	}
+}
