@@ -10,10 +10,10 @@
 		parseSimulationInputFixture,
 		serializeSimulationInputFixture
 	} from '$lib/simulation/serialization/simulation-input';
+	import { constructSingleBallRun } from '$lib/simulation/run';
 	import ApplicationBar from './ApplicationBar.svelte';
 	import DiagnosticsConsole from './DiagnosticsConsole.svelte';
 	import EventTimeline from './EventTimeline.svelte';
-	import LaunchControls from './LaunchControls.svelte';
 	import MetricsPanel from './MetricsPanel.svelte';
 	import PlaybackControls from './PlaybackControls.svelte';
 	import RunInspector from './RunInspector.svelte';
@@ -26,12 +26,12 @@
 		type RunSource
 	} from './model';
 	import {
-		createLaunchDraft,
-		executeLaunchSubmission,
-		prepareLaunchSubmission,
-		type LaunchDraft,
-		type LaunchValidationError
-	} from './launch-controls';
+		createSimulationInputDraft,
+		prepareSimulationInputSubmission,
+		SimulationInputControls,
+		type SimulationInputDraft,
+		type SimulationInputValidationError
+	} from './input';
 	import {
 		defaultWorkbenchScenario,
 		getWorkbenchScenario,
@@ -52,10 +52,12 @@
 	});
 	let loadFeedback = $state.raw<LoadFeedback | null>(null);
 	let selectedScenarioId = $state<string | null>(defaultWorkbenchScenario.id);
-	let launchBaseInput = $state.raw<SimulationInput>(defaultWorkbenchScenario.input);
-	let launchDraft = $state.raw<LaunchDraft>(createLaunchDraft(defaultWorkbenchScenario.input));
-	let launchErrors = $state.raw<readonly LaunchValidationError[]>([]);
-	let launchFeedback = $state<string | null>(null);
+	let draftBaseInput = $state.raw<SimulationInput>(defaultWorkbenchScenario.input);
+	let inputDraft = $state.raw<SimulationInputDraft>(
+		createSimulationInputDraft(defaultWorkbenchScenario.input)
+	);
+	let inputErrors = $state.raw<readonly SimulationInputValidationError[]>([]);
+	let inputFeedback = $state<string | null>(null);
 	let submittedInput = $state.raw<SimulationInput | null>(null);
 	let actualScenarioId = $state<string | null>(null);
 	let playback = $derived(toRendererPlaybackInput(currentRun));
@@ -127,49 +129,48 @@
 		if (!scenario) return;
 
 		selectedScenarioId = scenario.id;
-		launchBaseInput = scenario.input;
-		launchDraft = createLaunchDraft(scenario.input);
-		launchErrors = [];
-		launchFeedback = `Draft reset to ${scenario.name}. Current run unchanged until Run.`;
+		draftBaseInput = scenario.input;
+		inputDraft = createSimulationInputDraft(scenario.input);
+		inputErrors = [];
+		inputFeedback = `Draft reset to ${scenario.name}. Current run unchanged until Run.`;
 	}
 
 	function resetCanonicalDefault(): void {
 		selectScenario(defaultWorkbenchScenario.id);
 	}
 
-	function changeLaunchDraft(nextDraft: LaunchDraft): void {
-		launchDraft = nextDraft;
-		launchErrors = [];
-		launchFeedback = null;
+	function changeInputDraft(nextDraft: SimulationInputDraft): void {
+		inputDraft = nextDraft;
+		inputErrors = [];
+		inputFeedback = null;
 	}
 
 	function runDraftScenario(): void {
-		const submission = prepareLaunchSubmission(launchBaseInput, launchDraft);
+		const submission = prepareSimulationInputSubmission(draftBaseInput, inputDraft);
 		if (!submission.valid) {
-			launchErrors = submission.errors;
-			launchFeedback = null;
+			inputErrors = submission.errors;
+			inputFeedback = null;
 			return;
 		}
 
-		const calculation = executeLaunchSubmission(submission.input);
-		submittedInput = calculation.submittedInput;
-		const run = calculation.run;
+		submittedInput = submission.input;
+		const run = constructSingleBallRun(submission.input);
 		const scenarioName = getWorkbenchScenario(selectedScenarioId)?.name ?? 'Loaded custom scenario';
 		acceptRun(run, { kind: 'simulation', name: scenarioName }, selectedScenarioId);
-		launchErrors = [];
-		launchFeedback = `Run calculated · ${run.outcome} · ${run.events.length} events · ${run.diagnostics.simulationWallTimeMilliseconds} ms wall time.`;
+		inputErrors = [];
+		inputFeedback = `Run calculated · ${run.outcome} · ${run.events.length} events · ${run.diagnostics.simulationWallTimeMilliseconds} ms wall time.`;
 	}
 
 	async function loadScenarioFile(file: File): Promise<void> {
 		try {
 			const input = parseSimulationInputFixture(await file.text());
 			selectedScenarioId = null;
-			launchBaseInput = input;
-			launchDraft = createLaunchDraft(input);
-			launchErrors = [];
-			launchFeedback = `Loaded ${file.name}. Current run unchanged until Run.`;
+			draftBaseInput = input;
+			inputDraft = createSimulationInputDraft(input);
+			inputErrors = [];
+			inputFeedback = `Loaded ${file.name}. Current run unchanged until Run.`;
 		} catch (error) {
-			launchErrors = [
+			inputErrors = [
 				{
 					field: 'scenario',
 					code: error instanceof RunFixtureError ? error.code : 'FILE_READ_ERROR',
@@ -177,15 +178,15 @@
 						error instanceof Error ? error.message : 'Could not read the scenario input file.'
 				}
 			];
-			launchFeedback = null;
+			inputFeedback = null;
 		}
 	}
 
 	function saveScenario(): void {
-		const submission = prepareLaunchSubmission(launchBaseInput, launchDraft);
+		const submission = prepareSimulationInputSubmission(draftBaseInput, inputDraft);
 		if (!submission.valid) {
-			launchErrors = submission.errors;
-			launchFeedback = null;
+			inputErrors = submission.errors;
+			inputFeedback = null;
 			return;
 		}
 
@@ -198,8 +199,8 @@
 		link.download = `${selectedScenarioId ?? 'custom-scenario'}-input.json`;
 		link.click();
 		URL.revokeObjectURL(url);
-		launchErrors = [];
-		launchFeedback = `Saved ${link.download}.`;
+		inputErrors = [];
+		inputFeedback = `Saved ${link.download}.`;
 	}
 
 	function selectRepositoryFixture(fixtureId: string): void {
@@ -276,19 +277,19 @@
 	<ScenarioCatalogue
 		scenarios={workbenchScenarios}
 		{selectedScenarioId}
-		customInput={launchBaseInput}
+		customInput={draftBaseInput}
 		{actualScenarioId}
 		actualOutcome={actualScenarioId === null ? null : currentRun.outcome}
 		onSelectScenario={selectScenario}
 	/>
 
-	<LaunchControls
-		draft={launchDraft}
-		errors={launchErrors}
-		feedback={launchFeedback}
+	<SimulationInputControls
+		draft={inputDraft}
+		errors={inputErrors}
+		feedback={inputFeedback}
 		lastSubmittedInput={submittedInput}
 		onResetDefault={resetCanonicalDefault}
-		onChangeDraft={changeLaunchDraft}
+		onChangeDraft={changeInputDraft}
 		onRun={runDraftScenario}
 		onLoadScenario={loadScenarioFile}
 		onSaveScenario={saveScenario}

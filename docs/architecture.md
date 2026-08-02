@@ -190,9 +190,10 @@ responsibilities by state ownership and independently evolving regions:
 - `scenario-catalogue.ts` adapts the public world catalogues into stable workbench categories
   without copying `SimulationInput`, while `ScenarioCatalogue` owns grouped selection and
   expected-versus-actual outcome presentation;
-- `LaunchControls` edits a launch draft, while `launch-controls.ts` converts velocity controls,
-  validates the draft and creates a deep immutable submitted input before invoking the headless
-  simulator;
+- the named `workbench/input` subdomain owns editable simulation inputs: `SimulationInputControls`
+  presents the load/save/run workflow, `BallControls` and `SimulationSettingsControls` own the
+  Ball, Environment and Run limits groups, `velocity-entry.ts` converts velocity representations,
+  and `simulation-input-draft.ts` validates fields and creates a deep immutable submitted input;
 - `SimulationViewport` owns Three.js mount, update and disposal;
 - application bar and playback controls expose typed callbacks rather than reaching into renderer
   state; and
@@ -201,8 +202,8 @@ responsibilities by state ownership and independently evolving regions:
 
 Draft input, submitted input, returned run record and presentation clock are distinct state. Preset
 selection and field editing cannot mutate an accepted run. The explicit Run action is the only path
-from a launch draft to simulation; renderer playback still receives only the returned run through
-`toRendererPlaybackInput`.
+from a simulation-input draft to simulation; renderer playback still receives only the returned run
+through `toRendererPlaybackInput`.
 
 The workbench catalogue includes canonical launches and every named board-state verification world.
 Its category vocabulary also reserves physical-settings, adversarial-contact and saved-regression

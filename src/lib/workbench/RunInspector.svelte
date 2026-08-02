@@ -21,6 +21,7 @@
 	} = $props();
 
 	let counts = $derived(getRunCounts(run));
+	let submittedBody = $derived(run.input.initialDynamicBodies[0] ?? null);
 </script>
 
 <aside class="inspector" aria-labelledby="inspector-heading">
@@ -102,14 +103,20 @@
 	{/if}
 
 	<details open>
-		<summary>Numerical policy</summary>
+		<summary>Submitted settings and numerical policy</summary>
 		<dl class="settings">
+			{#if submittedBody}
+				<div>
+					<dt>Ball radius</dt>
+					<dd>{submittedBody.physicalShape.radius} m</dd>
+				</div>
+			{/if}
 			<div>
 				<dt>Gravity</dt>
 				<dd>{formatVector(run.input.settings.gravity)}</dd>
 			</div>
 			<div>
-				<dt>Restitution</dt>
+				<dt>Bounciness (restitution)</dt>
 				<dd>{run.input.settings.restitution}</dd>
 			</div>
 			<div>

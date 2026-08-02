@@ -433,20 +433,24 @@ wide table.
 
 Names may vary, but ownership must match these boundaries.
 
-| Component or module     | Owns                                                                                                             | Must not own                                                                         |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `+page.svelte`          | Route composition and the explicit repository fixture catalog import                                             | Three.js lifecycle, animation frame loop, file parsing details or full workbench CSS |
-| `SimulationWorkbench`   | Current accepted run/source, load-attempt state, inspection mode, selected event and coordination between panels | Physical calculations or mutation of run records                                     |
-| `scenario-catalogue.ts` | Workbench descriptors, stable categories and authoritative outcome comparison                                    | Copied simulation inputs or renderer-derived correctness                             |
-| `ScenarioCatalogue`     | Grouped selection and read-only selected-scenario/outcome presentation                                           | Draft mutation beyond emitting a selected ID or simulation execution                 |
-| `LaunchControls`        | Editable initial position/velocity controls and explicit Run/load/save actions                                   | Scenario grouping, expected-outcome policy or renderer state                         |
-| `ApplicationBar`        | Source display, fixture selection, local-file interaction and load feedback presentation                         | Direct parser/version implementation or playback state                               |
-| `SimulationViewport`    | Three.js mount/update/destroy lifecycle and rendering the supplied recorded frame                                | Run loading, authoritative time, run mutation or status promotion                    |
-| `PlaybackControls`      | Accessible transport/seek presentation through typed values and callbacks                                        | Direct access to Three.js objects or the run loader                                  |
-| `RunInspector`          | Read-only status, provenance, horizon, count and settings presentation                                           | Transport or file-input state                                                        |
-| `EventTimeline`         | Read-only event list, selection presentation and seek request callback                                           | Clock mutation beyond emitting the selected stored timestamp                         |
-| `DiagnosticsConsole`    | Read-only diagnostic-entry presentation and optional local severity filter                                       | Load errors or synthetic diagnostics                                                 |
-| `MetricsPanel`          | Recorded/derived/unavailable metric presentation                                                                 | Speculative profiling collection                                                     |
+| Component or module          | Owns                                                                                                             | Must not own                                                                         |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `+page.svelte`               | Route composition and the explicit repository fixture catalog import                                             | Three.js lifecycle, animation frame loop, file parsing details or full workbench CSS |
+| `SimulationWorkbench`        | Current accepted run/source, load-attempt state, inspection mode, selected event and coordination between panels | Physical calculations or mutation of run records                                     |
+| `scenario-catalogue.ts`      | Workbench descriptors, stable categories and authoritative outcome comparison                                    | Copied simulation inputs or renderer-derived correctness                             |
+| `ScenarioCatalogue`          | Grouped selection and read-only selected-scenario/outcome presentation                                           | Draft mutation beyond emitting a selected ID or simulation execution                 |
+| `SimulationInputControls`    | Scenario-input load/save/run actions and draft-submission feedback                                               | Field parsing, scenario grouping or renderer state                                   |
+| `BallControls`               | Ball radius, initial position and velocity presentation                                                          | Environment policy, run execution or accepted-run mutation                           |
+| `SimulationSettingsControls` | Visually separate Environment and Run limits fields                                                              | Solver tolerances or physical calculation                                            |
+| `simulation-input-draft.ts`  | Generic draft prepopulation, field validation and immutable input submission                                     | Scenario-specific branches or simulation execution                                   |
+| `velocity-entry.ts`          | Speed/angle and component velocity conversion                                                                    | Input fixture parsing or run state                                                   |
+| `ApplicationBar`             | Source display, fixture selection, local-file interaction and load feedback presentation                         | Direct parser/version implementation or playback state                               |
+| `SimulationViewport`         | Three.js mount/update/destroy lifecycle and rendering the supplied recorded frame                                | Run loading, authoritative time, run mutation or status promotion                    |
+| `PlaybackControls`           | Accessible transport/seek presentation through typed values and callbacks                                        | Direct access to Three.js objects or the run loader                                  |
+| `RunInspector`               | Read-only status, provenance, horizon, count and submitted-settings presentation                                 | Transport or file-input state                                                        |
+| `EventTimeline`              | Read-only event list, selection presentation and seek request callback                                           | Clock mutation beyond emitting the selected stored timestamp                         |
+| `DiagnosticsConsole`         | Read-only diagnostic-entry presentation and optional local severity filter                                       | Load errors or synthetic diagnostics                                                 |
+| `MetricsPanel`               | Recorded/derived/unavailable metric presentation                                                                 | Speculative profiling collection                                                     |
 
 `SimulationWorkbench` may use a focused playback controller/store if that keeps request-animation
 frame and transport state cohesive. Do not introduce an application-wide store for this

@@ -91,6 +91,111 @@ test('selects, edits, runs and replays a canonical launch without mutating the p
 	await expect(controls.getByRole('button', { name: 'Pause' })).toBeVisible();
 });
 
+test('edits physical settings, runs their immutable snapshot and keeps replay unchanged by later drafts', async ({
+	page
+}) => {
+	await page.goto('/');
+	await page.getByLabel('Scenario preset').selectOption('offset-drop');
+
+	await page.getByLabel('Radius (m)').fill('0.17');
+	await page.getByLabel('Gravity X (m/s²)').fill('2.25');
+	await page.getByLabel('Gravity Y (m/s²)').fill('-4.5');
+	await page.getByLabel('Bounciness').fill('0.35');
+	await page.getByLabel('Maximum time (s)').fill('2');
+	await page.getByLabel('Maximum events').fill('12');
+	await page.getByRole('button', { name: 'Run simulation' }).click();
+
+	const inspector = page.getByRole('complementary', { name: 'Run inspector' });
+	await expect(inspector.getByText('0.17 m', { exact: true })).toBeVisible();
+	await expect(inspector.getByText('(2.25, -4.5)', { exact: true })).toBeVisible();
+	await expect(inspector.getByText('0.35', { exact: true })).toBeVisible();
+	await expect(inspector.getByText('12', { exact: true })).toBeVisible();
+	await expect(
+		inspector.getByText('Maximum simulation time').locator('..').getByText('2 s', { exact: true })
+	).toBeVisible();
+
+	await page.getByLabel('Radius (m)').fill('0.42');
+	await page.getByLabel('Gravity X (m/s²)').fill('0');
+	await page.getByLabel('Gravity Y (m/s²)').fill('9.81');
+
+	await expect(inspector.getByText('0.17 m', { exact: true })).toBeVisible();
+	await expect(inspector.getByText('(2.25, -4.5)', { exact: true })).toBeVisible();
+	await expect(inspector.getByText('0.42 m', { exact: true })).toHaveCount(0);
+	await expect(page.getByRole('region', { name: /replay|inspection/ }).first()).toBeVisible();
+});
+
+test('rejects invalid physical settings with field-level feedback before simulation', async ({
+	page
+}) => {
+	await page.goto('/');
+
+	await page.getByLabel('Radius (m)').fill('0');
+	await page.getByLabel('Gravity X (m/s²)').fill('');
+	await page.getByLabel('Gravity Y (m/s²)').fill('');
+	await page.getByLabel('Bounciness').fill('1.2');
+	await page.getByLabel('Maximum time (s)').fill('0');
+	await page.getByLabel('Maximum events').fill('1.5');
+	await page.getByRole('button', { name: 'Run simulation' }).click();
+
+	await expect(page.getByText('Ball radius must be greater than zero.')).toBeVisible();
+	await expect(page.getByText('Gravity X is required.')).toBeVisible();
+	await expect(page.getByText('Gravity Y is required.')).toBeVisible();
+	await expect(page.getByText('Bounciness must be between zero and one.')).toBeVisible();
+	await expect(page.getByText('Maximum simulation time must be greater than zero.')).toBeVisible();
+	await expect(page.getByText('Maximum event count must be a non-negative integer.')).toBeVisible();
+	await expect(
+		page
+			.getByLabel('Current run source')
+			.getByText('Repository fixture · canonical-event-driven-offset-drop.json', { exact: true })
+	).toBeVisible();
+});
+
+test('saves and reloads every exposed physical setting through scenario JSON', async ({ page }) => {
+	await page.goto('/');
+	await page.getByLabel('Scenario preset').selectOption('offset-drop');
+
+	await page.getByLabel('Radius (m)').fill('0.037');
+	await page.getByLabel('Gravity X (m/s²)').fill('-3.125');
+	await page.getByLabel('Gravity Y (m/s²)').fill('8.75');
+	await page.getByLabel('Bounciness').fill('0.625');
+	await page.getByLabel('Maximum time (s)').fill('12.75');
+	await page.getByLabel('Maximum events').fill('17');
+
+	const downloadPromise = page.waitForEvent('download');
+	await page.getByRole('button', { name: 'Save scenario' }).click();
+	const download = await downloadPromise;
+	const downloadPath = await download.path();
+	if (!downloadPath) throw new Error('Expected Playwright to retain the saved scenario download.');
+	const savedBuffer = await readFile(downloadPath);
+	const savedFixture = JSON.parse(savedBuffer.toString('utf8')) as {
+		input: SimulationInput;
+	};
+
+	expect(savedFixture.input.initialDynamicBodies[0]!.physicalShape.radius).toBe(0.037);
+	expect(savedFixture.input.settings).toMatchObject({
+		gravity: [-3.125, 8.75],
+		restitution: 0.625,
+		maximumSimulationTime: 12.75,
+		maximumEvents: 17
+	});
+
+	await page.getByLabel('Radius (m)').fill('1');
+	await page.getByLabel('Gravity X (m/s²)').fill('0');
+	await page.getByLabel('Gravity Y (m/s²)').fill('-9.81');
+	await chooseScenarioFile(page, {
+		name: 'physical-settings-input.json',
+		mimeType: 'application/json',
+		buffer: savedBuffer
+	});
+
+	await expect(page.getByLabel('Radius (m)')).toHaveValue('0.037');
+	await expect(page.getByLabel('Gravity X (m/s²)')).toHaveValue('-3.125');
+	await expect(page.getByLabel('Gravity Y (m/s²)')).toHaveValue('8.75');
+	await expect(page.getByLabel('Bounciness')).toHaveValue('0.625');
+	await expect(page.getByLabel('Maximum time (s)')).toHaveValue('12.75');
+	await expect(page.getByLabel('Maximum events')).toHaveValue('17');
+});
+
 test('groups verification scenarios, replaces worlds on Run and reports authoritative outcomes', async ({
 	page
 }) => {
@@ -396,6 +501,13 @@ async function expectRejectedCandidate(
 async function chooseFile(page: Page, file: FilePayload): Promise<void> {
 	const chooserPromise = page.waitForEvent('filechooser');
 	await page.getByRole('button', { name: 'Load saved run' }).click();
+	const chooser = await chooserPromise;
+	await chooser.setFiles(file);
+}
+
+async function chooseScenarioFile(page: Page, file: FilePayload): Promise<void> {
+	const chooserPromise = page.waitForEvent('filechooser');
+	await page.getByRole('button', { name: 'Load scenario' }).click();
 	const chooser = await chooserPromise;
 	await chooser.setFiles(file);
 }
