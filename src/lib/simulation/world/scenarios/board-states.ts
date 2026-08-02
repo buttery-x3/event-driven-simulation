@@ -6,16 +6,13 @@ import type {
 	StaticCircleCollider,
 	StaticLineSegmentCollider,
 	Vec2
-} from '../contracts';
-import { canonicalPlinkoScenarios } from './scenario-catalogue';
+} from '../../contracts';
+import { canonicalPlinkoScenarios } from './canonical-launches';
+import { getBoardStateScenarioMetadata } from './board-state-metadata';
+import type { VerificationScenario } from './types';
 
-export interface BoardStateScenario {
-	readonly id: string;
-	readonly name: string;
-	readonly verificationPurpose: string;
+export interface BoardStateScenario extends VerificationScenario {
 	readonly pegCount: number;
-	readonly expectedOutcomes: readonly RunOutcome[];
-	readonly input: SimulationInput;
 }
 
 const coordinateSystem = {
@@ -238,14 +235,21 @@ function boardScenario(
 	expectedOutcomes: readonly RunOutcome[],
 	input: SimulationInput
 ): BoardStateScenario {
+	const metadata = getBoardStateScenarioMetadata(id);
+
 	return {
 		id,
 		name,
+		categoryId: metadata.categoryId,
 		verificationPurpose,
 		pegCount: input.scene.staticColliders.filter(
 			(collider) => collider.physicalShape.type === 'circle'
 		).length,
 		expectedOutcomes,
+		expectedEventCharacteristics: metadata.expectedEventCharacteristics,
+		replayExpectation: metadata.replayExpectation,
+		coverage: metadata.coverage,
+		regressionFixture: false,
 		input
 	};
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { canonicalPlinkoBoard } from '../canonical-board';
-import { canonicalPlinkoScenarios } from '../scenario-catalogue';
+import { canonicalPlinkoScenarios } from '../scenarios/canonical-launches';
 
 describe('canonical Plinko scenario catalogue', () => {
 	it('provides the five required named, documented launch cases', () => {

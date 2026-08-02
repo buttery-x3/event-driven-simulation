@@ -1,12 +1,9 @@
-import type { SimulationInput, Vec2 } from '../contracts';
-import { canonicalPegDimensions, canonicalPlinkoBoard } from './canonical-board';
+import type { Vec2 } from '../../contracts';
+import { canonicalPegDimensions, canonicalPlinkoBoard } from '../canonical-board';
+import type { VerificationScenario } from './types';
 
-export interface SimulationScenario {
-	readonly id: string;
-	readonly name: string;
+export interface SimulationScenario extends VerificationScenario {
 	readonly initialConditionSummary: string;
-	readonly verificationPurpose: string;
-	readonly input: SimulationInput;
 }
 
 const defaultSettings = {
@@ -30,7 +27,9 @@ export const canonicalPlinkoScenarios = [
 		[0, 6.62],
 		[0, 0],
 		'Ball released from rest on the vertical centreline.',
-		'Baseline gravity-driven traversal and symmetric first contact with the centre peg.'
+		'Baseline gravity-driven traversal and symmetric first contact with the centre peg.',
+		['settled'],
+		['launch.symmetry-axis', 'sustained.centred-peg-settling', 'sustained.contracting-intervals']
 	),
 	scenario(
 		'offset-drop',
@@ -38,7 +37,8 @@ export const canonicalPlinkoScenarios = [
 		[0.43, 6.62],
 		[0, 0],
 		'Ball released from rest 0.43 m right of the centreline.',
-		'Asymmetric peg selection and deterministic sensitivity to launch position.'
+		'Asymmetric peg selection and deterministic sensitivity to launch position.',
+		['exited']
 	),
 	scenario(
 		'angled-launch',
@@ -46,7 +46,9 @@ export const canonicalPlinkoScenarios = [
 		[-1.45, 6.5],
 		[1.8, -0.3],
 		'Ball launched down and right from the upper-left entry.',
-		'Combined horizontal and vertical motion through the staggered field.'
+		'Combined horizontal and vertical motion through the staggered field.',
+		['exited'],
+		['physics.intermediate-restitution']
 	),
 	scenario(
 		'high-speed-launch',
@@ -54,7 +56,9 @@ export const canonicalPlinkoScenarios = [
 		[-1.8, 6.48],
 		[8, -14],
 		'Ball launched at 16.12 m/s down and right from the upper-left entry.',
-		'Earliest-event solving at a speed that would expose tunnelling in sampled collision checks.'
+		'Earliest-event solving at a speed that would expose tunnelling in sampled collision checks.',
+		['exited'],
+		['launch.high-downward-speed', 'launch.high-horizontal-speed']
 	),
 	scenario(
 		'near-grazing-peg-contact',
@@ -62,7 +66,9 @@ export const canonicalPlinkoScenarios = [
 		[grazingOffset, 6.62],
 		[0, 0],
 		`Ball released ${grazingOffset.toFixed(3)} m right of the centre peg axis.`,
-		'Contact classification when the vertical path nearly grazes the first-row centre peg.'
+		'Contact classification when the vertical path nearly grazes the first-row centre peg.',
+		['exited'],
+		['launch.near-tangent-peg']
 	)
 ] as const satisfies readonly SimulationScenario[];
 
@@ -74,13 +80,28 @@ function scenario(
 	position: Vec2,
 	velocity: Vec2,
 	initialConditionSummary: string,
-	verificationPurpose: string
+	verificationPurpose: string,
+	expectedOutcomes: SimulationScenario['expectedOutcomes'],
+	coverage: SimulationScenario['coverage'] = []
 ): SimulationScenario {
 	return {
 		id,
 		name,
+		categoryId: 'canonical-launches',
 		initialConditionSummary,
 		verificationPurpose,
+		expectedOutcomes,
+		expectedEventCharacteristics:
+			id === 'vertical-centre-drop'
+				? {
+						summary: 'Centred impacts contract into an explicit impact-to-resting transition.',
+						minimumContactEvents: 2,
+						requiredTransitions: [{ from: 'impact', to: 'resting' }]
+					}
+				: null,
+		replayExpectation: 'complete',
+		coverage,
+		regressionFixture: false,
 		input: {
 			scene: canonicalPlinkoBoard,
 			initialDynamicBodies: [

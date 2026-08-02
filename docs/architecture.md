@@ -51,6 +51,12 @@ The canonical board coordinate system, construction and named launch catalogue a
 [`simulation.md`](simulation.md). Scene validation is headless and returns typed, path-specific
 diagnostics for unsupported geometry, duplicate IDs, malformed coordinates and invalid dimensions.
 
+The named `simulation/world/scenarios` subdomain owns human-readable canonical, board-state and
+adversarial experiment definitions. Its shared descriptor declares category, purpose, complete
+`SimulationInput`, permitted outcomes, relevant event/contact expectations, replay expectation,
+coverage and regression provenance. It may describe invalid or unresolved experiments, but it does
+not invoke simulation or select solver behaviour; consumers receive it through `world/index.ts`.
+
 ## Contract responsibilities
 
 - `SimulationInput` groups the scene's `staticColliders`, `initialDynamicBodies` and all current
@@ -208,9 +214,9 @@ responsibilities by state ownership and independently evolving regions:
 
 - `SimulationWorkbench` coordinates the last accepted run, source, load feedback, inspection mode,
   event selection and presentation clock;
-- `scenario-catalogue.ts` adapts the public world catalogues into stable workbench categories
-  without copying `SimulationInput`, while `ScenarioCatalogue` owns grouped selection and
-  expected-versus-actual outcome presentation;
+- `scenario-catalogue.ts` assembles public world descriptors without copying `SimulationInput`,
+  while `ScenarioCatalogue` owns grouped selection, submitted-setting presentation, declared
+  event/replay expectations and expected-versus-actual outcome presentation;
 - the named `workbench/input` subdomain owns editable simulation inputs: `SimulationInputControls`
   presents the load/save/run workflow, `BallControls` and `SimulationSettingsControls` own the
   Ball, Environment and Run limits groups, `velocity-entry.ts` converts velocity representations,
@@ -226,10 +232,10 @@ selection and field editing cannot mutate an accepted run. The explicit Run acti
 from a simulation-input draft to simulation; renderer playback still receives only the returned run
 through `toRendererPlaybackInput`.
 
-The workbench catalogue includes canonical launches and every named board-state verification world.
-Its category vocabulary also reserves physical-settings, adversarial-contact and saved-regression
-homes so later data can join through descriptors rather than scenario-specific UI. Outcome matching
-uses the returned run record; rendering remains presentation-only.
+The workbench catalogue includes canonical launches, every named board-state verification world and
+the curated adversarial/physical-settings experiments. Its stable category vocabulary also reserves
+a saved-regression home so defect fixtures can join through descriptors rather than scenario-specific
+UI. Outcome matching uses the returned run record; rendering remains presentation-only.
 
 `simulation/serialization/simulation-input` provides the versioned JSON boundary for scenario
 inputs. It owns the version 6 structural input validator and then applies the single-ball semantic

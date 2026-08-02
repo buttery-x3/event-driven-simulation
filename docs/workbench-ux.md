@@ -77,11 +77,14 @@ cursor, viewport, event selection or diagnostics.
 
 ### Scenario catalogue and launch controls
 
-The catalogue groups canonical launches and all named board-state scenarios by stable category.
+The catalogue groups canonical launches, named board-state scenarios and curated adversarial
+experiments by stable category.
 Each descriptor retains its authoritative `SimulationInput` rather than copying scene, body or
-settings fields. The browser shows the selected stable ID, purpose, scene ID, initial state and
-expected or permitted outcomes before calculation. Physical-settings, adversarial-contact and
-saved-regression category IDs are stable extension homes even when a category has no current entry.
+settings fields. The browser shows the selected stable ID, purpose, scene ID, complete ball,
+environment and run-limit settings, expected or permitted outcomes, relevant event/contact-mode
+characteristics, and complete-versus-valid-prefix replay contract before calculation.
+Physical-settings and adversarial-contact categories contain the FLAME-39 experiments; the
+saved-regression category remains the stable home for a defect promoted to a permanent fixture.
 
 Selecting a preset replaces the draft but does not calculate or replace the current run. Position
 uses labelled `x` and `y` metre inputs. Velocity can be entered either as speed plus angle or as

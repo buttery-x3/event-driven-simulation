@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { boardStateScenarios, canonicalPlinkoScenarios } from '$lib/simulation/world';
+import {
+	adversarialScenarios,
+	boardStateScenarios,
+	canonicalPlinkoScenarios
+} from '$lib/simulation/world';
 import {
 	assessScenarioOutcome,
 	defaultWorkbenchScenario,
@@ -9,13 +13,17 @@ import {
 } from './scenario-catalogue';
 
 describe('workbench scenario catalogue', () => {
-	it('adapts every canonical launch and board-state scenario without copying its input', () => {
+	it('adapts every world scenario without copying its input', () => {
 		expect(workbenchScenarios).toHaveLength(
-			canonicalPlinkoScenarios.length + boardStateScenarios.length
+			canonicalPlinkoScenarios.length + boardStateScenarios.length + adversarialScenarios.length
 		);
 		expect(new Set(workbenchScenarios.map(({ id }) => id)).size).toBe(workbenchScenarios.length);
 
-		for (const source of [...canonicalPlinkoScenarios, ...boardStateScenarios]) {
+		for (const source of [
+			...canonicalPlinkoScenarios,
+			...boardStateScenarios,
+			...adversarialScenarios
+		]) {
 			expect(getWorkbenchScenario(source.id)?.input).toBe(source.input);
 		}
 	});
@@ -31,6 +39,7 @@ describe('workbench scenario catalogue', () => {
 		expect(getWorkbenchScenario('dense')?.categoryId).toBe('board-layouts');
 		expect(getWorkbenchScenario('angled-ramp')?.categoryId).toBe('physical-settings');
 		expect(getWorkbenchScenario('close-contacts')?.categoryId).toBe('adversarial-contacts');
+		expect(getWorkbenchScenario('lateral-gravity')?.categoryId).toBe('physical-settings');
 		expect(defaultWorkbenchScenario.id).toBe('vertical-centre-drop');
 	});
 

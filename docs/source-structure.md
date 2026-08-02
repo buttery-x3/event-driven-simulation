@@ -64,10 +64,15 @@ src/lib/simulation/
     world/
         index.ts
         canonical-board.ts
-        board-state-scenarios.ts
-        scenario-catalogue.ts
         scene-validation.ts
         prototype-input.ts
+        scenarios/
+            index.ts
+            types.ts
+            canonical-launches.ts
+            board-states.ts
+            board-state-metadata.ts
+            adversarial.ts
         __tests__/
 
     run/
@@ -266,6 +271,12 @@ FLAME-35 applied this ownership map from the former flat locations:
 | `run-fixture*.ts`                                                                                                      | `serialization/run-record/`                                                                                                                                |
 | `simulation-input-fixture.ts`                                                                                          | `serialization/simulation-input/`                                                                                                                          |
 | co-located `*.spec.ts` files                                                                                           | the matching local `__tests__/` directory                                                                                                                  |
+
+FLAME-39 later moved the independently growing canonical, board-state and adversarial catalogues
+into the named `world/scenarios` subdomain. `types.ts` owns their shared serialisable descriptor
+contract, the definition modules own complete `SimulationInput` values, and
+`board-state-metadata.ts` keeps verification policy from further enlarging the substantial board
+geometry module. Consumers continue to use `world/index.ts`.
 
 The migration issue must also update the path references in `architecture.md`, `simulation.md`,
 `workflow.md`, ESLint rules and all imports. Do not leave documentation describing paths that no

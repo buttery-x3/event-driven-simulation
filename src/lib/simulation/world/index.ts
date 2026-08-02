@@ -1,4 +1,3 @@
-export { boardStateScenarios, type BoardStateScenario } from './board-state-scenarios';
 export {
 	canonicalBoardDimensions,
 	canonicalPegDimensions,
@@ -6,10 +5,19 @@ export {
 } from './canonical-board';
 export { prototypeSimulationInput } from './prototype-input';
 export {
+	boardStateScenarios,
+	adversarialScenarios,
 	canonicalPlinkoScenarios,
 	defaultCanonicalPlinkoScenario,
-	type SimulationScenario
-} from './scenario-catalogue';
+	type BoardStateScenario,
+	type ScenarioCategoryId,
+	type ScenarioContactModeTransitionExpectation,
+	type ScenarioCoverageId,
+	type ScenarioEventExpectation,
+	type ScenarioMotionMode,
+	type SimulationScenario,
+	type VerificationScenario
+} from './scenarios';
 export {
 	assertValidSceneDefinition,
 	isStaticCircleCollider,

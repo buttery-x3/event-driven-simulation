@@ -1,6 +1,6 @@
 # Canonical Plinko scene and scenarios
 
-Milestone 2 uses one fixed physical board and a small named scenario catalogue. Both are ordinary
+Milestone 2 uses one fixed physical board and a curated named scenario catalogue. Both are ordinary
 TypeScript data exposed by `src/lib/simulation/world`; they can be imported in Node tests without
 Three.js, Svelte or DOM globals.
 
@@ -62,7 +62,15 @@ The scenario records include their initial-condition summaries and verification 
 do not need this document to interpret them. The catalogue is JSON-serialisable for headless tests,
 browser replay input and future regression capture.
 
-The workbench may replace only the selected scenario's initial ball position and velocity.
+The `world/scenarios` subdomain also contains the varied-board and adversarial catalogues. Every
+public descriptor carries a stable ID and category, complete submitted input, verification purpose,
+permitted outcome set, relevant event/contact-mode expectations, complete-versus-valid-prefix replay
+expectation, requirement-coverage tags and regression-fixture provenance. The adversarial catalogue
+uses focused named experiments for launch/path, initial-position, physical-setting and sustained-
+contact extremes; it is intentionally not a Cartesian parameter generator. Mirrored near-centre
+entries are constructed as an explicit pair and contract tests compare their authoritative evidence.
+
+The workbench may replace the selected scenario's editable input fields only in its draft copy.
 User-facing speed and angle controls use degrees measured from positive `x` toward positive `y`;
 they deterministically produce `(speed × cos(angle), speed × sin(angle))`. Direct velocity
 components remain available for exact regression reproduction. An explicit Run action validates

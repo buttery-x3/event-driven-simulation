@@ -1,7 +1,7 @@
 # Board-state matrix and terminal outcomes
 
 FLAME-33 extends the Milestone 2 headless experiment catalogue beyond the canonical board.
-`boardStateScenarios` in `src/lib/simulation/world/board-state-scenarios.ts` contains only ordinary
+`boardStateScenarios` in `src/lib/simulation/world/scenarios/board-states.ts` contains only ordinary
 serialisable scene, body and settings data. Every entry runs through `constructSingleBallRun`;
 scenario IDs and peg counts never select solver behaviour.
 

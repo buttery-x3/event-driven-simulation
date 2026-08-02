@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { boardStateScenarios } from '../board-state-scenarios';
+import { boardStateScenarios } from '../scenarios/board-states';
 import { defaultFixedWorldContactTolerances, findEarliestFixedWorldContact } from '../../collision';
 import { constructSingleBallRun } from '../../run';
 import { evaluateMotionSegmentPosition } from '../../motion';

@@ -83,7 +83,7 @@
 			</p>
 		</div>
 		<div class="initial-state">
-			<span>Relevant initial state</span>
+			<span>Submitted initial state and settings</span>
 			{#if initialBody}
 				<p>
 					<strong>{initialBody.id}</strong> · radius {initialBody.physicalShape.radius} m · p=({initialBody
@@ -98,11 +98,27 @@
 					.settings.gravity[0]}, {displayedInput.settings.gravity[1]}) m/s² · restitution {displayedInput
 					.settings.restitution}
 			</p>
+			<p>
+				limits {displayedInput.settings.maximumEvents} events / {displayedInput.settings
+					.maximumSimulationTime} s Â· tolerances {displayedInput.settings.tolerances
+					.contactDistance} m / {displayedInput.settings.tolerances.eventTime} s
+			</p>
 		</div>
 		<div class="outcomes" aria-label="Scenario outcome comparison">
 			<div>
 				<span>Expected / permitted outcomes</span>
 				<p>{selectedScenario?.expectedOutcomes.join(' or ') ?? 'No catalogue contract'}</p>
+				<span>Expected event / contact characteristics</span>
+				<p>
+					{selectedScenario?.expectedEventCharacteristics?.summary ??
+						'No event-count or contact-mode characteristic is required.'}
+				</p>
+				<span>Replay contract</span>
+				<p>
+					{selectedScenario?.replayExpectation === 'valid-prefix'
+						? 'Inspect the committed valid prefix through its failure boundary.'
+						: 'Replay the complete authoritative trajectory through its terminal boundary.'}
+				</p>
 			</div>
 			<div
 				class:matched={outcomeAssessment.status === 'matched'}

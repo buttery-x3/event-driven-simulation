@@ -242,9 +242,9 @@ test('groups verification scenarios, replaces worlds on Run and reports authorit
 	const catalogue = page.getByRole('region', { name: 'Scenario catalogue' });
 	const selector = catalogue.getByLabel('Scenario preset');
 	await expect(selector.locator('optgroup[label="Canonical launches"] option')).toHaveCount(5);
-	await expect(selector.locator('optgroup[label="Board layouts"] option')).toHaveCount(7);
-	await expect(selector.locator('optgroup[label="Physical settings"] option')).toHaveCount(5);
-	await expect(selector.locator('optgroup[label="Adversarial contacts"] option')).toHaveCount(1);
+	await expect(selector.locator('optgroup[label="Board layouts"] option')).toHaveCount(8);
+	await expect(selector.locator('optgroup[label="Physical settings"] option')).toHaveCount(13);
+	await expect(selector.locator('optgroup[label="Adversarial contacts"] option')).toHaveCount(14);
 
 	const scenarios = [
 		{ id: 'no-pegs', sceneId: 'no-pegs-board', outcome: 'exited' },
@@ -291,6 +291,48 @@ test('groups verification scenarios, replaces worlds on Run and reports authorit
 
 	await expect(page.getByRole('region', { name: 'Recorded-prefix inspection' })).toBeVisible();
 	await expect(page.getByRole('heading', { name: 'Failure boundary' })).toBeVisible();
+});
+
+test('runs sustained, unresolved and invalid curated scenarios with declared replay evidence', async ({
+	page
+}) => {
+	await page.goto('/');
+
+	const catalogue = page.getByRole('region', { name: 'Scenario catalogue' });
+	const selector = catalogue.getByLabel('Scenario preset');
+
+	await selector.selectOption('circular-support-detachment');
+	await expect(
+		catalogue.getByText('Submitted initial state and settings', { exact: true })
+	).toBeVisible();
+	await expect(catalogue.getByText(/limits 100 events \/ 3 s/)).toBeVisible();
+	await expect(
+		catalogue.getByText('Circular sliding is followed by a support-lost transition to free flight.')
+	).toBeVisible();
+	await expect(
+		catalogue.getByText(
+			'Replay the complete authoritative trajectory through its terminal boundary.'
+		)
+	).toBeVisible();
+	await page.getByRole('button', { name: 'Run simulation' }).click();
+	await expect(catalogue.getByText(/^escaped.*permitted$/)).toBeVisible();
+	await expect(page.getByRole('button', { name: /impact to sliding/ })).toBeVisible();
+	await expect(page.getByRole('button', { name: /sliding to free-flight/ })).toBeVisible();
+
+	await selector.selectOption('unresolved-circular-turning-point');
+	await expect(
+		catalogue.getByText('Inspect the committed valid prefix through its failure boundary.')
+	).toBeVisible();
+	await page.getByRole('button', { name: 'Run simulation' }).click();
+	await expect(catalogue.getByText(/^unresolved.*permitted$/)).toBeVisible();
+	await expect(page.getByRole('region', { name: 'Recorded-prefix inspection' })).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Failure boundary' })).toBeVisible();
+
+	await selector.selectOption('invalid-initial-peg-overlap');
+	await page.getByRole('button', { name: 'Run simulation' }).click();
+	await expect(catalogue.getByText(/^invalid.*permitted$/)).toBeVisible();
+	await expect(page.getByRole('region', { name: 'Invalid-prefix inspection' })).toBeVisible();
+	await expect(page.getByText('valid / unresolved', { exact: true })).toHaveCount(0);
 });
 
 test('loads a local saved run and retains it after typed validation failures', async ({ page }) => {
