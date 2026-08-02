@@ -154,10 +154,12 @@ result of this boundary.
 records. It sequences free flight, impact and sustained contact, commits only certified intervals,
 and continues from exact physical event times. The private `impact` subdomain owns contact-event
 commitment and classification: `response.ts` owns restitution and conservative manifold-level
-contracting-impact collapse, while `resolution.ts` owns diagnostic commitment, support selection,
-rest classification and construction of the next authoritative state. The private `manifold` subdomain
-owns deterministic active-set normal-impulse solving and non-negative support-reaction
-certification for one dynamic circle against fixed contacts. The named `sustained-contact` subdomain owns
+contracting-impact collapse, `evidence.ts` owns impact and accumulation diagnostics,
+`alternating-limit.ts` owns the acquired-manifold release transition, and `resolution.ts` owns
+support selection, rest classification and construction of the next authoritative state. The private `manifold` subdomain
+owns deterministic active-set normal-impulse solving, geometry/history-based acquisition of a
+fixed-circle accumulation manifold, and non-negative support-reaction certification for one dynamic
+circle against fixed contacts. The named `sustained-contact` subdomain owns
 support-shape dispatch, line continuation, shared contact-mode result construction and
 constrained-path geometry. Its private `circular` subdomain owns changing-normal continuation,
 turning-point reversal and independently testable angular motion/scene-event ordering.
@@ -182,6 +184,9 @@ The named `circle-circle` subdomain solves dynamic-circle versus static-circle r
 `contact-polynomial.ts` owns ballistic geometry and polynomial construction, `query.ts` owns root
 selection and result construction, `query-validation.ts` validates query invariants, and
 `root-topology.ts` owns entering, exiting, grazing, initial/release-owned and indeterminate policy.
+An accumulation-manifold release may explicitly ask `query.ts` to certify a release-owned passage
+whose maximum penetration is no greater than `contactDistance`; polynomial critical points prove
+the bound, and a deeper or uncertifiable passage still fails closed.
 `types.ts` declares the local public query and result contracts.
 `boundary-contact.ts` orchestrates finite-segment root selection, `boundary-query-validation.ts`
 validates its query contract, and `boundary-candidate.ts` classifies face and endpoint evidence.

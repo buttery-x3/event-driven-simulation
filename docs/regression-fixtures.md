@@ -7,11 +7,12 @@ Three.js, DOM or other renderer-owned objects.
 
 - `fixtures/runs/<descriptive-name>.json` contains shared canonical examples. The browser prototype
   and headless tests both load `canonical-event-driven-offset-drop.json` from this directory.
-- `fixtures/regressions/flame-<issue-number>-<short-description>.json` contains runs captured from
-  reproducible failures. Use lowercase kebab-case, for example
+- `fixtures/regressions/flame-<issue-number>-<short-description>.json` contains either a run captured
+  from a reproducible failure or a compact `SimulationInputFixture` when the input alone is the
+  authoritative reproducer. Use lowercase kebab-case, for example
   `flame-123-high-speed-peg-contact.json`.
 
-Keep one run record per file. Do not create renderer-specific copies.
+Keep one public fixture document per file. Do not create renderer-specific copies.
 
 ## Capturing a regression
 
@@ -27,6 +28,12 @@ Keep one run record per file. Do not create renderer-specific copies.
    fixtures must continue to be rejected by `assertPlaybackEligible`; tests may inspect their
    preserved valid prefix and diagnostics directly.
 6. Run the focused test, then run `npm run check` before requesting review.
+
+For a compact input-only regression, serialize the complete input with
+`serializeSimulationInputFixture`, load it with `parseSimulationInputFixture`, and assert the
+constructed run and independent validation result. Use this form when the historical output is
+already preserved externally or would add a large stale duplicate without strengthening the
+regression.
 
 There is deliberately no migration framework. If `contractVersion` changes, decide how to update
 or retain affected fixtures as part of that contract change.
@@ -65,3 +72,10 @@ bounce against `peg-row-01-column-04` never established tolerance-sized separati
 record reports a valid exit but contains a later free-flight crossing of that peg, so independent
 validation rejects it with `EARLY_GEOMETRY_CROSSING`; the focused rerun must retain the circle as
 sustained contact or fail closed before committing that interval.
+
+`flame-46-exact-fit-tangent-release.json` and `flame-46-oversized-two-peg-rest.json` are compact
+input fixtures for the paired dense-board accumulation boundary. The first has a ball whose diameter
+exactly equals the peg gap and must release downward from an unsupported tangent manifold. The
+second is wider than the gap and must settle on the same two pegs with non-negative support
+reactions. The focused regression also checks nearby radii, mirroring, collider ordering, renaming,
+full contact-set diagnostics and independent run validation.

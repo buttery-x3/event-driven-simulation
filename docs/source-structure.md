@@ -95,11 +95,14 @@ src/lib/simulation/
 			run-assembly.ts
 			impact/
 				index.ts
+				alternating-limit.ts
+				evidence.ts
 				response.ts
 				resolution.ts
             manifold/
                 index.ts
                 types.ts
+                acquisition.ts
                 impulse-solver.ts
                 support-reactions.ts
                 __tests__/

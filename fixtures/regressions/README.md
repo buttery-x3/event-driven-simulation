@@ -3,8 +3,8 @@
 Save future reproducible simulation failures here as
 `flame-<issue-number>-<short-description>.json`.
 
-Each file must contain one complete `SimulationRunRecord` in the current public contract. See
-`docs/regression-fixtures.md` for the capture, validation and replay process.
+Each file contains one public `SimulationRunRecord` or compact `SimulationInputFixture` in the
+current contract. See `docs/regression-fixtures.md` for the capture, validation and replay process.
 
 - `flame-27-high-speed-peg-contact.json` verifies continuous fixed-peg contact discovery at a speed
   that would expose tunnelling in a sampled collision check.
@@ -17,3 +17,7 @@ Each file must contain one complete `SimulationRunRecord` in the current public 
   diminishing bounce against `peg-row-01-column-04` never established tolerance-sized separation.
   The historical record reports a valid exit but independent validation rejects its later
   free-flight peg crossing with `EARLY_GEOMETRY_CROSSING`.
+- `flame-46-exact-fit-tangent-release.json` preserves the dense-board input whose exact-width throat
+  must acquire both alternating peg contacts and release downward.
+- `flame-46-oversized-two-peg-rest.json` preserves the paired dense-board input whose wider ball must
+  acquire both peg contacts and settle on their certified support manifold.
