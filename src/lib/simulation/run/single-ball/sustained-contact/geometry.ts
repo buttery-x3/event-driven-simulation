@@ -1,5 +1,5 @@
-import type { StaticCollider, Vec2 } from '../../contracts';
-import { dotVec2 } from '../../math';
+import type { StaticCollider, Vec2 } from '../../../contracts';
+import { dotVec2 } from '../../../math';
 
 export function circularPosition(centre: Vec2, contactRadius: number, angle: number): Vec2 {
 	return [centre[0] + contactRadius * Math.cos(angle), centre[1] + contactRadius * Math.sin(angle)];

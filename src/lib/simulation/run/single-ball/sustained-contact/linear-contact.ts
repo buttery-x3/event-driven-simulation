@@ -1,67 +1,29 @@
 import type {
-	ContactModeTransitionEvent,
-	InitialDynamicCircleBodyState,
 	LinearContactMotionSegment,
-	MotionSegment,
 	RunContactSearchDiagnostic,
-	RunTerminalReason,
 	SimulationInput,
 	StaticLineSegmentCollider,
 	Vec2
-} from '../../contracts';
-import { defaultFixedWorldContactTolerances, findEarliestFixedWorldContact } from '../../collision';
-import { dotVec2 } from '../../math';
-import { evaluateMotionSegmentPosition, evaluateMotionSegmentVelocity } from '../../motion';
+} from '../../../contracts';
+import {
+	defaultFixedWorldContactTolerances,
+	findEarliestFixedWorldContact
+} from '../../../collision';
+import { dotVec2 } from '../../../math';
+import { evaluateMotionSegmentPosition, evaluateMotionSegmentVelocity } from '../../../motion';
+import { toRunContactSearchDiagnostic } from '../diagnostics';
+import { findEarliestTerminationEntry } from '../termination-search';
 import { continueCircularContact } from './circular-contact';
-import { toRunContactSearchDiagnostic } from './diagnostics';
-import { findEarliestTerminationEntry } from './termination-search';
+import {
+	detachedContactResult,
+	entryTransition,
+	restingContactResult,
+	slidingTransition,
+	unresolvedContactResult
+} from './contact-mode-results';
+import type { SustainedContactRequest, SustainedContactResult } from './types';
 
-export interface SustainedNextState {
-	readonly time: number;
-	readonly position: Vec2;
-	readonly velocity: Vec2;
-	readonly ignoreInitialContactColliderId: string | null;
-	readonly acceptInitialContact: boolean;
-}
-
-export interface SustainedContactResult {
-	readonly segments: readonly MotionSegment[];
-	readonly events: readonly ContactModeTransitionEvent[];
-	readonly contactSearches: readonly RunContactSearchDiagnostic[];
-	readonly terminalReason: RunTerminalReason | null;
-	readonly nextState: SustainedNextState | null;
-}
-
-export interface SustainedContactRequest {
-	readonly input: SimulationInput;
-	readonly body: InitialDynamicCircleBodyState;
-	readonly colliderId: string;
-	readonly time: number;
-	readonly position: Vec2;
-	readonly normal: Vec2;
-	readonly outgoingVelocity: Vec2;
-	readonly entryFrom: 'free-flight' | 'impact';
-	readonly entryReason: 'impact-collapse' | 'supported-initial-state';
-}
-
-export function continueSustainedContact(request: SustainedContactRequest): SustainedContactResult {
-	const collider = request.input.scene.staticColliders.find(
-		(candidate) => candidate.id === request.colliderId
-	);
-	if (!collider) return unresolvedAtEntry(request, 'The supporting collider no longer exists.');
-
-	if (!('centre' in collider)) {
-		return continueLineContact(request, collider);
-	}
-
-	return continueCircularContact(
-		request,
-		collider.centre,
-		collider.physicalShape.radius + request.body.physicalShape.radius
-	);
-}
-
-function continueLineContact(
+export function continueLineContact(
 	request: SustainedContactRequest,
 	collider: StaticLineSegmentCollider
 ): SustainedContactResult {
@@ -76,9 +38,11 @@ function continueLineContact(
 		request.input.settings.gravity[1] - normalAcceleration * request.normal[1]
 	];
 	if (normalAcceleration > request.input.settings.tolerances.eventTime) {
-		return detachedAtEntry(request, tangentVelocity);
+		return detachedContactResult(request, tangentVelocity);
 	}
-	if (isResting(tangentVelocity, tangentAcceleration, request.input)) return resting(request);
+	if (isResting(tangentVelocity, tangentAcceleration, request.input)) {
+		return restingContactResult(request);
+	}
 
 	const segmentVector: Vec2 = [
 		collider.physicalShape.end[0] - collider.physicalShape.start[0],
@@ -123,7 +87,7 @@ function continueLineContact(
 		request.input.settings.tolerances.eventTime
 	);
 	if (termination.type === 'numerical-failure') {
-		return unresolvedAfterEntry(request, [], termination.detail);
+		return unresolvedContactResult(request, termination.detail);
 	}
 	const searchEnd = termination.type === 'entry' ? termination.entry.time : provisionalEndTime;
 	const contactResult = findEarliestFixedWorldContact({
@@ -143,7 +107,7 @@ function continueLineContact(
 		request.input.settings.restitution
 	);
 	if (contactResult.type === 'invalid-input' || contactResult.type === 'unresolved') {
-		return unresolvedAfterEntry(request, [searchDiagnostic], contactResult.reason);
+		return unresolvedContactResult(request, contactResult.reason, [searchDiagnostic]);
 	}
 
 	if (contactResult.type === 'contact') {
@@ -152,9 +116,8 @@ function continueLineContact(
 			segments: [endSegment],
 			events: [
 				entryTransition(request, 'sliding'),
-				transition(
+				slidingTransition(
 					request,
-					'sliding',
 					'impact',
 					'collider-contact',
 					contactResult.event.time,
@@ -180,9 +143,8 @@ function continueLineContact(
 			segments: [segment],
 			events: [
 				entryTransition(request, 'sliding'),
-				transition(
+				slidingTransition(
 					request,
-					'sliding',
 					'free-flight',
 					'terminal-region',
 					termination.entry.time,
@@ -236,9 +198,8 @@ function leaveLineEndpoint(
 			segments: [completed],
 			events: [
 				entryTransition(request, 'sliding'),
-				transition(
+				slidingTransition(
 					request,
-					'sliding',
 					'free-flight',
 					'endpoint-reached',
 					endpoint.time,
@@ -274,114 +235,6 @@ function leaveLineEndpoint(
 		segments: [completed, ...circular.segments],
 		events: [entryTransition(request, 'sliding'), ...circular.events.slice(1)],
 		contactSearches: [searchDiagnostic, ...circular.contactSearches]
-	};
-}
-
-function resting(request: SustainedContactRequest): SustainedContactResult {
-	return {
-		segments: [],
-		events: [entryTransition(request, 'resting')],
-		contactSearches: [],
-		terminalReason: {
-			type: 'resting-contact',
-			time: request.time,
-			colliderId: request.colliderId,
-			position: request.position,
-			normal: request.normal,
-			reason:
-				request.entryReason === 'supported-initial-state'
-					? 'zero-tangential-motion'
-					: 'impact-collapse'
-		},
-		nextState: null
-	};
-}
-
-function detachedAtEntry(request: SustainedContactRequest, velocity: Vec2): SustainedContactResult {
-	return {
-		segments: [],
-		events: [entryTransition(request, 'free-flight', 'support-lost')],
-		contactSearches: [],
-		terminalReason: null,
-		nextState: {
-			time: request.time,
-			position: request.position,
-			velocity,
-			ignoreInitialContactColliderId: request.colliderId,
-			acceptInitialContact: false
-		}
-	};
-}
-
-function unresolvedAtEntry(
-	request: SustainedContactRequest,
-	detail: string
-): SustainedContactResult {
-	return unresolvedAfterEntry(request, [], detail);
-}
-
-function unresolvedAfterEntry(
-	request: SustainedContactRequest,
-	contactSearches: readonly RunContactSearchDiagnostic[],
-	detail: string
-): SustainedContactResult {
-	return {
-		segments: [],
-		events: [
-			entryTransition(request, 'sliding'),
-			transition(
-				request,
-				'sliding',
-				'free-flight',
-				'unresolved',
-				request.time,
-				request.position,
-				request.normal
-			)
-		],
-		contactSearches,
-		terminalReason: { type: 'unresolved-collision-search', time: request.time, detail },
-		nextState: null
-	};
-}
-
-function entryTransition(
-	request: SustainedContactRequest,
-	to: 'resting' | 'sliding' | 'free-flight',
-	reason: ContactModeTransitionEvent['reason'] = to === 'free-flight'
-		? 'support-lost'
-		: 'impact-collapse'
-): ContactModeTransitionEvent {
-	return transition(
-		request,
-		request.entryFrom,
-		to,
-		to === 'free-flight' ? reason : request.entryReason,
-		request.time,
-		request.position,
-		request.normal
-	);
-}
-
-function transition(
-	request: SustainedContactRequest,
-	from: ContactModeTransitionEvent['from'],
-	to: ContactModeTransitionEvent['to'],
-	reason: ContactModeTransitionEvent['reason'],
-	time: number,
-	position: Vec2,
-	normal: Vec2
-): ContactModeTransitionEvent {
-	return {
-		type: 'contact-mode-transition',
-		time,
-		bodyId: request.body.id,
-		colliderId: request.colliderId,
-		from,
-		to,
-		reason,
-		position,
-		normal
 	};
 }
 
