@@ -16,7 +16,10 @@
 		onChangeDraft,
 		onRun,
 		onLoadScenario,
-		onSaveScenario
+		onSaveScenario,
+		canExportDiagnostics,
+		exportFeedback,
+		onExportDiagnostics
 	}: {
 		draft: SimulationInputDraft;
 		errors: readonly SimulationInputValidationError[];
@@ -27,6 +30,9 @@
 		onRun: () => void;
 		onLoadScenario: (file: File) => Promise<void>;
 		onSaveScenario: () => void;
+		canExportDiagnostics: boolean;
+		exportFeedback: { readonly kind: 'success' | 'error'; readonly message: string } | null;
+		onExportDiagnostics: () => void;
 	} = $props();
 
 	let scenarioInput = $state<HTMLInputElement>();
@@ -55,6 +61,17 @@
 				>Load scenario</button
 			>
 			<button type="button" class="secondary" onclick={onSaveScenario}>Save scenario</button>
+			<button
+				type="button"
+				class="diagnostic-export"
+				onclick={onExportDiagnostics}
+				disabled={!canExportDiagnostics}
+				title={canExportDiagnostics
+					? 'Export the accepted run and diagnostic evidence'
+					: 'Run or load a simulation before exporting diagnostics'}
+			>
+				Export diagnostics
+			</button>
 			<input
 				bind:this={scenarioInput}
 				class="file-input"
@@ -87,6 +104,14 @@
 	{#if scenarioError}
 		<p class="panel-error" role="alert">
 			<strong>{scenarioError.code}</strong> · {scenarioError.message}
+		</p>
+	{:else if exportFeedback}
+		<p
+			class:error={exportFeedback.kind === 'error'}
+			class="feedback"
+			role={exportFeedback.kind === 'error' ? 'alert' : 'status'}
+		>
+			{exportFeedback.message}
 		</p>
 	{:else if feedback}
 		<p class="feedback" role="status">{feedback}</p>
@@ -139,6 +164,7 @@
 	}
 
 	.secondary,
+	.diagnostic-export,
 	.run-button {
 		min-height: 2.5rem;
 		border-radius: var(--radius-sm);
@@ -151,6 +177,20 @@
 		background: var(--color-surface);
 		font-weight: 700;
 		cursor: pointer;
+	}
+
+	.diagnostic-export {
+		padding: 0 var(--space-3);
+		border: 1px solid var(--color-accent);
+		color: var(--color-background);
+		background: var(--color-accent);
+		font-weight: 800;
+		cursor: pointer;
+	}
+
+	.diagnostic-export:disabled {
+		cursor: not-allowed;
+		opacity: 0.55;
 	}
 
 	.input-body {
@@ -201,6 +241,10 @@
 		color: var(--color-success);
 	}
 
+	.feedback.error {
+		color: var(--color-danger);
+	}
+
 	.panel-error {
 		color: var(--color-danger);
 	}
@@ -243,6 +287,7 @@
 		}
 
 		.secondary,
+		.diagnostic-export,
 		.run-button {
 			min-height: 2.75rem;
 		}

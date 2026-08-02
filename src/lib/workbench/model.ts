@@ -124,3 +124,13 @@ export function formatSource(source: RunSource): string {
 				: 'Calculated scenario';
 	return `${label} · ${source.name}`;
 }
+
+export function createDiagnosticExportFilename(name: string, exportedAt: string): string {
+	const readableName = name
+		.replace(/\.json$/i, '')
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/^-+|-+$/g, '');
+	const timestamp = exportedAt.replace(/[-:]/g, '').replace('.', '');
+	return `${readableName || 'simulation-run'}-diagnostics-${timestamp}.json`;
+}

@@ -3,6 +3,7 @@ import path from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import type { SimulationInput } from '../../src/lib/simulation/contracts';
 import { constructSingleBallRun } from '../../src/lib/simulation/run';
+import type { DiagnosticExportV1 } from '../../src/lib/simulation/serialization/diagnostic-export';
 
 interface FilePayload {
 	readonly name: string;
@@ -194,6 +195,43 @@ test('saves and reloads every exposed physical setting through scenario JSON', a
 	await expect(page.getByLabel('Bounciness')).toHaveValue('0.625');
 	await expect(page.getByLabel('Maximum time (s)')).toHaveValue('12.75');
 	await expect(page.getByLabel('Maximum events')).toHaveValue('17');
+});
+
+test('downloads accepted run diagnostics separately from the editable scenario', async ({
+	page
+}) => {
+	await page.goto('/');
+
+	const saveScenario = page.getByRole('button', { name: 'Save scenario' });
+	const exportDiagnostics = page.getByRole('button', { name: 'Export diagnostics' });
+	await expect(saveScenario).toBeVisible();
+	await expect(exportDiagnostics).toBeVisible();
+	await expect(exportDiagnostics).toBeEnabled();
+
+	const downloadPromise = page.waitForEvent('download');
+	await exportDiagnostics.click();
+	const download = await downloadPromise;
+	expect(download.suggestedFilename()).toMatch(
+		/^canonical-event-driven-offset-drop-diagnostics-\d{8}T\d{9}Z\.json$/
+	);
+	const downloadPath = await download.path();
+	if (!downloadPath) throw new Error('Expected Playwright to retain the diagnostic download.');
+	const bundle = JSON.parse((await readFile(downloadPath)).toString('utf8')) as DiagnosticExportV1;
+
+	expect(bundle.kind).toBe('simulation-diagnostic-export');
+	expect(bundle.schemaVersion).toBe(1);
+	expect(bundle.provenance).toMatchObject({
+		runId: 'canonical-event-driven-offset-drop',
+		descriptiveName: 'canonical-event-driven-offset-drop.json',
+		sceneId: 'canonical-plinko-board',
+		source: { kind: 'repository', id: 'canonical-event-driven-offset-drop' }
+	});
+	expect(bundle.submittedInput.scene.id).toBe('canonical-plinko-board');
+	expect(bundle.summary.counts.events).toBe(bundle.authoritativeRun.events.length);
+	expect(bundle.summary.counts.trajectorySegments).toBeGreaterThan(0);
+	expect(bundle.diagnostics.contactSearches.length).toBeGreaterThan(0);
+	expect(bundle.diagnostics.entries.length).toBeGreaterThan(0);
+	await expect(page.getByText(/^Exported .*diagnostics-.*\.json\.$/)).toBeVisible();
 });
 
 test('groups verification scenarios, replaces worlds on Run and reports authoritative outcomes', async ({

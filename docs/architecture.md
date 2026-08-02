@@ -100,6 +100,21 @@ converts the record through `toRendererPlaybackInput`. `assertPlaybackEligible` 
 complete, unresolved and invalid records with a finite non-negative recorded horizon. Inspection
 never evaluates motion beyond the committed segment boundary.
 
+## Diagnostic export boundary
+
+Diagnostic export is a separate versioned external representation under
+`simulation/serialization/diagnostic-export`. Version 1 uses the stable
+`simulation-diagnostic-export` discriminator and snapshots explicit provenance, the submitted
+`SimulationInput`, a derived run summary, authoritative trajectories and events, contact-search
+evidence, and structured diagnostic entries. It preserves raw contract numbers and the terminal
+search evidence already recorded by the solver; it does not scrape presentation text or add a
+solver-iteration trace.
+
+The serialization capability depends only on plain simulation contracts. Workbench code supplies
+source metadata and owns `Blob`, object-URL and browser download lifecycle. Diagnostic exports are
+not accepted by the scenario-input or saved-run loaders, and neither existing format changes as a
+result of this boundary.
+
 ## Headless event-driven run
 
 `src/lib/simulation/run/single-ball/construct.ts` is the authoritative producer of single-ball run

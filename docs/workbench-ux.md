@@ -98,6 +98,13 @@ immutable input snapshot, calls `constructSingleBallRun`, and atomically accepts
 record. Invalid draft input leaves the current run and transport untouched. A valid but unresolved
 calculation is accepted in recorded-prefix mode rather than ordinary playback.
 
+**Save scenario** and **Export diagnostics** are adjacent but distinct actions. Save scenario
+serialises the editable draft input for later loading and rerunning. Export diagnostics snapshots
+the currently accepted run, its source provenance, authoritative history, valid-prefix boundary,
+contact searches and console diagnostics into one versioned evidence file. Draft edits after Run do
+not change the diagnostic export. If no accepted run exists the export action is disabled with an
+explanation; serialization or download failure is reported without replacing the current run.
+
 After calculation, the catalogue compares `run.outcome` with the submitted descriptor's permitted
 outcomes. A match or mismatch is textual and visible alongside the expected values. Selecting a
 different draft, or loading a saved run, clears that association without changing the accepted run;
@@ -194,8 +201,9 @@ The detailed run diagnostics console contains diagnostics from the current run o
 read/parser/validation errors stay in load feedback so they cannot be mistaken for simulation
 diagnostics.
 
-Contract v2 has no export operation. FLAME-23 therefore renders no export button, including no
-disabled placeholder. FLAME-24 may add export beside the load action when the operation exists.
+Diagnostic export uses its own schema version and discriminator rather than the saved-run contract
+version. The action is labelled **Export diagnostics** and does not imply that the resulting file is
+loadable as a scenario or saved run.
 
 ### Primary replay workspace
 

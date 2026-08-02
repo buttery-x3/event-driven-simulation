@@ -10,6 +10,10 @@
 		parseSimulationInputFixture,
 		serializeSimulationInputFixture
 	} from '$lib/simulation/serialization/simulation-input';
+	import {
+		createDiagnosticExport,
+		serializeDiagnosticExport
+	} from '$lib/simulation/serialization/diagnostic-export';
 	import { constructSingleBallRun } from '$lib/simulation/run';
 	import ApplicationBar from './ApplicationBar.svelte';
 	import DiagnosticsConsole from './DiagnosticsConsole.svelte';
@@ -20,6 +24,7 @@
 	import ScenarioCatalogue from './ScenarioCatalogue.svelte';
 	import SimulationViewport from './SimulationViewport.svelte';
 	import {
+		createDiagnosticExportFilename,
 		getInspectionMode,
 		type LoadFeedback,
 		type RepositoryRunFixture,
@@ -58,6 +63,10 @@
 	);
 	let inputErrors = $state.raw<readonly SimulationInputValidationError[]>([]);
 	let inputFeedback = $state<string | null>(null);
+	let exportFeedback = $state.raw<{
+		readonly kind: 'success' | 'error';
+		readonly message: string;
+	} | null>(null);
 	let submittedInput = $state.raw<SimulationInput | null>(null);
 	let actualScenarioId = $state<string | null>(null);
 	let playback = $derived(toRendererPlaybackInput(currentRun));
@@ -122,6 +131,7 @@
 		replayTime = 0;
 		playing = false;
 		selectedEventIndex = null;
+		exportFeedback = null;
 	}
 
 	function selectScenario(scenarioId: string): void {
@@ -133,6 +143,7 @@
 		inputDraft = createSimulationInputDraft(scenario.input);
 		inputErrors = [];
 		inputFeedback = `Draft reset to ${scenario.name}. Current run unchanged until Run.`;
+		exportFeedback = null;
 	}
 
 	function resetCanonicalDefault(): void {
@@ -143,9 +154,11 @@
 		inputDraft = nextDraft;
 		inputErrors = [];
 		inputFeedback = null;
+		exportFeedback = null;
 	}
 
 	function runDraftScenario(): void {
+		exportFeedback = null;
 		const submission = prepareSimulationInputSubmission(draftBaseInput, inputDraft);
 		if (!submission.valid) {
 			inputErrors = submission.errors;
@@ -162,6 +175,7 @@
 	}
 
 	async function loadScenarioFile(file: File): Promise<void> {
+		exportFeedback = null;
 		try {
 			const input = parseSimulationInputFixture(await file.text());
 			selectedScenarioId = null;
@@ -183,6 +197,7 @@
 	}
 
 	function saveScenario(): void {
+		exportFeedback = null;
 		const submission = prepareSimulationInputSubmission(draftBaseInput, inputDraft);
 		if (!submission.valid) {
 			inputErrors = submission.errors;
@@ -201,6 +216,36 @@
 		URL.revokeObjectURL(url);
 		inputErrors = [];
 		inputFeedback = `Saved ${link.download}.`;
+	}
+
+	function exportDiagnostics(): void {
+		let objectUrl: string | null = null;
+
+		try {
+			const exportedAt = new Date().toISOString();
+			const bundle = createDiagnosticExport(currentRun, {
+				exportedAt,
+				runId: currentSource.kind === 'repository' ? currentSource.id : null,
+				scenarioId: actualScenarioId,
+				descriptiveName: currentSource.name,
+				source: currentSource
+			});
+			const blob = new Blob([serializeDiagnosticExport(bundle)], { type: 'application/json' });
+			objectUrl = URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			link.href = objectUrl;
+			link.download = createDiagnosticExportFilename(currentSource.name, exportedAt);
+			link.click();
+			inputFeedback = null;
+			exportFeedback = { kind: 'success', message: `Exported ${link.download}.` };
+		} catch (error) {
+			exportFeedback = {
+				kind: 'error',
+				message: `Could not export diagnostics: ${error instanceof Error ? error.message : 'serialisation or download failed'}. Current run retained.`
+			};
+		} finally {
+			if (objectUrl) URL.revokeObjectURL(objectUrl);
+		}
 	}
 
 	function selectRepositoryFixture(fixtureId: string): void {
@@ -293,6 +338,9 @@
 		onRun={runDraftScenario}
 		onLoadScenario={loadScenarioFile}
 		onSaveScenario={saveScenario}
+		canExportDiagnostics={currentRun !== null}
+		{exportFeedback}
+		onExportDiagnostics={exportDiagnostics}
 	/>
 
 	<div class="primary-workspace">

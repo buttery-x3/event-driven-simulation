@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import canonicalFixtureJson from '../../../fixtures/runs/canonical-event-driven-offset-drop.json?raw';
 import { parseSimulationRunFixture } from '$lib/simulation/serialization/run-record';
 import {
+	createDiagnosticExportFilename,
 	formatRecordedSeconds,
 	formatSource,
 	getInspectionMode,
@@ -10,6 +11,15 @@ import {
 } from './model';
 
 describe('workbench run presentation model', () => {
+	it('builds a readable collision-resistant diagnostic export filename', () => {
+		expect(
+			createDiagnosticExportFilename(
+				'Canonical Event-Driven Offset Drop.json',
+				'2026-08-02T11:23:27.123Z'
+			)
+		).toBe('canonical-event-driven-offset-drop-diagnostics-20260802T112327123Z.json');
+	});
+
 	it.each([
 		['valid', 'exited', 'completed-replay'],
 		['valid', 'event-limit', 'recorded-prefix'],

@@ -94,6 +94,11 @@ src/lib/simulation/
         __tests__/
 
     serialization/
+        diagnostic-export/
+            index.ts
+            types.ts
+            v1.ts
+            __tests__/
         structural-validation/
             index.ts
             assertions.ts
@@ -128,6 +133,11 @@ is needed. It must not become a universal barrel that exposes every internal cap
 | `world`         | Scene validation, canonical boards and scenario definitions                    | Dynamic event sequencing, fixture parsing          |
 | `run`           | Event-to-event simulation, response and terminal outcome construction          | Renderer resources, external JSON parsing          |
 | `serialization` | Unknown-data parsing, contract-version dispatch and saved input/run validation | Authoritative motion or collision generation       |
+
+The `serialization/diagnostic-export` subdomain owns construction and formatted JSON writing for
+the versioned, immutable diagnostic evidence bundle. It consumes an accepted run record and
+explicit workbench provenance; it does not load scenarios, validate saved runs, invoke simulation,
+or depend on browser download APIs.
 
 These responsibilities refine the module descriptions already present in `architecture.md`; they do
 not replace the physical and renderer boundaries documented there.
