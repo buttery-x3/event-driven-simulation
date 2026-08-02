@@ -286,8 +286,7 @@ function resolveDegenerateContact(
 		normalVelocity,
 		source: 'boundary',
 		refinementIterations: 0,
-		classification:
-			normalVelocity > tolerances.normalVelocity ? 'rejected-separating' : 'accepted'
+		classification: normalVelocity > tolerances.normalVelocity ? 'rejected-separating' : 'accepted'
 	};
 	const degenerateDiagnostics = { ...diagnostics, polynomialScale, candidates: [candidate] };
 

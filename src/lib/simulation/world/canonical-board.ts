@@ -1,4 +1,8 @@
-import type { SceneDefinition, StaticCircleCollider, StaticLineSegmentCollider } from '../contracts';
+import type {
+	SceneDefinition,
+	StaticCircleCollider,
+	StaticLineSegmentCollider
+} from '../contracts';
 
 export const canonicalBoardDimensions = {
 	width: 5.4,

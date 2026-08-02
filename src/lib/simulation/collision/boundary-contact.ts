@@ -2,10 +2,7 @@ import type { ContactEvent, MotionSegment, StaticLineSegmentCollider, Vec2 } fro
 import { isolatePolynomialRoots, type IsolatedPolynomialRoot } from '../math';
 import { evaluateMotionSegmentPosition, evaluateMotionSegmentVelocity } from '../motion';
 import { dotVec2 } from '../math';
-import {
-	evaluateBoundaryCandidate,
-	type BoundaryFeatureRoot
-} from './boundary-candidate';
+import { evaluateBoundaryCandidate, type BoundaryFeatureRoot } from './boundary-candidate';
 import { validateBoundaryContactQuery } from './boundary-query-validation';
 
 export interface BoundaryContactTolerances {
@@ -367,4 +364,3 @@ function distanceToSegment(point: Vec2, start: Vec2, tangent: Vec2, segmentLengt
 function clamp(value: number, minimum: number, maximum: number): number {
 	return Math.min(maximum, Math.max(minimum, value));
 }
-

@@ -1,5 +1,2 @@
 export { constructSingleBallRun } from './construct';
-export {
-	validateSingleBallInput,
-	type SimulationInputDiagnostic
-} from './input-validation';
+export { validateSingleBallInput, type SimulationInputDiagnostic } from './input-validation';

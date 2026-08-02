@@ -142,7 +142,8 @@ export default defineConfig(
 						},
 						{
 							regex: '^\\$lib/simulation/serialization/run-record/.+',
-							message: 'Application routes must use the simulation/run-fixture public entry point.'
+							message:
+								'Application and workbench code must use the simulation/serialization/run-record public entry point.'
 						}
 					]
 				}

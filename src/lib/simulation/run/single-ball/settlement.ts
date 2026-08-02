@@ -1,4 +1,9 @@
-import type { RunTerminalReason, SimulationInput, StaticLineSegmentCollider, Vec2 } from '../../contracts';
+import type {
+	RunTerminalReason,
+	SimulationInput,
+	StaticLineSegmentCollider,
+	Vec2
+} from '../../contracts';
 import { dotVec2 } from '../../math';
 
 export function classifySettlement(

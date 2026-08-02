@@ -203,7 +203,8 @@ export function constructSingleBallRun(input: SimulationInput): SimulationRunRec
 				{
 					type: 'no-future-event',
 					time: state.time,
-					detail: 'The body is stationary with zero acceleration and no supported event is reachable.'
+					detail:
+						'The body is stationary with zero acceleration and no supported event is reachable.'
 				},
 				state.time
 			);

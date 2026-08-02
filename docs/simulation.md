@@ -1,8 +1,8 @@
 # Canonical Plinko scene and scenarios
 
 Milestone 2 uses one fixed physical board and a small named scenario catalogue. Both are ordinary
-TypeScript data under `src/lib/simulation`; they can be imported in Node tests without Three.js,
-Svelte or DOM globals.
+TypeScript data exposed by `src/lib/simulation/world`; they can be imported in Node tests without
+Three.js, Svelte or DOM globals.
 
 ## Board coordinate system
 

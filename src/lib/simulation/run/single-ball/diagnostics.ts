@@ -8,10 +8,7 @@ import type {
 	SimulationRunRecord,
 	Vec2
 } from '../../contracts';
-import type {
-	FixedWorldContactDiagnostics,
-	FixedWorldContactQueryResult
-} from '../../collision';
+import type { FixedWorldContactDiagnostics, FixedWorldContactQueryResult } from '../../collision';
 import { dotVec2 } from '../../math';
 import { evaluateMotionSegmentVelocity } from '../../motion';
 import { getTerminalDiagnosticCode } from '../outcome';

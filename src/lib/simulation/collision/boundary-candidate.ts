@@ -86,10 +86,7 @@ function evaluateFaceCandidate(
 ) {
 	const side = root.feature === 'segment-face-positive' ? 1 : -1;
 	const normal: Vec2 = [positiveNormal[0] * side, positiveNormal[1] * side];
-	const signedDistance = dotVec2(
-		[position[0] - start[0], position[1] - start[1]],
-		positiveNormal
-	);
+	const signedDistance = dotVec2([position[0] - start[0], position[1] - start[1]], positiveNormal);
 	const surfaceSeparation = Math.abs(signedDistance - side * query.ballRadius);
 	const normalVelocity = dotVec2(velocity, normal);
 	const contactPoint: Vec2 = [

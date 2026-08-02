@@ -2,11 +2,11 @@
 	import { onMount } from 'svelte';
 	import { PlaybackClock, toRendererPlaybackInput } from '$lib/rendering/playback';
 	import type { SimulationInput, SimulationRunRecord } from '$lib/simulation/contracts';
+	import { canonicalPlinkoScenarios, defaultCanonicalPlinkoScenario } from '$lib/simulation/world';
 	import {
-		canonicalPlinkoScenarios,
-		defaultCanonicalPlinkoScenario
-	} from '$lib/simulation/world';
-	import { parseSimulationRunFixture, RunFixtureError } from '$lib/simulation/serialization/run-record';
+		parseSimulationRunFixture,
+		RunFixtureError
+	} from '$lib/simulation/serialization/run-record';
 	import {
 		parseSimulationInputFixture,
 		serializeSimulationInputFixture

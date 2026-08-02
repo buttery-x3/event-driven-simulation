@@ -6,10 +6,10 @@ This document defines the filesystem representation of the Event-Driven Simulati
 
 It complements:
 
-* [`architecture.md`](architecture.md), which remains authoritative for conceptual subsystem
+- [`architecture.md`](architecture.md), which remains authoritative for conceptual subsystem
   responsibilities and the simulation/rendering boundary;
-* [`modularity.md`](modularity.md), which defines file and function growth policy; and
-* [`workflow.md`](workflow.md), which remains authoritative for quality-gate commands and review
+- [`modularity.md`](modularity.md), which defines file and function growth policy; and
+- [`workflow.md`](workflow.md), which remains authoritative for quality-gate commands and review
   workflow.
 
 This document owns source placement, subsystem entry points, cross-subsystem import rules and the
@@ -17,18 +17,10 @@ migration from the current flat simulation directory.
 
 ## Current state
 
-`src/lib/simulation` currently places contracts, numerical utilities, trajectory evaluation,
-collision solvers, world/scenario definitions, run construction, saved-run serialization and their
-tests at one directory level.
-
-The implementation has meaningful conceptual boundaries, but the filesystem does not expose them.
-Tests also visually double the number of entries in the directory.
-
-This flat layout is legacy. Do not add another production implementation file directly to
-`src/lib/simulation`.
-
-The migration should be performed as one dedicated, behaviour-preserving architecture issue rather
-than leaving the repository in a prolonged half-flat, half-nested state.
+FLAME-35 replaced the former flat `src/lib/simulation` layout with the named subsystems below.
+Production implementation files belong to one of those subsystems, tests are in local `__tests__`
+directories, and cross-subsystem consumers use explicit entry points. The architecture checker
+prevents the former flat layout from returning.
 
 ## Target topology
 
@@ -36,6 +28,7 @@ than leaving the repository in a prolonged half-flat, half-nested state.
 src/lib/simulation/
     contracts/
         index.ts
+        __tests__/
 
     math/
         index.ts
@@ -52,6 +45,8 @@ src/lib/simulation/
         index.ts
         peg-contact.ts
         boundary-contact.ts
+        boundary-candidate.ts
+        boundary-query-validation.ts
         fixed-world-contact.ts
         __tests__/
 
@@ -81,6 +76,7 @@ src/lib/simulation/
         run-record/
             index.ts
             error.ts
+            fixture.ts
             json.ts
             version.ts
             v5.ts
@@ -96,15 +92,15 @@ is needed. It must not become a universal barrel that exposes every internal cap
 
 ## Subsystem ownership
 
-| Subsystem | Owns | Does not own |
-| --- | --- | --- |
-| `contracts` | Plain serialisable simulation, trajectory, event and diagnostic types | Algorithms, browser types, runtime validation |
-| `math` | Small reusable numerical and vector operations | Scene semantics, collision policy, run state |
-| `motion` | Evaluation of declared continuous motion segments | Contact discovery, rendering clocks |
-| `collision` | Continuous fixed-geometry contact discovery and earliest-contact selection | Run construction, terminal outcomes, serialization |
-| `world` | Scene validation, canonical boards and scenario definitions | Dynamic event sequencing, fixture parsing |
-| `run` | Event-to-event simulation, response and terminal outcome construction | Renderer resources, external JSON parsing |
-| `serialization` | Unknown-data parsing, contract-version dispatch and saved input/run validation | Authoritative motion or collision generation |
+| Subsystem       | Owns                                                                           | Does not own                                       |
+| --------------- | ------------------------------------------------------------------------------ | -------------------------------------------------- |
+| `contracts`     | Plain serialisable simulation, trajectory, event and diagnostic types          | Algorithms, browser types, runtime validation      |
+| `math`          | Small reusable numerical and vector operations                                 | Scene semantics, collision policy, run state       |
+| `motion`        | Evaluation of declared continuous motion segments                              | Contact discovery, rendering clocks                |
+| `collision`     | Continuous fixed-geometry contact discovery and earliest-contact selection     | Run construction, terminal outcomes, serialization |
+| `world`         | Scene validation, canonical boards and scenario definitions                    | Dynamic event sequencing, fixture parsing          |
+| `run`           | Event-to-event simulation, response and terminal outcome construction          | Renderer resources, external JSON parsing          |
+| `serialization` | Unknown-data parsing, contract-version dispatch and saved input/run validation | Authoritative motion or collision generation       |
 
 These responsibilities refine the module descriptions already present in `architecture.md`; they do
 not replace the physical and renderer boundaries documented there.
@@ -126,15 +122,15 @@ serialization -> contracts, world, run
 
 Additional rules:
 
-* `contracts` imports no other simulation subsystem.
-* `run` must not import `serialization`.
-* `collision` must not import `world`, `run` or `serialization`.
-* `world` must not import `collision`, `run` or `serialization`.
-* `serialization` may validate and preserve run data but must never generate or repair
+- `contracts` imports no other simulation subsystem.
+- `run` must not import `serialization`.
+- `collision` must not import `world`, `run` or `serialization`.
+- `world` must not import `collision`, `run` or `serialization`.
+- `serialization` may validate and preserve run data but must never generate or repair
   authoritative motion.
-* Rendering may consume only the documented public contract and motion-evaluation APIs, consistent
+- Rendering may consume only the documented public contract and motion-evaluation APIs, consistent
   with `architecture.md`.
-* Application and workbench code may invoke run construction and serialization only through their
+- Application and workbench code may invoke run construction and serialization only through their
   public entry points.
 
 Circular subsystem dependencies are forbidden.
@@ -145,11 +141,11 @@ Each subsystem consumed outside itself must expose an explicit `index.ts`.
 
 Entry points must:
 
-* use explicit named exports;
-* contain no implementation logic;
-* avoid wildcard exports;
-* expose only supported public capabilities;
-* remain small enough to review as an API surface.
+- use explicit named exports;
+- contain no implementation logic;
+- avoid wildcard exports;
+- expose only supported public capabilities;
+- remain small enough to review as an API surface.
 
 Cross-subsystem imports must use the target subsystem entry point:
 
@@ -195,22 +191,22 @@ does not change the regression-fixture process in `regression-fixtures.md`.
 
 Browser tests remain under `tests/browser` and continue to follow `browser-testing.md`.
 
-## Migration map
+## Migration record
 
-The current files should move as follows:
+FLAME-35 applied this ownership map from the former flat locations:
 
-| Current location | Target subsystem |
-| --- | --- |
-| `contracts.ts` | `contracts/index.ts`, with later type splitting only if independently justified |
-| `vector.ts`, `polynomial-roots.ts` | `math/` |
-| `trajectory.ts` | `motion/` |
-| `peg-contact.ts`, `boundary-contact.ts`, `fixed-world-contact.ts` | `collision/` |
-| `canonical-board.ts`, `board-state-scenarios.ts`, `scenario-catalogue.ts`, `scene-validation.ts`, `prototype-input.ts` | `world/` |
-| `single-ball-run.ts`, `run-outcome.ts` | `run/`, including the `run/single-ball/` decomposition from `modularity.md` |
-| `synthetic-run.ts` | remove if the compatibility alias is no longer required; otherwise expose the alias from `run/index.ts` without retaining a separate implementation module |
-| `run-fixture*.ts` | `serialization/run-record/` |
-| `simulation-input-fixture.ts` | `serialization/simulation-input/` |
-| co-located `*.spec.ts` files | the matching local `__tests__/` directory |
+| Former location                                                                                                        | Target subsystem                                                                                                                                           |
+| ---------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `contracts.ts`                                                                                                         | `contracts/index.ts`, with later type splitting only if independently justified                                                                            |
+| `vector.ts`, `polynomial-roots.ts`                                                                                     | `math/`                                                                                                                                                    |
+| `trajectory.ts`                                                                                                        | `motion/`                                                                                                                                                  |
+| `peg-contact.ts`, `boundary-contact.ts`, `fixed-world-contact.ts`                                                      | `collision/`                                                                                                                                               |
+| `canonical-board.ts`, `board-state-scenarios.ts`, `scenario-catalogue.ts`, `scene-validation.ts`, `prototype-input.ts` | `world/`                                                                                                                                                   |
+| `single-ball-run.ts`, `run-outcome.ts`                                                                                 | `run/`, including the `run/single-ball/` decomposition from `modularity.md`                                                                                |
+| `synthetic-run.ts`                                                                                                     | remove if the compatibility alias is no longer required; otherwise expose the alias from `run/index.ts` without retaining a separate implementation module |
+| `run-fixture*.ts`                                                                                                      | `serialization/run-record/`                                                                                                                                |
+| `simulation-input-fixture.ts`                                                                                          | `serialization/simulation-input/`                                                                                                                          |
+| co-located `*.spec.ts` files                                                                                           | the matching local `__tests__/` directory                                                                                                                  |
 
 The migration issue must also update the path references in `architecture.md`, `simulation.md`,
 `workflow.md`, ESLint rules and all imports. Do not leave documentation describing paths that no
@@ -218,7 +214,7 @@ longer exist.
 
 ## Mechanical enforcement
 
-Create `scripts/check-architecture.mjs` after the migration target exists.
+`scripts/check-architecture.mjs` enforces the migrated topology.
 
 The checker should fail when it finds:
 
@@ -234,17 +230,17 @@ The checker should fail when it finds:
 Use the TypeScript compiler API or another parser already available in the repository. Do not
 introduce a dependency solely to parse imports unless the existing toolchain cannot do so safely.
 
-Add the checker as:
+The checker is exposed as:
 
 ```json
 {
-  "scripts": {
-    "check:architecture": "node scripts/check-architecture.mjs"
-  }
+	"scripts": {
+		"check:architecture": "node scripts/check-architecture.mjs"
+	}
 }
 ```
 
-Then include `npm run check:architecture` inside the existing `npm run check` chain.
+`npm run check:architecture` is included inside the existing `npm run check` chain.
 
 The same issue must update `docs/workflow.md` so it continues to describe the actual canonical
 quality gate. Do not create a second completion command or separate architecture-review ritual.
@@ -258,15 +254,15 @@ failure mode.
 
 The source-topology issue is complete when:
 
-* the target subsystems exist and every current simulation production file has an explicit home;
-* `single-ball-run.ts` has been decomposed according to `modularity.md`;
-* all unit tests have moved rather than been duplicated;
-* public imports use subsystem entry points;
-* dependency-direction and topology checks pass;
-* `architecture.md`, `simulation.md`, `workflow.md` and ESLint paths describe the new layout;
-* the existing repository quality gate passes;
-* relevant browser tests pass because application import paths are affected;
-* no physical behaviour, run contract or saved fixture meaning changed as part of the move.
+- the target subsystems exist and every current simulation production file has an explicit home;
+- `single-ball-run.ts` has been decomposed according to `modularity.md`;
+- all unit tests have moved rather than been duplicated;
+- public imports use subsystem entry points;
+- dependency-direction and topology checks pass;
+- `architecture.md`, `simulation.md`, `workflow.md` and ESLint paths describe the new layout;
+- the existing repository quality gate passes;
+- relevant browser tests pass because application import paths are affected;
+- no physical behaviour, run contract or saved fixture meaning changed as part of the move.
 
 Behavioural changes discovered during migration should become separate follow-up issues unless they
 are necessary to preserve the existing contract.

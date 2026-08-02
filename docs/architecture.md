@@ -3,8 +3,8 @@
 ## Simulation and rendering boundary
 
 The browser application uses plain TypeScript data as the boundary between scene configuration,
-headless simulation, saved run records and renderer playback. The public contracts live in
-`src/lib/simulation/contracts.ts` and do not import Svelte, Three.js or browser APIs.
+headless simulation, saved run records and renderer playback. The public contracts live in the
+`src/lib/simulation/contracts` subsystem and do not import Svelte, Three.js or browser APIs.
 
 The dependency direction is:
 
@@ -20,11 +20,11 @@ Simulation data uses two-dimensional coordinates. Rendering may map that data in
 three-dimensional presentation, but renderer objects never enter the simulation contracts and
 rendering is not a source of physical truth.
 
-Modules expose narrow public APIs and have one primary reason to change. Where a subsystem needs
-multiple implementation modules, a deliberately small entry point may preserve its public contract
-without exposing those implementation files to application routes. This rule is enforced for the
-saved-run and playback boundaries described below; it is not a reason to add barrels for unrelated
-modules.
+Simulation modules belong to the `contracts`, `math`, `motion`, `collision`, `world`, `run`, or
+`serialization` subsystem documented in [`source-structure.md`](source-structure.md). Each
+subsystem exposes supported capabilities through an explicit `index.ts`; implementation modules
+remain private to their subsystem. The architecture checker enforces this topology and the
+dependency graph, while ESLint enforces production file and function growth limits.
 
 ## Physical scene semantics
 
@@ -86,11 +86,11 @@ either transport today.
 ## Saved run boundary
 
 Saved run fixtures live under the repository-level `fixtures/` directory so headless tests and the
-browser renderer consume the same files. `src/lib/simulation/run-fixture.ts` is the narrow runtime
-entry point from unknown JSON data to `SimulationRunRecord`. JSON parsing, typed fixture errors,
-contract-version recognition and version 5 structural and consistency validation live in separate implementation
-modules behind that entry point. Version dispatch is intentionally explicit rather than a general
-schema registry.
+browser renderer consume the same files. `src/lib/simulation/serialization/run-record/index.ts` is
+the narrow runtime entry point from unknown JSON data to `SimulationRunRecord`. JSON parsing, typed
+fixture errors, contract-version recognition and version 5 structural and consistency validation
+live in separate implementation modules behind that entry point. Version dispatch is intentionally
+explicit rather than a general schema registry.
 
 Loading a fixture establishes only that it matches the saved-run contract. It does not promote the
 terminal reason or make an incomplete run eligible for ordinary playback. The renderer still
@@ -101,27 +101,29 @@ never evaluates motion beyond the committed segment boundary.
 
 ## Headless event-driven run
 
-`src/lib/simulation/single-ball-run.ts` is the authoritative producer of single-ball run records.
-It repeatedly constructs one continuous constant-acceleration path, selects the earliest supported
-fixed-world contact or termination-region entry, commits only the certified interval, resolves the
-contact from its evaluated event state and continues from the exact event time. The old
-`generateSyntheticRun` name is a compatibility alias for this producer and no longer invents a
-midpoint contact.
+`src/lib/simulation/run/single-ball/construct.ts` is the authoritative producer of single-ball run
+records. It repeatedly constructs one continuous constant-acceleration path, selects the earliest
+supported fixed-world contact or termination-region entry, commits only the certified interval,
+resolves the contact from its evaluated event state and continues from the exact event time.
+Validation, termination search, settlement and diagnostic construction are separate modules in the
+same subdomain. The `run` entry point preserves both `constructSingleBallRun` and the old
+`generateSyntheticRun` compatibility name without retaining a forwarding implementation module.
 
-Canonical recorded-segment position and velocity evaluation lives in
-`src/lib/simulation/trajectory.ts`. Synthetic generation and renderer playback both consume this
-framework-independent evaluator, so rendering cannot acquire a duplicate motion equation.
-Low-level two-dimensional vector operations live separately in `src/lib/simulation/vector.ts`.
-These modules import only the plain simulation contracts and are exercised in Vitest's Node
-environment, so they do not depend on Svelte, Three.js, a renderer or browser globals.
+Canonical recorded-segment position and velocity evaluation lives in the `simulation/motion`
+subsystem. Run construction and renderer playback both consume this framework-independent
+evaluator, so rendering cannot acquire a duplicate motion equation. Low-level vector and
+polynomial operations live in `simulation/math`. These modules import only allowed lower-level
+simulation entry points and are exercised in Vitest's Node environment, so they do not depend on
+Svelte, Three.js, a renderer or browser globals.
 
-Continuous fixed-world collision discovery is headless simulation code.
-`peg-contact.ts` solves ball-versus-circle contacts, `boundary-contact.ts` solves finite segment
-faces and endpoints, and `fixed-world-contact.ts` compares their common typed candidates.
-`polynomial-roots.ts` contains the shared interval root isolation used by both geometry solvers.
-None of these modules advances state through fixed timesteps or imports rendering code. Renderer
-line thickness remains presentation-only; collision offsets use the dynamic ball radius and the
-zero-thickness physical segment contract.
+Continuous fixed-world collision discovery is owned by `simulation/collision`.
+`peg-contact.ts` solves ball-versus-circle contacts, `boundary-contact.ts` orchestrates finite
+segment root selection, `boundary-query-validation.ts` validates its query contract,
+`boundary-candidate.ts` classifies face and endpoint evidence, and `fixed-world-contact.ts` compares
+their common typed candidates. `simulation/math/polynomial-roots.ts` contains the shared interval
+root isolation used by both geometry solvers. None of these modules advances state through fixed
+timesteps or imports rendering code. Renderer line thickness remains presentation-only; collision
+offsets use the dynamic ball radius and the zero-thickness physical segment contract.
 
 ## Renderer playback
 
@@ -158,14 +160,16 @@ presentation-specific format.
 
 ## Enforced dependency direction
 
-ESLint makes the architectural boundary executable. Production files under
+ESLint and `scripts/check-architecture.mjs` make the architectural boundary executable. Production files under
 `src/lib/simulation/` cannot import Svelte, Three.js or rendering modules and cannot reference
 browser, worker or network globals. Production files under `src/lib/rendering/` may import the
 plain simulation contracts and the canonical trajectory evaluator, but not simulation producers or
-fixture loaders. Application routes must use the `rendering/playback` and
-`simulation/run-fixture` entry points rather than their internal implementation modules. Co-located
-tests may cross the boundary deliberately to prove end-to-end fixture replay, while the production
-modules remain independently reusable.
+fixture loaders. Application and workbench modules use the `simulation/run`,
+`simulation/serialization/run-record`, and `simulation/serialization/simulation-input` entry points
+rather than their internal implementation modules. The architecture checker also rejects unknown
+subsystems, deep cross-subsystem imports, reversed or circular dependencies, crowded directories,
+entry-point logic and catch-all directories. Co-located tests may cross a boundary deliberately to
+prove end-to-end fixture replay, while production modules remain independently reusable.
 
 ## Workbench UI and CSS
 
@@ -190,9 +194,10 @@ selection and field editing cannot mutate an accepted run. The explicit Run acti
 from a launch draft to simulation; renderer playback still receives only the returned run through
 `toRendererPlaybackInput`.
 
-`simulation-input-fixture.ts` provides the versioned JSON boundary for scenario inputs. It reuses
-the version 5 structural input validator and then applies the single-ball semantic validator.
-Saved run records continue to use the independent `run-fixture.ts` boundary.
+`simulation/serialization/simulation-input` provides the versioned JSON boundary for scenario
+inputs. It reuses the version 5 structural input validator and then applies the single-ball semantic
+validator. Saved run records continue to use the independent
+`simulation/serialization/run-record` boundary.
 
 The current styling policy is Svelte component-scoped CSS plus global CSS custom properties.
 `src/app.css` contains the reset, document defaults and shared tokens for colour, spacing,
