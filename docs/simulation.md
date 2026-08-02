@@ -199,8 +199,12 @@ the public contract. Diagnostics retain each contact search's accepted and rejec
 record search iterations, event count, candidate count, segment count, simulated horizon and
 calculation wall time. Accepted contact candidates additionally preserve their proposed time delta,
 position, contact point, normal, pre- and coupled post-contact velocity, near-simultaneous and
-active-set classification, impulse, and outgoing normal velocity. Contact events preserve the same
-complete manifold evidence. These optional forensic fields remain diagnostic evidence only:
+event-contact-set membership, positive-impulse contribution, retained/released support
+classification, impulse, and outgoing normal velocity. Membership is independent of impulse: a
+retained unilateral support can remain active with zero instantaneous impact impulse. Evidence is
+matched to the exact event-time candidate; later roots for the same collider and feature retain their
+original classification. Contact events preserve the same complete manifold evidence. These optional
+forensic fields remain diagnostic evidence only:
 instrumentation is written after selection and never participates in
 event selection or becomes authoritative trajectory motion.
 
@@ -225,6 +229,12 @@ continuation between those transitions. Rest requires a separate non-negative re
 proving gravity can be balanced by the full contact set; small speed alone is insufficient.
 Resting contact is terminal for the current fixed-world,
 single-ball model because no supported future external event can change it.
+
+When a constrained circular path reaches a new collider, the circular segment end state supplies
+the canonical event time, position and velocity directly to the manifold solve. The retained circle
+support uses the end-state radial normal, and the new collider geometry is constructed at that same
+state. The run does not introduce a sub-tolerance free-flight interval between the constrained path
+and its impact.
 
 For a fixed straight segment, the constrained acceleration is
 

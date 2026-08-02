@@ -12,8 +12,8 @@ export const manifoldContactScenarios = [
 	scenario(
 		'circular-slide-second-peg',
 		'Circular slide reaches a second peg at pace',
-		'A supported circular path reaches another peg and resolves the old support with the new impact.',
-		['escaped'],
+		'A supported circular path reaches another peg, retains support, reverses and settles after contracting returns.',
+		['settled'],
 		input(circularAcquisitionColliders(), [0, 0.6], [1, 0], 0.5),
 		'manifold.circular-acquisition',
 		['circular-contact']

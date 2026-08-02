@@ -255,7 +255,7 @@ test('groups verification scenarios, replaces worlds on Run and reports authorit
 		{
 			id: 'circular-slide-second-peg',
 			sceneId: 'manifold-support-peg-impact-peg',
-			outcome: 'escaped'
+			outcome: 'settled'
 		},
 		{ id: 'sustained-two-support-rest', sceneId: 'manifold-left-v-right-v', outcome: 'settled' },
 		{

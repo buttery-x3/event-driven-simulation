@@ -9,7 +9,7 @@ import type {
 } from '../../contracts';
 import { getRunOutcome } from '../outcome';
 import { bodyOrNull, toTerminalDiagnostic } from './diagnostics';
-import type { ImpactObservation } from './impact-response';
+import type { ImpactObservation } from './impact';
 import type { SustainedContactResult } from './sustained-contact';
 
 export interface RunAssembly {

@@ -91,9 +91,12 @@ src/lib/simulation/
             construct.ts
             input-validation.ts
             termination-search.ts
-            impact-response.ts
-            diagnostics.ts
-            run-assembly.ts
+			diagnostics.ts
+			run-assembly.ts
+			impact/
+				index.ts
+				response.ts
+				resolution.ts
             manifold/
                 index.ts
                 types.ts

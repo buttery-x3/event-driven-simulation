@@ -16,6 +16,7 @@ export interface SustainedNextState {
 	readonly releasedContactColliderId: string | null;
 	readonly releasedContactColliderIds: readonly string[];
 	readonly retainedSupportCandidates: readonly FixedWorldContactCandidate[];
+	readonly pendingContactCandidates: readonly FixedWorldContactCandidate[];
 	readonly acceptInitialContact: boolean;
 }
 

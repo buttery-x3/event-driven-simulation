@@ -40,6 +40,7 @@ export function detachedContactResult(
 			releasedContactColliderId: request.colliderId,
 			releasedContactColliderIds: [request.colliderId],
 			retainedSupportCandidates: [],
+			pendingContactCandidates: [],
 			acceptInitialContact: false
 		}
 	};

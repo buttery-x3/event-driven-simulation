@@ -274,6 +274,10 @@ export interface RunContactCandidateDiagnostic {
 	readonly postContactVelocity?: Vec2;
 	readonly nearSimultaneous?: boolean;
 	readonly activeInManifold?: boolean;
+	readonly eventContactSetMember?: boolean;
+	readonly positiveImpulseContributor?: boolean;
+	readonly retainedSupportAfterImpact?: boolean;
+	readonly releasedAfterImpact?: boolean;
 	readonly impulse?: number;
 	readonly postImpactNormalVelocity?: number;
 }

@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import type { SimulationInput, StaticCollider, Vec2 } from '../../../contracts';
+import type {
+	ContactManifoldMember,
+	RunContactSearchDiagnostic,
+	SimulationInput,
+	StaticCollider,
+	Vec2
+} from '../../../contracts';
+import type { FixedWorldContactCandidate } from '../../../collision';
 import { boardStateScenarios } from '../../../world';
 import { constructSingleBallRun } from '../construct';
+import { withManifoldEvidence } from '../diagnostics';
 
 const closeContacts = boardStateScenarios.find(({ id }) => id === 'close-contacts')!.input;
 
@@ -83,6 +91,21 @@ describe('FLAME-44 coupled fixed-world impact manifolds', () => {
 		expect(
 			run.trajectories[0]!.segments.filter(({ type }) => type === 'linear-contact').length
 		).toBeGreaterThan(1);
+		const search = run.diagnostics.contactSearches.find((candidate) =>
+			candidate.activeColliderIds?.includes('wall')
+		);
+		expect(
+			search?.candidates.find(
+				({ colliderId, eventContactSetMember }) => colliderId === 'floor' && eventContactSetMember
+			)
+		).toMatchObject({
+			activeInManifold: true,
+			eventContactSetMember: true,
+			positiveImpulseContributor: false,
+			retainedSupportAfterImpact: true,
+			releasedAfterImpact: false,
+			impulse: 0
+		});
 	});
 
 	it('couples a paced circular slide with a second peg', () => {
@@ -105,11 +128,60 @@ describe('FLAME-44 coupled fixed-world impact manifolds', () => {
 		const run = constructSingleBallRun(testInput(pegs, [0, 0.6], [1, 0], 0.5));
 		const manifold = run.events.filter(({ type }) => type === 'contact')[1];
 
-		expect(run.trajectories[0]!.segments.some(({ type }) => type === 'circular-contact')).toBe(
-			true
-		);
 		expect(manifold).toMatchObject({ type: 'contact', contacts: [{}, {}] });
-		expect(run.terminalReason.type).not.toBe('zero-time-loop');
+		if (!manifold || manifold.type !== 'contact') return;
+		const support = manifold.contacts?.find(({ colliderId }) => colliderId === 'support-peg');
+		const radius = Math.hypot(...manifold.position);
+		const radial: Vec2 = [manifold.position[0] / radius, manifold.position[1] / radius];
+		expectVector(support?.normal, radial, 9);
+		expect(support?.normal[0]).toBeCloseTo(0.5403023059, 8);
+		expect(support?.normal[1]).toBeCloseTo(0.8414709848, 8);
+		expect(Math.hypot(...(support?.contactPoint ?? [Infinity, Infinity]))).toBeCloseTo(0.5, 9);
+		expect(support?.preImpactNormalVelocity).toBeCloseTo(0, 12);
+		expect(support?.postImpactNormalVelocity).toBeCloseTo(0, 12);
+		expectVector(manifold.postContactVelocity, [-0.71677674, 0.46023705], 7);
+
+		const segments = run.trajectories[0]!.segments;
+		const segmentBefore = segments.find(
+			(segment) => segment.type === 'circular-contact' && segment.endTime === manifold.time
+		);
+		const segmentAfter = segments.find(
+			(segment) => segment.type === 'circular-contact' && segment.startTime === manifold.time
+		);
+		expect(segmentBefore?.endTime).toBe(manifold.time);
+		expect(segmentAfter?.startTime).toBe(manifold.time);
+		expect(
+			segments.some(
+				(segment) => segment.type === 'free-flight' && segment.startTime === manifold.time
+			)
+		).toBe(false);
+
+		const search = run.diagnostics.contactSearches.find(
+			(candidate) =>
+				candidate.selectedColliderId === 'impact-peg' &&
+				candidate.searchInterval[1] === manifold.time
+		);
+		expect(
+			search?.candidates.filter(
+				({ colliderId, eventContactSetMember }) =>
+					colliderId === 'support-peg' && eventContactSetMember
+			)
+		).toHaveLength(1);
+		expect(
+			search?.candidates
+				.filter(({ time }) => time > manifold.time)
+				.every(
+					({ eventContactSetMember, activeInManifold, impulse }) =>
+						!eventContactSetMember && !activeInManifold && impulse === undefined
+				)
+		).toBe(true);
+		expect(run.outcome).toBe('settled');
+		if (run.terminalReason.type === 'resting-contact') {
+			expect(run.terminalReason.contacts?.map(({ colliderId }) => colliderId).sort()).toEqual([
+				'impact-peg',
+				'support-peg'
+			]);
+		}
 	});
 
 	it('allows a new angled impact to release the old support', () => {
@@ -133,6 +205,69 @@ describe('FLAME-44 coupled fixed-world impact manifolds', () => {
 		if (!manifold || manifold.type !== 'contact') return;
 		expect(manifold.postContactVelocity![1]).toBeGreaterThan(0);
 		expect(manifold.contacts?.find(({ colliderId }) => colliderId === 'floor')?.impulse).toBe(0);
+		const search = run.diagnostics.contactSearches.find((candidate) =>
+			candidate.activeColliderIds?.includes('lifting-circle')
+		);
+		expect(
+			search?.candidates.find(
+				({ colliderId, eventContactSetMember }) => colliderId === 'floor' && eventContactSetMember
+			)
+		).toMatchObject({
+			activeInManifold: true,
+			positiveImpulseContributor: false,
+			retainedSupportAfterImpact: false,
+			releasedAfterImpact: true
+		});
+	});
+
+	it('does not annotate a later root that shares the current collider and feature', () => {
+		const current = circleCandidate(1);
+		const diagnostic: RunContactSearchDiagnostic = {
+			searchInterval: [0, 2],
+			outcome: 'contact',
+			reason: null,
+			selectedColliderId: current.colliderId,
+			candidates: [
+				{
+					colliderId: current.colliderId,
+					feature: current.feature,
+					time: current.time,
+					classification: 'accepted-impact',
+					eventContactSetMember: true
+				},
+				{
+					colliderId: current.colliderId,
+					feature: current.feature,
+					time: 1.5,
+					classification: 'future-root'
+				}
+			]
+		};
+		const contact: ContactManifoldMember = {
+			colliderId: current.colliderId,
+			feature: current.feature,
+			contactPoint: current.contactPoint,
+			normal: current.normal,
+			preImpactNormalVelocity: -1,
+			postImpactNormalVelocity: 0.5,
+			impulse: 1.5
+		};
+		const annotated = withManifoldEvidence(
+			diagnostic,
+			[1, 0],
+			[-0.5, 0],
+			[current],
+			[contact],
+			[],
+			1e-9
+		);
+
+		expect(annotated.candidates[0]).toMatchObject({
+			classification: 'accepted-impact',
+			eventContactSetMember: true,
+			positiveImpulseContributor: true
+		});
+		expect(annotated.candidates[1]).toEqual(diagnostic.candidates[1]);
 	});
 
 	it('certifies a mixed circle-line resting manifold', () => {
@@ -173,6 +308,27 @@ function withColliders(colliders: SimulationInput['scene']['staticColliders']): 
 
 function line(id: string, start: Vec2, end: Vec2): StaticCollider {
 	return { id, motionAuthority: 'static', physicalShape: { type: 'line-segment', start, end } };
+}
+
+function circleCandidate(time: number): FixedWorldContactCandidate {
+	return {
+		type: 'contact-candidate',
+		bodyId: 'ball',
+		colliderId: 'peg',
+		colliderKind: 'circle',
+		feature: 'circle',
+		time,
+		position: [0.6, 0],
+		contactPoint: [0.5, 0],
+		normal: [1, 0],
+		normalVelocity: -1,
+		response: 'impact'
+	};
+}
+
+function expectVector(actual: Vec2 | undefined, expected: Vec2, precision: number): void {
+	expect(actual?.[0]).toBeCloseTo(expected[0], precision);
+	expect(actual?.[1]).toBeCloseTo(expected[1], precision);
 }
 
 function testInput(

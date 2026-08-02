@@ -5,6 +5,7 @@ import type {
 } from '../../../../contracts';
 import { dotVec2 } from '../../../../math';
 import { evaluateCircularContactState } from '../../../../motion';
+import type { FixedWorldContactCandidate } from '../../../../collision';
 import { entryTransition, slidingTransition } from '../contact-mode-results';
 import { supportCandidate } from '../geometry';
 import type { SustainedContactRequest, SustainedContactResult } from '../types';
@@ -16,6 +17,7 @@ export function circularBoundaryResult(
 	boundary: AngularEvent,
 	leg: CircularContactMotionSegment,
 	endState: ReturnType<typeof evaluateCircularContactState>,
+	incomingCandidate: FixedWorldContactCandidate | null,
 	segments: readonly CircularContactMotionSegment[],
 	contactSearches: readonly RunContactSearchDiagnostic[]
 ): SustainedContactResult | null {
@@ -56,7 +58,7 @@ export function circularBoundaryResult(
 	}
 	const isContact = boundary.type === 'contact';
 	const retained = isContact
-		? supportCandidate(request, leg.endTime, endState.position, endState.velocity)
+		? supportCandidate(request, leg.endTime, endState.position, endState.velocity, endState.normal)
 		: null;
 	return completedResult(
 		entryRequest,
@@ -78,7 +80,8 @@ export function circularBoundaryResult(
 			releasedContactColliderId: entryRequest.colliderId,
 			releasedContactColliderIds: [entryRequest.colliderId],
 			retainedSupportCandidates: retained ? [retained] : [],
-			acceptInitialContact: isContact
+			pendingContactCandidates: incomingCandidate ? [incomingCandidate] : [],
+			acceptInitialContact: false
 		}
 	);
 }
@@ -163,21 +166,27 @@ export function unresolvedCircularResult(
 export function circularSearchDiagnostic(
 	request: SustainedContactRequest,
 	segment: CircularContactMotionSegment,
-	colliderId: string | null
+	candidate: FixedWorldContactCandidate | null
 ): RunContactSearchDiagnostic {
 	return {
 		searchInterval: [segment.startTime, segment.endTime],
 		eventTimeTolerance: request.input.settings.tolerances.eventTime,
-		outcome: colliderId ? 'contact' : 'no-event',
+		outcome: candidate ? 'contact' : 'no-event',
 		reason: null,
-		selectedColliderId: colliderId,
-		candidates: colliderId
+		selectedColliderId: candidate?.colliderId ?? null,
+		candidates: candidate
 			? [
 					{
-						colliderId,
-						feature: 'constrained-path',
-						time: segment.endTime,
-						classification: 'accepted'
+						colliderId: candidate.colliderId,
+						feature: candidate.feature,
+						time: candidate.time,
+						classification:
+							candidate.response === 'impact' ? 'accepted-impact' : 'accepted-non-impulsive',
+						position: candidate.position,
+						contactPoint: candidate.contactPoint,
+						normal: candidate.normal,
+						normalVelocity: candidate.normalVelocity,
+						eventContactSetMember: true
 					}
 				]
 			: []

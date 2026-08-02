@@ -131,8 +131,10 @@ result of this boundary.
 
 `src/lib/simulation/run/single-ball/construct.ts` is the authoritative producer of single-ball run
 records. It sequences free flight, impact and sustained contact, commits only certified intervals,
-and continues from exact physical event times. `impact-response.ts` owns restitution and the
-conservative manifold-level contracting-impact collapse policy. The private `manifold` subdomain
+and continues from exact physical event times. The private `impact` subdomain owns contact-event
+commitment and classification: `response.ts` owns restitution and conservative manifold-level
+contracting-impact collapse, while `resolution.ts` owns diagnostic commitment, support selection,
+rest classification and construction of the next authoritative state. The private `manifold` subdomain
 owns deterministic active-set normal-impulse solving and non-negative support-reaction
 certification for one dynamic circle against fixed contacts. The named `sustained-contact` subdomain owns
 support-shape dispatch, line continuation, shared contact-mode result construction and

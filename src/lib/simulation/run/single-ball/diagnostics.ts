@@ -9,7 +9,11 @@ import type {
 	Vec2
 } from '../../contracts';
 import type { ContactManifoldMember } from '../../contracts';
-import type { FixedWorldContactDiagnostics, FixedWorldContactQueryResult } from '../../collision';
+import type {
+	FixedWorldContactCandidate,
+	FixedWorldContactDiagnostics,
+	FixedWorldContactQueryResult
+} from '../../collision';
 import { dotVec2 } from '../../math';
 import { evaluateMotionSegmentVelocity } from '../../motion';
 import { getTerminalDiagnosticCode } from '../outcome';
@@ -41,7 +45,10 @@ export function toRunContactSearchDiagnostic(
 			normalVelocity: normalizeDiagnosticNumber(candidate.normalVelocity),
 			preContactVelocity: normalizeDiagnosticVector(preContactVelocity),
 			postContactVelocity: normalizeDiagnosticVector(postContactVelocity),
-			nearSimultaneous: nearSimultaneous.has(candidate)
+			nearSimultaneous: nearSimultaneous.has(candidate),
+			eventContactSetMember: diagnostics.activeCandidates.some((active) =>
+				sameCandidateEvent(active, candidate)
+			)
 		};
 	});
 	const rejected = diagnostics.colliderEvaluations.flatMap((evaluation) =>
@@ -67,37 +74,86 @@ export function withManifoldEvidence(
 	diagnostic: RunContactSearchDiagnostic,
 	preContactVelocity: Vec2,
 	postContactVelocity: Vec2,
-	contacts: readonly ContactManifoldMember[]
+	candidates: readonly FixedWorldContactCandidate[],
+	contacts: readonly ContactManifoldMember[],
+	retainedSupportCandidates: readonly FixedWorldContactCandidate[],
+	impulseTolerance: number
 ): RunContactSearchDiagnostic {
+	const diagnosticCandidates = [...diagnostic.candidates];
+	const evidenceByDiagnosticIndex = new Map<number, number>();
+	for (const [candidateIndex, candidate] of candidates.entries()) {
+		let diagnosticIndex = diagnosticCandidates.findIndex(
+			(entry, index) =>
+				!evidenceByDiagnosticIndex.has(index) &&
+				entry.eventContactSetMember === true &&
+				sameCandidateEvent(entry, candidate)
+		);
+		if (diagnosticIndex < 0) {
+			diagnosticIndex = diagnosticCandidates.length;
+			diagnosticCandidates.push(toCandidateDiagnostic(candidate, preContactVelocity));
+		}
+		evidenceByDiagnosticIndex.set(diagnosticIndex, candidateIndex);
+	}
 	return {
 		...diagnostic,
-		activeColliderIds: contacts
-			.filter(({ impulse }) => impulse > 0)
-			.map(({ colliderId }) => colliderId),
+		activeColliderIds: [...new Set(candidates.map(({ colliderId }) => colliderId))],
 		preContactVelocity: normalizeDiagnosticVector(preContactVelocity),
 		postContactVelocity: normalizeDiagnosticVector(postContactVelocity),
-		candidates: diagnostic.candidates.map((candidate) => {
-			const contact = contacts.find(
-				(member) =>
-					member.colliderId === candidate.colliderId && member.feature === candidate.feature
-			);
-			return contact
+		candidates: diagnosticCandidates.map((candidate, diagnosticIndex) => {
+			const candidateIndex = evidenceByDiagnosticIndex.get(diagnosticIndex);
+			const contact = candidateIndex === undefined ? undefined : contacts[candidateIndex];
+			const source = candidateIndex === undefined ? undefined : candidates[candidateIndex];
+			const retained = source
+				? retainedSupportCandidates.some((candidate) => sameCandidateEvent(candidate, source))
+				: false;
+			const positiveImpulse = Boolean(contact && contact.impulse > impulseTolerance);
+			return contact && source
 				? {
 						...candidate,
-						classification:
-							contact.impulse > 0
-								? 'active-manifold-contact'
-								: candidate.classification === 'accepted-non-impulsive'
-									? candidate.classification
-									: 'inactive-manifold-contact',
+						preContactVelocity: normalizeDiagnosticVector(preContactVelocity),
 						postContactVelocity: normalizeDiagnosticVector(postContactVelocity),
-						activeInManifold: contact.impulse > 0,
+						activeInManifold: true,
+						eventContactSetMember: true,
+						positiveImpulseContributor: positiveImpulse,
+						retainedSupportAfterImpact: retained,
+						releasedAfterImpact: !retained,
 						impulse: normalizeDiagnosticNumber(contact.impulse),
 						postImpactNormalVelocity: normalizeDiagnosticNumber(contact.postImpactNormalVelocity)
 					}
 				: candidate;
 		})
 	};
+}
+
+function toCandidateDiagnostic(
+	candidate: FixedWorldContactCandidate,
+	preContactVelocity: Vec2
+): RunContactSearchDiagnostic['candidates'][number] {
+	return {
+		colliderId: candidate.colliderId,
+		feature: candidate.feature,
+		time: candidate.time,
+		classification: candidate.response === 'impact' ? 'accepted-impact' : 'accepted-non-impulsive',
+		position: normalizeDiagnosticVector(candidate.position),
+		contactPoint: normalizeDiagnosticVector(candidate.contactPoint),
+		normal: normalizeDiagnosticVector(candidate.normal),
+		normalVelocity: normalizeDiagnosticNumber(candidate.normalVelocity),
+		preContactVelocity: normalizeDiagnosticVector(preContactVelocity),
+		eventContactSetMember: true
+	};
+}
+
+function sameCandidateEvent(
+	left: { readonly colliderId: string; readonly feature: string; readonly time: number },
+	right: { readonly colliderId: string; readonly feature: string; readonly time: number }
+): boolean {
+	const exactTimeTolerance =
+		16 * Number.EPSILON * Math.max(1, Math.abs(left.time), Math.abs(right.time));
+	return (
+		left.colliderId === right.colliderId &&
+		left.feature === right.feature &&
+		Math.abs(left.time - right.time) <= exactTimeTolerance
+	);
 }
 
 function restitutionResponse(velocity: Vec2, normal: Vec2, restitution: number): Vec2 {

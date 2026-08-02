@@ -254,11 +254,15 @@ function validateDiagnostics(value: unknown, path: string): void {
 						if (candidateRecord[field] !== undefined)
 							requireFiniteNumber(candidateRecord[field], `${candidatePath}.${field}`);
 					}
-					if (
-						candidateRecord.activeInManifold !== undefined &&
-						typeof candidateRecord.activeInManifold !== 'boolean'
-					) {
-						invalidRunRecordField(`${candidatePath}.activeInManifold`, 'must be a boolean');
+					for (const field of [
+						'activeInManifold',
+						'eventContactSetMember',
+						'positiveImpulseContributor',
+						'retainedSupportAfterImpact',
+						'releasedAfterImpact'
+					] as const) {
+						if (candidateRecord[field] !== undefined && typeof candidateRecord[field] !== 'boolean')
+							invalidRunRecordField(`${candidatePath}.${field}`, 'must be a boolean');
 					}
 					if (
 						candidateRecord.nearSimultaneous !== undefined &&

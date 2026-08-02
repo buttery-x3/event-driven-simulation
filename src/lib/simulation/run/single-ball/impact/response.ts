@@ -1,7 +1,7 @@
-import type { ContactManifoldMember, SimulationInput, Vec2 } from '../../contracts';
-import type { FixedWorldContactCandidate } from '../../collision';
-import { dotVec2 } from '../../math';
-import { solveImpactManifold } from './manifold';
+import type { ContactManifoldMember, SimulationInput, Vec2 } from '../../../contracts';
+import type { FixedWorldContactCandidate } from '../../../collision';
+import { dotVec2 } from '../../../math';
+import { solveImpactManifold } from '../manifold';
 
 export interface ImpactObservation {
 	readonly manifoldKey: string;

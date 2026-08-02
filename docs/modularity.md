@@ -141,8 +141,18 @@ run/single-ball/
     construct.ts
     input-validation.ts
     termination-search.ts
-    impact-response.ts
     diagnostics.ts
+    run-assembly.ts
+    impact/
+        index.ts
+        response.ts
+        resolution.ts
+    manifold/
+        index.ts
+        types.ts
+        impulse-solver.ts
+        support-reactions.ts
+        __tests__/
     sustained-contact/
         index.ts
         types.ts
@@ -161,10 +171,14 @@ run/single-ball/
 
 The implemented ownership is:
 
-- `construct.ts` — the event-to-event state machine and committed-history assembly;
+- `construct.ts` — the event-to-event state machine and certified interval sequencing;
 - `input-validation.ts` — semantic validation of a single-ball input;
 - `termination-search.ts` — continuous region entry and supported-bounds exit solving;
-- `impact-response.ts` — restitution response and conservative inelastic-collapse policy;
+- `impact/response.ts` — restitution response and conservative inelastic-collapse policy;
+- `impact/resolution.ts` — contact-event commitment, diagnostic evidence, physical support/rest
+  classification and next-state construction;
+- `manifold/` — coupled normal-impulse and support-reaction algorithms;
+- `run-assembly.ts` — committed history and terminal run-record assembly;
 - `sustained-contact/index.ts` and `continuation.ts` — the named local capability and shape
   dispatch;
 - `sustained-contact/linear-contact.ts` — fixed-line continuation and endpoint sequencing;

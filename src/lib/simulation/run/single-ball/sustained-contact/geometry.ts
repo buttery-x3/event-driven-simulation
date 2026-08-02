@@ -56,11 +56,12 @@ export function supportCandidate(
 	request: SustainedContactRequest,
 	time: number,
 	position: Vec2,
-	velocity: Vec2
+	velocity: Vec2,
+	normal: Vec2
 ): FixedWorldContactCandidate | null {
 	const collider = request.input.scene.staticColliders.find(({ id }) => id === request.colliderId);
 	if (!collider) return null;
-	const feature = 'centre' in collider ? 'circle' : boundaryFeature(collider, request.normal);
+	const feature = 'centre' in collider ? 'circle' : boundaryFeature(collider, normal);
 	return {
 		type: 'contact-candidate',
 		bodyId: request.body.id,
@@ -70,12 +71,90 @@ export function supportCandidate(
 		time,
 		position,
 		contactPoint: [
-			position[0] - request.normal[0] * request.body.physicalShape.radius,
-			position[1] - request.normal[1] * request.body.physicalShape.radius
+			position[0] - normal[0] * request.body.physicalShape.radius,
+			position[1] - normal[1] * request.body.physicalShape.radius
 		],
-		normal: request.normal,
-		normalVelocity: dotVec2(velocity, request.normal),
+		normal,
+		normalVelocity: dotVec2(velocity, normal),
 		response: 'non-impulsive-contact'
+	};
+}
+
+export function colliderCandidateAtState(
+	request: SustainedContactRequest,
+	colliderId: string,
+	time: number,
+	position: Vec2,
+	velocity: Vec2
+): FixedWorldContactCandidate | null {
+	const collider = request.input.scene.staticColliders.find(({ id }) => id === colliderId);
+	if (!collider) return null;
+	const geometry =
+		'centre' in collider
+			? circleContactGeometry(position, collider.centre, request.body.physicalShape.radius)
+			: boundaryContactGeometry(position, collider);
+	if (!geometry) return null;
+	const normalVelocity = dotVec2(velocity, geometry.normal);
+	return {
+		type: 'contact-candidate',
+		bodyId: request.body.id,
+		colliderId,
+		colliderKind: 'centre' in collider ? 'circle' : 'boundary',
+		feature: geometry.feature,
+		time,
+		position,
+		contactPoint: geometry.contactPoint,
+		normal: geometry.normal,
+		normalVelocity,
+		response:
+			normalVelocity < -request.input.settings.tolerances.eventTime
+				? 'impact'
+				: 'non-impulsive-contact'
+	};
+}
+
+function circleContactGeometry(position: Vec2, centre: Vec2, ballRadius: number) {
+	const offset: Vec2 = [position[0] - centre[0], position[1] - centre[1]];
+	const distance = Math.hypot(...offset);
+	if (!(distance > 0)) return null;
+	const normal: Vec2 = [offset[0] / distance, offset[1] / distance];
+	return {
+		feature: 'circle' as const,
+		contactPoint: [
+			position[0] - normal[0] * ballRadius,
+			position[1] - normal[1] * ballRadius
+		] as Vec2,
+		normal
+	};
+}
+
+function boundaryContactGeometry(
+	position: Vec2,
+	collider: Exclude<StaticCollider, { centre: Vec2 }>
+) {
+	const start = collider.physicalShape.start;
+	const end = collider.physicalShape.end;
+	const delta: Vec2 = [end[0] - start[0], end[1] - start[1]];
+	const lengthSquared = dotVec2(delta, delta);
+	if (!(lengthSquared > 0)) return null;
+	const fraction = Math.max(
+		0,
+		Math.min(1, dotVec2([position[0] - start[0], position[1] - start[1]], delta) / lengthSquared)
+	);
+	const contactPoint: Vec2 = [start[0] + fraction * delta[0], start[1] + fraction * delta[1]];
+	const offset: Vec2 = [position[0] - contactPoint[0], position[1] - contactPoint[1]];
+	const distance = Math.hypot(...offset);
+	if (!(distance > 0)) return null;
+	const normal: Vec2 = [offset[0] / distance, offset[1] / distance];
+	return {
+		feature:
+			fraction === 0
+				? ('start-endpoint' as const)
+				: fraction === 1
+					? ('end-endpoint' as const)
+					: boundaryFeature(collider, normal),
+		contactPoint,
+		normal
 	};
 }
 

@@ -6,6 +6,7 @@ import type {
 import { dotVec2 } from '../../../../math';
 import { circularContactTravelTime, evaluateCircularContactState } from '../../../../motion';
 import { detachedContactResult, restingContactResult } from '../contact-mode-results';
+import { colliderCandidateAtState } from '../geometry';
 import type { SustainedContactRequest, SustainedContactResult } from '../types';
 import { findEarliestAngularEvent, type CircularContactSeed } from './angular-event-search';
 import {
@@ -113,21 +114,35 @@ function continueCircularLegs(
 			return circularTimeLimitResult(entryRequest, current.request, leg, segments, contactSearches);
 		}
 
-		segments.push(leg);
-		contactSearches.push(
-			circularSearchDiagnostic(
-				current.request,
-				leg,
-				boundary.type === 'contact' ? boundary.colliderId : null
-			)
-		);
 		const endState = evaluateCircularContactState(leg, leg.endTime);
+		const incomingCandidate =
+			boundary.type === 'contact'
+				? colliderCandidateAtState(
+						current.request,
+						boundary.colliderId,
+						leg.endTime,
+						endState.position,
+						endState.velocity
+					)
+				: null;
+		if (boundary.type === 'contact' && !incomingCandidate) {
+			return unresolvedCircularResult(
+				entryRequest,
+				current.request,
+				segments,
+				contactSearches,
+				'Circular contact could not construct authoritative event-time collider geometry.'
+			);
+		}
+		segments.push(leg);
+		contactSearches.push(circularSearchDiagnostic(current.request, leg, incomingCandidate));
 		const result = circularBoundaryResult(
 			entryRequest,
 			current.request,
 			boundary,
 			leg,
 			endState,
+			incomingCandidate,
 			segments,
 			contactSearches
 		);

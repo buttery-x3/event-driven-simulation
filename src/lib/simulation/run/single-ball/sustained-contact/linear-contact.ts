@@ -118,7 +118,8 @@ export function continueLineContact(
 			request,
 			contactResult.event.time,
 			contactResult.event.position,
-			endVelocity
+			endVelocity,
+			request.normal
 		);
 		return {
 			segments: [endSegment],
@@ -142,6 +143,7 @@ export function continueLineContact(
 				releasedContactColliderId: collider.id,
 				releasedContactColliderIds: [collider.id],
 				retainedSupportCandidates: retained ? [retained] : [],
+				pendingContactCandidates: [],
 				acceptInitialContact: true
 			}
 		};
@@ -226,6 +228,7 @@ function leaveLineEndpoint(
 				releasedContactColliderId: collider.id,
 				releasedContactColliderIds: [collider.id],
 				retainedSupportCandidates: [],
+				pendingContactCandidates: [],
 				acceptInitialContact: false
 			}
 		};
