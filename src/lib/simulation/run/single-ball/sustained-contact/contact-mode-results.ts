@@ -38,7 +38,7 @@ export function detachedContactResult(
 			time: request.time,
 			position: request.position,
 			velocity,
-			ignoreInitialContactColliderId: request.colliderId,
+			releasedContactColliderId: request.colliderId,
 			acceptInitialContact: false
 		}
 	};

@@ -22,17 +22,17 @@ export function toRunContactSearchDiagnostic(
 	const nearSimultaneous = new Set(diagnostics.nearSimultaneousCandidates);
 	const accepted = diagnostics.orderedCandidates.map((candidate) => {
 		const preContactVelocity = evaluateMotionSegmentVelocity(path, candidate.time);
-		const responseScale = (1 + restitution) * dotVec2(preContactVelocity, candidate.normal);
-		const postContactVelocity: Vec2 = [
-			preContactVelocity[0] - responseScale * candidate.normal[0],
-			preContactVelocity[1] - responseScale * candidate.normal[1]
-		];
+		const postContactVelocity =
+			candidate.response === 'impact'
+				? restitutionResponse(preContactVelocity, candidate.normal, restitution)
+				: preContactVelocity;
 
 		return {
 			colliderId: candidate.colliderId,
 			feature: candidate.feature,
 			time: candidate.time,
-			classification: 'accepted',
+			classification:
+				candidate.response === 'impact' ? 'accepted-impact' : 'accepted-non-impulsive',
 			timeDelta: normalizeDiagnosticNumber(candidate.time - path.startTime),
 			position: normalizeDiagnosticVector(candidate.position),
 			contactPoint: normalizeDiagnosticVector(candidate.contactPoint),
@@ -60,6 +60,11 @@ export function toRunContactSearchDiagnostic(
 		selectedColliderId: result.type === 'contact' ? result.event.colliderId : null,
 		candidates: [...accepted, ...rejected]
 	};
+}
+
+function restitutionResponse(velocity: Vec2, normal: Vec2, restitution: number): Vec2 {
+	const responseScale = (1 + restitution) * dotVec2(velocity, normal);
+	return [velocity[0] - responseScale * normal[0], velocity[1] - responseScale * normal[1]];
 }
 
 export function toTerminalDiagnostic(

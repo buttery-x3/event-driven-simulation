@@ -48,11 +48,17 @@ src/lib/simulation/
 
     collision/
         index.ts
-        peg-contact.ts
         boundary-contact.ts
         boundary-candidate.ts
         boundary-query-validation.ts
         fixed-world-contact.ts
+        circle-circle/
+            index.ts
+            query.ts
+            contact-polynomial.ts
+            query-validation.ts
+            root-topology.ts
+            types.ts
         __tests__/
 
     world/
@@ -243,7 +249,7 @@ FLAME-35 applied this ownership map from the former flat locations:
 | `contracts.ts`                                                                                                         | `contracts/index.ts`, with later type splitting only if independently justified                                                                            |
 | `vector.ts`, `polynomial-roots.ts`                                                                                     | `math/`                                                                                                                                                    |
 | `trajectory.ts`                                                                                                        | `motion/`                                                                                                                                                  |
-| `peg-contact.ts`, `boundary-contact.ts`, `fixed-world-contact.ts`                                                      | `collision/`                                                                                                                                               |
+| `peg-contact.ts`, `boundary-contact.ts`, `fixed-world-contact.ts`                                                      | `collision/`; FLAME-42 later replaced peg-specific collision terminology with the named `collision/circle-circle/` subdomain                               |
 | `canonical-board.ts`, `board-state-scenarios.ts`, `scenario-catalogue.ts`, `scene-validation.ts`, `prototype-input.ts` | `world/`                                                                                                                                                   |
 | `single-ball-run.ts`, `run-outcome.ts`                                                                                 | `run/`, including the `run/single-ball/` decomposition from `modularity.md`                                                                                |
 | `synthetic-run.ts`                                                                                                     | remove if the compatibility alias is no longer required; otherwise expose the alias from `run/index.ts` without retaining a separate implementation module |

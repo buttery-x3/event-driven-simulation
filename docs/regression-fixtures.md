@@ -38,11 +38,18 @@ explicit contact-mode transitions and resting-contact terminal data. Pre-release
 updated in place; earlier data is intentionally rejected rather than guessed or migrated.
 
 `flame-27-high-speed-peg-contact.json` is a complete, minimal run record whose incoming motion
-segment crosses a fixed peg at 10,000 m/s. The focused peg-contact test loads that public fixture
-and replays its segment through the continuous solver, so regression data exercises collision
-discovery without a renderer or a fixed-step fallback.
+segment crosses a fixed peg at 10,000 m/s. The focused circle-circle contact test loads that public
+fixture and replays its segment through the continuous solver, so regression data exercises
+collision discovery without a renderer or a fixed-step fallback. The historical fixture name keeps
+the board-role terminology under which the failure was captured.
 
 `flame-28-high-speed-wall-contact.json` records the analogous 10,000 m/s crossing of a finite
 vertical boundary. Its focused test replays the ballistic segment through the boundary solver and
 asserts the radius-offset face event at `0.00995 s`, guarding against tunnelling and accidental use
 of renderer line thickness.
+
+`flame-42-post-detachment-zero-time-loop.json` preserves the exact unresolved full-board run in
+which circular support loss was followed by a microscopic same-circle contact and a
+`zero-time-loop`. The fixture remains unresolved forensic evidence. Its end-to-end regression test
+reruns the stored input and asserts certified release ownership, continuous retained history and a
+non-`zero-time-loop` authoritative continuation.

@@ -6,10 +6,10 @@ import type {
 	Vec2
 } from '../../contracts';
 import {
-	defaultPegContactTolerances,
-	findEarliestPegContact,
-	type PegContactQuery
-} from '../peg-contact';
+	defaultCircleCircleContactTolerances,
+	findEarliestCircleCircleContact,
+	type CircleCircleContactQuery
+} from '../circle-circle';
 import { parseSimulationRunFixture } from '../../serialization/run-record';
 
 const peg = {
@@ -40,18 +40,18 @@ function segment(
 function query(
 	motionSegment: ConstantAccelerationMotionSegment,
 	searchUntilTime = motionSegment.endTime
-): PegContactQuery {
+): CircleCircleContactQuery {
 	return {
 		segment: motionSegment,
 		ballRadius: 0.5,
-		peg,
+		circle: peg,
 		searchUntilTime
 	};
 }
 
-describe('continuous ballistic peg contact solving', () => {
+describe('continuous ballistic circle-circle contact solving', () => {
 	it('finds a known gravity-driven direct hit and returns its event state', () => {
-		const result = findEarliestPegContact(query(segment([0, 5], [0, 0], [0, -2], 2, 5)));
+		const result = findEarliestCircleCircleContact(query(segment([0, 5], [0, 0], [0, -2], 2, 5)));
 
 		expect(result.type).toBe('contact');
 		if (result.type !== 'contact') return;
@@ -77,10 +77,10 @@ describe('continuous ballistic peg contact solving', () => {
 		if (motionSegment.type !== 'free-flight') return;
 		const collider = run.input.scene.staticColliders[0] as StaticCircleCollider;
 		const expectedEvent = run.events[0]!;
-		const result = findEarliestPegContact({
+		const result = findEarliestCircleCircleContact({
 			segment: motionSegment,
 			ballRadius: body.physicalShape.radius,
-			peg: collider,
+			circle: collider,
 			searchUntilTime: motionSegment.endTime
 		});
 
@@ -93,7 +93,7 @@ describe('continuous ballistic peg contact solving', () => {
 	});
 
 	it.each([1, 1_000_000])('finds the same supported contact at %s m/s', (speed) => {
-		const result = findEarliestPegContact(
+		const result = findEarliestCircleCircleContact(
 			query(segment([-2, 0], [speed, 0], [0, 0], 0, 4 / speed), 4 / speed)
 		);
 
@@ -103,31 +103,31 @@ describe('continuous ballistic peg contact solving', () => {
 	});
 
 	it('reports no contact when the only mathematical contact is in the past', () => {
-		const result = findEarliestPegContact(query(segment([2, 0], [1, 0])));
+		const result = findEarliestCircleCircleContact(query(segment([2, 0], [1, 0])));
 
 		expect(result.type).toBe('no-contact');
 		expect(result.diagnostics.candidates).toEqual([]);
 	});
 
 	it('reports no contact for a path that misses the peg', () => {
-		const result = findEarliestPegContact(query(segment([-2, 1.1], [1, 0])));
+		const result = findEarliestCircleCircleContact(query(segment([-2, 1.1], [1, 0])));
 
 		expect(result.type).toBe('no-contact');
 	});
 
 	it('accepts an exact tangent root isolated at a polynomial critical point', () => {
-		const result = findEarliestPegContact(query(segment([-2, 1], [1, 0]), 4));
+		const result = findEarliestCircleCircleContact(query(segment([-2, 1], [1, 0]), 4));
 
-		expect(result.type).toBe('contact');
-		if (result.type !== 'contact') return;
-		expect(result.event.time).toBeCloseTo(2, 8);
-		expect(result.event.position).toEqual([0, 1]);
-		expect(result.state.normalVelocity).toBe(0);
+		expect(result.type).toBe('no-contact');
 		expect(result.diagnostics.candidates[0]?.source).toBe('critical-point');
+		expect(result.diagnostics.candidates[0]).toMatchObject({
+			topology: 'grazing',
+			classification: 'rejected-grazing'
+		});
 	});
 
 	it('finds a near-tangent contact with a shallow approaching normal velocity', () => {
-		const result = findEarliestPegContact(query(segment([-2, 0.999999], [1, 0]), 4));
+		const result = findEarliestCircleCircleContact(query(segment([-2, 0.999999], [1, 0]), 4));
 
 		expect(result.type).toBe('contact');
 		if (result.type !== 'contact') return;
@@ -136,8 +136,54 @@ describe('continuous ballistic peg contact solving', () => {
 		expect(Math.abs(result.state.normalVelocity)).toBeLessThan(0.002);
 	});
 
+	it('classifies zero-speed inward onset as non-impulsive entry', () => {
+		const result = findEarliestCircleCircleContact(
+			query(segment([-1, 0], [0, 0], [1, 0], 0, 1), 1)
+		);
+
+		expect(result.type).toBe('contact');
+		if (result.type !== 'contact') return;
+		expect(result.state).toMatchObject({
+			normalVelocity: 0,
+			response: 'non-impulsive-contact'
+		});
+		expect(result.diagnostics.candidates[0]).toMatchObject({
+			topology: 'initial-contact',
+			afterRegion: 'overlapping',
+			classification: 'accepted-non-impulsive'
+		});
+	});
+
+	it('rejects release-owned roots until separation, then accepts genuine recollision', () => {
+		const result = findEarliestCircleCircleContact({
+			...query(segment([1, 0], [1, 0], [-2, 0], 0, 2), 2),
+			releasedInitialContact: true
+		});
+
+		expect(result.type).toBe('contact');
+		if (result.type !== 'contact') return;
+		expect(result.event.time).toBeCloseTo(1, 8);
+		expect(result.state.response).toBe('impact');
+		expect(result.diagnostics.candidates.map(({ classification }) => classification)).toEqual([
+			'rejected-release-owned',
+			'accepted-impact'
+		]);
+	});
+
+	it('fails closed when released contact remains indeterminate', () => {
+		const result = findEarliestCircleCircleContact({
+			...query(segment([-1, 0], [0, 0])),
+			releasedInitialContact: true
+		});
+
+		expect(result).toMatchObject({
+			type: 'unresolved',
+			reason: 'Released circle contact remained indeterminate across the search interval.'
+		});
+	});
+
 	it('accepts exact initial contact when not separating', () => {
-		const result = findEarliestPegContact(query(segment([-1, 0], [1, 0])));
+		const result = findEarliestCircleCircleContact(query(segment([-1, 0], [1, 0])));
 
 		expect(result.type).toBe('contact');
 		if (result.type !== 'contact') return;
@@ -146,7 +192,7 @@ describe('continuous ballistic peg contact solving', () => {
 	});
 
 	it('accepts stationary initial contact despite a degenerate contact polynomial', () => {
-		const result = findEarliestPegContact(query(segment([-1, 0], [0, 0])));
+		const result = findEarliestCircleCircleContact(query(segment([-1, 0], [0, 0])));
 
 		expect(result.type).toBe('contact');
 		if (result.type !== 'contact') return;
@@ -155,19 +201,21 @@ describe('continuous ballistic peg contact solving', () => {
 	});
 
 	it('rejects a separating initial root and returns the later approaching root', () => {
-		const result = findEarliestPegContact(query(segment([1, 0], [1, 0], [-2, 0], 0, 1.5), 1.5));
+		const result = findEarliestCircleCircleContact(
+			query(segment([1, 0], [1, 0], [-2, 0], 0, 1.5), 1.5)
+		);
 
 		expect(result.type).toBe('contact');
 		if (result.type !== 'contact') return;
 		expect(result.event.time).toBeCloseTo(1, 8);
 		expect(result.diagnostics.candidates.map(({ classification }) => classification)).toEqual([
-			'rejected-separating',
-			'accepted'
+			'rejected-exiting',
+			'accepted-impact'
 		]);
 	});
 
 	it('returns the entry root when the contact polynomial also contains an exit root', () => {
-		const result = findEarliestPegContact(query(segment([-2, 0], [1, 0]), 4));
+		const result = findEarliestCircleCircleContact(query(segment([-2, 0], [1, 0]), 4));
 
 		expect(result.type).toBe('contact');
 		if (result.type !== 'contact') return;
@@ -176,13 +224,15 @@ describe('continuous ballistic peg contact solving', () => {
 	});
 
 	it('does not return contact beyond the declared search horizon', () => {
-		const result = findEarliestPegContact(query(segment([-2, 0], [1, 0]), 0.5));
+		const result = findEarliestCircleCircleContact(query(segment([-2, 0], [1, 0]), 0.5));
 
 		expect(result.type).toBe('no-contact');
 	});
 
 	it('returns unresolved when finite input overflows the contact polynomial', () => {
-		const result = findEarliestPegContact(query(segment([1e308, 0], [1e308, 0], [0, 0], 0, 1), 1));
+		const result = findEarliestCircleCircleContact(
+			query(segment([1e308, 0], [1e308, 0], [0, 0], 0, 1), 1)
+		);
 
 		expect(result).toMatchObject({
 			type: 'unresolved',
@@ -191,7 +241,7 @@ describe('continuous ballistic peg contact solving', () => {
 	});
 
 	it('returns invalid input for an invalid physical radius', () => {
-		const result = findEarliestPegContact({
+		const result = findEarliestCircleCircleContact({
 			...query(segment([-2, 0], [1, 0])),
 			ballRadius: -1
 		});
@@ -203,10 +253,10 @@ describe('continuous ballistic peg contact solving', () => {
 	});
 
 	it('returns unresolved instead of no contact when refinement cannot converge', () => {
-		const result = findEarliestPegContact({
+		const result = findEarliestCircleCircleContact({
 			...query(segment([-2, 0], [1, 0])),
 			tolerances: {
-				...defaultPegContactTolerances,
+				...defaultCircleCircleContactTolerances,
 				eventTime: Number.MIN_VALUE
 			},
 			maximumRefinementIterations: 1

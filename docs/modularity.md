@@ -192,6 +192,16 @@ polynomial construction, root isolation and earliest-candidate orchestration. Ke
 operations together avoids duplicating tolerance and ordering policy across tiny face and endpoint
 wrappers.
 
+### Circle-circle contact
+
+FLAME-42 replaced the substantial peg-specific contact module with the named
+`collision/circle-circle` subdomain. `contact-polynomial.ts` owns quartic construction and ballistic
+candidate geometry, `query.ts` owns root isolation and earliest eligible contact construction, and
+`query-validation.ts` owns input validation. `root-topology.ts` owns the independently testable
+entering, exiting, grazing, initial/release-owned and indeterminate policy, while `types.ts` owns
+contract-only declarations. The local `index.ts` exposes geometry-pair terminology while the parent
+collision entry point remains the supported cross-subsystem boundary.
+
 ### Fixture validation
 
 `serialization/simulation-input/v6.ts` owns standalone version 6 input shape validation.

@@ -118,7 +118,7 @@ describe('shared sustained-contact result construction', () => {
 		expect(detachedContactResult(request, [2, 3])).toMatchObject({
 			events: [{ from: 'impact', to: 'free-flight', reason: 'support-lost' }],
 			terminalReason: null,
-			nextState: { velocity: [2, 3], ignoreInitialContactColliderId: 'peg' }
+			nextState: { velocity: [2, 3], releasedContactColliderId: 'peg' }
 		});
 		expect(unresolvedContactResult(request, 'search failed')).toMatchObject({
 			events: [

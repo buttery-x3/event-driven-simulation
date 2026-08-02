@@ -11,13 +11,21 @@ import type {
 	SimulationRunRecord,
 	Vec2
 } from '../../contracts';
-import { defaultFixedWorldContactTolerances, findEarliestFixedWorldContact } from '../../collision';
+import {
+	defaultFixedWorldContactTolerances,
+	findEarliestFixedWorldContact,
+	type FixedWorldContactCandidate
+} from '../../collision';
 import { evaluateMotionSegmentPosition, evaluateMotionSegmentVelocity } from '../../motion';
 import { getRunOutcome } from '../outcome';
 import { bodyOrNull, toRunContactSearchDiagnostic, toTerminalDiagnostic } from './diagnostics';
 import { resolveImpactResponse, type ImpactObservation } from './impact-response';
 import { validateSingleBallInput } from './input-validation';
-import { continueSustainedContact, type SustainedNextState } from './sustained-contact';
+import {
+	continueSustainedContact,
+	type SustainedContactResult,
+	type SustainedNextState
+} from './sustained-contact';
 import {
 	findContainingRegion,
 	findEarliestTerminationEntry,
@@ -28,7 +36,7 @@ interface EventState {
 	readonly time: number;
 	readonly position: Vec2;
 	readonly velocity: Vec2;
-	readonly ignoreInitialContactColliderId: string | null;
+	readonly releasedContactColliderId: string | null;
 	readonly acceptInitialContact: boolean;
 }
 
@@ -77,7 +85,7 @@ export function constructSingleBallRun(input: SimulationInput): SimulationRunRec
 		time: 0,
 		position: body.position,
 		velocity: body.velocity,
-		ignoreInitialContactColliderId: null,
+		releasedContactColliderId: null,
 		acceptInitialContact: false
 	};
 	const initialTermination = findContainingRegion(
@@ -128,18 +136,7 @@ export function constructSingleBallRun(input: SimulationInput): SimulationRunRec
 			terminationSearch.type === 'entry'
 				? terminationSearch.entry.time
 				: input.settings.maximumSimulationTime;
-		const contactResult = findEarliestFixedWorldContact({
-			segment: path,
-			ballRadius: body.physicalShape.radius,
-			colliders: input.scene.staticColliders,
-			ignoredInitialContactColliderId: state.ignoreInitialContactColliderId,
-			searchUntilTime,
-			tolerances: {
-				...defaultFixedWorldContactTolerances,
-				contactDistance: input.settings.tolerances.contactDistance,
-				eventTime: input.settings.tolerances.eventTime
-			}
-		});
+		const contactResult = findFreeFlightContact(input, body, state, path, searchUntilTime);
 		assembly.contactSearches.push(
 			toRunContactSearchDiagnostic(contactResult, path, input.settings.restitution)
 		);
@@ -193,7 +190,14 @@ export function constructSingleBallRun(input: SimulationInput): SimulationRunRec
 				}
 				assembly.segments.push(segment);
 			}
-			const resolution = resolveContact(input, body, path, contactResult.event, assembly);
+			const resolution = resolveContact(
+				input,
+				body,
+				path,
+				contactResult.event,
+				contactResult.candidate,
+				assembly
+			);
 			if (resolution.type === 'terminal') {
 				return finish('valid', resolution.reason, resolution.time);
 			}
@@ -256,11 +260,33 @@ export function constructSingleBallRun(input: SimulationInput): SimulationRunRec
 	}
 }
 
+function findFreeFlightContact(
+	input: SimulationInput,
+	body: InitialDynamicCircleBodyState,
+	state: EventState,
+	path: FreeFlightMotionSegment,
+	searchUntilTime: number
+) {
+	return findEarliestFixedWorldContact({
+		segment: path,
+		ballRadius: body.physicalShape.radius,
+		colliders: input.scene.staticColliders,
+		releasedContactColliderId: state.releasedContactColliderId,
+		searchUntilTime,
+		tolerances: {
+			...defaultFixedWorldContactTolerances,
+			contactDistance: input.settings.tolerances.contactDistance,
+			eventTime: input.settings.tolerances.eventTime
+		}
+	});
+}
+
 function resolveContact(
 	input: SimulationInput,
 	body: InitialDynamicCircleBodyState,
 	path: FreeFlightMotionSegment,
 	event: ContactEvent,
+	candidate: FixedWorldContactCandidate,
 	assembly: RunAssembly
 ): ImpactResolution {
 	const incomingVelocity = evaluateMotionSegmentVelocity(path, event.time);
@@ -284,6 +310,9 @@ function resolveContact(
 		time: event.time,
 		bodyId: body.id
 	});
+	if (candidate.response === 'non-impulsive-contact') {
+		return continueFromSupportedOnset(input, body, event, incomingVelocity, assembly);
+	}
 	const response = resolveImpactResponse(
 		input,
 		event.colliderId,
@@ -318,7 +347,7 @@ function resolveContact(
 				time: event.time,
 				position: event.position,
 				velocity: response.outgoingVelocity,
-				ignoreInitialContactColliderId: null,
+				releasedContactColliderId: null,
 				acceptInitialContact: false
 			}
 		};
@@ -338,6 +367,66 @@ function resolveContact(
 				? 'supported-initial-state'
 				: 'impact-collapse'
 	});
+	appendSustainedContact(assembly, continuation);
+	if (continuation.terminalReason) {
+		return {
+			type: 'terminal',
+			time: continuation.terminalReason.time ?? event.time,
+			reason: continuation.terminalReason
+		};
+	}
+	return {
+		type: 'continue',
+		nextState: toEventState(continuation.nextState!)
+	};
+}
+
+function continueFromSupportedOnset(
+	input: SimulationInput,
+	body: InitialDynamicCircleBodyState,
+	event: ContactEvent,
+	velocity: Vec2,
+	assembly: RunAssembly
+): ImpactResolution {
+	const pressingAcceleration = -(
+		input.settings.gravity[0] * event.normal[0] +
+		input.settings.gravity[1] * event.normal[1]
+	);
+	if (pressingAcceleration <= 0) {
+		return {
+			type: 'continue',
+			nextState: {
+				time: event.time,
+				position: event.position,
+				velocity,
+				releasedContactColliderId: event.colliderId,
+				acceptInitialContact: false
+			}
+		};
+	}
+	const continuation = continueSustainedContact({
+		input,
+		body,
+		colliderId: event.colliderId,
+		time: event.time,
+		position: event.position,
+		normal: event.normal,
+		outgoingVelocity: velocity,
+		entryFrom: 'free-flight',
+		entryReason: 'supported-initial-state'
+	});
+	appendSustainedContact(assembly, continuation);
+	if (continuation.terminalReason) {
+		return {
+			type: 'terminal',
+			time: continuation.terminalReason.time ?? event.time,
+			reason: continuation.terminalReason
+		};
+	}
+	return { type: 'continue', nextState: toEventState(continuation.nextState!) };
+}
+
+function appendSustainedContact(assembly: RunAssembly, continuation: SustainedContactResult): void {
 	assembly.segments.push(...continuation.segments);
 	assembly.events.push(...continuation.events);
 	assembly.contactSearches.push(...continuation.contactSearches);
@@ -350,17 +439,6 @@ function resolveContact(
 			bodyId: transition.bodyId
 		});
 	}
-	if (continuation.terminalReason) {
-		return {
-			type: 'terminal',
-			time: continuation.terminalReason.time ?? event.time,
-			reason: continuation.terminalReason
-		};
-	}
-	return {
-		type: 'continue',
-		nextState: toEventState(continuation.nextState!)
-	};
 }
 
 function finishRun(

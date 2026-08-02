@@ -140,7 +140,7 @@ export function continueCircularContact(
 				time: naturalEndTime,
 				position: endState.position,
 				velocity: endState.velocity,
-				ignoreInitialContactColliderId: request.colliderId,
+				releasedContactColliderId: request.colliderId,
 				acceptInitialContact: true
 			}
 		};
@@ -164,7 +164,7 @@ export function continueCircularContact(
 			time: naturalEndTime,
 			position: endState.position,
 			velocity: endState.velocity,
-			ignoreInitialContactColliderId: request.colliderId,
+			releasedContactColliderId: request.colliderId,
 			acceptInitialContact: false
 		}
 	};

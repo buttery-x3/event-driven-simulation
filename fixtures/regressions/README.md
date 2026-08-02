@@ -8,3 +8,6 @@ Each file must contain one complete `SimulationRunRecord` in the current public 
 
 - `flame-27-high-speed-peg-contact.json` verifies continuous fixed-peg contact discovery at a speed
   that would expose tunnelling in a sampled collision check.
+- `flame-42-post-detachment-zero-time-loop.json` preserves the unresolved run that exposed a
+  microscopic same-circle root after circular support loss; tests rerun its input without changing
+  the forensic record.

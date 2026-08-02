@@ -131,7 +131,7 @@ export function continueLineContact(
 				time: contactResult.event.time,
 				position: contactResult.event.position,
 				velocity: evaluateMotionSegmentVelocity(endSegment, contactResult.event.time),
-				ignoreInitialContactColliderId: collider.id,
+				releasedContactColliderId: collider.id,
 				acceptInitialContact: true
 			}
 		};
@@ -213,7 +213,7 @@ function leaveLineEndpoint(
 				time: endpoint.time,
 				position,
 				velocity,
-				ignoreInitialContactColliderId: collider.id,
+				releasedContactColliderId: collider.id,
 				acceptInitialContact: false
 			}
 		};

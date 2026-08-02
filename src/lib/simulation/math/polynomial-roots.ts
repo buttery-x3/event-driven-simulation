@@ -2,7 +2,19 @@ export interface IsolatedPolynomialRoot {
 	readonly normalizedTime: number;
 	readonly source: 'boundary' | 'critical-point' | 'bracketed-root';
 	readonly refinementIterations: number;
+	readonly isolatingInterval: readonly [minimum: number, maximum: number];
+	readonly neighbourhood: {
+		readonly before: PolynomialRootNeighbourhoodSample | null;
+		readonly after: PolynomialRootNeighbourhoodSample | null;
+	};
 }
+
+export interface PolynomialRootNeighbourhoodSample {
+	readonly normalizedTime: number;
+	readonly value: number;
+}
+
+type RootEstimate = Omit<IsolatedPolynomialRoot, 'neighbourhood'>;
 
 export type PolynomialRootIsolationResult =
 	| {
@@ -49,15 +61,15 @@ export function isolatePolynomialRoots(
 		if (root < minimum - timeTolerance || root > maximum + timeTolerance) {
 			return { type: 'roots', roots: [], refinementIterations: 0 };
 		}
+		const estimate: RootEstimate = {
+			normalizedTime: clamp(root, minimum, maximum),
+			source: 'bracketed-root',
+			refinementIterations: 0,
+			isolatingInterval: [clamp(root, minimum, maximum), clamp(root, minimum, maximum)]
+		};
 		return {
 			type: 'roots',
-			roots: [
-				{
-					normalizedTime: clamp(root, minimum, maximum),
-					source: 'bracketed-root',
-					refinementIterations: 0
-				}
-			],
+			roots: attachRootNeighbourhoods(coefficients, [estimate], minimum, maximum, timeTolerance),
 			refinementIterations: 0
 		};
 	}
@@ -77,7 +89,7 @@ export function isolatePolynomialRoots(
 		.map((root) => root.normalizedTime)
 		.filter((root) => root > minimum + timeTolerance && root < maximum - timeTolerance);
 	const partition = [minimum, ...criticalPoints, maximum];
-	const roots: IsolatedPolynomialRoot[] = [];
+	const roots: RootEstimate[] = [];
 	let refinementIterations = criticalResult.refinementIterations;
 
 	for (const point of partition) {
@@ -93,7 +105,8 @@ export function isolatePolynomialRoots(
 			roots.push({
 				normalizedTime: point,
 				source: point === minimum || point === maximum ? 'boundary' : 'critical-point',
-				refinementIterations: 0
+				refinementIterations: 0,
+				isolatingInterval: [point, point]
 			});
 		}
 	}
@@ -127,13 +140,15 @@ export function isolatePolynomialRoots(
 		roots.push({
 			normalizedTime: refined.root,
 			source: 'bracketed-root',
-			refinementIterations: refined.iterations
+			refinementIterations: refined.iterations,
+			isolatingInterval: refined.interval
 		});
 	}
+	const uniqueRoots = deduplicateRoots(roots, timeTolerance);
 
 	return {
 		type: 'roots',
-		roots: deduplicateRoots(roots, timeTolerance),
+		roots: attachRootNeighbourhoods(coefficients, uniqueRoots, minimum, maximum, timeTolerance),
 		refinementIterations
 	};
 }
@@ -154,7 +169,12 @@ function refineBracketedRoot(
 	timeTolerance: number,
 	maxIterations: number
 ):
-	| { readonly type: 'root'; readonly root: number; readonly iterations: number }
+	| {
+			readonly type: 'root';
+			readonly root: number;
+			readonly interval: readonly [number, number];
+			readonly iterations: number;
+	  }
 	| { readonly type: 'unresolved'; readonly reason: string; readonly iterations: number } {
 	let left = initialLeft;
 	let right = initialRight;
@@ -171,7 +191,12 @@ function refineBracketedRoot(
 			};
 		}
 		if (midpointValue === 0) {
-			return { type: 'root', root: midpoint, iterations: iteration };
+			return {
+				type: 'root',
+				root: midpoint,
+				interval: [midpoint, midpoint],
+				iterations: iteration
+			};
 		}
 		if (right - left <= timeTolerance) {
 			const rightValue = evaluatePolynomial(coefficients, right);
@@ -185,6 +210,7 @@ function refineBracketedRoot(
 					Number.isFinite(secantRoot) && secantRoot >= left && secantRoot <= right
 						? secantRoot
 						: midpoint,
+				interval: [left, right],
 				iterations: iteration
 			};
 		}
@@ -209,12 +235,9 @@ function trimPolynomial(coefficients: readonly number[]): number[] {
 	return trimmed;
 }
 
-function deduplicateRoots(
-	roots: readonly IsolatedPolynomialRoot[],
-	timeTolerance: number
-): IsolatedPolynomialRoot[] {
+function deduplicateRoots(roots: readonly RootEstimate[], timeTolerance: number): RootEstimate[] {
 	const sorted = [...roots].sort((left, right) => left.normalizedTime - right.normalizedTime);
-	const unique: IsolatedPolynomialRoot[] = [];
+	const unique: RootEstimate[] = [];
 
 	for (const root of sorted) {
 		const previous = unique.at(-1);
@@ -224,6 +247,42 @@ function deduplicateRoots(
 	}
 
 	return unique;
+}
+
+function attachRootNeighbourhoods(
+	coefficients: readonly number[],
+	roots: readonly RootEstimate[],
+	minimum: number,
+	maximum: number,
+	timeTolerance: number
+): IsolatedPolynomialRoot[] {
+	return roots.map((root, index) => {
+		const previous = roots[index - 1];
+		const next = roots[index + 1];
+		const leftLimit = previous?.isolatingInterval[1] ?? minimum;
+		const rightLimit = next?.isolatingInterval[0] ?? maximum;
+		const beforeTime = midpointWhenDistinct(leftLimit, root.isolatingInterval[0], timeTolerance);
+		const afterTime = midpointWhenDistinct(root.isolatingInterval[1], rightLimit, timeTolerance);
+
+		return {
+			...root,
+			neighbourhood: {
+				before: beforeTime === null ? null : polynomialSample(coefficients, beforeTime),
+				after: afterTime === null ? null : polynomialSample(coefficients, afterTime)
+			}
+		};
+	});
+}
+
+function midpointWhenDistinct(left: number, right: number, tolerance: number): number | null {
+	return right - left > tolerance ? left + (right - left) / 2 : null;
+}
+
+function polynomialSample(
+	coefficients: readonly number[],
+	normalizedTime: number
+): PolynomialRootNeighbourhoodSample {
+	return { normalizedTime, value: evaluatePolynomial(coefficients, normalizedTime) };
 }
 
 function clamp(value: number, minimum: number, maximum: number): number {

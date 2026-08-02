@@ -82,17 +82,25 @@ angular interval, direction, entry tangential speed and gravity. The shared moti
 those records directly at any requested time. Simulation code must not mutate a segment or advance
 it through sampled timesteps.
 
-`findEarliestPegContact` performs continuous ball-versus-fixed-circle discovery over a declared
-future interval inside one motion segment. It substitutes normalized interval time into the
-ballistic path and forms the quartic squared-distance equation using the combined ball and peg
-radius. Real roots are isolated by recursively partitioning the interval at the roots of the
+`findEarliestCircleCircleContact` performs continuous dynamic-circle versus fixed-circle discovery
+over a declared future interval inside one motion segment. It substitutes normalized interval time
+into the ballistic path and forms the quartic squared-distance equation using the combined circle
+radii. Real roots are isolated by recursively partitioning the interval at the roots of the
 polynomial derivative. Sign-changing intervals are refined by bisection; a zero at a derivative
 root preserves tangent contacts that sign-change-only searches would miss.
 
-The contact policy accepts the earliest root on the supported interval whose geometric separation
-is within `contactDistance` and whose outward normal velocity is no greater than
-`normalVelocity`. Separating roots are retained in diagnostics and rejected. A segment that starts
-penetrating the peg is invalid. The search horizon is inclusive and must not extend beyond the
+Each isolated root carries a geometry-neutral isolating interval and certified neighbouring
+polynomial samples. The math subsystem does not interpret their signs. Circle-circle policy
+evaluates physical separation at those samples and classifies roots as entering, exiting, external
+grazing, initial contact or indeterminate. Definite incoming normal motion is an impact. An
+entering root inside the normal-velocity ambiguity band is a non-impulsive contact onset; external
+grazing and exiting roots are rejected, while indeterminate topology fails closed.
+
+A segment that starts penetrating the fixed circle is invalid. A just-released supporting circle
+owns its initial root cluster until the same free-flight path certifies positive separation. Roots
+inside that release-owned cluster are rejected, but a later entering root with certified separated
+evidence before it remains eligible as a genuine recollision. This policy uses geometry rather than
+an elapsed-time ignore window. The search horizon is inclusive and must not extend beyond the
 segment.
 
 The query has four typed outcomes: `contact`, `no-contact`, `unresolved`, and `invalid-input`.
@@ -106,7 +114,8 @@ Tolerances are named by purpose:
 - `polynomialResidual` detects roots at interval and derivative-partition boundaries.
 
 Diagnostics record the normalized polynomial, its scale, candidate sources, residuals, geometric
-separation, normal velocity, classification, and refinement counts.
+separation, normal velocity, local topology, release ownership, classification, and refinement
+counts.
 
 `findEarliestBoundaryContact` applies the same continuous-path policy to a fixed line segment. The
 ball centre is solved against the two parallel face offsets at one ball radius from the supporting
@@ -147,17 +156,19 @@ evidence but is not committed as the result.
 collider continuously, and commits a segment only after the selected interval has been certified
 collision-free. It never advances collision state through renderer frames or physics timesteps.
 
-Each selected contact is evaluated directly on the incoming path. For outward unit normal `n`,
-incoming velocity `v` and restitution `e`, the outgoing velocity is:
+Each selected contact is evaluated directly on the incoming path. Restitution is applied only to a
+definite incoming impact. For outward unit normal `n`, incoming velocity `v` and restitution `e`,
+the outgoing velocity is:
 
 ```text
 v' = v - (1 + e)(v · n)n
 ```
 
-The contact position becomes the next segment's exact start position. No positional nudge or
-arbitrary time advance is applied. A separating response naturally suppresses the start-time root
-for that collider; if the next query still selects a contact within `eventTime` of the current
-state, the run stops with `zero-time-loop` and preserves the certified prefix.
+Certified non-impulsive onset uses the unchanged incoming velocity and proceeds directly to
+sustained-contact support classification. The contact position becomes the next segment's exact
+start position. No positional nudge or arbitrary time advance is applied. If the next query still
+selects a contradictory contact without a positive collision-free interval, the unchanged
+`zero-time-loop` guard stops the run and preserves the certified prefix.
 
 Axis-aligned completion and escape regions are intersected continuously with the same ballistic
 path. A contact at or before a region entry wins; otherwise the committed terminal segment ends

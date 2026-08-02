@@ -223,6 +223,49 @@ describe('authoritative event-driven single-ball runs', () => {
 		);
 	});
 
+	it('enters circular support without restitution when zero-speed topology proves entry', () => {
+		const circle: StaticCollider = {
+			id: 'support-circle',
+			motionAuthority: 'static',
+			physicalShape: { type: 'circle', radius: 0.5 },
+			centre: [0, 0]
+		};
+		const run = constructSingleBallRun(
+			input({
+				position: [0, 0.6],
+				velocity: [1, 0],
+				colliders: [circle],
+				restitution: 0.8,
+				maximumSimulationTime: 1
+			})
+		);
+		const initialCandidate = run.diagnostics.contactSearches[0]!.candidates.find(
+			(candidate) => candidate.colliderId === circle.id
+		)!;
+
+		expect(initialCandidate).toMatchObject({
+			time: 0,
+			classification: 'accepted-non-impulsive',
+			preContactVelocity: [1, 0],
+			postContactVelocity: [1, 0]
+		});
+		expect(run.events).toContainEqual(
+			expect.objectContaining({
+				type: 'contact-mode-transition',
+				colliderId: circle.id,
+				from: 'free-flight',
+				to: 'sliding'
+			})
+		);
+		const supportedSegment = run.trajectories[0]!.segments[0]!;
+		expect(supportedSegment).toMatchObject({
+			type: 'circular-contact',
+			supportingColliderId: circle.id
+		});
+		expect(supportedSegment.startVelocity[0]).toBeCloseTo(1, 12);
+		expect(supportedSegment.startVelocity[1]).toBeCloseTo(0, 12);
+	});
+
 	it('collapses repeated centred peg impacts into symmetric resting contact', () => {
 		const peg: StaticCollider = {
 			id: 'centre-peg',

@@ -124,13 +124,19 @@ simulation entry points and are exercised in Vitest's Node environment, so they 
 Svelte, Three.js, a renderer or browser globals.
 
 Continuous fixed-world collision discovery is owned by `simulation/collision`.
-`peg-contact.ts` solves ball-versus-circle contacts, `boundary-contact.ts` orchestrates finite
-segment root selection, `boundary-query-validation.ts` validates its query contract,
-`boundary-candidate.ts` classifies face and endpoint evidence, and `fixed-world-contact.ts` compares
-their common typed candidates. `simulation/math/polynomial-roots.ts` contains the shared interval
-root isolation used by both geometry solvers. None of these modules advances state through fixed
-timesteps or imports rendering code. Renderer line thickness remains presentation-only; collision
-offsets use the dynamic ball radius and the zero-thickness physical segment contract.
+The named `circle-circle` subdomain solves dynamic-circle versus static-circle roots:
+`contact-polynomial.ts` owns ballistic geometry and polynomial construction, `query.ts` owns root
+selection and result construction, `query-validation.ts` validates query invariants, and
+`root-topology.ts` owns entering, exiting, grazing, initial/release-owned and indeterminate policy.
+`types.ts` declares the local public query and result contracts.
+`boundary-contact.ts` orchestrates finite-segment root selection, `boundary-query-validation.ts`
+validates its query contract, `boundary-candidate.ts` classifies face and endpoint evidence, and
+`fixed-world-contact.ts` compares their common typed candidates.
+`simulation/math/polynomial-roots.ts` contains the shared interval root isolation and exposes
+geometry-neutral isolating intervals and neighbouring polynomial samples to both geometry solvers.
+None of these modules advances state through fixed timesteps or imports rendering code. Renderer
+line thickness remains presentation-only; collision offsets use the dynamic ball radius and the
+zero-thickness physical segment contract.
 
 ## Renderer playback
 

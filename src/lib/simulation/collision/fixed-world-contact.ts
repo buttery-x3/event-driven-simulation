@@ -13,13 +13,13 @@ import type {
 	Vec2
 } from '../contracts';
 import {
-	findEarliestPegContact,
-	type PegContactCandidateDiagnostic,
-	type PegContactTolerances
-} from './peg-contact';
+	findEarliestCircleCircleContact,
+	type CircleCircleContactCandidateDiagnostic,
+	type CircleCircleContactTolerances
+} from './circle-circle';
 
 export interface FixedWorldContactTolerances
-	extends PegContactTolerances, BoundaryContactTolerances {}
+	extends CircleCircleContactTolerances, BoundaryContactTolerances {}
 
 export const defaultFixedWorldContactTolerances = {
 	contactDistance: 1e-9,
@@ -35,7 +35,7 @@ export interface FixedWorldContactQuery {
 	readonly searchUntilTime: number;
 	readonly tolerances?: FixedWorldContactTolerances;
 	readonly maximumRefinementIterations?: number;
-	readonly ignoredInitialContactColliderId?: string | null;
+	readonly releasedContactColliderId?: string | null;
 }
 
 export type FixedWorldContactFeature = 'circle' | BoundaryContactFeature;
@@ -44,13 +44,14 @@ export interface FixedWorldContactCandidate {
 	readonly type: 'contact-candidate';
 	readonly bodyId: string;
 	readonly colliderId: string;
-	readonly colliderKind: 'peg' | 'boundary';
+	readonly colliderKind: 'circle' | 'boundary';
 	readonly feature: FixedWorldContactFeature;
 	readonly time: number;
 	readonly position: Vec2;
 	readonly contactPoint: Vec2;
 	readonly normal: Vec2;
 	readonly normalVelocity: number;
+	readonly response: 'impact' | 'non-impulsive-contact';
 }
 
 export interface FixedWorldRejectedCandidateDiagnostic {
@@ -61,7 +62,7 @@ export interface FixedWorldRejectedCandidateDiagnostic {
 
 export interface FixedWorldColliderDiagnostic {
 	readonly colliderId: string;
-	readonly colliderKind: 'peg' | 'boundary';
+	readonly colliderKind: 'circle' | 'boundary';
 	readonly outcome: 'contact' | 'no-contact' | 'unresolved' | 'invalid-input';
 	readonly reason: string | null;
 	readonly eventTime: number | null;
@@ -130,7 +131,7 @@ export function findEarliestFixedWorldContact(
 
 	for (const collider of query.colliders) {
 		if ('centre' in collider) {
-			const evaluation = evaluatePeg(query, collider, tolerances);
+			const evaluation = evaluateCircle(query, collider, tolerances);
 			colliderEvaluations.push(evaluation.diagnostic);
 			if (evaluation.candidate) candidates.push(evaluation.candidate);
 		} else {
@@ -247,33 +248,33 @@ function validateQuery(
 	return null;
 }
 
-function evaluatePeg(
+function evaluateCircle(
 	query: FixedWorldContactQuery,
-	peg: StaticCircleCollider,
+	circle: StaticCircleCollider,
 	tolerances: FixedWorldContactTolerances
 ): {
 	readonly candidate: FixedWorldContactCandidate | null;
 	readonly diagnostic: FixedWorldColliderDiagnostic;
 } {
-	const result = findEarliestPegContact({
+	const result = findEarliestCircleCircleContact({
 		segment: query.segment,
 		ballRadius: query.ballRadius,
-		peg,
+		circle,
 		searchUntilTime: query.searchUntilTime,
 		tolerances,
 		maximumRefinementIterations: query.maximumRefinementIterations,
-		ignoreInitialContact: query.ignoredInitialContactColliderId === peg.id
+		releasedInitialContact: query.releasedContactColliderId === circle.id
 	});
 	const rejectedCandidates = result.diagnostics.candidates
-		.filter((candidate) => candidate.classification !== 'accepted')
-		.map(toPegRejection);
+		.filter((candidate) => !candidate.classification.startsWith('accepted-'))
+		.map(toCircleRejection);
 
 	if (result.type !== 'contact') {
 		return {
 			candidate: null,
 			diagnostic: {
-				colliderId: peg.id,
-				colliderKind: 'peg',
+				colliderId: circle.id,
+				colliderKind: 'circle',
 				outcome: result.type,
 				reason: 'reason' in result ? result.reason : null,
 				eventTime: null,
@@ -292,20 +293,21 @@ function evaluatePeg(
 		type: 'contact-candidate',
 		bodyId: result.event.bodyId,
 		colliderId: result.event.colliderId,
-		colliderKind: 'peg',
+		colliderKind: 'circle',
 		feature: 'circle',
 		time: result.event.time,
 		position: result.event.position,
 		contactPoint,
 		normal: result.event.normal,
-		normalVelocity: result.state.normalVelocity
+		normalVelocity: result.state.normalVelocity,
+		response: result.state.response
 	} as const satisfies FixedWorldContactCandidate;
 
 	return {
 		candidate,
 		diagnostic: {
-			colliderId: peg.id,
-			colliderKind: 'peg',
+			colliderId: circle.id,
+			colliderKind: 'circle',
 			outcome: 'contact',
 			reason: null,
 			eventTime: candidate.time,
@@ -331,7 +333,7 @@ function evaluateBoundary(
 		searchUntilTime: query.searchUntilTime,
 		tolerances,
 		maximumRefinementIterations: query.maximumRefinementIterations,
-		ignoreInitialContact: query.ignoredInitialContactColliderId === boundary.id
+		ignoreInitialContact: query.releasedContactColliderId === boundary.id
 	});
 	const rejectedCandidates = result.diagnostics.candidates
 		.filter((candidate) => candidate.classification !== 'accepted')
@@ -363,7 +365,9 @@ function evaluateBoundary(
 		position: result.event.position,
 		contactPoint: result.state.contactPoint,
 		normal: result.event.normal,
-		normalVelocity: result.state.normalVelocity
+		normalVelocity: result.state.normalVelocity,
+		response:
+			result.state.normalVelocity < -tolerances.normalVelocity ? 'impact' : 'non-impulsive-contact'
 	} as const satisfies FixedWorldContactCandidate;
 
 	return {
@@ -381,8 +385,8 @@ function evaluateBoundary(
 	};
 }
 
-function toPegRejection(
-	candidate: PegContactCandidateDiagnostic
+function toCircleRejection(
+	candidate: CircleCircleContactCandidateDiagnostic
 ): FixedWorldRejectedCandidateDiagnostic {
 	return {
 		time: candidate.time,

@@ -180,6 +180,8 @@ export function findEarliestBoundaryContact(
 				normalizedTime: 0,
 				source: 'boundary',
 				refinementIterations: 0,
+				isolatingInterval: [0, 0],
+				neighbourhood: { before: null, after: null },
 				normalizedCoefficients: coefficients
 			});
 			continue;

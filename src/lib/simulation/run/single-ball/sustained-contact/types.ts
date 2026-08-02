@@ -12,7 +12,7 @@ export interface SustainedNextState {
 	readonly time: number;
 	readonly position: Vec2;
 	readonly velocity: Vec2;
-	readonly ignoreInitialContactColliderId: string | null;
+	readonly releasedContactColliderId: string | null;
 	readonly acceptInitialContact: boolean;
 }
 

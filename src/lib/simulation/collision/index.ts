@@ -23,13 +23,16 @@ export {
 	type FixedWorldRejectedCandidateDiagnostic
 } from './fixed-world-contact';
 export {
-	defaultPegContactTolerances,
-	findEarliestPegContact,
-	type PegContactCandidateClassification,
-	type PegContactCandidateDiagnostic,
-	type PegContactDiagnostics,
-	type PegContactQuery,
-	type PegContactQueryResult,
-	type PegContactState,
-	type PegContactTolerances
-} from './peg-contact';
+	defaultCircleCircleContactTolerances,
+	findEarliestCircleCircleContact,
+	type CircleCircleContactCandidateClassification,
+	type CircleCircleContactCandidateDiagnostic,
+	type CircleCircleContactDiagnostics,
+	type CircleCircleContactQuery,
+	type CircleCircleContactQueryResult,
+	type CircleCircleContactState,
+	type CircleCircleContactTolerances,
+	type CircleCircleRootRegion,
+	type CircleCircleRootTopology,
+	type CircleCircleRootTopologyEvidence
+} from './circle-circle';
