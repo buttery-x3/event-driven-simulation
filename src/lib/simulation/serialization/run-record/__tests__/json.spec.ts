@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { RunFixtureError } from '../error';
+import { RunFixtureError } from '..';
 import { parseRunFixtureJson } from '../json';
 
 describe('run fixture JSON parsing', () => {

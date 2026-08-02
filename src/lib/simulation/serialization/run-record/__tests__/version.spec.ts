@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import canonicalFixtureJson from '../../../../../../fixtures/runs/canonical-event-driven-offset-drop.json?raw';
-import { RunFixtureError } from '../error';
+import { RunFixtureError } from '..';
 import { loadSimulationRunFixture } from '../version';
 
 describe('run fixture contract-version dispatch', () => {

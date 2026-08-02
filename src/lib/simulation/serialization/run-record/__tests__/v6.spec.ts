@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import canonicalFixtureJson from '../../../../../../fixtures/runs/canonical-event-driven-offset-drop.json?raw';
-import { RunFixtureError } from '../error';
+import { RunFixtureError } from '..';
 import { validateRunFixtureV6 } from '../v6';
+import { validateRunConsistencyV6 } from '../v6-consistency';
+import { validateRunRecordShapeV6 } from '../v6-shape';
 
 describe('version 6 run fixture validation', () => {
 	it('accepts the complete version 6 saved-run shape', () => {
@@ -34,6 +36,33 @@ describe('version 6 run fixture validation', () => {
 			expect.objectContaining<Partial<RunFixtureError>>({
 				code: 'INVALID_RUN_RECORD',
 				path: '$.outcome'
+			})
+		);
+	});
+
+	it('keeps structural validation independent from cross-field run consistency', () => {
+		const mislabelled = JSON.parse(canonicalFixtureJson) as { outcome: string };
+		mislabelled.outcome = 'settled';
+
+		const structurallyValid = validateRunRecordShapeV6(mislabelled);
+		expect(() => validateRunConsistencyV6(structurallyValid)).toThrowError(
+			expect.objectContaining<Partial<RunFixtureError>>({
+				code: 'INVALID_RUN_RECORD',
+				path: '$.outcome'
+			})
+		);
+	});
+
+	it('treats terminal references as run consistency rather than primitive shape', () => {
+		const missingReference = JSON.parse(canonicalFixtureJson) as {
+			terminalReason: { regionId: string };
+		};
+		missingReference.terminalReason.regionId = 'missing-region';
+
+		const structurallyValid = validateRunRecordShapeV6(missingReference);
+		expect(() => validateRunConsistencyV6(structurallyValid)).toThrowError(
+			expect.objectContaining<Partial<RunFixtureError>>({
+				path: '$.terminalReason.regionId'
 			})
 		);
 	});

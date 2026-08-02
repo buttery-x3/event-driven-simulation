@@ -1,5 +1,5 @@
 import type { SimulationRunRecord } from '../../contracts';
-import { RunFixtureError } from './error';
+import { RunFixtureError } from '../structural-validation/fixture-error';
 import { validateRunFixtureV6 } from './v6';
 
 export function loadSimulationRunFixture(value: unknown): SimulationRunRecord {

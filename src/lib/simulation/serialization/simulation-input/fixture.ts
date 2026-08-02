@@ -1,8 +1,8 @@
 import type { SimulationInput } from '../../contracts';
 import { parseRunFixtureJson } from '../run-record/json';
-import { RunFixtureError } from '../run-record/error';
-import { validateSimulationInputV6 } from '../run-record/v6';
 import { validateSingleBallInput } from '../../run';
+import { RunFixtureError } from '../structural-validation/fixture-error';
+import { validateSimulationInputV6 } from './v6';
 
 export interface SimulationInputFixture {
 	readonly contractVersion: 6;
@@ -41,15 +41,7 @@ export function parseSimulationInputFixture(json: string): SimulationInput {
 		);
 	}
 
-	let input: SimulationInput;
-	try {
-		input = validateSimulationInputV6(value.input, '$.input');
-	} catch (error) {
-		if (error instanceof RunFixtureError) {
-			throw invalidInput(error.message, error.path);
-		}
-		throw error;
-	}
+	const input = validateSimulationInputV6(value.input, '$.input');
 
 	const diagnostic = validateSingleBallInput(input)[0];
 	if (diagnostic) {

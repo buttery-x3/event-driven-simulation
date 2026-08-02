@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { canonicalPlinkoScenarios } from '../../../world';
-import { RunFixtureError } from '../../run-record/error';
+import { RunFixtureError } from '../../run-record';
 import { parseSimulationInputFixture, serializeSimulationInputFixture } from '..';
 
 describe('simulation input fixture boundary', () => {
