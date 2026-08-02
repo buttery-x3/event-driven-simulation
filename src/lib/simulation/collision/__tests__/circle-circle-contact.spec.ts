@@ -170,6 +170,22 @@ describe('continuous ballistic circle-circle contact solving', () => {
 		]);
 	});
 
+	it('fails closed when a released circle re-enters before tolerance-sized separation', () => {
+		const result = findEarliestCircleCircleContact({
+			...query(segment([1, 0], [0.0001, 0], [-10, 0], 0, 0.01), 0.01),
+			releasedInitialContact: true
+		});
+
+		expect(result).toMatchObject({
+			type: 'unresolved',
+			reason: 'Released circle contact re-entered before positive separation was certified.'
+		});
+		expect(result.diagnostics.candidates.map(({ classification }) => classification)).toEqual([
+			'rejected-release-owned',
+			'rejected-release-owned'
+		]);
+	});
+
 	it('fails closed when released contact remains indeterminate', () => {
 		const result = findEarliestCircleCircleContact({
 			...query(segment([-1, 0], [0, 0])),

@@ -59,3 +59,9 @@ sliding uphill, reaches exact rest, reverses under tangential gravity, loses sup
 escapes the board. Its focused test pins the original free-flight/contact prefix, the shared
 turning time and angle, zero velocity, continuous position, reversed velocity sign and deterministic
 rerun serialization.
+
+`flame-45-sub-tolerance-circle-release.json` preserves the full forensic run whose final diminishing
+bounce against `peg-row-01-column-04` never established tolerance-sized separation. The historical
+record reports a valid exit but contains a later free-flight crossing of that peg, so independent
+validation rejects it with `EARLY_GEOMETRY_CROSSING`; the focused rerun must retain the circle as
+sustained contact or fail closed before committing that interval.

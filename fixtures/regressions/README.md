@@ -13,3 +13,7 @@ Each file must contain one complete `SimulationRunRecord` in the current public 
   the forensic record.
 - `flame-43-circular-turning-point.json` preserves the complete certified run whose circular
   contact reaches exact rest, reverses direction, and continues downhill to support loss.
+- `flame-45-sub-tolerance-circle-release.json` preserves the full forensic run whose final
+  diminishing bounce against `peg-row-01-column-04` never established tolerance-sized separation.
+  The historical record reports a valid exit but independent validation rejects its later
+  free-flight peg crossing with `EARLY_GEOMETRY_CROSSING`.

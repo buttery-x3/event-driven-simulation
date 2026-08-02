@@ -15,7 +15,20 @@ export interface ImpactResponse {
 	readonly activeCandidates: readonly FixedWorldContactCandidate[];
 	readonly enterSustainedContact: boolean;
 	readonly collapseReason:
-		'zero-restitution' | 'contracting-impacts' | 'initial-supported-state' | null;
+		| 'zero-restitution'
+		| 'contracting-impacts'
+		| 'initial-supported-state'
+		| 'sub-tolerance-release'
+		| null;
+	readonly releaseRetention: ReleaseRetentionEvidence | null;
+}
+
+export interface ReleaseRetentionEvidence {
+	readonly colliderId: string;
+	readonly outgoingNormalSpeed: number;
+	readonly pressingNormalAcceleration: number;
+	readonly maximumNormalSeparation: number;
+	readonly contactDistanceTolerance: number;
 }
 
 export function resolveImpactResponse(
@@ -53,6 +66,11 @@ export function resolveImpactResponse(
 		return response(solution, true, 'initial-supported-state');
 	}
 	if (input.settings.restitution === 0) return response(solution, true, 'zero-restitution');
+
+	const releaseRetention = subToleranceReleaseEvidence(input, candidates, solution.contacts);
+	if (releaseRetention) {
+		return response(solution, true, 'sub-tolerance-release', releaseRetention);
+	}
 
 	const sameManifold = history
 		.filter((observation) => observation.manifoldKey === manifoldKey)
@@ -112,9 +130,33 @@ export function impactObservation(
 function response(
 	solution: NonNullable<ReturnType<typeof solveImpactManifold>>,
 	enterSustainedContact: boolean,
-	collapseReason: ImpactResponse['collapseReason']
+	collapseReason: ImpactResponse['collapseReason'],
+	releaseRetention: ReleaseRetentionEvidence | null = null
 ): ImpactResponse {
-	return { ...solution, enterSustainedContact, collapseReason };
+	return { ...solution, enterSustainedContact, collapseReason, releaseRetention };
+}
+
+function subToleranceReleaseEvidence(
+	input: SimulationInput,
+	candidates: readonly FixedWorldContactCandidate[],
+	contacts: readonly ContactManifoldMember[]
+): ReleaseRetentionEvidence | null {
+	if (candidates.length !== 1 || contacts.length !== 1) return null;
+	const candidate = candidates[0]!;
+	const outgoingNormalSpeed = contacts[0]!.postImpactNormalVelocity;
+	const pressingNormalAcceleration = -dotVec2(input.settings.gravity, candidate.normal);
+	if (outgoingNormalSpeed <= 0 || pressingNormalAcceleration <= 0) return null;
+	const maximumNormalSeparation =
+		(outgoingNormalSpeed * outgoingNormalSpeed) / (2 * pressingNormalAcceleration);
+	return maximumNormalSeparation <= input.settings.tolerances.contactDistance
+		? {
+				colliderId: candidate.colliderId,
+				outgoingNormalSpeed,
+				pressingNormalAcceleration,
+				maximumNormalSeparation,
+				contactDistanceTolerance: input.settings.tolerances.contactDistance
+			}
+		: null;
 }
 
 function contactManifoldKey(candidates: readonly FixedWorldContactCandidate[]): string {

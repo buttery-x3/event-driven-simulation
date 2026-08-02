@@ -208,6 +208,16 @@ function recordImpactEvidence(
 		time: event.time,
 		bodyId: body.id
 	});
+	if (response.releaseRetention) {
+		const evidence = response.releaseRetention;
+		assembly.entries.push({
+			severity: 'info',
+			code: 'SUB_TOLERANCE_RELEASE_RETAINED',
+			message: `Retained ${evidence.colliderId} for sustained contact: maximum normal separation ${evidence.maximumNormalSeparation} m from outgoing speed ${evidence.outgoingNormalSpeed} m/s and pressing acceleration ${evidence.pressingNormalAcceleration} m/s² does not exceed contact-distance tolerance ${evidence.contactDistanceTolerance} m.`,
+			time: event.time,
+			bodyId: body.id
+		});
+	}
 	assembly.impactHistory.push(impactObservation(candidates, event.time, response.contacts));
 }
 

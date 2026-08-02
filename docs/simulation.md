@@ -108,8 +108,9 @@ A segment that starts penetrating the fixed circle is invalid. A just-released s
 owns its initial root cluster until the same free-flight path certifies positive separation. Roots
 inside that release-owned cluster are rejected, but a later entering root with certified separated
 evidence before it remains eligible as a genuine recollision. This policy uses geometry rather than
-an elapsed-time ignore window. The search horizon is inclusive and must not extend beyond the
-segment.
+an elapsed-time ignore window. If an entering root or overlapping local evidence appears before
+positive separation is certified, the query fails closed as unresolved instead of silently
+returning no contact. The search horizon is inclusive and must not extend beyond the segment.
 
 The query has four typed outcomes: `contact`, `no-contact`, `unresolved`, and `invalid-input`.
 Coefficient overflow, a degenerate polynomial, non-finite candidate state, or exhausted root
@@ -221,6 +222,14 @@ For positive restitution, collapse requires repeated impacts with the same geome
 impact intervals and approach speeds, a sufficiently small normal speed derived from contact
 distance and pressing acceleration, and a finite nearby predicted accumulation time. This policy
 never adds a position nudge, random direction, damping step or synthetic time advance.
+
+A single pressing impact also retains its support immediately when the outgoing normal excursion
+bound `vₙ² / (2aₙ)` is no greater than the configured `contactDistance`. Such a release cannot
+establish the positive separation needed to clear release ownership, so it enters the existing
+sustained-contact continuation instead of committing ordinary free flight. Diagnostics preserve
+the outgoing normal speed, pressing acceleration, calculated separation bound and configured
+tolerance. Multi-contact cases that cannot establish certified separation remain subject to the
+fail-closed release-root policy rather than selecting an arbitrary support.
 
 Every accepted manifold remains one `contact` event. Entering or leaving sustained contact adds a
 `contact-mode-transition` event with the supporting collider, position, normal, source and target

@@ -146,6 +146,12 @@ export function findEarliestCircleCircleContact(
 				)
 			);
 			if (evidence.after === 'separated') releaseOwned = false;
+			else if (motion === 'entering' || evidence.after === 'overlapping') {
+				return unresolved(
+					'Released circle contact re-entered before positive separation was certified.',
+					{ ...diagnostics, candidates }
+				);
+			}
 			continue;
 		}
 		releaseOwned = false;
