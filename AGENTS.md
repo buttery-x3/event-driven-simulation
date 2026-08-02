@@ -130,10 +130,10 @@ justification, and a threshold failure requires reassessing ownership rather tha
 or shaving lines until the file barely passes. If file or function limits are encountered more than
 once, stop line-budget refactoring and restate the ownership plan before continuing.
 
-Assess a named subdomain before a directory reaches saturation when it contains six of eight
-implementation-file slots, when three or more implementation files serve one new state machine or
-domain concept, or when lifecycle, result or transition construction is duplicated across domain
-modules. Any threshold increase or exception requires repository-owner approval and documented
+Assess a named subdomain before a directory reaches the capacity documented in
+`docs/modularity.md`, when multiple implementation files serve one new state machine or domain
+concept, or when lifecycle, result or transition construction is duplicated across domain modules.
+Any threshold increase or exception requires repository-owner approval and documented
 justification.
 
 Do not satisfy modularity rules by creating arbitrary fragments, thin forwarding wrappers or
@@ -233,8 +233,8 @@ structural-pressure report covering:
 * threshold, dependency-rule and documented-topology changes, or an explicit statement that none
   were required;
 * remaining structural pressure and likely future split points supported by concrete evidence; and
-* headroom concerns for every modified or newly created production file above 350 effective lines,
-  including an explicit one-primary-reason-to-change justification for a newly created file.
+* headroom concerns and responsibility justification for modified or newly created production files
+  that meet the review triggers documented in `docs/modularity.md`.
 
 This is implementation evidence, not permission for speculative architecture work.
 

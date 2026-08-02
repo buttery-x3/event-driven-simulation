@@ -4,7 +4,7 @@ import {
 	getTerminalDiagnosticCode,
 	isOutcomeConsistentWithValidity
 } from '../../run';
-import { invalidRunRecordField } from '../structural-validation/fixture-error';
+import { invalidRunRecordField } from '../structural-validation';
 
 export function validateRunConsistencyV6(record: SimulationRunRecord): void {
 	const expectedOutcome = getRunOutcome(record.terminalReason);

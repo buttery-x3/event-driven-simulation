@@ -1,7 +1,6 @@
 import type { SimulationRunRecord } from '../../contracts';
 import { validateSimulationInputV6 } from '../simulation-input/v6';
-import { createUnknownDataAssertions } from '../structural-validation/assertions';
-import { invalidRunRecordField } from '../structural-validation/fixture-error';
+import { createUnknownDataAssertions, invalidRunRecordField } from '../structural-validation';
 
 const {
 	requireArray,

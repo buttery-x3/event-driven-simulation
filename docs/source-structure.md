@@ -89,6 +89,7 @@ src/lib/simulation/
 
     serialization/
         structural-validation/
+            index.ts
             assertions.ts
             fixture-error.ts
         run-record/

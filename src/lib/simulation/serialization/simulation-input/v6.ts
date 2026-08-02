@@ -2,9 +2,9 @@ import type { SimulationInput } from '../../contracts';
 import { validateSceneDefinition } from '../../world';
 import {
 	createUnknownDataAssertions,
+	invalidSimulationInputField,
 	type FieldValidationFailure
-} from '../structural-validation/assertions';
-import { invalidSimulationInputField } from '../structural-validation/fixture-error';
+} from '../structural-validation';
 
 export function validateSimulationInputV6(
 	value: unknown,

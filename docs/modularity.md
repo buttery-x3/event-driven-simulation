@@ -198,7 +198,8 @@ wrappers.
 `serialization/run-record/v6-shape.ts` owns run-record structural validation, while
 `v6-consistency.ts` owns cross-field invariants and terminal references. `run-record/v6.ts` only
 orchestrates those two phases. Reusable unknown-data assertions and typed fixture failures live in
-the narrowly named `serialization/structural-validation` subdomain.
+the narrowly named `serialization/structural-validation` subdomain and are exposed to sibling
+serialization modules through its local entry point.
 
 ## Extraction rules
 

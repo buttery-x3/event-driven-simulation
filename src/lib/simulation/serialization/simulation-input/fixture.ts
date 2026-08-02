@@ -1,7 +1,7 @@
 import type { SimulationInput } from '../../contracts';
 import { parseRunFixtureJson } from '../run-record/json';
 import { validateSingleBallInput } from '../../run';
-import { RunFixtureError } from '../structural-validation/fixture-error';
+import { RunFixtureError } from '../structural-validation';
 import { validateSimulationInputV6 } from './v6';
 
 export interface SimulationInputFixture {

@@ -1,4 +1,4 @@
-import { RunFixtureError } from '../structural-validation/fixture-error';
+import { RunFixtureError } from '../structural-validation';
 
 export function parseRunFixtureJson(json: string): unknown {
 	try {

@@ -206,7 +206,8 @@ inputs. It owns the version 6 structural input validator and then applies the si
 validator. Saved run records use the independent `simulation/serialization/run-record` boundary,
 where version-specific shape and cross-field consistency validation have separate owners. Shared
 unknown-data assertions and typed fixture failures live in the private
-`simulation/serialization/structural-validation` subdomain.
+`simulation/serialization/structural-validation` subdomain and are consumed through its local entry
+point.
 
 The current styling policy is Svelte component-scoped CSS plus global CSS custom properties.
 `src/app.css` contains the reset, document defaults and shared tokens for colour, spacing,
