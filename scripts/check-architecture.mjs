@@ -10,6 +10,7 @@ const documentedSubsystems = new Set([
 	'motion',
 	'run',
 	'serialization',
+	'verification',
 	'world'
 ]);
 
@@ -20,7 +21,8 @@ const allowedDependencies = new Map([
 	['collision', new Set(['contracts', 'math', 'motion'])],
 	['world', new Set(['contracts'])],
 	['run', new Set(['collision', 'contracts', 'math', 'motion', 'world'])],
-	['serialization', new Set(['contracts', 'run', 'world'])]
+	['serialization', new Set(['contracts', 'run', 'world'])],
+	['verification', new Set(['contracts', 'math', 'motion'])]
 ]);
 
 const catchAllDirectoryNames = new Set(['common', 'core', 'helpers', 'misc', 'shared', 'utils']);

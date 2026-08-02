@@ -28,6 +28,18 @@ describe('simulation architecture checker', () => {
 		expect(checkArchitecture(root)).toEqual([]);
 	});
 
+	it('accepts verification as a leaf consumer of public contract and motion APIs', () => {
+		const root = createFixture({
+			'src/lib/simulation/contracts/index.ts': 'export type Run = string;',
+			'src/lib/simulation/motion/index.ts': 'export type Evaluator = string;',
+			'src/lib/simulation/verification/index.ts': "export { validate } from './validate';",
+			'src/lib/simulation/verification/validate.ts':
+				"import type { Run } from '../contracts'; import type { Evaluator } from '../motion'; export function validate(run: Run): Evaluator { return run; }"
+		});
+
+		expect(checkArchitecture(root)).toEqual([]);
+	});
+
 	it.each([
 		{
 			name: 'root-level implementation',

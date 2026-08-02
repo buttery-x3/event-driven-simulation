@@ -20,8 +20,9 @@ Simulation data uses two-dimensional coordinates. Rendering may map that data in
 three-dimensional presentation, but renderer objects never enter the simulation contracts and
 rendering is not a source of physical truth.
 
-Simulation modules belong to the `contracts`, `math`, `motion`, `collision`, `world`, `run`, or
-`serialization` subsystem documented in [`source-structure.md`](source-structure.md). Each
+Simulation modules belong to the `contracts`, `math`, `motion`, `collision`, `world`, `run`,
+`serialization`, or `verification` subsystem documented in
+[`source-structure.md`](source-structure.md). Each
 subsystem exposes supported capabilities through an explicit `index.ts`; implementation modules
 remain private to their subsystem. The architecture checker enforces this topology and the
 dependency graph, while ESLint enforces production file and function growth limits.
@@ -104,6 +105,23 @@ the narrow runtime entry point from unknown JSON data to `SimulationRunRecord`. 
 fixture errors, contract-version recognition and version 6 structural and consistency validation
 live in separate implementation modules behind that entry point. Version dispatch is intentionally
 explicit rather than a general schema registry.
+
+## Independent run verification boundary
+
+`src/lib/simulation/verification/index.ts` exposes the reusable headless
+`validateSimulationRun(input, run)` capability. It compares an immutable submitted input with a
+public run record and returns stable failure categories, codes and record references. The private
+`history` subdomain owns record references, finiteness and temporal continuity. The private
+`physics` subdomain owns submitted geometry, bounded collision-free samples, impact and support
+necessary conditions, and terminal semantics. The parent owns result collection, orchestration and
+JSON round-trip preservation.
+
+Verification is a leaf consumer of the public `contracts`, `math` and `motion` entry points.
+Simulation, world and serialization modules never import it. It evaluates declared trajectories
+only at recorded boundaries and a bounded set of challenge samples; it does not search for or repair
+events, classify roots, solve constrained continuation, or reproduce the manifold solver. Focused
+solver tests remain authoritative for those algorithms, while verification establishes that their
+composed public history is internally consistent and physically plausible at observable boundaries.
 
 Loading a fixture establishes only that it matches the saved-run contract. It does not promote the
 terminal reason or make an incomplete run eligible for ordinary playback. The renderer still

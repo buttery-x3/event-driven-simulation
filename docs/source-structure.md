@@ -143,6 +143,22 @@ src/lib/simulation/
             fixture.ts
             v6.ts
             __tests__/
+
+    verification/
+        index.ts
+        validate.ts
+        results.ts
+        history/
+            index.ts
+            record-integrity.ts
+            temporal-continuity.ts
+        physics/
+            index.ts
+            contact-geometry.ts
+            collision-free.ts
+            contact-dynamics.ts
+            terminal-outcome.ts
+        __tests__/
 ```
 
 An optional `src/lib/simulation/index.ts` may exist only when a genuine package-level public facade
@@ -159,6 +175,7 @@ is needed. It must not become a universal barrel that exposes every internal cap
 | `world`         | Scene validation, canonical boards and scenario definitions                    | Dynamic event sequencing, fixture parsing          |
 | `run`           | Event-to-event simulation, response and terminal outcome construction          | Renderer resources, external JSON parsing          |
 | `serialization` | Unknown-data parsing, contract-version dispatch and saved input/run validation | Authoritative motion or collision generation       |
+| `verification`  | Independent public run-history invariants and structured validation evidence   | Event generation, record repair, renderer playback |
 
 The `serialization/diagnostic-export` subdomain owns construction and formatted JSON writing for
 the versioned, immutable diagnostic evidence bundle. It consumes an accepted run record and
@@ -181,6 +198,7 @@ collision     -> contracts, math, motion
 world         -> contracts
 run           -> contracts, math, motion, collision, world
 serialization -> contracts, world, run
+verification  -> contracts, math, motion
 ```
 
 Additional rules:
@@ -191,6 +209,8 @@ Additional rules:
 - `world` must not import `collision`, `run` or `serialization`.
 - `serialization` may validate and preserve run data but must never generate or repair
   authoritative motion.
+- `verification` is a leaf validation capability. Simulation producers and serializers must not
+  import it, and it must not reproduce collision discovery or constrained-motion solving.
 - Rendering may consume only the documented public contract and motion-evaluation APIs, consistent
   with `architecture.md`.
 - Application and workbench code may invoke run construction and serialization only through their
