@@ -37,8 +37,11 @@ export function solveImpactManifold(
 		feature: constraint.candidate.feature,
 		contactPoint: constraint.candidate.contactPoint,
 		normal: constraint.candidate.normal,
-		preImpactNormalVelocity: constraint.incoming,
-		postImpactNormalVelocity: dotVec2(outgoingVelocity, constraint.candidate.normal),
+		preImpactNormalVelocity: normalize(constraint.incoming, tolerance),
+		postImpactNormalVelocity: normalize(
+			dotVec2(outgoingVelocity, constraint.candidate.normal),
+			tolerance
+		),
 		impulse: normalize(solution.impulses[index] ?? 0, tolerance)
 	}));
 	return {

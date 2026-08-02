@@ -19,6 +19,7 @@ export interface FixedWorldContactQuery {
 	readonly maximumRefinementIterations?: number;
 	readonly releasedContactColliderId?: string | null;
 	readonly releasedContactColliderIds?: readonly string[];
+	readonly toleranceContainedReleaseColliderIds?: readonly string[];
 }
 
 export type FixedWorldContactFeature = 'circle' | BoundaryContactFeature;

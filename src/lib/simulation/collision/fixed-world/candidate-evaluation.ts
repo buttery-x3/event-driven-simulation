@@ -30,7 +30,9 @@ export function evaluateCircle(
 		searchUntilTime: query.searchUntilTime,
 		tolerances,
 		maximumRefinementIterations: query.maximumRefinementIterations,
-		releasedInitialContact: released(query, circle.id)
+		releasedInitialContact: released(query, circle.id),
+		allowToleranceContainedReleasePassage:
+			query.toleranceContainedReleaseColliderIds?.includes(circle.id) ?? false
 	});
 	const rejectedCandidates = result.diagnostics.candidates
 		.filter((candidate) => !candidate.classification.startsWith('accepted-'))

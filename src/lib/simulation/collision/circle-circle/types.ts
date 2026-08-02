@@ -21,6 +21,7 @@ export interface CircleCircleContactQuery {
 	readonly tolerances?: CircleCircleContactTolerances;
 	readonly maximumRefinementIterations?: number;
 	readonly releasedInitialContact?: boolean;
+	readonly allowToleranceContainedReleasePassage?: boolean;
 }
 
 export type CircleCircleContactCandidateClassification =

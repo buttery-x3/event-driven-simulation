@@ -88,7 +88,7 @@ export function findEarliestCircleCircleContact(
 
 	const candidates: CircleCircleContactCandidateDiagnostic[] = [];
 	let releaseOwned = query.releasedInitialContact ?? false;
-	for (const root of rootIsolation.roots) {
+	for (const [rootIndex, root] of rootIsolation.roots.entries()) {
 		const evaluated = evaluateCircleCircleCandidate(
 			query,
 			tolerances.contactDistance,
@@ -146,7 +146,21 @@ export function findEarliestCircleCircleContact(
 				)
 			);
 			if (evidence.after === 'separated') releaseOwned = false;
-			else if (motion === 'entering' || evidence.after === 'overlapping') {
+			else if (
+				(motion === 'entering' || evidence.after === 'overlapping') &&
+				query.allowToleranceContainedReleasePassage === true &&
+				certifiesToleranceContainedReleasePassage(
+					query,
+					tolerances,
+					normalizedCoefficients,
+					root.normalizedTime,
+					rootIsolation.roots[rootIndex + 1]?.normalizedTime,
+					searchDuration,
+					combinedRadius
+				)
+			) {
+				continue;
+			} else if (motion === 'entering' || evidence.after === 'overlapping') {
 				return unresolved(
 					'Released circle contact re-entered before positive separation was certified.',
 					{ ...diagnostics, candidates }
@@ -219,6 +233,35 @@ export function findEarliestCircleCircleContact(
 	}
 
 	return { type: 'no-contact', diagnostics: { ...diagnostics, candidates } };
+}
+
+function certifiesToleranceContainedReleasePassage(
+	query: CircleCircleContactQuery,
+	tolerances: CircleCircleContactTolerances,
+	coefficients: readonly number[],
+	entryTime: number,
+	exitTime: number | undefined,
+	searchDuration: number,
+	combinedRadius: number
+): boolean {
+	if (exitTime === undefined || exitTime <= entryTime) return false;
+	const derivative = coefficients.slice(1).map((coefficient, index) => coefficient * (index + 1));
+	const critical = isolatePolynomialRoots(
+		derivative,
+		entryTime,
+		exitTime,
+		tolerances.eventTime / searchDuration,
+		tolerances.polynomialResidual,
+		query.maximumRefinementIterations ?? defaultMaximumRefinementIterations
+	);
+	if (critical.type === 'unresolved') return false;
+	const minimumSeparation = Math.min(
+		...[entryTime, exitTime, ...critical.roots.map(({ normalizedTime }) => normalizedTime)].map(
+			(normalizedTime) =>
+				circleCircleSurfaceSeparation(query, combinedRadius, normalizedTime, searchDuration)
+		)
+	);
+	return Number.isFinite(minimumSeparation) && minimumSeparation >= -tolerances.contactDistance;
 }
 
 function candidateDiagnostic(

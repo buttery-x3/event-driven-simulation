@@ -12,9 +12,11 @@ import { defaultFixedWorldContactTolerances, findEarliestFixedWorldContact } fro
 import { evaluateMotionSegmentPosition, evaluateMotionSegmentVelocity } from '../../motion';
 import { toRunContactSearchDiagnostic } from './diagnostics';
 import {
+	isContractingAlternatingImpactSequence,
 	mergeContactCandidates,
 	resolveContact,
 	resolvePendingContact,
+	type ImpactObservation,
 	type ImpactNextState
 } from './impact';
 import { validateSingleBallInput } from './input-validation';
@@ -135,11 +137,7 @@ export function constructSingleBallRun(input: SimulationInput): SimulationRunRec
 
 		if (contactResult.type === 'contact') {
 			const elapsed = contactResult.event.time - state.time;
-			if (
-				elapsed <= input.settings.tolerances.eventTime &&
-				!state.acceptInitialContact &&
-				!(state.time === 0 && contactResult.event.time === 0)
-			) {
+			if (isUnresolvedZeroTimeContact(input, state, contactResult, assembly.impactHistory)) {
 				return finish(
 					'valid',
 					{
@@ -238,6 +236,24 @@ export function constructSingleBallRun(input: SimulationInput): SimulationRunRec
 	}
 }
 
+function isUnresolvedZeroTimeContact(
+	input: SimulationInput,
+	state: EventState,
+	result: Extract<ReturnType<typeof findFreeFlightContact>, { type: 'contact' }>,
+	history: readonly ImpactObservation[]
+): boolean {
+	const elapsed = result.event.time - state.time;
+	return (
+		elapsed <= input.settings.tolerances.eventTime &&
+		!state.acceptInitialContact &&
+		!(state.time === 0 && result.event.time === 0) &&
+		!(
+			elapsed > 0 &&
+			isContractingAlternatingImpactSequence(result.event.time, result.activeCandidates, history)
+		)
+	);
+}
+
 function findFreeFlightContact(
 	input: SimulationInput,
 	body: InitialDynamicCircleBodyState,
@@ -251,6 +267,7 @@ function findFreeFlightContact(
 		colliders: input.scene.staticColliders,
 		releasedContactColliderId: state.releasedContactColliderId,
 		releasedContactColliderIds: state.releasedContactColliderIds,
+		toleranceContainedReleaseColliderIds: state.toleranceContainedReleaseColliderIds,
 		searchUntilTime,
 		tolerances: {
 			...defaultFixedWorldContactTolerances,

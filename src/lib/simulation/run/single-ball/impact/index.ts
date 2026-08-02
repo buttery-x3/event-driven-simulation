@@ -5,4 +5,4 @@ export {
 	type ImpactNextState,
 	type ImpactResolution
 } from './resolution';
-export { type ImpactObservation } from './response';
+export { isContractingAlternatingImpactSequence, type ImpactObservation } from './response';

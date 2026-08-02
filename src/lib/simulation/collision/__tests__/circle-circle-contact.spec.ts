@@ -186,6 +186,33 @@ describe('continuous ballistic circle-circle contact solving', () => {
 		]);
 	});
 
+	it('certifies an explicitly allowed release passage whose penetration stays within tolerance', () => {
+		const result = findEarliestCircleCircleContact({
+			...query(segment([0.9999999995, 0.00004], [0, -1], [0, 0], 0, 0.00008), 0.00008),
+			releasedInitialContact: true,
+			allowToleranceContainedReleasePassage: true
+		});
+
+		expect(result.type).toBe('no-contact');
+		expect(result.diagnostics.candidates.map(({ classification }) => classification)).toEqual([
+			'rejected-release-owned',
+			'rejected-release-owned'
+		]);
+	});
+
+	it('rejects an allowed release passage whose penetration exceeds tolerance', () => {
+		const result = findEarliestCircleCircleContact({
+			...query(segment([0.999999998, 0.00007], [0, -1], [0, 0], 0, 0.00014), 0.00014),
+			releasedInitialContact: true,
+			allowToleranceContainedReleasePassage: true
+		});
+
+		expect(result).toMatchObject({
+			type: 'unresolved',
+			reason: 'Released circle contact re-entered before positive separation was certified.'
+		});
+	});
+
 	it('fails closed when released contact remains indeterminate', () => {
 		const result = findEarliestCircleCircleContact({
 			...query(segment([-1, 0], [0, 0])),

@@ -5,6 +5,7 @@ import { solveImpactManifold } from '../manifold';
 
 export interface ImpactObservation {
 	readonly manifoldKey: string;
+	readonly colliderIds: readonly string[];
 	readonly time: number;
 	readonly incomingNormalSpeed: number;
 }
@@ -17,6 +18,7 @@ export interface ImpactResponse {
 	readonly collapseReason:
 		| 'zero-restitution'
 		| 'contracting-impacts'
+		| 'alternating-contact-limit'
 		| 'initial-supported-state'
 		| 'sub-tolerance-release'
 		| null;
@@ -36,16 +38,18 @@ export function resolveImpactResponse(
 	time: number,
 	candidates: readonly FixedWorldContactCandidate[],
 	incomingVelocity: Vec2,
-	history: readonly ImpactObservation[]
+	history: readonly ImpactObservation[],
+	forcedCollapse: 'alternating-contact-limit' | null = null
 ): ImpactResponse | null {
 	const tolerance = input.settings.tolerances.eventTime;
 	const solution = solveImpactManifold(
 		candidates,
 		incomingVelocity,
-		input.settings.restitution,
+		forcedCollapse ? 0 : input.settings.restitution,
 		tolerance
 	);
 	if (!solution) return null;
+	if (forcedCollapse) return response(solution, true, forcedCollapse);
 	const manifoldKey = contactManifoldKey(candidates);
 	const pressingAcceleration = Math.max(
 		0,
@@ -72,6 +76,9 @@ export function resolveImpactResponse(
 		return response(solution, true, 'sub-tolerance-release', releaseRetention);
 	}
 
+	if (isContractingAlternatingImpactSequence(time, candidates, history)) {
+		return response(solution, retainedConstraint, null);
+	}
 	const sameManifold = history
 		.filter((observation) => observation.manifoldKey === manifoldKey)
 		.slice(-2);
@@ -119,12 +126,47 @@ export function impactObservation(
 ): ImpactObservation {
 	return {
 		manifoldKey: contactManifoldKey(candidates),
+		colliderIds: [...new Set(candidates.map(({ colliderId }) => colliderId))].sort(),
 		time,
 		incomingNormalSpeed: Math.max(
 			0,
 			...contacts.map(({ preImpactNormalVelocity }) => -preImpactNormalVelocity)
 		)
 	};
+}
+
+export function isContractingAlternatingImpactSequence(
+	time: number,
+	candidates: readonly FixedWorldContactCandidate[],
+	history: readonly ImpactObservation[]
+): boolean {
+	if (candidates.length !== 1) return false;
+	const current = candidates[0]!;
+	const observations = [
+		...history,
+		{
+			time,
+			manifoldKey: contactManifoldKey(candidates),
+			colliderIds: [current.colliderId],
+			incomingNormalSpeed: Math.max(0, -current.normalVelocity)
+		}
+	].slice(-5);
+	if (observations.length < 5 || observations.some(({ colliderIds }) => colliderIds.length !== 1)) {
+		return false;
+	}
+	const keys = observations.map(({ manifoldKey }) => manifoldKey);
+	if (keys[0] !== keys[2] || keys[2] !== keys[4] || keys[1] !== keys[3] || keys[0] === keys[1])
+		return false;
+	const intervals = observations.slice(1).map((observation, index) => {
+		return observation.time - observations[index]!.time;
+	});
+	return (
+		intervals.every((interval) => interval > 0) &&
+		intervals[3]! < intervals[0]! &&
+		intervals.slice(1).filter((interval, index) => interval < intervals[index]!).length >= 2 &&
+		observations[4]!.incomingNormalSpeed < observations[2]!.incomingNormalSpeed &&
+		observations[3]!.incomingNormalSpeed < observations[1]!.incomingNormalSpeed
+	);
 }
 
 function response(
