@@ -5,6 +5,11 @@ FLAME-33 extends the Milestone 2 headless experiment catalogue beyond the canoni
 serialisable scene, body and settings data. Every entry runs through `constructSingleBallRun`;
 scenario IDs and peg counts never select solver behaviour.
 
+The diagnostic workbench consumes this same catalogue through a workbench-facing descriptor. It
+groups these entries with canonical launches, displays their purpose and terminal contract before
+execution, and submits their unchanged `SimulationInput` through the public headless run API. The
+returned run remains the only source for actual outcome and renderer playback.
+
 ## Scenario matrix
 
 | Scenario                    | Peg count | Material variation                                      | Expected terminal outcome          |

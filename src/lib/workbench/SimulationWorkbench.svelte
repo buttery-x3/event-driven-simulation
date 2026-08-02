@@ -2,7 +2,6 @@
 	import { onMount } from 'svelte';
 	import { PlaybackClock, toRendererPlaybackInput } from '$lib/rendering/playback';
 	import type { SimulationInput, SimulationRunRecord } from '$lib/simulation/contracts';
-	import { canonicalPlinkoScenarios, defaultCanonicalPlinkoScenario } from '$lib/simulation/world';
 	import {
 		parseSimulationRunFixture,
 		RunFixtureError
@@ -18,6 +17,7 @@
 	import MetricsPanel from './MetricsPanel.svelte';
 	import PlaybackControls from './PlaybackControls.svelte';
 	import RunInspector from './RunInspector.svelte';
+	import ScenarioCatalogue from './ScenarioCatalogue.svelte';
 	import SimulationViewport from './SimulationViewport.svelte';
 	import {
 		getInspectionMode,
@@ -32,6 +32,11 @@
 		type LaunchDraft,
 		type LaunchValidationError
 	} from './launch-controls';
+	import {
+		defaultWorkbenchScenario,
+		getWorkbenchScenario,
+		workbenchScenarios
+	} from './scenario-catalogue';
 
 	let { fixtures }: { fixtures: readonly RepositoryRunFixture[] } = $props();
 
@@ -46,14 +51,13 @@
 		name: initialFixture.name
 	});
 	let loadFeedback = $state.raw<LoadFeedback | null>(null);
-	let selectedScenarioId = $state<string | null>(defaultCanonicalPlinkoScenario.id);
-	let launchBaseInput = $state.raw<SimulationInput>(defaultCanonicalPlinkoScenario.input);
-	let launchDraft = $state.raw<LaunchDraft>(
-		createLaunchDraft(defaultCanonicalPlinkoScenario.input)
-	);
+	let selectedScenarioId = $state<string | null>(defaultWorkbenchScenario.id);
+	let launchBaseInput = $state.raw<SimulationInput>(defaultWorkbenchScenario.input);
+	let launchDraft = $state.raw<LaunchDraft>(createLaunchDraft(defaultWorkbenchScenario.input));
 	let launchErrors = $state.raw<readonly LaunchValidationError[]>([]);
 	let launchFeedback = $state<string | null>(null);
 	let submittedInput = $state.raw<SimulationInput | null>(null);
+	let actualScenarioId = $state<string | null>(null);
 	let playback = $derived(toRendererPlaybackInput(currentRun));
 	let inspectionMode = $derived(getInspectionMode(currentRun.validity, currentRun.outcome));
 	let clock = new PlaybackClock(initialRun.diagnostics.simulatedUntilTime);
@@ -104,9 +108,14 @@
 		seekPlayback(time);
 	}
 
-	function acceptRun(run: SimulationRunRecord, source: RunSource): void {
+	function acceptRun(
+		run: SimulationRunRecord,
+		source: RunSource,
+		scenarioId: string | null = null
+	): void {
 		currentRun = run;
 		currentSource = source;
+		actualScenarioId = scenarioId;
 		clock = new PlaybackClock(run.diagnostics.simulatedUntilTime);
 		replayTime = 0;
 		playing = false;
@@ -114,7 +123,7 @@
 	}
 
 	function selectScenario(scenarioId: string): void {
-		const scenario = canonicalPlinkoScenarios.find(({ id }) => id === scenarioId);
+		const scenario = getWorkbenchScenario(scenarioId);
 		if (!scenario) return;
 
 		selectedScenarioId = scenario.id;
@@ -125,7 +134,7 @@
 	}
 
 	function resetCanonicalDefault(): void {
-		selectScenario(defaultCanonicalPlinkoScenario.id);
+		selectScenario(defaultWorkbenchScenario.id);
 	}
 
 	function changeLaunchDraft(nextDraft: LaunchDraft): void {
@@ -145,10 +154,8 @@
 		const calculation = executeLaunchSubmission(submission.input);
 		submittedInput = calculation.submittedInput;
 		const run = calculation.run;
-		const scenarioName =
-			canonicalPlinkoScenarios.find(({ id }) => id === selectedScenarioId)?.name ??
-			'Loaded custom scenario';
-		acceptRun(run, { kind: 'simulation', name: scenarioName });
+		const scenarioName = getWorkbenchScenario(selectedScenarioId)?.name ?? 'Loaded custom scenario';
+		acceptRun(run, { kind: 'simulation', name: scenarioName }, selectedScenarioId);
 		launchErrors = [];
 		launchFeedback = `Run calculated · ${run.outcome} · ${run.events.length} events · ${run.diagnostics.simulationWallTimeMilliseconds} ms wall time.`;
 	}
@@ -266,14 +273,20 @@
 		onLoadFile={loadLocalFile}
 	/>
 
-	<LaunchControls
-		scenarios={canonicalPlinkoScenarios}
+	<ScenarioCatalogue
+		scenarios={workbenchScenarios}
 		{selectedScenarioId}
+		customInput={launchBaseInput}
+		{actualScenarioId}
+		actualOutcome={actualScenarioId === null ? null : currentRun.outcome}
+		onSelectScenario={selectScenario}
+	/>
+
+	<LaunchControls
 		draft={launchDraft}
 		errors={launchErrors}
 		feedback={launchFeedback}
 		lastSubmittedInput={submittedInput}
-		onSelectScenario={selectScenario}
 		onResetDefault={resetCanonicalDefault}
 		onChangeDraft={changeLaunchDraft}
 		onRun={runDraftScenario}

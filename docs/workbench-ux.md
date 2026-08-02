@@ -3,9 +3,9 @@
 ## Purpose and scope
 
 This document defines the browser prototype as a diagnostics and experiment workbench for saved and
-newly calculated simulation runs. FLAME-23 established the replay and inspection surface; FLAME-31
-adds explicit canonical-scenario launch controls that invoke the real headless single-ball
-simulator.
+newly calculated simulation runs. FLAME-23 established the replay and inspection surface, FLAME-31
+added explicit launch controls, and FLAME-37 exposes the complete named single-ball verification
+catalogue through the same real headless simulator.
 
 The large headline, explanatory essay and decorative `simulation -> completed run -> renderer`
 strip in the current route are removed. A compact application bar provides identity and source
@@ -75,12 +75,18 @@ The session retains:
 A rejected load attempt changes only load feedback. It does not change the current run, source,
 cursor, viewport, event selection or diagnostics.
 
-### Launch controls
+### Scenario catalogue and launch controls
 
-The launch panel exposes the five canonical scenario presets and a reset to the canonical default.
+The catalogue groups canonical launches and all named board-state scenarios by stable category.
+Each descriptor retains its authoritative `SimulationInput` rather than copying scene, body or
+settings fields. The browser shows the selected stable ID, purpose, scene ID, initial state and
+expected or permitted outcomes before calculation. Physical-settings, adversarial-contact and
+saved-regression category IDs are stable extension homes even when a category has no current entry.
+
 Selecting a preset replaces the draft but does not calculate or replace the current run. Position
 uses labelled `x` and `y` metre inputs. Velocity can be entered either as speed plus angle or as
-direct `x` and `y` metre-per-second components.
+direct `x` and `y` metre-per-second components. The explicit Run action is the only operation that
+replaces the accepted run and rendered world.
 
 Angles are measured in degrees from positive `x`, with positive angles rotating toward positive
 `y`. The workbench converts speed and angle with `vx = speed × cos(angle)` and
@@ -91,6 +97,11 @@ Run validates field syntax and the supported single-ball scenario policy, create
 immutable input snapshot, calls `constructSingleBallRun`, and atomically accepts the returned
 record. Invalid draft input leaves the current run and transport untouched. A valid but unresolved
 calculation is accepted in recorded-prefix mode rather than ordinary playback.
+
+After calculation, the catalogue compares `run.outcome` with the submitted descriptor's permitted
+outcomes. A match or mismatch is textual and visible alongside the expected values. Selecting a
+different draft, or loading a saved run, clears that association without changing the accepted run;
+the renderer never decides whether an outcome is correct.
 
 Scenario input files use a versioned JSON envelope with `contractVersion: 6`,
 `documentType: "simulation-input"` and an `input` value conforming to `SimulationInput`. Loading
@@ -422,17 +433,20 @@ wide table.
 
 Names may vary, but ownership must match these boundaries.
 
-| Component or module   | Owns                                                                                                             | Must not own                                                                         |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `+page.svelte`        | Route composition and the explicit repository fixture catalog import                                             | Three.js lifecycle, animation frame loop, file parsing details or full workbench CSS |
-| `SimulationWorkbench` | Current accepted run/source, load-attempt state, inspection mode, selected event and coordination between panels | Physical calculations or mutation of run records                                     |
-| `ApplicationBar`      | Source display, fixture selection, local-file interaction and load feedback presentation                         | Direct parser/version implementation or playback state                               |
-| `SimulationViewport`  | Three.js mount/update/destroy lifecycle and rendering the supplied recorded frame                                | Run loading, authoritative time, run mutation or status promotion                    |
-| `PlaybackControls`    | Accessible transport/seek presentation through typed values and callbacks                                        | Direct access to Three.js objects or the run loader                                  |
-| `RunInspector`        | Read-only status, provenance, horizon, count and settings presentation                                           | Transport or file-input state                                                        |
-| `EventTimeline`       | Read-only event list, selection presentation and seek request callback                                           | Clock mutation beyond emitting the selected stored timestamp                         |
-| `DiagnosticsConsole`  | Read-only diagnostic-entry presentation and optional local severity filter                                       | Load errors or synthetic diagnostics                                                 |
-| `MetricsPanel`        | Recorded/derived/unavailable metric presentation                                                                 | Speculative profiling collection                                                     |
+| Component or module     | Owns                                                                                                             | Must not own                                                                         |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `+page.svelte`          | Route composition and the explicit repository fixture catalog import                                             | Three.js lifecycle, animation frame loop, file parsing details or full workbench CSS |
+| `SimulationWorkbench`   | Current accepted run/source, load-attempt state, inspection mode, selected event and coordination between panels | Physical calculations or mutation of run records                                     |
+| `scenario-catalogue.ts` | Workbench descriptors, stable categories and authoritative outcome comparison                                    | Copied simulation inputs or renderer-derived correctness                             |
+| `ScenarioCatalogue`     | Grouped selection and read-only selected-scenario/outcome presentation                                           | Draft mutation beyond emitting a selected ID or simulation execution                 |
+| `LaunchControls`        | Editable initial position/velocity controls and explicit Run/load/save actions                                   | Scenario grouping, expected-outcome policy or renderer state                         |
+| `ApplicationBar`        | Source display, fixture selection, local-file interaction and load feedback presentation                         | Direct parser/version implementation or playback state                               |
+| `SimulationViewport`    | Three.js mount/update/destroy lifecycle and rendering the supplied recorded frame                                | Run loading, authoritative time, run mutation or status promotion                    |
+| `PlaybackControls`      | Accessible transport/seek presentation through typed values and callbacks                                        | Direct access to Three.js objects or the run loader                                  |
+| `RunInspector`          | Read-only status, provenance, horizon, count and settings presentation                                           | Transport or file-input state                                                        |
+| `EventTimeline`         | Read-only event list, selection presentation and seek request callback                                           | Clock mutation beyond emitting the selected stored timestamp                         |
+| `DiagnosticsConsole`    | Read-only diagnostic-entry presentation and optional local severity filter                                       | Load errors or synthetic diagnostics                                                 |
+| `MetricsPanel`          | Recorded/derived/unavailable metric presentation                                                                 | Speculative profiling collection                                                     |
 
 `SimulationWorkbench` may use a focused playback controller/store if that keeps request-animation
 frame and transport state cohesive. Do not introduce an application-wide store for this
@@ -456,7 +470,9 @@ frame then flows to the viewport; the event list never manipulates a mesh.
 
 ### Available now
 
-- canonical scenario selection and precise initial-position/velocity editing;
+- grouped canonical and board-state scenario selection with precise initial-position/velocity editing;
+- selected scenario purpose, scene, initial-state and permitted-outcome evidence;
+- authoritative actual-outcome matching after explicit calculation;
 - explicit headless simulation runs from immutable submitted input;
 - versioned scenario input load/save;
 - contract version;

@@ -1,30 +1,23 @@
 <script lang="ts">
 	import type { SimulationInput } from '$lib/simulation/contracts';
-	import type { SimulationScenario } from '$lib/simulation/world';
 	import type { LaunchDraft, LaunchField, LaunchValidationError } from './launch-controls';
 	import { changeVelocityEntryMode } from './launch-controls';
 
 	let {
-		scenarios,
-		selectedScenarioId,
 		draft,
 		errors,
 		feedback,
 		lastSubmittedInput,
-		onSelectScenario,
 		onResetDefault,
 		onChangeDraft,
 		onRun,
 		onLoadScenario,
 		onSaveScenario
 	}: {
-		scenarios: readonly SimulationScenario[];
-		selectedScenarioId: string | null;
 		draft: LaunchDraft;
 		errors: readonly LaunchValidationError[];
 		feedback: string | null;
 		lastSubmittedInput: SimulationInput | null;
-		onSelectScenario: (scenarioId: string) => void;
 		onResetDefault: () => void;
 		onChangeDraft: (draft: LaunchDraft) => void;
 		onRun: () => void;
@@ -33,7 +26,6 @@
 	} = $props();
 
 	let scenarioInput = $state<HTMLInputElement>();
-	let selectedScenario = $derived(scenarios.find(({ id }) => id === selectedScenarioId) ?? null);
 	let lastSubmittedBody = $derived(lastSubmittedInput?.initialDynamicBodies[0] ?? null);
 
 	function changeField(field: keyof LaunchDraft, value: string): void {
@@ -82,36 +74,6 @@
 	</header>
 
 	<div class="launch-body">
-		<div class="scenario-column">
-			<label>
-				<span>Scenario preset</span>
-				<select
-					aria-label="Scenario preset"
-					value={selectedScenarioId ?? ''}
-					onchange={(event) => onSelectScenario(event.currentTarget.value)}
-				>
-					{#if selectedScenarioId === null}
-						<option value="">Loaded custom scenario</option>
-					{/if}
-					{#each scenarios as scenario (scenario.id)}
-						<option value={scenario.id}>{scenario.name}</option>
-					{/each}
-				</select>
-			</label>
-
-			{#if selectedScenario}
-				<div class="scenario-copy" aria-live="polite">
-					<strong>{selectedScenario.initialConditionSummary}</strong>
-					<p>{selectedScenario.verificationPurpose}</p>
-				</div>
-			{:else}
-				<div class="scenario-copy">
-					<strong>Loaded scenario input</strong>
-					<p>The scene and numerical policy came from the validated local input document.</p>
-				</div>
-			{/if}
-		</div>
-
 		<fieldset class="position-fields">
 			<legend>Initial position (m)</legend>
 			<label>
@@ -277,7 +239,6 @@
 
 	header p,
 	h2,
-	.scenario-copy p,
 	.run-column p,
 	.feedback,
 	.panel-error {
@@ -308,7 +269,6 @@
 
 	.secondary,
 	.run-button,
-	select,
 	input[type='number'] {
 		min-height: 2.5rem;
 		border-radius: var(--radius-sm);
@@ -325,16 +285,12 @@
 
 	.launch-body {
 		display: grid;
-		grid-template-columns: minmax(16rem, 1.5fr) minmax(12rem, 0.7fr) minmax(20rem, 1.2fr) minmax(
-				12rem,
-				0.65fr
-			);
+		grid-template-columns: minmax(12rem, 0.7fr) minmax(20rem, 1.2fr) minmax(12rem, 0.65fr);
 		gap: var(--space-4);
 		align-items: start;
 		padding: var(--space-4) var(--space-5);
 	}
 
-	.scenario-column,
 	.velocity-column,
 	.run-column,
 	fieldset,
@@ -359,7 +315,6 @@
 		grid-column: 1 / -1;
 	}
 
-	select,
 	input[type='number'] {
 		width: 100%;
 		padding: 0 var(--space-3);
@@ -367,18 +322,6 @@
 		color: var(--color-text);
 		background: var(--color-surface-raised);
 		font-family: var(--font-mono);
-	}
-
-	.scenario-copy {
-		display: grid;
-		gap: var(--space-1);
-		color: var(--color-text-subtle);
-		font-size: var(--font-size-sm);
-		line-height: 1.4;
-	}
-
-	.scenario-copy strong {
-		font-weight: 700;
 	}
 
 	.mode-fields {

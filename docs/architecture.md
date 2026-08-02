@@ -187,6 +187,9 @@ responsibilities by state ownership and independently evolving regions:
 
 - `SimulationWorkbench` coordinates the last accepted run, source, load feedback, inspection mode,
   event selection and presentation clock;
+- `scenario-catalogue.ts` adapts the public world catalogues into stable workbench categories
+  without copying `SimulationInput`, while `ScenarioCatalogue` owns grouped selection and
+  expected-versus-actual outcome presentation;
 - `LaunchControls` edits a launch draft, while `launch-controls.ts` converts velocity controls,
   validates the draft and creates a deep immutable submitted input before invoking the headless
   simulator;
@@ -200,6 +203,11 @@ Draft input, submitted input, returned run record and presentation clock are dis
 selection and field editing cannot mutate an accepted run. The explicit Run action is the only path
 from a launch draft to simulation; renderer playback still receives only the returned run through
 `toRendererPlaybackInput`.
+
+The workbench catalogue includes canonical launches and every named board-state verification world.
+Its category vocabulary also reserves physical-settings, adversarial-contact and saved-regression
+homes so later data can join through descriptors rather than scenario-specific UI. Outcome matching
+uses the returned run record; rendering remains presentation-only.
 
 `simulation/serialization/simulation-input` provides the versioned JSON boundary for scenario
 inputs. It owns the version 6 structural input validator and then applies the single-ball semantic

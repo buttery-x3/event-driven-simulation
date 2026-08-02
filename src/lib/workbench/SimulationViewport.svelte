@@ -56,7 +56,7 @@
 			class="scene"
 			bind:this={sceneHost}
 			role="img"
-			aria-label="A canonical Plinko board replaying recorded ball trajectory data"
+			aria-label={`Scene ${input.scene.id} replaying recorded ball trajectory data`}
 		></div>
 		{#if mode !== 'completed-replay'}
 			<div class:invalid={mode === 'invalid-prefix'} class="restriction" role="status">

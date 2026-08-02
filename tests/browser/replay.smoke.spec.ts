@@ -32,7 +32,7 @@ test('presents a calculated run as a diagnostic workbench and seeks exact events
 	await expect(replay).toBeVisible();
 	await expect(
 		replay.getByRole('img', {
-			name: 'A canonical Plinko board replaying recorded ball trajectory data'
+			name: 'Scene canonical-plinko-board replaying recorded ball trajectory data'
 		})
 	).toBeVisible();
 	await expect(replay.locator('canvas')).toBeVisible();
@@ -89,6 +89,65 @@ test('selects, edits, runs and replays a canonical launch without mutating the p
 	const controls = page.getByRole('region', { name: 'Replay controls' });
 	await controls.getByRole('button', { name: 'Play' }).click();
 	await expect(controls.getByRole('button', { name: 'Pause' })).toBeVisible();
+});
+
+test('groups verification scenarios, replaces worlds on Run and reports authoritative outcomes', async ({
+	page
+}) => {
+	await page.goto('/');
+
+	const catalogue = page.getByRole('region', { name: 'Scenario catalogue' });
+	const selector = catalogue.getByLabel('Scenario preset');
+	await expect(selector.locator('optgroup[label="Canonical launches"] option')).toHaveCount(5);
+	await expect(selector.locator('optgroup[label="Board layouts"] option')).toHaveCount(7);
+	await expect(selector.locator('optgroup[label="Physical settings"] option')).toHaveCount(5);
+	await expect(selector.locator('optgroup[label="Adversarial contacts"] option')).toHaveCount(1);
+
+	const scenarios = [
+		{ id: 'no-pegs', sceneId: 'no-pegs-board', outcome: 'exited' },
+		{ id: 'dense', sceneId: 'dense-board', outcome: 'exited' },
+		{ id: 'mirrored-sparse', sceneId: 'mirrored-sparse-board', outcome: 'escaped' },
+		{ id: 'angled-ramp', sceneId: 'angled-ramp-board', outcome: 'escaped' },
+		{ id: 'close-contacts', sceneId: 'close-contact-board', outcome: 'unresolved' }
+	] as const;
+
+	for (const scenario of scenarios) {
+		await selector.selectOption(scenario.id);
+		await expect(catalogue.getByLabel('Selected scenario ID')).toHaveText(scenario.id);
+		await expect(catalogue.getByLabel('Selected scene ID')).toHaveText(scenario.sceneId);
+		await expect(
+			catalogue.getByText('Expected / permitted outcomes', { exact: true })
+		).toBeVisible();
+		await expect(catalogue.getByText('Not run for this selection', { exact: true })).toBeVisible();
+		await expect(
+			page.getByRole('img', {
+				name: `Scene ${scenario.sceneId} replaying recorded ball trajectory data`
+			})
+		).toHaveCount(0);
+
+		await page.getByRole('button', { name: 'Run simulation' }).click();
+
+		await expect(
+			page.getByRole('img', {
+				name: `Scene ${scenario.sceneId} replaying recorded ball trajectory data`
+			})
+		).toBeVisible();
+		await expect(catalogue.getByText(new RegExp(`^${scenario.outcome}.*permitted$`))).toBeVisible();
+		await expect(
+			page.getByText(new RegExp(`^Run calculated.*${scenario.outcome}.*events`))
+		).toBeVisible();
+
+		if (scenario.id === 'no-pegs') {
+			await page.getByLabel('Components').check();
+			await page.getByLabel('Velocity X (m/s)').fill('10');
+			await page.getByLabel('Velocity Y (m/s)').fill('0');
+			await page.getByRole('button', { name: 'Run simulation' }).click();
+			await expect(catalogue.getByRole('alert')).toContainText(/escaped.*mismatch/);
+		}
+	}
+
+	await expect(page.getByRole('region', { name: 'Recorded-prefix inspection' })).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Failure boundary' })).toBeVisible();
 });
 
 test('loads a local saved run and retains it after typed validation failures', async ({ page }) => {
