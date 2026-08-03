@@ -1,4 +1,4 @@
-import type { IsolatedPolynomialRoot } from '../../math';
+import { isolatePolynomialRoots, type IsolatedPolynomialRoot } from '../../math';
 
 export type CircleCircleRootRegion = 'separated' | 'overlapping' | 'ambiguous';
 
@@ -30,12 +30,6 @@ export function classifyCircleCircleRootTopology(
 	);
 
 	if (before === null) return { topology: 'initial-contact', before, after };
-	if (normalVelocity < -normalVelocityTolerance) {
-		return { topology: 'entering', before, after };
-	}
-	if (normalVelocity > normalVelocityTolerance) {
-		return { topology: 'exiting', before, after };
-	}
 	if (before === 'separated' && after === 'overlapping') {
 		return { topology: 'entering', before, after };
 	}
@@ -44,6 +38,12 @@ export function classifyCircleCircleRootTopology(
 	}
 	if (before === 'separated' && after === 'separated') {
 		return { topology: 'grazing', before, after };
+	}
+	if (normalVelocity < -normalVelocityTolerance) {
+		return { topology: 'entering', before, after };
+	}
+	if (normalVelocity > normalVelocityTolerance) {
+		return { topology: 'exiting', before, after };
 	}
 	return { topology: 'indeterminate', before, after };
 }
@@ -58,6 +58,66 @@ export function initialContactMotion(
 	if (evidence.after === 'overlapping') return 'entering';
 	if (evidence.after === 'separated') return 'grazing';
 	return 'indeterminate';
+}
+
+export function findToleranceContainedGrazingExit(
+	roots: readonly IsolatedPolynomialRoot[],
+	entryIndex: number,
+	coefficients: readonly number[],
+	normalizedEventTimeTolerance: number,
+	polynomialResidualTolerance: number,
+	maximumRefinementIterations: number,
+	contactDistanceTolerance: number,
+	surfaceSeparationAt: (normalizedTime: number) => number
+): number | null {
+	const entryTime = roots[entryIndex]!.normalizedTime;
+	for (const root of roots.slice(entryIndex + 1)) {
+		const afterTime = root.neighbourhood.after?.normalizedTime;
+		if (afterTime === undefined) continue;
+		if (surfaceSeparationAt(afterTime) <= contactDistanceTolerance) continue;
+		return certifiesToleranceContainedPassage(
+			coefficients,
+			entryTime,
+			root.normalizedTime,
+			normalizedEventTimeTolerance,
+			polynomialResidualTolerance,
+			maximumRefinementIterations,
+			contactDistanceTolerance,
+			surfaceSeparationAt
+		)
+			? root.normalizedTime
+			: null;
+	}
+	return null;
+}
+
+export function certifiesToleranceContainedPassage(
+	coefficients: readonly number[],
+	entryTime: number,
+	exitTime: number | undefined,
+	normalizedEventTimeTolerance: number,
+	polynomialResidualTolerance: number,
+	maximumRefinementIterations: number,
+	contactDistanceTolerance: number,
+	surfaceSeparationAt: (normalizedTime: number) => number
+): boolean {
+	if (exitTime === undefined || exitTime <= entryTime) return false;
+	const derivative = coefficients.slice(1).map((coefficient, index) => coefficient * (index + 1));
+	const critical = isolatePolynomialRoots(
+		derivative,
+		entryTime,
+		exitTime,
+		normalizedEventTimeTolerance,
+		polynomialResidualTolerance,
+		maximumRefinementIterations
+	);
+	if (critical.type === 'unresolved') return false;
+	const minimumSeparation = Math.min(
+		...[entryTime, exitTime, ...critical.roots.map(({ normalizedTime }) => normalizedTime)].map(
+			surfaceSeparationAt
+		)
+	);
+	return Number.isFinite(minimumSeparation) && minimumSeparation >= -contactDistanceTolerance;
 }
 
 function classifySample(

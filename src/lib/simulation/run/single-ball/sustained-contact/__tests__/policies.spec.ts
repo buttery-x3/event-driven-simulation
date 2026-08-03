@@ -182,6 +182,77 @@ describe('sustained-contact numerical event policy', () => {
 		expect(downhill.startPosition[0]).toBeCloseTo(turningState.position[0], 12);
 		expect(downhill.startPosition[1]).toBeCloseTo(turningState.position[1], 12);
 	});
+
+	it.each([-0.5e-9, 0.5e-9])(
+		'uses meaningful tangential acceleration instead of %s residual circular speed',
+		(residualSpeed) => {
+			const request = makeRequest();
+			const normal = [0, 1] as const;
+			const ccwTangent = [-1, 0] as const;
+			const result = continueCircularContact(
+				{
+					...request,
+					input: {
+						...request.input,
+						settings: { ...request.input.settings, gravity: [1, -10] }
+					},
+					position: [0, 0.6],
+					normal,
+					outgoingVelocity: [ccwTangent[0] * residualSpeed, 0]
+				},
+				[0, 0],
+				0.6
+			);
+
+			expect(result.segments[0]).toMatchObject({
+				type: 'circular-contact',
+				direction: -1,
+				startTangentialSpeed: 0,
+				startVelocity: [0, 0]
+			});
+		}
+	);
+
+	it('preserves circular continuation under left-right reflection', () => {
+		const request = makeRequest();
+		const startAngle = 2;
+		const normal = [Math.cos(startAngle), Math.sin(startAngle)] as const;
+		const clockwiseTangent = [normal[1], -normal[0]] as const;
+		const run = (mirror: 1 | -1) =>
+			continueCircularContact(
+				{
+					...request,
+					input: {
+						...request.input,
+						settings: { ...request.input.settings, gravity: [0, -10] }
+					},
+					position: [mirror * normal[0] * 0.6, normal[1] * 0.6],
+					normal: [mirror * normal[0], normal[1]],
+					outgoingVelocity: [mirror * clockwiseTangent[0] * 0.1, clockwiseTangent[1] * 0.1]
+				},
+				[0, 0],
+				0.6
+			);
+		const baseline = run(1);
+		const mirrored = run(-1);
+		const baselineCircular = baseline.segments.filter(
+			(segment) => segment.type === 'circular-contact'
+		);
+		const mirroredCircular = mirrored.segments.filter(
+			(segment) => segment.type === 'circular-contact'
+		);
+
+		expect(mirrored.terminalReason?.type).toBe(baseline.terminalReason?.type);
+		expect(mirroredCircular).toHaveLength(baselineCircular.length);
+		for (const [index, segment] of baselineCircular.entries()) {
+			const reflected = mirroredCircular[index]!;
+			expect(reflected.direction).toBe(-segment.direction);
+			expect(reflected.endTime - reflected.startTime).toBeCloseTo(
+				segment.endTime - segment.startTime,
+				10
+			);
+		}
+	});
 });
 
 describe('shared sustained-contact result construction', () => {

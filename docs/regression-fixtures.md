@@ -79,3 +79,9 @@ exactly equals the peg gap and must release downward from an unsupported tangent
 second is wider than the gap and must settle on the same two pegs with non-negative support
 reactions. The focused regression also checks nearby radii, mirroring, collider ordering, renaming,
 full contact-set diagnostics and independent run validation.
+
+`flame-47-unit-restitution-reverse-throat.json` is the compact exact-fit return traversal. The ball
+passes downward between two tangent pegs, rebounds elastically from a centred lower peg and returns
+upward through the same throat. The corrected run must keep both throat roots non-impulsive, preserve
+zero horizontal velocity, avoid a zero-time loop, pass independent validation and survive saved-run
+serialization plus recorded-inspection replay admission.

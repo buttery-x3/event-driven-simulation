@@ -6,6 +6,7 @@ import type {
 	Vec2
 } from '../../contracts';
 import {
+	classifyCircleCircleRootTopology,
 	defaultCircleCircleContactTolerances,
 	findEarliestCircleCircleContact,
 	type CircleCircleContactQuery
@@ -124,6 +125,76 @@ describe('continuous ballistic circle-circle contact solving', () => {
 			topology: 'grazing',
 			classification: 'rejected-grazing'
 		});
+	});
+
+	it.each([-1e-8, 1e-8])(
+		'classifies separated tangent neighbourhoods as grazing despite %s normal velocity noise',
+		(normalVelocity) => {
+			const evidence = classifyCircleCircleRootTopology(
+				{
+					normalizedTime: 0.5,
+					source: 'critical-point',
+					refinementIterations: 1,
+					isolatingInterval: [0.49, 0.51],
+					neighbourhood: {
+						before: { normalizedTime: 0.49, value: 1 },
+						after: { normalizedTime: 0.51, value: 1 }
+					}
+				},
+				normalVelocity,
+				defaultCircleCircleContactTolerances.normalVelocity,
+				defaultCircleCircleContactTolerances.contactDistance,
+				() => 1e-6
+			);
+
+			expect(evidence).toEqual({
+				topology: 'grazing',
+				before: 'separated',
+				after: 'separated'
+			});
+		}
+	);
+
+	it.each([
+		{ before: 1e-6, after: -1e-6, normalVelocity: 1e-8, topology: 'entering' },
+		{ before: -1e-6, after: 1e-6, normalVelocity: -1e-8, topology: 'exiting' }
+	] as const)(
+		'uses $topology neighbourhood topology before a contradictory derivative sign',
+		({ before, after, normalVelocity, topology }) => {
+			const evidence = classifyCircleCircleRootTopology(
+				{
+					normalizedTime: 0.5,
+					source: 'bracketed-root',
+					refinementIterations: 1,
+					isolatingInterval: [0.49, 0.51],
+					neighbourhood: {
+						before: { normalizedTime: 0.4, value: before },
+						after: { normalizedTime: 0.6, value: after }
+					}
+				},
+				normalVelocity,
+				defaultCircleCircleContactTolerances.normalVelocity,
+				defaultCircleCircleContactTolerances.contactDistance,
+				(normalizedTime) => (normalizedTime < 0.5 ? before : after)
+			);
+
+			expect(evidence.topology).toBe(topology);
+		}
+	);
+
+	it('preserves classification for mirror-equivalent circle paths', () => {
+		const leftToRight = findEarliestCircleCircleContact(query(segment([-2, 0.4], [1, 0]), 4));
+		const rightToLeft = findEarliestCircleCircleContact(query(segment([2, 0.4], [-1, 0]), 4));
+
+		expect(leftToRight.type).toBe('contact');
+		expect(rightToLeft.type).toBe('contact');
+		if (leftToRight.type !== 'contact' || rightToLeft.type !== 'contact') return;
+		expect(rightToLeft.state.response).toBe(leftToRight.state.response);
+		expect(rightToLeft.event.time).toBeCloseTo(leftToRight.event.time, 12);
+		expect(rightToLeft.event.position[0]).toBeCloseTo(-leftToRight.event.position[0], 12);
+		expect(rightToLeft.event.position[1]).toBeCloseTo(leftToRight.event.position[1], 12);
+		expect(rightToLeft.event.normal[0]).toBeCloseTo(-leftToRight.event.normal[0], 12);
+		expect(rightToLeft.event.normal[1]).toBeCloseTo(leftToRight.event.normal[1], 12);
 	});
 
 	it('finds a near-tangent contact with a shallow approaching normal velocity', () => {

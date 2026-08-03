@@ -66,6 +66,40 @@ describe('continuous ballistic boundary contact solving', () => {
 		expect(result.state.feature).toBe('segment-face-positive');
 	});
 
+	it('preserves both-face contact geometry when endpoint declaration is reversed', () => {
+		for (const [startPosition, velocity, expectedNormal] of [
+			[
+				[-2, 0],
+				[1, 0],
+				[-1, 0]
+			],
+			[
+				[2, 0],
+				[-1, 0],
+				[1, 0]
+			]
+		] as const) {
+			const forward = findEarliestBoundaryContact(
+				query(segment(startPosition, velocity), boundary('forward', [0, -5], [0, 5]))
+			);
+			const reversed = findEarliestBoundaryContact(
+				query(segment(startPosition, velocity), boundary('reversed', [0, 5], [0, -5]))
+			);
+
+			expect(forward.type).toBe('contact');
+			expect(reversed.type).toBe('contact');
+			if (forward.type !== 'contact' || reversed.type !== 'contact') continue;
+			expect(forward.event.time).toBe(1.5);
+			expect(reversed.event.time).toBe(forward.event.time);
+			expect(forward.event.position).toEqual(reversed.event.position);
+			expect(forward.event.normal[0]).toBeCloseTo(expectedNormal[0], 12);
+			expect(forward.event.normal[1]).toBeCloseTo(expectedNormal[1], 12);
+			expect(reversed.event.normal[0]).toBeCloseTo(expectedNormal[0], 12);
+			expect(reversed.event.normal[1]).toBeCloseTo(expectedNormal[1], 12);
+			expect(reversed.state.contactPoint).toEqual(forward.state.contactPoint);
+		}
+	});
+
 	it('finds contact against an angled boundary', () => {
 		const angledBoundary = boundary('angled-wall', [-2, -2], [2, 2]);
 		const result = findEarliestBoundaryContact(query(segment([0, 2], [0, -1]), angledBoundary));

@@ -46,15 +46,21 @@ function classifyCircularLegStart(
 	const ccwTangent: Vec2 = [-request.normal[1], request.normal[0]];
 	const signedSpeed = dotVec2(request.outgoingVelocity, ccwTangent);
 	const tangentAcceleration = dotVec2(request.input.settings.gravity, ccwTangent);
+	const speedIsSignificant = Math.abs(signedSpeed) > request.input.settings.tolerances.eventTime;
 	if (
-		Math.abs(signedSpeed) <= request.input.settings.tolerances.eventTime &&
+		!speedIsSignificant &&
 		Math.abs(tangentAcceleration) <= request.input.settings.tolerances.eventTime
 	) {
 		return { type: 'resting' };
 	}
-	const direction: -1 | 1 =
-		signedSpeed !== 0 ? (signedSpeed > 0 ? 1 : -1) : tangentAcceleration > 0 ? 1 : -1;
-	const startTangentialSpeed = Math.abs(signedSpeed);
+	const direction: -1 | 1 = speedIsSignificant
+		? signedSpeed > 0
+			? 1
+			: -1
+		: tangentAcceleration > 0
+			? 1
+			: -1;
+	const startTangentialSpeed = speedIsSignificant ? Math.abs(signedSpeed) : 0;
 	const initialSupport = -(
 		startTangentialSpeed ** 2 / contactRadius +
 		dotVec2(request.input.settings.gravity, request.normal)

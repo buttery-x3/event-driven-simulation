@@ -1,5 +1,9 @@
 import type { ContactEvent } from '../../contracts';
-import { evaluatePolynomial, isolatePolynomialRoots } from '../../math';
+import {
+	evaluatePolynomial,
+	isolatePolynomialRoots,
+	type IsolatedPolynomialRoot
+} from '../../math';
 import {
 	buildCircleCircleContactPolynomial,
 	circleCircleSurfaceSeparation,
@@ -7,7 +11,9 @@ import {
 	type CircleCircleCandidateState
 } from './contact-polynomial';
 import {
+	certifiesToleranceContainedPassage,
 	classifyCircleCircleRootTopology,
+	findToleranceContainedGrazingExit,
 	initialContactMotion,
 	type CircleCircleRootTopology,
 	type CircleCircleRootTopologyEvidence
@@ -85,10 +91,30 @@ export function findEarliestCircleCircleContact(
 	);
 	diagnostics = { ...diagnostics, refinementIterations: rootIsolation.refinementIterations };
 	if (rootIsolation.type === 'unresolved') return unresolved(rootIsolation.reason, diagnostics);
+	return selectEarliestEligibleRoot(
+		query,
+		tolerances,
+		rootIsolation.roots,
+		normalizedCoefficients,
+		searchDuration,
+		combinedRadius,
+		diagnostics
+	);
+}
 
+function selectEarliestEligibleRoot(
+	query: CircleCircleContactQuery,
+	tolerances: CircleCircleContactTolerances,
+	roots: readonly IsolatedPolynomialRoot[],
+	normalizedCoefficients: readonly number[],
+	searchDuration: number,
+	combinedRadius: number,
+	diagnostics: CircleCircleContactDiagnostics
+): CircleCircleContactQueryResult {
 	const candidates: CircleCircleContactCandidateDiagnostic[] = [];
 	let releaseOwned = query.releasedInitialContact ?? false;
-	for (const [rootIndex, root] of rootIsolation.roots.entries()) {
+	let toleranceContainedGrazingThrough: number | null = null;
+	for (const [rootIndex, root] of roots.entries()) {
 		const evaluated = evaluateCircleCircleCandidate(
 			query,
 			tolerances.contactDistance,
@@ -128,8 +154,32 @@ export function findEarliestCircleCircleContact(
 			(normalizedTime) =>
 				circleCircleSurfaceSeparation(query, combinedRadius, normalizedTime, searchDuration)
 		);
-		const motion =
-			evidence.topology === 'initial-contact'
+		const inheritedToleranceContainedGrazing: boolean =
+			toleranceContainedGrazingThrough !== null &&
+			root.normalizedTime <= toleranceContainedGrazingThrough;
+		const toleranceContainedGrazingExit: number | null = inheritedToleranceContainedGrazing
+			? toleranceContainedGrazingThrough
+			: evidence.before === 'separated' && evidence.after === 'ambiguous'
+				? findToleranceContainedGrazingExit(
+						roots,
+						rootIndex,
+						normalizedCoefficients,
+						tolerances.eventTime / searchDuration,
+						tolerances.polynomialResidual,
+						query.maximumRefinementIterations ?? defaultMaximumRefinementIterations,
+						tolerances.contactDistance,
+						(normalizedTime) =>
+							circleCircleSurfaceSeparation(query, combinedRadius, normalizedTime, searchDuration)
+					)
+				: null;
+		const toleranceContainedGrazing =
+			inheritedToleranceContainedGrazing || toleranceContainedGrazingExit !== null;
+		if (toleranceContainedGrazingExit !== null) {
+			toleranceContainedGrazingThrough = toleranceContainedGrazingExit;
+		}
+		const motion = toleranceContainedGrazing
+			? 'grazing'
+			: evidence.topology === 'initial-contact'
 				? initialContactMotion(evidence, evaluated.normalVelocity, tolerances.normalVelocity)
 				: evidence.topology;
 		const separationWasCertified = evidence.before === 'separated';
@@ -149,14 +199,16 @@ export function findEarliestCircleCircleContact(
 			else if (
 				(motion === 'entering' || evidence.after === 'overlapping') &&
 				query.allowToleranceContainedReleasePassage === true &&
-				certifiesToleranceContainedReleasePassage(
-					query,
-					tolerances,
+				certifiesToleranceContainedPassage(
 					normalizedCoefficients,
 					root.normalizedTime,
-					rootIsolation.roots[rootIndex + 1]?.normalizedTime,
-					searchDuration,
-					combinedRadius
+					roots[rootIndex + 1]?.normalizedTime,
+					tolerances.eventTime / searchDuration,
+					tolerances.polynomialResidual,
+					query.maximumRefinementIterations ?? defaultMaximumRefinementIterations,
+					tolerances.contactDistance,
+					(normalizedTime) =>
+						circleCircleSurfaceSeparation(query, combinedRadius, normalizedTime, searchDuration)
 				)
 			) {
 				continue;
@@ -190,7 +242,7 @@ export function findEarliestCircleCircleContact(
 					evaluated,
 					root,
 					polynomialResidual,
-					evidence.topology,
+					motion,
 					evidence.before,
 					evidence.after,
 					'rejected-grazing'
@@ -233,35 +285,6 @@ export function findEarliestCircleCircleContact(
 	}
 
 	return { type: 'no-contact', diagnostics: { ...diagnostics, candidates } };
-}
-
-function certifiesToleranceContainedReleasePassage(
-	query: CircleCircleContactQuery,
-	tolerances: CircleCircleContactTolerances,
-	coefficients: readonly number[],
-	entryTime: number,
-	exitTime: number | undefined,
-	searchDuration: number,
-	combinedRadius: number
-): boolean {
-	if (exitTime === undefined || exitTime <= entryTime) return false;
-	const derivative = coefficients.slice(1).map((coefficient, index) => coefficient * (index + 1));
-	const critical = isolatePolynomialRoots(
-		derivative,
-		entryTime,
-		exitTime,
-		tolerances.eventTime / searchDuration,
-		tolerances.polynomialResidual,
-		query.maximumRefinementIterations ?? defaultMaximumRefinementIterations
-	);
-	if (critical.type === 'unresolved') return false;
-	const minimumSeparation = Math.min(
-		...[entryTime, exitTime, ...critical.roots.map(({ normalizedTime }) => normalizedTime)].map(
-			(normalizedTime) =>
-				circleCircleSurfaceSeparation(query, combinedRadius, normalizedTime, searchDuration)
-		)
-	);
-	return Number.isFinite(minimumSeparation) && minimumSeparation >= -tolerances.contactDistance;
 }
 
 function candidateDiagnostic(

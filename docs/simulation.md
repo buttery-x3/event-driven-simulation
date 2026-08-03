@@ -100,9 +100,13 @@ root preserves tangent contacts that sign-change-only searches would miss.
 Each isolated root carries a geometry-neutral isolating interval and certified neighbouring
 polynomial samples. The math subsystem does not interpret their signs. Circle-circle policy
 evaluates physical separation at those samples and classifies roots as entering, exiting, external
-grazing, initial contact or indeterminate. Definite incoming normal motion is an impact. An
-entering root inside the normal-velocity ambiguity band is a non-impulsive contact onset; external
-grazing and exiting roots are rejected, while indeterminate topology fails closed.
+grazing, initial contact or indeterminate. Decisive separated/overlapping neighbourhood topology
+takes precedence over the derivative evaluated at the isolated root, so a tangent root separated on
+both sides remains grazing when root-location noise gives it a tiny signed normal velocity. Signed
+normal motion is used only when that local topology is unavailable or ambiguous. A certified
+entering root with definite incoming normal motion is an impact; an entering root inside the
+normal-velocity ambiguity band is a non-impulsive contact onset. External grazing and exiting roots
+are rejected, while indeterminate topology fails closed.
 
 A segment that starts penetrating the fixed circle is invalid. A just-released supporting circle
 owns its initial root cluster until the same free-flight path certifies positive separation. Roots
@@ -129,6 +133,21 @@ Tolerances are named by purpose:
 - `eventTime` controls root isolation/refinement precision;
 - `normalVelocity` classifies approach versus separation; and
 - `polynomialResidual` detects roots at interval and derivative-partition boundaries.
+
+### FLAME-47 directional sign audit
+
+The bounded contact-path audit classifies sign-sensitive decisions by their physical role:
+
+| Category                           | Audited decisions                                                                                                               | Policy                                                                                                                                         |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Signed physical direction          | normal approach/separation, support pressing/detachment, tangent direction and outward bounds motion                            | Keep the comparison relative to the local normal, tangent or declared bounds face; reflecting the geometry and gravity reflects the basis too. |
+| Tolerance-aware near zero          | circle-root derivative fallback, tolerance-contained tangent clusters, reconstructed manifold response and circular entry speed | Use the existing collision or submitted tolerance before sign can select impact, grazing or clockwise/counter-clockwise motion.                |
+| Inherently non-negative constraint | impulses, support reactions, squared speed and separation bounds                                                                | Preserve unilateral non-negativity; tolerances may admit numerical residuals but never attractive impulses or reactions.                       |
+| Strictly positive domain           | radii, segment lengths, search durations, event intervals and simulation horizons                                               | Preserve strict positivity because zero or negative values do not describe the supported domain.                                               |
+| World-axis assumption              | termination boxes and declared board bounds only                                                                                | Keep their explicit coordinate-axis checks; no contact, manifold or sustained-contact classification depends on a preferred world direction.   |
+
+This audit changed only the near-zero policies. Stable ordering by collider ID or feature remains
+diagnostic and deterministic, but it does not select a physical response.
 
 Diagnostics record the normalized polynomial, its scale, candidate sources, residuals, geometric
 separation, normal velocity, local topology, release ownership, classification, and refinement

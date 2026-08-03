@@ -5,7 +5,10 @@ import type {
 	StaticCollider,
 	Vec2
 } from '../../../contracts';
-import type { FixedWorldContactCandidate } from '../../../collision';
+import {
+	defaultFixedWorldContactTolerances,
+	type FixedWorldContactCandidate
+} from '../../../collision';
 import { dotVec2 } from '../../../math';
 
 interface AlternatingObservation {
@@ -229,7 +232,10 @@ function candidateAtLimit(
 		contactPoint: state.contactPoint,
 		normal: state.normal,
 		normalVelocity,
-		response: normalVelocity < 0 ? 'impact' : 'non-impulsive-contact'
+		response:
+			normalVelocity < -defaultFixedWorldContactTolerances.normalVelocity
+				? 'impact'
+				: 'non-impulsive-contact'
 	};
 }
 

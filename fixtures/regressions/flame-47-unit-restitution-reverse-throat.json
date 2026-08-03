@@ -1,0 +1,53 @@
+{
+	"contractVersion": 6,
+	"documentType": "simulation-input",
+	"input": {
+		"scene": {
+			"id": "flame-47-reverse-throat",
+			"coordinateSystem": {
+				"origin": "centre-bottom",
+				"horizontalAxis": "right",
+				"verticalAxis": "up",
+				"lengthUnit": "metre"
+			},
+			"bounds": { "width": 4.4, "height": 4.2 },
+			"staticColliders": [
+				{
+					"id": "throat-left",
+					"motionAuthority": "static",
+					"physicalShape": { "type": "circle", "radius": 0.075 },
+					"centre": [0.42, 3.25]
+				},
+				{
+					"id": "throat-right",
+					"motionAuthority": "static",
+					"physicalShape": { "type": "circle", "radius": 0.075 },
+					"centre": [0.84, 3.25]
+				},
+				{
+					"id": "rebound-peg",
+					"motionAuthority": "static",
+					"physicalShape": { "type": "circle", "radius": 0.075 },
+					"centre": [0.63, 2.67]
+				}
+			],
+			"terminationRegions": []
+		},
+		"initialDynamicBodies": [
+			{
+				"id": "ball-primary",
+				"motionAuthority": "dynamic",
+				"physicalShape": { "type": "circle", "radius": 0.135 },
+				"position": [0.63, 3.95],
+				"velocity": [0, 0]
+			}
+		],
+		"settings": {
+			"gravity": [0, -9.81],
+			"restitution": 1,
+			"maximumEvents": 200,
+			"maximumSimulationTime": 8,
+			"tolerances": { "contactDistance": 1e-9, "eventTime": 1e-9 }
+		}
+	}
+}
