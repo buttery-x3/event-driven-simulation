@@ -35,6 +35,15 @@ export function validateRunRecordShapeV7(value: unknown): SimulationRunRecord {
 function validateTerminalReason(value: unknown, path: string): void {
 	const reason = assertions.requireRecord(value, path);
 	switch (reason.type) {
+		case 'world-complete':
+			assertions.requireFiniteNumber(reason.time, `${path}.time`);
+			assertions.requireOneOf(
+				reason.outcome,
+				['exited', 'escaped', 'settled', 'no-future-event'],
+				`${path}.outcome`
+			);
+			assertions.requireString(reason.detail, `${path}.detail`);
+			return;
 		case 'completion-region':
 		case 'escape-region':
 			assertions.requireString(reason.regionId, `${path}.regionId`);
@@ -215,7 +224,15 @@ function validateDiagnostics(value: unknown, path: string): void {
 			validateRevision(item.revision, `${itemPath}.revision`);
 			assertions.requireOneOf(
 				item.eventType,
-				['release', 'fixed-contact', 'body-contact', 'termination', 'none', 'unresolved'],
+				[
+					'release',
+					'fixed-contact',
+					'body-contact',
+					'motion-transition',
+					'termination',
+					'none',
+					'unresolved'
+				],
 				`${itemPath}.eventType`
 			);
 		});
@@ -246,6 +263,35 @@ function validateDiagnostics(value: unknown, path: string): void {
 			);
 			assertions.requireString(item.reason, `${itemPath}.reason`);
 		});
+	if (diagnostics.schedulerSteps !== undefined) {
+		assertions
+			.requireArray(diagnostics.schedulerSteps, `${path}.schedulerSteps`)
+			.forEach((entry, index) => {
+				const itemPath = `${path}.schedulerSteps[${index}]`;
+				const item = assertions.requireRecord(entry, itemPath);
+				assertions.requireFiniteNumber(item.worldTime, `${itemPath}.worldTime`);
+				assertions.requireString(item.bodyId, `${itemPath}.bodyId`);
+				assertions.requireInteger(item.revision, `${itemPath}.revision`);
+				assertions.requireOneOf(
+					item.eventType,
+					[
+						'release',
+						'fixed-contact',
+						'body-contact',
+						'motion-transition',
+						'termination',
+						'none',
+						'unresolved'
+					],
+					`${itemPath}.eventType`
+				);
+				assertions
+					.requireArray(item.retainedBodyIds, `${itemPath}.retainedBodyIds`)
+					.forEach((bodyId, bodyIndex) =>
+						assertions.requireString(bodyId, `${itemPath}.retainedBodyIds[${bodyIndex}]`)
+					);
+			});
+	}
 }
 
 function validateInterval(value: unknown, path: string): void {

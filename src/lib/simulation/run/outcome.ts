@@ -2,6 +2,8 @@ import type { RunOutcome, RunTerminalReason, RunValidity } from '../contracts';
 
 export function getRunOutcome(reason: RunTerminalReason): RunOutcome {
 	switch (reason.type) {
+		case 'world-complete':
+			return reason.outcome;
 		case 'completion-region':
 			return 'exited';
 		case 'escape-region':

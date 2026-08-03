@@ -27,6 +27,7 @@ export type {
 	PredictionRevision,
 	RunContactCandidateDiagnostic,
 	RunContactSearchDiagnostic,
-	RunDiagnostics
+	RunDiagnostics,
+	WorldSchedulerStepDiagnostic
 } from './diagnostics';
 export type { RendererPlaybackInput, SimulationRunRecord } from './run-record';

@@ -93,6 +93,8 @@ export function getInspectionModeLabel(mode: InspectionMode): string {
 
 export function getRunStatusLabel(reason: RunTerminalReason): string {
 	switch (reason.type) {
+		case 'world-complete':
+			return 'World complete';
 		case 'completion-region':
 			return 'Exited';
 		case 'escape-region':

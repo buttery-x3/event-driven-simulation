@@ -31,6 +31,12 @@ export interface BodyRunState {
 }
 
 export type RunTerminalReason =
+	| {
+			readonly type: 'world-complete';
+			readonly time: number;
+			readonly outcome: 'exited' | 'escaped' | 'settled' | 'no-future-event';
+			readonly detail: string;
+	  }
 	| { readonly type: 'completion-region'; readonly regionId: EntityId; readonly time: number }
 	| { readonly type: 'escape-region'; readonly regionId: EntityId; readonly time: number }
 	| {

@@ -55,6 +55,7 @@ export function validateTerminalOutcome(context: RunValidationContext): void {
 }
 
 function validateBoundaryReason(context: RunValidationContext, reason: RunTerminalReason): void {
+	if (reason.type === 'world-complete') return;
 	const position = terminalPosition(context);
 	if (!position) return;
 	const tolerance = stateTolerance(context);
@@ -221,6 +222,8 @@ function insideBox(position: Vec2, minimum: Vec2, maximum: Vec2, tolerance: numb
 
 function outcomeFor(reason: RunTerminalReason): RunOutcome {
 	switch (reason.type) {
+		case 'world-complete':
+			return reason.outcome;
 		case 'completion-region':
 			return 'exited';
 		case 'escape-region':

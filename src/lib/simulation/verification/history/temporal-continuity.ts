@@ -49,9 +49,11 @@ function validateMonotonicEvents(context: RunValidationContext): void {
 }
 
 function validateSearchIntervals(context: RunValidationContext): void {
-	let previousStart = Number.NEGATIVE_INFINITY;
+	const previousStartByBody = new Map<string, number>();
 	for (const [index, search] of context.run.diagnostics.contactSearches.entries()) {
 		const [start, end] = search.searchInterval;
+		const bodyKey = search.bodyId ?? '__legacy-global__';
+		const previousStart = previousStartByBody.get(bodyKey) ?? Number.NEGATIVE_INFINITY;
 		if (start > end || start < previousStart) {
 			fail(
 				context,
@@ -74,7 +76,7 @@ function validateSearchIntervals(context: RunValidationContext): void {
 				}
 			);
 		}
-		previousStart = start;
+		previousStartByBody.set(bodyKey, start);
 	}
 }
 

@@ -31,6 +31,7 @@ export interface RunContactCandidateDiagnostic {
 }
 
 export interface RunContactSearchDiagnostic {
+	readonly bodyId?: EntityId;
 	readonly searchInterval: readonly [startTime: number, endTime: number];
 	readonly eventTimeTolerance?: number;
 	readonly outcome: 'contact' | 'no-event' | 'unresolved' | 'invalid-input';
@@ -54,7 +55,21 @@ export interface BodyEventHorizonDiagnostic {
 	readonly interval: readonly [startTime: number, endTime: number];
 	readonly revision: PredictionRevision;
 	readonly eventType:
-		'release' | 'fixed-contact' | 'body-contact' | 'termination' | 'none' | 'unresolved';
+		| 'release'
+		| 'fixed-contact'
+		| 'body-contact'
+		| 'motion-transition'
+		| 'termination'
+		| 'none'
+		| 'unresolved';
+}
+
+export interface WorldSchedulerStepDiagnostic {
+	readonly worldTime: number;
+	readonly bodyId: EntityId;
+	readonly revision: number;
+	readonly eventType: BodyEventHorizonDiagnostic['eventType'];
+	readonly retainedBodyIds: readonly EntityId[];
 }
 
 export interface PairPredictionDiagnostic {
@@ -77,5 +92,6 @@ export interface RunDiagnostics {
 	readonly contactSearches: readonly RunContactSearchDiagnostic[];
 	readonly bodyEventHorizons: readonly BodyEventHorizonDiagnostic[];
 	readonly pairPredictions: readonly PairPredictionDiagnostic[];
+	readonly schedulerSteps?: readonly WorldSchedulerStepDiagnostic[];
 	readonly entries: readonly DiagnosticEntry[];
 }

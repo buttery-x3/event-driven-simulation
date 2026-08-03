@@ -1,0 +1,200 @@
+import type {
+	BodyRunState,
+	InitialDynamicCircleBodyState,
+	MotionSegment,
+	RunOutcome,
+	RunTerminalReason,
+	RunValidity,
+	SimulationRunRecord,
+	StationaryMotionSegment
+} from '../../contracts';
+import { getRunOutcome } from '../outcome';
+import { toTerminalDiagnostic } from '../single-ball/diagnostics';
+import type { LocalBodyRuntime } from '../single-ball/local-events';
+import type { SchedulerState } from './types';
+
+export function finishScheduledRun(
+	state: SchedulerState,
+	validity: RunValidity,
+	reason: RunTerminalReason
+): SimulationRunRecord {
+	const outcome = getRunOutcome(reason);
+	const bodyStates = [...state.input.initialDynamicBodies]
+		.sort((left, right) => left.id.localeCompare(right.id))
+		.map((body) => bodyState(state, body));
+	const trajectories = [...state.runtimes.values()]
+		.sort((left, right) => left.body.id.localeCompare(right.body.id))
+		.map((runtime) => ({
+			bodyId: runtime.body.id,
+			segments: trajectorySegments(runtime, state.worldTime)
+		}));
+	const events = [...state.runtimes.values()]
+		.flatMap(({ events: localEvents }) => localEvents)
+		.sort(eventOrder);
+	const contactSearches = [...state.runtimes.values()]
+		.sort((left, right) => left.body.id.localeCompare(right.body.id))
+		.flatMap(({ contactSearches: searches }) => searches);
+	const entries = [...state.runtimes.values()].flatMap(({ entries: localEntries }) => localEntries);
+	const terminalCode = `RUN_${outcome.replaceAll('-', '_').toUpperCase()}`;
+	if (entries.at(-1)?.code !== terminalCode) {
+		entries.push(
+			toTerminalDiagnostic(
+				outcome,
+				reason,
+				state.input.initialDynamicBodies.length === 1 ? state.input.initialDynamicBodies[0]! : null
+			)
+		);
+	}
+	const candidateCount = contactSearches.reduce(
+		(total, search) => total + search.candidates.length,
+		0
+	);
+	return {
+		contractVersion: 7,
+		input: state.input,
+		validity,
+		outcome,
+		terminalReason: reason,
+		bodyStates,
+		trajectories,
+		events,
+		releases: [...state.releases].sort(
+			(left, right) => left.time - right.time || left.bodyId.localeCompare(right.bodyId)
+		),
+		dynamicContacts: [],
+		contactComponents: [],
+		componentEvents: [],
+		diagnostics: {
+			iterations: contactSearches.length,
+			simulatedUntilTime: state.worldTime,
+			eventCount: events.length,
+			candidateCount,
+			segmentCount: trajectories.reduce(
+				(total, trajectory) => total + trajectory.segments.length,
+				0
+			),
+			simulationWallTimeMilliseconds: Math.max(0, Date.now() - state.wallTimeStart),
+			contactSearches,
+			bodyEventHorizons: state.horizons,
+			pairPredictions: [],
+			schedulerSteps: state.steps,
+			entries
+		}
+	};
+}
+
+export function aggregateWorldReason(state: SchedulerState): RunTerminalReason {
+	const runtimes = [...state.runtimes.values()];
+	if (state.input.initialDynamicBodies.length === 1) return runtimes[0]!.terminalReason!;
+	const outcomes = runtimes.map((runtime) => getRunOutcome(runtime.terminalReason!));
+	const outcome: Extract<RunOutcome, 'exited' | 'escaped' | 'settled' | 'no-future-event'> =
+		outcomes.some((value) => value === 'settled' || value === 'no-future-event')
+			? 'settled'
+			: outcomes.some((value) => value === 'exited')
+				? 'exited'
+				: 'escaped';
+	return {
+		type: 'world-complete',
+		time: state.worldTime,
+		outcome,
+		detail: `All ${runtimes.length} scheduled bodies reached independent terminal or dormant states.`
+	};
+}
+
+function bodyState(state: SchedulerState, body: InitialDynamicCircleBodyState): BodyRunState {
+	if (state.rejectedBodyIds.has(body.id)) {
+		return {
+			bodyId: body.id,
+			lifecycle: 'invalid',
+			releaseTime: body.releaseTime,
+			activeFromTime: null,
+			recordedUntilTime: null,
+			terminalOutcome: 'invalid'
+		};
+	}
+	const runtime = state.runtimes.get(body.id);
+	if (!runtime) {
+		return {
+			bodyId: body.id,
+			lifecycle: 'scheduled',
+			releaseTime: body.releaseTime,
+			activeFromTime: null,
+			recordedUntilTime: null,
+			terminalOutcome: null
+		};
+	}
+	const reason = runtime.terminalReason;
+	if (!reason) {
+		return releasedState(body, 'active', runtime.committedTime, null);
+	}
+	if (reason.type === 'completion-region') {
+		return releasedState(body, 'completed', reason.time, 'completed');
+	}
+	if (reason.type === 'escape-region' || reason.type === 'bounds-escape') {
+		return releasedState(body, 'escaped', reason.time, 'escaped');
+	}
+	if (reason.type === 'resting-contact' || reason.type === 'no-future-event') {
+		return releasedState(body, 'resting', state.worldTime, null);
+	}
+	if (reason.type === 'invalid-state') {
+		return releasedState(body, 'invalid', reason.time ?? runtime.committedTime, 'invalid');
+	}
+	return releasedState(body, 'unresolved', reason.time ?? runtime.committedTime, 'unresolved');
+}
+
+function releasedState(
+	body: InitialDynamicCircleBodyState,
+	lifecycle: BodyRunState['lifecycle'],
+	recordedUntilTime: number,
+	terminalOutcome: BodyRunState['terminalOutcome']
+): BodyRunState {
+	return {
+		bodyId: body.id,
+		lifecycle,
+		releaseTime: body.releaseTime,
+		activeFromTime: body.releaseTime,
+		recordedUntilTime,
+		terminalOutcome
+	};
+}
+
+function trajectorySegments(
+	runtime: LocalBodyRuntime,
+	worldTime: number
+): readonly MotionSegment[] {
+	const segments = [...runtime.segments];
+	const reason = runtime.terminalReason;
+	if (
+		reason &&
+		(reason.type === 'resting-contact' || reason.type === 'no-future-event') &&
+		worldTime > (reason.time ?? runtime.committedTime)
+	) {
+		const startTime = reason.time ?? runtime.committedTime;
+		const startPosition =
+			reason.type === 'resting-contact' ? reason.position : runtime.state.position;
+		const stationary: StationaryMotionSegment = {
+			type: 'stationary',
+			bodyId: runtime.body.id,
+			startTime,
+			endTime: worldTime,
+			startPosition,
+			startVelocity: [0, 0],
+			reason: 'resting-contact',
+			componentId: null
+		};
+		segments.push(stationary);
+	}
+	return segments;
+}
+
+function eventOrder(
+	left: SimulationRunRecord['events'][number],
+	right: SimulationRunRecord['events'][number]
+): number {
+	return (
+		left.time - right.time ||
+		left.bodyId.localeCompare(right.bodyId) ||
+		left.type.localeCompare(right.type) ||
+		left.colliderId.localeCompare(right.colliderId)
+	);
+}

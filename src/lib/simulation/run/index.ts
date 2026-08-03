@@ -6,7 +6,11 @@ export {
 } from './outcome';
 export {
 	constructSingleBallRun,
-	constructSingleBallRun as generateSyntheticRun,
 	validateSingleBallInput,
+	validateSimulationInput,
 	type SimulationInputDiagnostic
 } from './single-ball';
+export {
+	constructSimulationRun,
+	constructSimulationRun as generateSyntheticRun
+} from './scheduler';

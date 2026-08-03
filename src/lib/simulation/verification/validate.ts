@@ -3,6 +3,7 @@ import {
 	deepEqual,
 	validateMultiBodyContracts,
 	validateRecordIntegrity,
+	validateSchedulerHistory,
 	validateTemporalContinuity
 } from './history';
 import {
@@ -26,6 +27,7 @@ export function validateSimulationRun(
 	validateMultiBodyContracts(context);
 	validateRecordIntegrity(context);
 	validateTemporalContinuity(context);
+	validateSchedulerHistory(context);
 	validateContactGeometry(context);
 	validateCollisionFreeIntervals(context);
 	validateContactDynamics(context);

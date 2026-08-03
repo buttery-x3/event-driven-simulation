@@ -53,5 +53,6 @@ export type {
 	PairPredictionDiagnostic,
 	PredictionDecision,
 	PredictionRevision,
+	WorldSchedulerStepDiagnostic,
 	RendererPlaybackInput
 } from './history';
