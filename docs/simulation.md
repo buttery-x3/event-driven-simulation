@@ -193,12 +193,21 @@ every collider reports no contact. Any unresolved collider calculation makes the
 unresolved because it could conceal an earlier event; a valid later candidate remains diagnostic
 evidence but is not committed as the result.
 
-## Event-to-event single-ball runs
+## Event-to-event world runs
 
-`constructSingleBallRun` is the authoritative Milestone 2 producer. It accepts one immutable
-`SimulationInput`, constructs a ballistic path from the current event state, queries every fixed
-collider continuously, and commits a segment only after the selected interval has been certified
-collision-free. It never advances collision state through renderer frames or physics timesteps.
+`constructSimulationRun` is the authoritative producer. It accepts one immutable
+`SimulationInput` and maintains one local state, revision and certified prediction per released
+body. A deterministic scan chooses the earliest exact time across scheduled releases and local
+fixed-world events. Only the selected body's prefix is committed; every unrelated body retains its
+existing continuous prediction across that world event. Exact-time independent candidates are
+processed as a body-ID-ordered batch without tolerance-merging distinct times. The compatibility
+name `constructSingleBallRun` routes through this same scheduler.
+
+The local-event solver constructs a ballistic or constrained path from the body's current event
+state, queries every fixed collider continuously, and exposes the next contact, transition,
+terminal boundary or failure as a prediction. Prepared sustained-contact legs are not committed
+until their local boundary is selected, which is the interruption boundary later body-pair search
+will use. The runner never advances collision state through renderer frames or physics timesteps.
 
 Each selected contact set is evaluated directly on the incoming path. For one contact, restitution
 reduces to the familiar outward-normal response:
@@ -244,8 +253,8 @@ event selection or becomes authoritative trajectory motion.
 
 ## Multi-body history contract
 
-Version 7 defines multi-body semantics without implementing a global scheduler or dynamic-body
-collision solver. Each input body has a unique ID, positive finite mass, radius, initial state and
+Version 7 defines multi-body semantics and the independent-body global scheduler, but does not yet
+implement dynamic-body collision search or response. Each input body has a unique ID, positive finite mass, radius, initial state and
 non-negative release time. Before that time it is `scheduled` and physically absent. Simultaneous
 releases form one semantic batch; serialized array order and diagnostic IDs cannot decide physical
 ordering or response. Exact fixed or dynamic touching is evidence for the applicable contact policy,
@@ -268,6 +277,14 @@ events record creation, split, merge and dissolution without exposing solver mat
 Diagnostic body horizons and pair predictions record a common validity interval, per-body revision
 stamps and selected/retained/invalidated/stale decisions. They are evidence only. Rendering evaluates
 the authoritative trajectories and never reconstructs motion from predictions or component IDs.
+
+`schedulerSteps` records the local event that advanced world time, its body revision and the body
+IDs whose predictions were retained unchanged. A future release remains an external event even
+when every released body is dormant. Release batches are admitted together; overlap beyond
+`contactDistance` with fixed geometry, a present body or another simultaneous release invalidates
+the world. Any released body-level invalid or unresolved outcome terminates the initial scheduler
+conservatively. Completed, escaped and resting body states remain separate from the aggregate world
+outcome; mixed successful worlds use a `world-complete` terminal reason.
 
 Supported scene-bounds crossings are solved continuously alongside explicit completion and escape
 regions. A non-penetrating contact may enter sustained contact only when the contact normal can
@@ -315,8 +332,9 @@ Entering or leaving sustained contact adds a `contact-mode-transition` event wit
 collider, position, normal, source and target mode, and reason. A `linear-contact` or
 `circular-contact` motion segment is the authoritative continuation between those transitions. Rest requires a separate non-negative reaction solve
 proving gravity can be balanced by the full contact set; small speed alone is insufficient.
-Resting contact is terminal for the current fixed-world,
-single-ball model because no supported future external event can change it.
+Resting contact makes that body dormant. The world continues when a scheduled release or another
+active body remains, and one stationary segment covers the dormant interval without cuts at
+unrelated world events.
 
 When a constrained circular path reaches a new collider, the circular segment end state supplies
 the canonical event time, position and velocity directly to the manifold solve. The retained circle

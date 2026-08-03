@@ -9,7 +9,12 @@ import type {
 import { formatVector } from '../model';
 
 export type WorkbenchHistoryKind =
-	'release' | 'physical-event' | 'dynamic-contact' | 'component-transition' | 'prediction';
+	| 'release'
+	| 'physical-event'
+	| 'dynamic-contact'
+	| 'component-transition'
+	| 'prediction'
+	| 'scheduler';
 
 export interface WorkbenchHistoryItem {
 	readonly id: string;
@@ -37,7 +42,22 @@ export function buildWorkbenchHistory(run: SimulationRunRecord): readonly Workbe
 			detail: `${prediction.reason} Revisions ${prediction.revisions.map(({ revision }) => revision).join(' / ')}.`,
 			bodyIds: prediction.bodyIds,
 			sourceOrder: 4_000 + index
-		}))
+		})),
+		...(run.diagnostics.schedulerSteps ?? [])
+			.filter(({ eventType }) => eventType !== 'release')
+			.map((step, index) => ({
+				id: `scheduler-${index}-${step.bodyId}-${step.revision}`,
+				time: step.worldTime,
+				kind: 'scheduler' as const,
+				title: `Scheduler selected ${step.eventType}`,
+				participants: step.bodyId,
+				detail:
+					step.retainedBodyIds.length === 0
+						? `Revision ${step.revision}; no unrelated predictions were active.`
+						: `Revision ${step.revision}; retained ${step.retainedBodyIds.join(', ')} without segmentation.`,
+				bodyIds: [step.bodyId, ...step.retainedBodyIds],
+				sourceOrder: 5_000 + index
+			}))
 	];
 
 	return items.sort(

@@ -10,7 +10,7 @@
 			name: 'canonical-event-driven-offset-drop.json',
 			json: canonicalFixtureJson,
 			evidenceKind: 'production-run',
-			description: 'Recorded output from the production single-body simulator.'
+			description: 'Recorded output from the production event-driven world scheduler.'
 		},
 		...syntheticMultiBodyFixtures.map((fixture) => ({
 			id: fixture.id,

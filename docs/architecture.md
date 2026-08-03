@@ -155,9 +155,20 @@ result of this boundary.
 
 ## Headless event-driven run
 
-`src/lib/simulation/run/single-ball/construct.ts` is the authoritative producer of single-ball run
-records. It sequences free flight, impact and sustained contact, commits only certified intervals,
-and continues from exact physical event times. The private `impact` subdomain owns contact-event
+`src/lib/simulation/run/scheduler` is the authoritative producer of world run records.
+`constructSimulationRun` orders scheduled releases and per-body local predictions in one monotonic
+event history. `constructSingleBallRun` remains a compatibility export of that same authority, so
+one-body behaviour cannot drift onto a separate production path. The scheduler performs a simple
+deterministic scan, commits only the selected body's certified prefix, retains unrelated continuous
+predictions without segmentation, and processes exact-time independent events in body-ID order.
+It rejects overlapping release batches and fails the world conservatively when a released body
+becomes invalid or unresolved. Its `release.ts` owns fixed/body overlap admission, `assembly.ts`
+owns world outcome and per-body lifecycle construction, and `construct.ts` owns global selection.
+
+`src/lib/simulation/run/single-ball/local-events` exposes the fixed-world local prediction and
+commit boundary used by the scheduler. It sequences free flight, impact and sustained contact,
+including prepared constrained-motion horizons that remain interruptible until selected. The
+private `impact` subdomain owns contact-event
 commitment and classification: `response.ts` owns restitution and conservative manifold-level
 contracting-impact collapse, `evidence.ts` owns impact and accumulation diagnostics,
 `alternating-limit.ts` owns the acquired-manifold release transition, and `resolution.ts` owns
@@ -169,9 +180,8 @@ support-shape dispatch, line continuation, shared contact-mode result constructi
 constrained-path geometry. Its private `circular` subdomain owns changing-normal continuation,
 turning-point reversal and independently testable angular motion/scene-event ordering.
 Validation, termination search and diagnostic construction remain separate modules in the parent
-single-ball subdomain. The
-`run` entry point preserves both `constructSingleBallRun` and the old
-`generateSyntheticRun` compatibility name without retaining a forwarding implementation module.
+single-ball subdomain. The `run` entry point exposes `constructSimulationRun` and preserves both
+`constructSingleBallRun` and the old `generateSyntheticRun` names as compatibility aliases.
 
 Canonical recorded-segment position and velocity evaluation lives in the `simulation/motion`
 subsystem. Constant-acceleration segments use their immutable initial conditions. Circular-contact

@@ -5,8 +5,8 @@
 This document defines the browser prototype as a diagnostics and experiment workbench for saved and
 newly calculated simulation runs. FLAME-23 established the replay and inspection surface, FLAME-31
 added explicit launch controls, FLAME-37 exposed the complete named single-ball verification
-catalogue, and FLAME-49 adds precomputed multi-body experiment replay and inspection without
-claiming production multi-body physics support.
+catalogue, FLAME-49 added precomputed multi-body experiment replay and inspection, and FLAME-50
+adds production-generated independent-body scheduler scenarios.
 
 The large headline, explanatory essay and decorative `simulation -> completed run -> renderer`
 strip in the current route are removed. A compact application bar provides identity and source
@@ -15,8 +15,9 @@ available around it.
 
 The workbench edits the supported mass, radius, release time, initial position and velocity for one
 selected dynamic body at a time. It does not provide arbitrary board construction, peg dragging or
-continuous recalculation. Multi-body inputs can be saved and reloaded, but the production Run action
-remains disabled for them until a public multi-body solver exists.
+continuous recalculation. The named production multi-body scenarios run through the independent-body
+world scheduler. Arbitrary or synthetic multi-body drafts remain saveable but are not presented as
+supported physics because body-body contact search is not implemented.
 
 ## Product principles
 
@@ -80,8 +81,8 @@ cursor, viewport, event selection or diagnostics.
 
 ### Scenario catalogue and launch controls
 
-The catalogue groups canonical launches, named board-state scenarios and curated adversarial
-experiments by stable category.
+The catalogue groups canonical launches, named board-state scenarios, production multi-body
+scheduler experiments and curated adversarial experiments by stable category.
 Each descriptor retains its authoritative `SimulationInput` rather than copying scene, body or
 settings fields. The browser shows the selected stable ID, purpose, scene ID, complete ball,
 environment and run-limit settings, expected or permitted outcomes, relevant event/contact-mode
@@ -99,17 +100,18 @@ Angles are measured in degrees from positive `x`, with positive angles rotating 
 `vy = speed × sin(angle)`, normalising floating-point components smaller than `1e-15` to zero.
 Switching velocity entry modes preserves the represented vector.
 
-Run validates field syntax and the supported single-ball scenario policy, creates a deep,
-immutable input snapshot, calls `constructSingleBallRun`, and atomically accepts the returned
+Run validates field syntax and supported independent-body input policy, creates a deep,
+immutable input snapshot, calls `constructSimulationRun`, and atomically accepts the returned
 record. Invalid draft input leaves the current run and transport untouched. A valid but unresolved
 calculation is accepted in recorded-prefix mode rather than ordinary playback.
 
 The draft model itself is multi-body: it snapshots every body's stable ID, mass, radius, release
 time, initial position and initial velocity through the versioned `simulation-input` serializer.
 Loading any accepted saved run also makes its complete input available as a separate editable draft.
-For more than one body, Save scenario remains available and Run clearly states that production
-multi-body calculation is unavailable; choosing a synthetic run never routes that draft into the
-single-body producer.
+For more than one body, Save scenario remains available. Run is enabled for the deliberately
+non-interacting production scheduler catalogue and disabled for synthetic or arbitrary multi-body
+drafts. Synthetic contract fixtures stay visibly distinct and are never promoted into
+production-generated physics evidence.
 
 **Save scenario** and **Export diagnostics** are adjacent but distinct actions. Save scenario
 serialises the editable draft input for later loading and rerunning. Export diagnostics snapshots
@@ -125,8 +127,8 @@ the renderer never decides whether an outcome is correct.
 
 Scenario input files use a versioned JSON envelope with `contractVersion: 7`,
 `documentType: "simulation-input"` and an `input` value conforming to `SimulationInput`. Loading
-passes through structural, identity, mass and declared-release validation; invoking the current
-single-ball runner then applies its narrower one-body, time-zero-release policy. Saved run files
+passes through structural, identity, mass and declared-release validation; invoking the world
+scheduler then applies release-overlap and conservative unresolved-body policy. Saved run files
 continue through the separate saved-run boundary. Version 6 scenario envelopes migrate explicitly
 to unit mass and release time zero.
 

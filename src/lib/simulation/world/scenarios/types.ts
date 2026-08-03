@@ -4,6 +4,7 @@ export type ScenarioCategoryId =
 	| 'canonical-launches'
 	| 'board-layouts'
 	| 'physical-settings'
+	| 'multi-body-scheduler'
 	| 'adversarial-contacts'
 	| 'saved-regression-cases';
 
@@ -58,7 +59,12 @@ export type ScenarioCoverageId =
 	| 'manifold.circular-acquisition'
 	| 'manifold.multi-support-rest'
 	| 'manifold.support-release'
-	| 'manifold.mixed-support';
+	| 'manifold.mixed-support'
+	| 'scheduler.staggered-releases'
+	| 'scheduler.mixed-outcomes'
+	| 'scheduler.resting-continuation'
+	| 'scheduler.simultaneous-events'
+	| 'scheduler.single-body-equivalence';
 
 export type ScenarioMotionMode = 'free-flight' | 'linear-contact' | 'circular-contact';
 

@@ -3,6 +3,7 @@ import {
 	adversarialScenarios,
 	boardStateScenarios,
 	canonicalPlinkoScenarios,
+	independentBodySchedulerScenarios,
 	manifoldContactScenarios
 } from '$lib/simulation/world';
 import {
@@ -19,6 +20,7 @@ describe('workbench scenario catalogue', () => {
 			canonicalPlinkoScenarios.length +
 				boardStateScenarios.length +
 				manifoldContactScenarios.length +
+				independentBodySchedulerScenarios.length +
 				adversarialScenarios.length
 		);
 		expect(new Set(workbenchScenarios.map(({ id }) => id)).size).toBe(workbenchScenarios.length);
@@ -27,6 +29,7 @@ describe('workbench scenario catalogue', () => {
 			...canonicalPlinkoScenarios,
 			...boardStateScenarios,
 			...manifoldContactScenarios,
+			...independentBodySchedulerScenarios,
 			...adversarialScenarios
 		]) {
 			expect(getWorkbenchScenario(source.id)?.input).toBe(source.input);
@@ -38,6 +41,7 @@ describe('workbench scenario catalogue', () => {
 			'canonical-launches',
 			'board-layouts',
 			'physical-settings',
+			'multi-body-scheduler',
 			'adversarial-contacts',
 			'saved-regression-cases'
 		]);
@@ -45,6 +49,9 @@ describe('workbench scenario catalogue', () => {
 		expect(getWorkbenchScenario('angled-ramp')?.categoryId).toBe('physical-settings');
 		expect(getWorkbenchScenario('close-contacts')?.categoryId).toBe('adversarial-contacts');
 		expect(getWorkbenchScenario('lateral-gravity')?.categoryId).toBe('physical-settings');
+		expect(getWorkbenchScenario('staggered-independent-drops')?.categoryId).toBe(
+			'multi-body-scheduler'
+		);
 		expect(defaultWorkbenchScenario.id).toBe('vertical-centre-drop');
 	});
 

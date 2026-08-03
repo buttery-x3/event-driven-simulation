@@ -346,7 +346,16 @@ test('groups verification scenarios, replaces worlds on Run and reports authorit
 	await expect(selector.locator('optgroup[label="Canonical launches"] option')).toHaveCount(5);
 	await expect(selector.locator('optgroup[label="Board layouts"] option')).toHaveCount(8);
 	await expect(selector.locator('optgroup[label="Physical settings"] option')).toHaveCount(13);
+	await expect(selector.locator('optgroup[label="Multi-body scheduler"] option')).toHaveCount(5);
 	await expect(selector.locator('optgroup[label="Adversarial contacts"] option')).toHaveCount(18);
+
+	await selector.selectOption('staggered-independent-drops');
+	await page.getByRole('button', { name: 'Run simulation' }).click();
+	await expect(catalogue.getByText(/^escaped.*permitted$/)).toBeVisible();
+	await expect(page.getByLabel('Selected body').locator('option')).toHaveCount(4);
+	await expect(
+		page.getByRole('button', { name: /Scheduler selected termination/ }).first()
+	).toBeVisible();
 
 	const scenarios = [
 		{ id: 'no-pegs', sceneId: 'no-pegs-board', outcome: 'exited' },

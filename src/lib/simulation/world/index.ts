@@ -8,6 +8,7 @@ export {
 	boardStateScenarios,
 	adversarialScenarios,
 	manifoldContactScenarios,
+	independentBodySchedulerScenarios,
 	canonicalPlinkoScenarios,
 	defaultCanonicalPlinkoScenario,
 	type BoardStateScenario,

@@ -3,6 +3,7 @@ import {
 	adversarialScenarios,
 	boardStateScenarios,
 	canonicalPlinkoScenarios,
+	independentBodySchedulerScenarios,
 	manifoldContactScenarios,
 	type ScenarioCategoryId,
 	type VerificationScenario
@@ -25,6 +26,7 @@ export const workbenchScenarioCategories = [
 	{ id: 'canonical-launches', name: 'Canonical launches' },
 	{ id: 'board-layouts', name: 'Board layouts' },
 	{ id: 'physical-settings', name: 'Physical settings' },
+	{ id: 'multi-body-scheduler', name: 'Multi-body scheduler' },
 	{ id: 'adversarial-contacts', name: 'Adversarial contacts' },
 	{ id: 'saved-regression-cases', name: 'Saved regression cases' }
 ] as const satisfies readonly WorkbenchScenarioCategory[];
@@ -33,6 +35,7 @@ export const workbenchScenarios = [
 	...canonicalPlinkoScenarios,
 	...boardStateScenarios,
 	...manifoldContactScenarios,
+	...independentBodySchedulerScenarios,
 	...adversarialScenarios
 ] as const satisfies readonly WorkbenchScenarioDescriptor[];
 

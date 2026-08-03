@@ -143,6 +143,11 @@ run/single-ball/
     termination-search.ts
     diagnostics.ts
     run-assembly.ts
+    local-events/
+        index.ts
+        types.ts
+        prediction.ts
+        commit.ts
     impact/
         index.ts
         response.ts
@@ -166,6 +171,19 @@ run/single-ball/
             angular-event-search.ts
             results.ts
         __tests__/
+    __tests__/
+```
+
+FLAME-50 moved world orchestration into the sibling `run/scheduler/` subdomain and retained
+single-body fixed-world solving as its local capability:
+
+```text
+run/scheduler/
+    index.ts
+    types.ts
+    construct.ts
+    release.ts
+    assembly.ts
     __tests__/
 ```
 
@@ -194,6 +212,18 @@ The implemented ownership is:
 - `diagnostics.ts` — translation of solver evidence and terminal outcomes into recorded
   diagnostics;
 - `index.ts` — explicit public exports only.
+
+For FLAME-50, the earlier `construct.ts` and `input-validation.ts` bullets are superseded:
+`construct.ts` is now only the compatibility export, `input-validation.ts` serves shared world
+validation plus the narrower compatibility validator, and `local-events/prediction.ts` with
+`commit.ts` owns per-body fixed-world prediction, exact-event commitment and retained
+constrained-motion horizons.
+
+Within `run/scheduler`, `construct.ts` owns monotonic global selection and exact-time batches,
+`release.ts` owns release overlap admission, `assembly.ts` owns world/per-body outcome construction,
+and `types.ts` owns only their scheduler state vocabulary. This boundary is evidenced by the new
+global state machine, scheduled releases, later body-pair interruption consumer and independent
+world/body outcomes; it is not a speculative layer.
 
 FLAME-36 moved restitution response out of `construct.ts` when sustained contact introduced a
 second response mode. The orchestrator retains only state sequencing and run assembly.

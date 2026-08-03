@@ -87,6 +87,9 @@ src/lib/simulation/
             board-states.ts
             board-state-metadata.ts
             adversarial.ts
+            independent-bodies/
+                index.ts
+                definitions.ts
             manifold/
                 index.ts
                 definitions.ts
@@ -95,13 +98,25 @@ src/lib/simulation/
     run/
         index.ts
         outcome.ts
+        scheduler/
+            index.ts
+            types.ts
+            construct.ts
+            release.ts
+            assembly.ts
+            __tests__/
         single-ball/
             index.ts
             construct.ts
             input-validation.ts
             termination-search.ts
 			diagnostics.ts
-			run-assembly.ts
+            run-assembly.ts
+			local-events/
+				index.ts
+				types.ts
+				prediction.ts
+				commit.ts
 			impact/
 				index.ts
 				alternating-limit.ts
@@ -173,6 +188,7 @@ src/lib/simulation/
             record-integrity.ts
             temporal-continuity.ts
             multi-body.ts
+			scheduler.ts
         physics/
             index.ts
             contact-geometry.ts
@@ -287,9 +303,9 @@ workbench/
 
 `fixtures` declares evidence but never generates physics. `inspection` consumes only accepted run
 records and renderer playback frames; it may filter or format evidence but cannot repair or extend
-history. `input` may validate and serialize several dynamic bodies, while the existing production
-Run action remains explicitly single-body until a later simulation issue supplies a public
-multi-body producer. `layout` and the sibling `simulation-workbench.css` keep responsive region
+history. `input` validates and serializes several dynamic bodies, and the production Run action
+submits them through the public world scheduler. `inspection` also presents scheduler selections
+and the unrelated body predictions retained at each world event. `layout` and the sibling `simulation-workbench.css` keep responsive region
 composition out of the session orchestrator. Cross-domain consumers use each folder's `index.ts`.
 
 ## Evolving internal subdomains

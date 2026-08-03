@@ -8,7 +8,7 @@
 	} from '$lib/rendering/playback';
 	import type { SimulationInput, SimulationRunRecord } from '$lib/simulation/contracts';
 	import { RunFixtureError } from '$lib/simulation/serialization/run-record';
-	import { constructSingleBallRun } from '$lib/simulation/run';
+	import { constructSimulationRun } from '$lib/simulation/run';
 	import { validateSimulationRun, type RunValidationResult } from '$lib/simulation/verification';
 	import ApplicationBar from './ApplicationBar.svelte';
 	import ScenarioCatalogue from './ScenarioCatalogue.svelte';
@@ -98,6 +98,10 @@
 			: replayTime >= playback.playableUntilTime && playback.playableUntilTime > 0
 				? 'ended'
 				: 'paused'
+	);
+	let canRunProduction = $derived(
+		inputDraft.bodies.length === 1 ||
+			getWorkbenchScenario(selectedScenarioId)?.categoryId === 'multi-body-scheduler'
 	);
 
 	function syncClock(): void {
@@ -189,20 +193,8 @@
 			inputFeedback = null;
 			return;
 		}
-		if (submission.input.initialDynamicBodies.length !== 1) {
-			inputErrors = [
-				{
-					field: 'scenario',
-					code: 'PRODUCTION_MULTI_BODY_UNAVAILABLE',
-					message:
-						'Multi-body inputs can be saved and inspected with synthetic runs, but the production runner remains single-body.'
-				}
-			];
-			return;
-		}
-
 		submittedInput = submission.input;
-		const run = constructSingleBallRun(submission.input);
+		const run = constructSimulationRun(submission.input);
 		const scenarioName = getWorkbenchScenario(selectedScenarioId)?.name ?? 'Loaded custom scenario';
 		acceptRun(run, { kind: 'simulation', name: scenarioName }, selectedScenarioId);
 		inputErrors = [];
@@ -349,7 +341,7 @@
 		onRun={runDraftScenario}
 		onLoadScenario={loadScenarioFile}
 		onSaveScenario={saveScenario}
-		canRunProduction={inputDraft.bodies.length === 1}
+		{canRunProduction}
 		canExportDiagnostics={currentRun !== null}
 		{exportFeedback}
 		onExportDiagnostics={exportDiagnostics}
