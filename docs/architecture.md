@@ -218,6 +218,14 @@ position function. When adjacent segments share a boundary, the later segment is
 exact transition time. Missing recorded intervals produce no body pose rather than invented or
 integrated renderer motion.
 
+FLAME-49 applies that rule independently to every dynamic body. One renderer object is retained per
+stable body ID; a body is hidden before its declared release, becomes visible only where its own
+trajectory has authoritative coverage, and exposes recorded velocity, motion mode, lifecycle and
+exact-time contact-component membership to the workbench. A body with an explicit terminal outcome
+may retain its final recorded pose while the world replay continues, but its velocity is presented
+as stopped and its trajectory is never extended. Scheduled bodies, missing intervals and unresolved
+history beyond the world prefix remain absent rather than being inferred or overlap-corrected.
+
 `toRenderSceneViewModel` adapts physical records to a small renderer-side discriminated union.
 Dynamic circular bodies become spheres. Static circular Plinko colliders become cylinders.
 Line-segment boundaries become boxes whose visible thickness is presentation-only. Axis-aligned
@@ -236,6 +244,12 @@ The browser prototype loads `fixtures/runs/canonical-event-driven-offset-drop.js
 saved-run boundary and replays its 25-contact authoritative run through this same renderer
 contract. The fixture is neither regenerated in the route nor duplicated into a
 presentation-specific format.
+
+The route also serializes five declarative `workbench/fixtures` synthetic multi-body records and
+immediately routes them through that same public saved-run parser before acceptance. They are
+labelled synthetic contract evidence at every selection/source surface. Their trajectories,
+contacts, components and failure boundaries are precomputed declarations; neither the route nor the
+renderer invokes a multi-body producer or derives missing physics from them.
 
 ## Enforced dependency direction
 
@@ -258,19 +272,30 @@ diagnostic markup or page styling. Workbench components under `src/lib/workbench
 responsibilities by state ownership and independently evolving regions:
 
 - `SimulationWorkbench` coordinates the last accepted run, source, load feedback, inspection mode,
-  event selection and presentation clock;
+  selected body/history evidence and presentation clock;
 - `scenario-catalogue.ts` assembles public world descriptors without copying `SimulationInput`,
   while `ScenarioCatalogue` owns grouped selection, submitted-setting presentation, declared
   event/replay expectations and expected-versus-actual outcome presentation;
 - the named `workbench/input` subdomain owns editable simulation inputs: `SimulationInputControls`
-  presents the load/save/run workflow, `BallControls` and `SimulationSettingsControls` own the
-  Ball, Environment and Run limits groups, `velocity-entry.ts` converts velocity representations,
-  and `simulation-input-draft.ts` validates fields and creates a deep immutable submitted input;
+  presents the load/save/run workflow, `BallControls` owns the bounded one-at-a-time dynamic-body
+  editor, `SimulationSettingsControls` owns Environment and Run limits, `velocity-entry.ts`
+  converts velocity representations, and `simulation-input-draft.ts` validates every body and
+  creates a deep immutable submitted input;
+- the named `workbench/inspection` subdomain owns the selected-body view and the unified physical
+  history assembled from releases, fixed-world events, dynamic contacts, component transitions and
+  pair-prediction evidence;
+- `workbench/layout` composes the replay and evidence regions without owning session state, while
+  `simulation-workbench.css` owns their responsive grid;
+- `workbench/fixtures` owns explicitly labelled precomputed synthetic contract records used only to
+  prove public playback and inspection behavior; it never calls or substitutes for a solver;
+- `workbench/io` owns browser download object-URL lifecycle and fixture-error presentation;
+- `workbench/session` owns the browser animation-frame lifecycle that advances only the
+  presentation clock;
 - `SimulationViewport` owns Three.js mount, update and disposal;
 - application bar and playback controls expose typed callbacks rather than reaching into renderer
   state; and
-- the run inspector, event timeline, diagnostics console and metrics panel render read-only views
-  of the accepted run.
+- the run inspector, body inspector, physical history, diagnostics console and metrics panel render
+  read-only views of the accepted run.
 
 Draft input, submitted input, returned run record and presentation clock are distinct state. Preset
 selection and field editing cannot mutate an accepted run. The explicit Run action is the only path

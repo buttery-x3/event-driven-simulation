@@ -27,6 +27,14 @@
 	);
 	let displayedInput = $derived(selectedScenario?.input ?? customInput);
 	let initialBody = $derived(displayedInput.initialDynamicBodies[0] ?? null);
+	let releaseRange = $derived(
+		displayedInput.initialDynamicBodies.length === 0
+			? null
+			: [
+					Math.min(...displayedInput.initialDynamicBodies.map(({ releaseTime }) => releaseTime)),
+					Math.max(...displayedInput.initialDynamicBodies.map(({ releaseTime }) => releaseTime))
+				]
+	);
 	let outcomeAssessment = $derived(
 		selectedScenario
 			? assessScenarioOutcome(selectedScenario, actualScenarioId, actualOutcome)
@@ -84,6 +92,14 @@
 		</div>
 		<div class="initial-state">
 			<span>Submitted initial state and settings</span>
+			<p>
+				<strong
+					>{displayedInput.initialDynamicBodies.length} dynamic {displayedInput.initialDynamicBodies
+						.length === 1
+						? 'body'
+						: 'bodies'}</strong
+				>{releaseRange ? ` · releases ${releaseRange[0]}–${releaseRange[1]} s` : ''}
+			</p>
 			{#if initialBody}
 				<p>
 					<strong>{initialBody.id}</strong> · radius {initialBody.physicalShape.radius} m · p=({initialBody

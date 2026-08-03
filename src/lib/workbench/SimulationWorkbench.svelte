@@ -1,32 +1,28 @@
 <script lang="ts">
+	import './simulation-workbench.css';
 	import { onMount } from 'svelte';
-	import { PlaybackClock, toRendererPlaybackInput } from '$lib/rendering/playback';
+	import {
+		getPlaybackFrame,
+		PlaybackClock,
+		toRendererPlaybackInput
+	} from '$lib/rendering/playback';
 	import type { SimulationInput, SimulationRunRecord } from '$lib/simulation/contracts';
-	import {
-		parseSimulationRunFixture,
-		RunFixtureError
-	} from '$lib/simulation/serialization/run-record';
-	import {
-		parseSimulationInputFixture,
-		serializeSimulationInputFixture
-	} from '$lib/simulation/serialization/simulation-input';
-	import {
-		createDiagnosticExport,
-		serializeDiagnosticExport
-	} from '$lib/simulation/serialization/diagnostic-export';
+	import { RunFixtureError } from '$lib/simulation/serialization/run-record';
 	import { constructSingleBallRun } from '$lib/simulation/run';
 	import { validateSimulationRun, type RunValidationResult } from '$lib/simulation/verification';
 	import ApplicationBar from './ApplicationBar.svelte';
-	import DiagnosticsConsole from './DiagnosticsConsole.svelte';
-	import EventTimeline from './EventTimeline.svelte';
-	import MetricsPanel from './MetricsPanel.svelte';
-	import PlaybackControls from './PlaybackControls.svelte';
-	import RunInspector from './RunInspector.svelte';
 	import ScenarioCatalogue from './ScenarioCatalogue.svelte';
-	import SimulationViewport from './SimulationViewport.svelte';
+	import { EvidenceWorkspace, ReplayWorkspace } from './layout';
 	import {
-		createDiagnosticExportFilename,
+		downloadRunDiagnostics,
+		downloadSimulationInput,
+		parseLocalRun,
+		parseLocalSimulationInput,
+		parseRepositoryRun
+	} from './io';
+	import {
 		getInspectionMode,
+		requireInitialRepositoryFixture,
 		toRunValidationDiagnosticEntries,
 		type LoadFeedback,
 		type RepositoryRunFixture,
@@ -44,13 +40,13 @@
 		getWorkbenchScenario,
 		workbenchScenarios
 	} from './scenario-catalogue';
+	import { startPlaybackAnimationLoop } from './session';
 
 	let { fixtures }: { fixtures: readonly RepositoryRunFixture[] } = $props();
 
-	const initialFixture = getInitialFixture();
-	if (!initialFixture) throw new Error('The workbench requires at least one repository fixture.');
+	const initialFixture = (() => requireInitialRepositoryFixture(fixtures))();
 
-	const initialRun = parseSimulationRunFixture(initialFixture.json);
+	const initialRun = parseRepositoryRun(initialFixture);
 	let currentRun = $state.raw<SimulationRunRecord>(initialRun);
 	let currentValidation = $state.raw<RunValidationResult>(
 		validateSimulationRun(initialRun.input, initialRun)
@@ -58,7 +54,8 @@
 	let currentSource = $state.raw<RunSource>({
 		kind: 'repository',
 		id: initialFixture.id,
-		name: initialFixture.name
+		name: initialFixture.name,
+		evidenceKind: initialFixture.evidenceKind
 	});
 	let loadFeedback = $state.raw<LoadFeedback | null>(null);
 	let selectedScenarioId = $state<string | null>(defaultWorkbenchScenario.id);
@@ -82,10 +79,19 @@
 		...currentRun.diagnostics.entries,
 		...toRunValidationDiagnosticEntries(currentValidation)
 	]);
+	let selectedBodyId = $state<string | null>(null);
+	let filteredDiagnosticEntries = $derived(
+		selectedBodyId === null
+			? presentedDiagnosticEntries
+			: presentedDiagnosticEntries.filter(
+					(entry) => entry.bodyId === null || entry.bodyId === selectedBodyId
+				)
+	);
 	let clock = new PlaybackClock(initialRun.diagnostics.simulatedUntilTime);
 	let replayTime = $state(0);
+	let replayFrame = $derived(getPlaybackFrame(playback, replayTime));
 	let playing = $state(false);
-	let selectedEventIndex = $state<number | null>(null);
+	let selectedHistoryItemId = $state<string | null>(null);
 	let transportState: 'playing' | 'paused' | 'ended' = $derived(
 		playing
 			? 'playing'
@@ -93,10 +99,6 @@
 				? 'ended'
 				: 'paused'
 	);
-
-	function getInitialFixture(): RepositoryRunFixture | undefined {
-		return fixtures[0];
-	}
 
 	function syncClock(): void {
 		replayTime = clock.time;
@@ -114,7 +116,7 @@
 	function restartPlayback(): void {
 		if (playback.playableUntilTime <= 0) return;
 
-		selectedEventIndex = null;
+		selectedHistoryItemId = null;
 		clock.restart();
 		syncClock();
 	}
@@ -125,9 +127,22 @@
 		syncClock();
 	}
 
-	function selectEvent(index: number, time: number): void {
-		selectedEventIndex = index;
+	function selectHistoryItem(id: string, time: number): void {
+		selectedHistoryItemId = id;
 		seekPlayback(time);
+	}
+
+	function selectBody(bodyId: string | null): void {
+		selectedBodyId = bodyId;
+		selectedHistoryItemId = null;
+	}
+
+	function loadRunInputAsDraft(run: SimulationRunRecord, name: string): void {
+		selectedScenarioId = null;
+		draftBaseInput = run.input;
+		inputDraft = createSimulationInputDraft(run.input);
+		inputErrors = [];
+		inputFeedback = `Loaded ${name} inputs for editing. Accepted replay history remains immutable.`;
 	}
 
 	function acceptRun(
@@ -142,7 +157,8 @@
 		clock = new PlaybackClock(run.diagnostics.simulatedUntilTime);
 		replayTime = 0;
 		playing = false;
-		selectedEventIndex = null;
+		selectedHistoryItemId = null;
+		selectedBodyId = null;
 		exportFeedback = null;
 	}
 
@@ -156,10 +172,6 @@
 		inputErrors = [];
 		inputFeedback = `Draft reset to ${scenario.name}. Current run unchanged until Run.`;
 		exportFeedback = null;
-	}
-
-	function resetCanonicalDefault(): void {
-		selectScenario(defaultWorkbenchScenario.id);
 	}
 
 	function changeInputDraft(nextDraft: SimulationInputDraft): void {
@@ -177,6 +189,17 @@
 			inputFeedback = null;
 			return;
 		}
+		if (submission.input.initialDynamicBodies.length !== 1) {
+			inputErrors = [
+				{
+					field: 'scenario',
+					code: 'PRODUCTION_MULTI_BODY_UNAVAILABLE',
+					message:
+						'Multi-body inputs can be saved and inspected with synthetic runs, but the production runner remains single-body.'
+				}
+			];
+			return;
+		}
 
 		submittedInput = submission.input;
 		const run = constructSingleBallRun(submission.input);
@@ -189,7 +212,7 @@
 	async function loadScenarioFile(file: File): Promise<void> {
 		exportFeedback = null;
 		try {
-			const input = parseSimulationInputFixture(await file.text());
+			const input = await parseLocalSimulationInput(file);
 			selectedScenarioId = null;
 			draftBaseInput = input;
 			inputDraft = createSimulationInputDraft(input);
@@ -217,50 +240,26 @@
 			return;
 		}
 
-		const blob = new Blob([serializeSimulationInputFixture(submission.input)], {
-			type: 'application/json'
-		});
-		const url = URL.createObjectURL(blob);
-		const link = document.createElement('a');
-		link.href = url;
-		link.download = `${selectedScenarioId ?? 'custom-scenario'}-input.json`;
-		link.click();
-		URL.revokeObjectURL(url);
+		const filename = downloadSimulationInput(submission.input, selectedScenarioId);
 		inputErrors = [];
-		inputFeedback = `Saved ${link.download}.`;
+		inputFeedback = `Saved ${filename}.`;
 	}
 
 	function exportDiagnostics(): void {
-		let objectUrl: string | null = null;
-
 		try {
-			const exportedAt = new Date().toISOString();
-			const bundle = createDiagnosticExport(
+			const filename = downloadRunDiagnostics(
 				currentRun,
-				{
-					exportedAt,
-					runId: currentSource.kind === 'repository' ? currentSource.id : null,
-					scenarioId: actualScenarioId,
-					descriptiveName: currentSource.name,
-					source: currentSource
-				},
+				currentSource,
+				actualScenarioId,
 				currentValidation
 			);
-			const blob = new Blob([serializeDiagnosticExport(bundle)], { type: 'application/json' });
-			objectUrl = URL.createObjectURL(blob);
-			const link = document.createElement('a');
-			link.href = objectUrl;
-			link.download = createDiagnosticExportFilename(currentSource.name, exportedAt);
-			link.click();
 			inputFeedback = null;
-			exportFeedback = { kind: 'success', message: `Exported ${link.download}.` };
+			exportFeedback = { kind: 'success', message: `Exported ${filename}.` };
 		} catch (error) {
 			exportFeedback = {
 				kind: 'error',
 				message: `Could not export diagnostics: ${error instanceof Error ? error.message : 'serialisation or download failed'}. Current run retained.`
 			};
-		} finally {
-			if (objectUrl) URL.revokeObjectURL(objectUrl);
 		}
 	}
 
@@ -269,8 +268,14 @@
 		if (!fixture) return;
 
 		try {
-			const run = parseSimulationRunFixture(fixture.json);
-			acceptRun(run, { kind: 'repository', id: fixture.id, name: fixture.name });
+			const run = parseRepositoryRun(fixture);
+			acceptRun(run, {
+				kind: 'repository',
+				id: fixture.id,
+				name: fixture.name,
+				evidenceKind: fixture.evidenceKind
+			});
+			loadRunInputAsDraft(run, fixture.name);
 			loadFeedback = {
 				kind: 'success',
 				message: `Loaded ${fixture.name} · contract v${run.contractVersion}`
@@ -284,8 +289,9 @@
 		loadFeedback = { kind: 'reading', message: `Reading ${file.name}…` };
 
 		try {
-			const run = parseSimulationRunFixture(await file.text());
-			acceptRun(run, { kind: 'local', name: file.name });
+			const run = await parseLocalRun(file);
+			acceptRun(run, { kind: 'local', name: file.name, evidenceKind: 'imported-run' });
+			loadRunInputAsDraft(run, file.name);
 			loadFeedback = {
 				kind: 'success',
 				message: `Loaded ${file.name} · contract v${run.contractVersion}`
@@ -307,23 +313,12 @@
 		};
 	}
 
-	onMount(() => {
-		let previousTimestamp: number | null = null;
-		let animationFrame = 0;
-
-		const animate = (timestamp: number) => {
-			const elapsedSeconds =
-				previousTimestamp === null ? 0 : (timestamp - previousTimestamp) / 1_000;
-			previousTimestamp = timestamp;
+	onMount(() =>
+		startPlaybackAnimationLoop((elapsedSeconds) => {
 			clock.advance(elapsedSeconds);
 			syncClock();
-			animationFrame = requestAnimationFrame(animate);
-		};
-
-		animationFrame = requestAnimationFrame(animate);
-
-		return () => cancelAnimationFrame(animationFrame);
-	});
+		})
+	);
 </script>
 
 <main class="workbench" aria-label="Simulation diagnostics workbench">
@@ -349,120 +344,39 @@
 		errors={inputErrors}
 		feedback={inputFeedback}
 		lastSubmittedInput={submittedInput}
-		onResetDefault={resetCanonicalDefault}
+		onResetDefault={() => selectScenario(defaultWorkbenchScenario.id)}
 		onChangeDraft={changeInputDraft}
 		onRun={runDraftScenario}
 		onLoadScenario={loadScenarioFile}
 		onSaveScenario={saveScenario}
+		canRunProduction={inputDraft.bodies.length === 1}
 		canExportDiagnostics={currentRun !== null}
 		{exportFeedback}
 		onExportDiagnostics={exportDiagnostics}
 	/>
 
-	<div class="primary-workspace">
-		<div class="replay-workspace">
-			<SimulationViewport
-				input={playback}
-				time={replayTime}
-				mode={inspectionMode}
-				independentValidationPassed={currentValidation.valid}
-				{transportState}
-			/>
-			<PlaybackControls
-				time={replayTime}
-				duration={playback.playableUntilTime}
-				{playing}
-				mode={inspectionMode}
-				onToggle={togglePlayback}
-				onRestart={restartPlayback}
-				onSeek={seekPlayback}
-			/>
-		</div>
+	<ReplayWorkspace
+		{playback}
+		run={currentRun}
+		validation={currentValidation}
+		source={currentSource}
+		{replayTime}
+		{playing}
+		mode={inspectionMode}
+		{transportState}
+		{selectedBodyId}
+		onToggle={togglePlayback}
+		onRestart={restartPlayback}
+		onSeek={seekPlayback}
+	/>
 
-		<RunInspector
-			run={currentRun}
-			validation={currentValidation}
-			source={currentSource}
-			playableUntilTime={playback.playableUntilTime}
-		/>
-	</div>
-
-	<div class="evidence-grid">
-		<EventTimeline
-			events={currentRun.events}
-			selectedIndex={selectedEventIndex}
-			canSeek={true}
-			onSelect={selectEvent}
-		/>
-		<DiagnosticsConsole entries={presentedDiagnosticEntries} />
-		<div class="metrics-slot">
-			<MetricsPanel run={currentRun} />
-		</div>
-	</div>
+	<EvidenceWorkspace
+		run={currentRun}
+		frame={replayFrame}
+		entries={filteredDiagnosticEntries}
+		{selectedBodyId}
+		selectedItemId={selectedHistoryItemId}
+		onSelectBody={selectBody}
+		onSelectHistory={selectHistoryItem}
+	/>
 </main>
-
-<style>
-	.workbench {
-		display: grid;
-		gap: var(--space-5);
-		width: min(100% - 2rem, 100rem);
-		margin: 0 auto;
-		padding: var(--space-5) 0 var(--space-8);
-	}
-
-	.primary-workspace {
-		display: grid;
-		grid-template-columns: minmax(0, 2fr) minmax(18rem, 0.8fr);
-		gap: var(--space-5);
-		align-items: start;
-	}
-
-	.replay-workspace {
-		display: grid;
-		gap: var(--space-3);
-		min-width: 0;
-	}
-
-	.evidence-grid {
-		display: grid;
-		grid-template-columns: minmax(0, 1.45fr) minmax(18rem, 1fr) minmax(15rem, 0.65fr);
-		gap: var(--space-5);
-		align-items: start;
-	}
-
-	.metrics-slot {
-		min-width: 0;
-	}
-
-	@media (max-width: 1099px) {
-		.primary-workspace {
-			grid-template-columns: 1fr;
-		}
-
-		.evidence-grid {
-			grid-template-columns: repeat(2, minmax(0, 1fr));
-		}
-
-		.metrics-slot {
-			grid-column: 1 / -1;
-		}
-	}
-
-	@media (max-width: 719px) {
-		.workbench {
-			gap: var(--space-4);
-			width: min(100% - 1rem, 100rem);
-			padding-top: var(--space-2);
-		}
-
-		.primary-workspace,
-		.evidence-grid {
-			grid-template-columns: 1fr;
-			gap: var(--space-4);
-		}
-
-		.metrics-slot {
-			grid-column: auto;
-		}
-	}
-</style>

@@ -2,7 +2,10 @@
 	import type { DiagnosticEntry } from '$lib/simulation/contracts';
 	import { formatRecordedSeconds } from './model';
 
-	let { entries }: { entries: readonly DiagnosticEntry[] } = $props();
+	let {
+		entries,
+		selectedBodyId
+	}: { entries: readonly DiagnosticEntry[]; selectedBodyId: string | null } = $props();
 </script>
 
 <section class="console" aria-labelledby="diagnostics-heading">
@@ -11,7 +14,7 @@
 			<p>Structured output</p>
 			<h2 id="diagnostics-heading">Diagnostics console</h2>
 		</div>
-		<span>{entries.length} entries</span>
+		<span>{entries.length} entries{selectedBodyId ? ` · ${selectedBodyId}` : ''}</span>
 	</header>
 
 	{#if entries.length === 0}

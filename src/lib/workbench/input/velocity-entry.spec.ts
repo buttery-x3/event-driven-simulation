@@ -16,8 +16,9 @@ describe('velocity entry', () => {
 	});
 
 	it('keeps the authoritative vector aligned when changing entry modes', () => {
+		const draft = createSimulationInputDraft(angledScenario.input);
 		const speedDraft = {
-			...createSimulationInputDraft(angledScenario.input),
+			...draft.bodies[0]!,
 			speed: '2',
 			angleDegrees: '-90'
 		};

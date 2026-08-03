@@ -269,6 +269,29 @@ Tests may inspect private implementation modules inside the subsystem they test.
 another subsystem should use that subsystem's public entry point unless the test explicitly verifies
 an internal architectural invariant.
 
+## Workbench internal topology
+
+The application-facing `src/lib/workbench` area is not a simulation subsystem and may orchestrate
+simulation public entry points, rendering playback and browser presentation. Its named internal
+domains are:
+
+```text
+workbench/
+    fixtures/     precomputed, visibly synthetic multi-body contract records
+    input/        editable inputs and immutable submission snapshots
+    inspection/   selected-body state and unified recorded-history presentation
+    io/           browser file-download lifecycle and load-error formatting
+    layout/       replay/evidence region composition without session state
+    session/      presentation animation-frame lifecycle
+```
+
+`fixtures` declares evidence but never generates physics. `inspection` consumes only accepted run
+records and renderer playback frames; it may filter or format evidence but cannot repair or extend
+history. `input` may validate and serialize several dynamic bodies, while the existing production
+Run action remains explicitly single-body until a later simulation issue supplies a public
+multi-body producer. `layout` and the sibling `simulation-workbench.css` keep responsive region
+composition out of the session orchestrator. Cross-domain consumers use each folder's `index.ts`.
+
 ## Evolving internal subdomains
 
 When concrete responsibility pressure shows that the current internal topology is stale, introduce

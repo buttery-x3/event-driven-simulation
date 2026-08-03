@@ -1,11 +1,25 @@
-import type { SimulationInput, Vec2 } from '$lib/simulation/contracts';
-import { validateSingleBallInput, type SimulationInputDiagnostic } from '$lib/simulation/run';
+import type {
+	InitialDynamicCircleBodyState,
+	SimulationInput,
+	Vec2
+} from '$lib/simulation/contracts';
+import {
+	parseSimulationInputFixture,
+	serializeSimulationInputFixture
+} from '$lib/simulation/serialization/simulation-input';
 import { convertSpeedAndAngleToVelocity, type VelocityEntryDraft } from './velocity-entry';
 
-export interface SimulationInputDraft extends VelocityEntryDraft {
+export interface DynamicBodyDraft extends VelocityEntryDraft {
+	readonly id: string;
+	readonly mass: string;
 	readonly radius: string;
+	readonly releaseTime: string;
 	readonly positionX: string;
 	readonly positionY: string;
+}
+
+export interface SimulationInputDraft {
+	readonly bodies: readonly DynamicBodyDraft[];
 	readonly gravityX: string;
 	readonly gravityY: string;
 	readonly restitution: string;
@@ -13,7 +27,7 @@ export interface SimulationInputDraft extends VelocityEntryDraft {
 	readonly maximumEvents: string;
 }
 
-export type SimulationInputField = Exclude<keyof SimulationInputDraft, 'velocityMode'> | 'scenario';
+export type SimulationInputField = string;
 
 export interface SimulationInputValidationError {
 	readonly field: SimulationInputField;
@@ -22,32 +36,12 @@ export interface SimulationInputValidationError {
 }
 
 export type SimulationInputSubmissionResult =
-	| {
-			readonly valid: true;
-			readonly input: SimulationInput;
-			readonly velocity: Vec2;
-	  }
-	| {
-			readonly valid: false;
-			readonly errors: readonly SimulationInputValidationError[];
-	  };
+	| { readonly valid: true; readonly input: SimulationInput; readonly velocities: readonly Vec2[] }
+	| { readonly valid: false; readonly errors: readonly SimulationInputValidationError[] };
 
 export function createSimulationInputDraft(input: SimulationInput): SimulationInputDraft {
-	const body = input.initialDynamicBodies[0];
-	const position = body?.position ?? [0, 0];
-	const velocity = body?.velocity ?? [0, 0];
-	const speed = Math.hypot(...velocity);
-	const angleDegrees = speed === 0 ? 0 : radiansToDegrees(Math.atan2(velocity[1], velocity[0]));
-
 	return {
-		radius: String(body?.physicalShape.radius ?? 0),
-		positionX: String(position[0]),
-		positionY: String(position[1]),
-		velocityMode: 'speed-angle',
-		speed: String(speed),
-		angleDegrees: String(angleDegrees),
-		velocityX: String(velocity[0]),
-		velocityY: String(velocity[1]),
+		bodies: input.initialDynamicBodies.map(createBodyDraft),
 		gravityX: String(input.settings.gravity[0]),
 		gravityY: String(input.settings.gravity[1]),
 		restitution: String(input.settings.restitution),
@@ -61,9 +55,9 @@ export function prepareSimulationInputSubmission(
 	draft: SimulationInputDraft
 ): SimulationInputSubmissionResult {
 	const errors: SimulationInputValidationError[] = [];
-	const radius = parseFiniteField('radius', 'Ball radius', draft.radius, errors);
-	const positionX = parseFiniteField('positionX', 'Initial position X', draft.positionX, errors);
-	const positionY = parseFiniteField('positionY', 'Initial position Y', draft.positionY, errors);
+	const bodies = draft.bodies.map((bodyDraft, index) =>
+		parseBodyDraft(baseInput.initialDynamicBodies[index], bodyDraft, index, errors)
+	);
 	const gravityX = parseFiniteField('gravityX', 'Gravity X', draft.gravityX, errors);
 	const gravityY = parseFiniteField('gravityY', 'Gravity Y', draft.gravityY, errors);
 	const restitution = parseFiniteField(
@@ -85,11 +79,18 @@ export function prepareSimulationInputSubmission(
 		errors
 	);
 
-	if (radius !== null && radius <= 0) {
+	if (draft.bodies.length === 0) {
 		errors.push({
-			field: 'radius',
-			code: 'INVALID_RADIUS',
-			message: 'Ball radius must be greater than zero.'
+			field: 'scenario',
+			code: 'INVALID_BODY_COUNT',
+			message: 'The scenario must contain at least one dynamic body.'
+		});
+	}
+	if (new Set(draft.bodies.map(({ id }) => id.trim())).size !== draft.bodies.length) {
+		errors.push({
+			field: 'scenario',
+			code: 'DUPLICATE_BODY_ID',
+			message: 'Body IDs must be unique.'
 		});
 	}
 	if (restitution !== null && (restitution < 0 || restitution > 1)) {
@@ -114,46 +115,21 @@ export function prepareSimulationInputSubmission(
 		});
 	}
 
-	const velocity = parseVelocity(draft, errors);
 	if (
-		radius === null ||
-		positionX === null ||
-		positionY === null ||
+		bodies.some((body) => body === null) ||
 		gravityX === null ||
 		gravityY === null ||
 		restitution === null ||
 		maximumSimulationTime === null ||
 		maximumEvents === null ||
-		velocity === null ||
 		errors.length > 0
 	) {
 		return { valid: false, errors };
 	}
 
-	const body = baseInput.initialDynamicBodies[0];
-	if (!body) {
-		return {
-			valid: false,
-			errors: [
-				{
-					field: 'scenario',
-					code: 'INVALID_BODY_COUNT',
-					message: 'The selected scenario must contain exactly one dynamic body.'
-				}
-			]
-		};
-	}
-
 	const candidate: SimulationInput = {
 		...baseInput,
-		initialDynamicBodies: [
-			{
-				...body,
-				physicalShape: { ...body.physicalShape, radius },
-				position: [positionX, positionY],
-				velocity
-			}
-		],
+		initialDynamicBodies: bodies as readonly InitialDynamicCircleBodyState[],
 		settings: {
 			...baseInput.settings,
 			gravity: [gravityX, gravityY],
@@ -163,52 +139,156 @@ export function prepareSimulationInputSubmission(
 			tolerances: { ...baseInput.settings.tolerances }
 		}
 	};
-	const diagnostics = validateSingleBallInput(candidate);
-	if (diagnostics.length > 0) {
+
+	try {
+		const input = deepFreeze(
+			parseSimulationInputFixture(serializeSimulationInputFixture(candidate))
+		);
+		return {
+			valid: true,
+			input,
+			velocities: input.initialDynamicBodies.map(({ velocity }) => velocity)
+		};
+	} catch (error) {
 		return {
 			valid: false,
-			errors: diagnostics.map(toSimulationInputValidationError)
+			errors: [
+				{
+					field: 'scenario',
+					code: 'INVALID_SIMULATION_INPUT',
+					message: error instanceof Error ? error.message : 'The submitted input is invalid.'
+				}
+			]
 		};
 	}
+}
+
+function createBodyDraft(body: InitialDynamicCircleBodyState): DynamicBodyDraft {
+	const speed = Math.hypot(...body.velocity);
+	const angleDegrees =
+		speed === 0 ? 0 : radiansToDegrees(Math.atan2(body.velocity[1], body.velocity[0]));
+	return {
+		id: body.id,
+		mass: String(body.mass),
+		radius: String(body.physicalShape.radius),
+		releaseTime: String(body.releaseTime),
+		positionX: String(body.position[0]),
+		positionY: String(body.position[1]),
+		velocityMode: 'speed-angle',
+		speed: String(speed),
+		angleDegrees: String(angleDegrees),
+		velocityX: String(body.velocity[0]),
+		velocityY: String(body.velocity[1])
+	};
+}
+
+function parseBodyDraft(
+	baseBody: InitialDynamicCircleBodyState | undefined,
+	draft: DynamicBodyDraft,
+	index: number,
+	errors: SimulationInputValidationError[]
+): InitialDynamicCircleBodyState | null {
+	const prefix = `body.${index}`;
+	const id = draft.id.trim();
+	if (!id)
+		errors.push({ field: `${prefix}.id`, code: 'REQUIRED', message: 'Body ID is required.' });
+	const mass = parseFiniteField(`${prefix}.mass`, 'Body mass', draft.mass, errors);
+	const radius = parseFiniteField(`${prefix}.radius`, 'Body radius', draft.radius, errors);
+	const releaseTime = parseFiniteField(
+		`${prefix}.releaseTime`,
+		'Body release time',
+		draft.releaseTime,
+		errors
+	);
+	const positionX = parseFiniteField(
+		`${prefix}.positionX`,
+		'Initial position X',
+		draft.positionX,
+		errors
+	);
+	const positionY = parseFiniteField(
+		`${prefix}.positionY`,
+		'Initial position Y',
+		draft.positionY,
+		errors
+	);
+	const velocity = parseVelocity(draft, prefix, errors);
+
+	if (mass !== null && mass <= 0)
+		errors.push({
+			field: `${prefix}.mass`,
+			code: 'INVALID_MASS',
+			message: 'Body mass must be greater than zero.'
+		});
+	if (radius !== null && radius <= 0)
+		errors.push({
+			field: `${prefix}.radius`,
+			code: 'INVALID_RADIUS',
+			message: 'Ball radius must be greater than zero.'
+		});
+	if (releaseTime !== null && releaseTime < 0)
+		errors.push({
+			field: `${prefix}.releaseTime`,
+			code: 'INVALID_RELEASE_TIME',
+			message: 'Release time cannot be negative.'
+		});
+
+	if (
+		!baseBody ||
+		!id ||
+		mass === null ||
+		radius === null ||
+		releaseTime === null ||
+		positionX === null ||
+		positionY === null ||
+		velocity === null ||
+		mass <= 0 ||
+		radius <= 0 ||
+		releaseTime < 0
+	)
+		return null;
 
 	return {
-		valid: true,
-		input: deepFreeze(copySerializable(candidate)),
+		...baseBody,
+		id,
+		mass,
+		physicalShape: { ...baseBody.physicalShape, radius },
+		releaseTime,
+		position: [positionX, positionY],
 		velocity
 	};
 }
 
 function parseVelocity(
-	draft: SimulationInputDraft,
+	draft: DynamicBodyDraft,
+	prefix: string,
 	errors: SimulationInputValidationError[]
 ): Vec2 | null {
 	if (draft.velocityMode === 'speed-angle') {
-		const speed = parseFiniteField('speed', 'Launch speed', draft.speed, errors);
+		const speed = parseFiniteField(`${prefix}.speed`, 'Launch speed', draft.speed, errors);
 		const angleDegrees = parseFiniteField(
-			'angleDegrees',
+			`${prefix}.angleDegrees`,
 			'Launch angle',
 			draft.angleDegrees,
 			errors
 		);
-		if (speed !== null && speed < 0) {
+		if (speed !== null && speed < 0)
 			errors.push({
-				field: 'speed',
+				field: `${prefix}.speed`,
 				code: 'NEGATIVE_SPEED',
 				message: 'Launch speed must be zero or greater.'
 			});
-		}
 		return speed !== null && speed >= 0 && angleDegrees !== null
 			? convertSpeedAndAngleToVelocity(speed, angleDegrees)
 			: null;
 	}
-
-	const velocityX = parseFiniteField('velocityX', 'Velocity X', draft.velocityX, errors);
-	const velocityY = parseFiniteField('velocityY', 'Velocity Y', draft.velocityY, errors);
+	const velocityX = parseFiniteField(`${prefix}.velocityX`, 'Velocity X', draft.velocityX, errors);
+	const velocityY = parseFiniteField(`${prefix}.velocityY`, 'Velocity Y', draft.velocityY, errors);
 	return velocityX !== null && velocityY !== null ? [velocityX, velocityY] : null;
 }
 
 function parseFiniteField(
-	field: Exclude<SimulationInputField, 'scenario'>,
+	field: string,
 	label: string,
 	value: string,
 	errors: SimulationInputValidationError[]
@@ -217,38 +297,12 @@ function parseFiniteField(
 		errors.push({ field, code: 'REQUIRED', message: `${label} is required.` });
 		return null;
 	}
-
 	const parsed = Number(value);
 	if (!Number.isFinite(parsed)) {
 		errors.push({ field, code: 'NOT_FINITE', message: `${label} must be a finite number.` });
 		return null;
 	}
-
 	return parsed;
-}
-
-function toSimulationInputValidationError(
-	diagnostic: SimulationInputDiagnostic
-): SimulationInputValidationError {
-	const fieldByPath: Readonly<Record<string, SimulationInputField>> = {
-		'$.initialDynamicBodies[0].physicalShape.radius': 'radius',
-		'$.initialDynamicBodies[0].position': 'positionX',
-		'$.initialDynamicBodies[0].velocity': 'velocityX',
-		'$.settings.gravity': 'gravityX',
-		'$.settings.restitution': 'restitution',
-		'$.settings.maximumEvents': 'maximumEvents',
-		'$.settings.maximumSimulationTime': 'maximumSimulationTime'
-	};
-
-	return {
-		field: fieldByPath[diagnostic.path] ?? 'scenario',
-		code: diagnostic.code,
-		message: diagnostic.message
-	};
-}
-
-function copySerializable<T>(value: T): T {
-	return JSON.parse(JSON.stringify(value)) as T;
 }
 
 function deepFreeze<T>(value: T): T {

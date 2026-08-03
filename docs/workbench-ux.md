@@ -4,16 +4,19 @@
 
 This document defines the browser prototype as a diagnostics and experiment workbench for saved and
 newly calculated simulation runs. FLAME-23 established the replay and inspection surface, FLAME-31
-added explicit launch controls, and FLAME-37 exposes the complete named single-ball verification
-catalogue through the same real headless simulator.
+added explicit launch controls, FLAME-37 exposed the complete named single-ball verification
+catalogue, and FLAME-49 adds precomputed multi-body experiment replay and inspection without
+claiming production multi-body physics support.
 
 The large headline, explanatory essay and decorative `simulation -> completed run -> renderer`
 strip in the current route are removed. A compact application bar provides identity and source
 controls. The viewport is the largest region, while exact run, event and diagnostic data remain
 available around it.
 
-The workbench edits only the supported initial position and velocity. It does not provide arbitrary
-board construction, peg dragging, multi-ball controls or continuous recalculation.
+The workbench edits the supported mass, radius, release time, initial position and velocity for one
+selected dynamic body at a time. It does not provide arbitrary board construction, peg dragging or
+continuous recalculation. Multi-body inputs can be saved and reloaded, but the production Run action
+remains disabled for them until a public multi-body solver exists.
 
 ## Product principles
 
@@ -101,6 +104,13 @@ immutable input snapshot, calls `constructSingleBallRun`, and atomically accepts
 record. Invalid draft input leaves the current run and transport untouched. A valid but unresolved
 calculation is accepted in recorded-prefix mode rather than ordinary playback.
 
+The draft model itself is multi-body: it snapshots every body's stable ID, mass, radius, release
+time, initial position and initial velocity through the versioned `simulation-input` serializer.
+Loading any accepted saved run also makes its complete input available as a separate editable draft.
+For more than one body, Save scenario remains available and Run clearly states that production
+multi-body calculation is unavailable; choosing a synthetic run never routes that draft into the
+single-body producer.
+
 **Save scenario** and **Export diagnostics** are adjacent but distinct actions. Save scenario
 serialises the editable draft input for later loading and rerunning. Export diagnostics snapshots
 the currently accepted run, its source provenance, authoritative history, valid-prefix boundary,
@@ -145,7 +155,7 @@ Use a single full-width workbench shell with a practical maximum content width o
 2. The primary workspace uses a `minmax(0, 2fr) minmax(18rem, 0.8fr)` grid.
 3. The viewport and its controls occupy the larger left column.
 4. The persistent run inspector occupies the right column.
-5. The evidence area sits below as three bounded panels: event timeline, diagnostics console and
+5. The evidence area sits below as three bounded panels: physical history, diagnostics console and
    metrics.
 
 The viewport must remain the largest single surface by both area and visual weight. Evidence panels
@@ -183,13 +193,15 @@ The bar is one or two compact rows, not a hero. It contains:
 
 - the short identity **Event-Driven Simulation**;
 - the current source label;
-- an explicit repository fixture selector;
+- an explicit run/experiment selector grouped by production, synthetic-contract and regression
+  provenance;
 - a **Load saved run** action backed by a file input accepting `.json` and JSON MIME types; and
 - concise load feedback.
 
-The repository fixture catalog is a small explicit build-time list. Initially it contains
-`canonical-event-driven-offset-drop.json`. Do not introduce runtime directory discovery, a backend or a
-fixture database.
+The run catalog is a small explicit build-time list. It contains the production-recorded
+`canonical-event-driven-offset-drop.json` plus the five FLAME-49 synthetic contract records. Do not
+introduce runtime directory discovery, a backend or a fixture database. Synthetic records carry a
+persistent warning that they are contract evidence, not production solver output.
 
 The current source label is never replaced by the name of a rejected candidate. During a local file
 attempt, feedback may say `Could not load candidate.json`, while the source continues to say
@@ -284,10 +296,12 @@ events       = events.length
 diagnostics  = diagnostics.entries.length
 ```
 
-### Event timeline
+### Physical history
 
-The timeline displays every `run.events` entry in source order. It is a table-like list with a
-sticky header on desktop and a stacked label/value layout on narrow screens.
+The history surface merges recorded releases, `run.events`, dynamic contacts, component lifecycle
+transitions and pair-prediction decisions into one stable time-ordered list. Same-time entries stay
+separate and selectable. It is a table-like list with a sticky header on desktop and a stacked
+label/value layout on narrow screens.
 
 Each physical event exposes:
 
@@ -304,8 +318,23 @@ Each selectable entry is one keyboard-operable control, not a clickable collecti
 The selected entry uses `aria-current="true"` or equivalent and a non-colour-only selected
 indicator. Selection follows the interaction rules in the primary workspace.
 
-For every accepted run, timeline entries seek within the committed prefix. For an empty event list,
-show `No physical events were recorded`; do not hide the panel.
+For every accepted run, history entries seek within the committed prefix. Selecting a body filters
+the list to evidence that names that body; selecting an item seeks to its exact stored time. Dynamic
+contacts show both participants, normal, impulse, incoming/outgoing normal velocity and state.
+Component transitions show their prior and resulting component IDs, and prediction decisions show
+their body revisions and invalidation reason.
+
+### Body inspector
+
+The body inspector provides an `All bodies` option plus one bounded selector for every dynamic body,
+so a roughly twenty-body run does not permanently expand twenty histories. For a selected body it
+shows ID, mass, radius, release time, initial state, current recorded position and velocity, current
+motion mode, time-relative lifecycle, terminal outcome and exact-time component membership. It also
+lists that body's authoritative trajectory segments and marks the segment used at the replay cursor.
+
+Selecting a body scales its renderer object for presentation emphasis and de-emphasizes the other
+bodies. The selection does not alter positions, contacts or motion authority. The same selection
+filters physical history and body-specific diagnostics while retaining world-level diagnostics.
 
 ### Diagnostics console
 
@@ -412,7 +441,7 @@ never silently promotes its terminal reason to `completion-region`.
 - The application bar may wrap source controls onto a second row.
 - The primary workspace becomes one column: viewport, controls, then run inspector.
 - The inspector uses a multi-column key/value grid where space permits.
-- The evidence area uses two columns: event timeline and diagnostics; metrics spans both below.
+- The evidence area uses two columns: physical history and diagnostics; metrics spans both below.
 - The viewport remains at least `50vh` where viewport height permits and stays more prominent than
   any one evidence panel.
 
@@ -424,7 +453,7 @@ Stack regions in this exact order:
 2. viewport header and viewport;
 3. playback controls;
 4. run inspector;
-5. event timeline;
+5. physical history;
 6. diagnostics console;
 7. metrics.
 
@@ -446,24 +475,25 @@ wide table.
 
 Names may vary, but ownership must match these boundaries.
 
-| Component or module          | Owns                                                                                                             | Must not own                                                                         |
-| ---------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `+page.svelte`               | Route composition and the explicit repository fixture catalog import                                             | Three.js lifecycle, animation frame loop, file parsing details or full workbench CSS |
-| `SimulationWorkbench`        | Current accepted run/source, load-attempt state, inspection mode, selected event and coordination between panels | Physical calculations or mutation of run records                                     |
-| `scenario-catalogue.ts`      | Workbench descriptors, stable categories and authoritative outcome comparison                                    | Copied simulation inputs or renderer-derived correctness                             |
-| `ScenarioCatalogue`          | Grouped selection and read-only selected-scenario/outcome presentation                                           | Draft mutation beyond emitting a selected ID or simulation execution                 |
-| `SimulationInputControls`    | Scenario-input load/save/run actions and draft-submission feedback                                               | Field parsing, scenario grouping or renderer state                                   |
-| `BallControls`               | Ball radius, initial position and velocity presentation                                                          | Environment policy, run execution or accepted-run mutation                           |
-| `SimulationSettingsControls` | Visually separate Environment and Run limits fields                                                              | Solver tolerances or physical calculation                                            |
-| `simulation-input-draft.ts`  | Generic draft prepopulation, field validation and immutable input submission                                     | Scenario-specific branches or simulation execution                                   |
-| `velocity-entry.ts`          | Speed/angle and component velocity conversion                                                                    | Input fixture parsing or run state                                                   |
-| `ApplicationBar`             | Source display, fixture selection, local-file interaction and load feedback presentation                         | Direct parser/version implementation or playback state                               |
-| `SimulationViewport`         | Three.js mount/update/destroy lifecycle and rendering the supplied recorded frame                                | Run loading, authoritative time, run mutation or status promotion                    |
-| `PlaybackControls`           | Accessible transport/seek presentation through typed values and callbacks                                        | Direct access to Three.js objects or the run loader                                  |
-| `RunInspector`               | Read-only status, provenance, horizon, count and submitted-settings presentation                                 | Transport or file-input state                                                        |
-| `EventTimeline`              | Read-only event list, selection presentation and seek request callback                                           | Clock mutation beyond emitting the selected stored timestamp                         |
-| `DiagnosticsConsole`         | Read-only diagnostic-entry presentation and optional local severity filter                                       | Load errors or synthetic diagnostics                                                 |
-| `MetricsPanel`               | Recorded/derived/unavailable metric presentation                                                                 | Speculative profiling collection                                                     |
+| Component or module          | Owns                                                                                                                | Must not own                                                                         |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `+page.svelte`               | Route composition and the explicit production/synthetic run catalog                                                 | Three.js lifecycle, animation frame loop, file parsing details or full workbench CSS |
+| `SimulationWorkbench`        | Current accepted run/source, load-attempt state, inspection mode, selected body/history item and panel coordination | Physical calculations or mutation of run records                                     |
+| `scenario-catalogue.ts`      | Workbench descriptors, stable categories and authoritative outcome comparison                                       | Copied simulation inputs or renderer-derived correctness                             |
+| `ScenarioCatalogue`          | Grouped selection and read-only selected-scenario/outcome presentation                                              | Draft mutation beyond emitting a selected ID or simulation execution                 |
+| `SimulationInputControls`    | Scenario-input load/save/run actions and draft-submission feedback                                                  | Field parsing, scenario grouping or renderer state                                   |
+| `BallControls`               | One-at-a-time body ID, mass, radius, release, position and velocity presentation                                    | Environment policy, run execution or accepted-run mutation                           |
+| `SimulationSettingsControls` | Visually separate Environment and Run limits fields                                                                 | Solver tolerances or physical calculation                                            |
+| `simulation-input-draft.ts`  | Generic draft prepopulation, field validation and immutable input submission                                        | Scenario-specific branches or simulation execution                                   |
+| `velocity-entry.ts`          | Speed/angle and component velocity conversion                                                                       | Input fixture parsing or run state                                                   |
+| `ApplicationBar`             | Source display, fixture selection, local-file interaction and load feedback presentation                            | Direct parser/version implementation or playback state                               |
+| `SimulationViewport`         | Three.js mount/update/destroy lifecycle and rendering the supplied recorded frame                                   | Run loading, authoritative time, run mutation or status promotion                    |
+| `PlaybackControls`           | Accessible transport/seek presentation through typed values and callbacks                                           | Direct access to Three.js objects or the run loader                                  |
+| `RunInspector`               | Read-only status, provenance, horizon, count and submitted-settings presentation                                    | Transport or file-input state                                                        |
+| `inspection/BodyInspector`   | Selected-body identity, current recorded state, component membership and trajectory segment presentation            | Motion evaluation, run mutation or mesh positioning                                  |
+| `inspection/PhysicalHistory` | Read-only merged release/event/contact/component/prediction list and exact-time seek callback                       | Clock mutation beyond emitting the selected stored timestamp                         |
+| `DiagnosticsConsole`         | Read-only diagnostic-entry presentation and optional local severity filter                                          | Load errors or synthetic diagnostics                                                 |
+| `MetricsPanel`               | Recorded/derived/unavailable metric presentation                                                                    | Speculative profiling collection                                                     |
 
 `SimulationWorkbench` may use a focused playback controller/store if that keeps request-animation
 frame and transport state cohesive. Do not introduce an application-wide store for this
@@ -477,7 +507,7 @@ repository/local JSON
     -> immutable current run + source
     -> inspection-mode decision
     -> playback controller -> recorded frame -> viewport
-    -> read-only inspector, event, diagnostics and metrics views
+    -> read-only run/body inspectors, physical history, diagnostics and metrics views
 ```
 
 Event selection sends one stored simulation timestamp to the playback controller. The evaluated
@@ -487,7 +517,8 @@ frame then flows to the viewport; the event list never manipulates a mesh.
 
 ### Available now
 
-- grouped canonical and board-state scenario selection with precise initial-position/velocity editing;
+- grouped canonical and board-state scenario selection with precise multi-body mass, radius,
+  release-time, initial-position and velocity editing;
 - selected scenario purpose, scene, initial-state and permitted-outcome evidence;
 - authoritative actual-outcome matching after explicit calculation;
 - explicit headless simulation runs from immutable submitted input;
@@ -498,7 +529,9 @@ frame then flows to the viewport; the event list never manipulates a mesh.
 - bodies, static colliders and their physical circle data;
 - simulation settings and tolerances;
 - trajectories and segment counts;
-- full contact-event records with time, participants, position and normal;
+- full fixed-world and body-body contact records with time, participants, position, normal and
+  impulse evidence;
+- release history, contact-component lifecycle and pair-prediction invalidation evidence;
 - solver iteration count;
 - solver candidate and segment counts;
 - solver calculation duration;

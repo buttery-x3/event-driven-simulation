@@ -17,6 +17,9 @@
 	} = $props();
 
 	let fileInput = $state<HTMLInputElement>();
+	let selectedFixture = $derived(
+		source.kind === 'repository' ? fixtures.find(({ id }) => id === source.id) : undefined
+	);
 
 	function selectFixture(event: Event): void {
 		const fixtureId = (event.currentTarget as HTMLSelectElement).value;
@@ -45,9 +48,9 @@
 
 	<div class="actions">
 		<label>
-			<span>Repository fixture</span>
+			<span>Run / experiment</span>
 			<select
-				aria-label="Repository fixture"
+				aria-label="Run or experiment"
 				value={source.kind === 'repository' ? source.id : ''}
 				onchange={selectFixture}
 				disabled={feedback?.kind === 'reading'}
@@ -57,10 +60,30 @@
 						>{source.kind === 'local' ? 'Local file selected' : 'Calculated scenario'}</option
 					>
 				{/if}
-				{#each fixtures as fixture (fixture.id)}
-					<option value={fixture.id}>{fixture.name}</option>
+				{#each ['production-run', 'synthetic-contract', 'saved-regression'] as evidenceKind (evidenceKind)}
+					{@const matchingFixtures = fixtures.filter(
+						(fixture) => fixture.evidenceKind === evidenceKind
+					)}
+					{#if matchingFixtures.length > 0}
+						<optgroup
+							label={evidenceKind === 'production-run'
+								? 'Production-generated runs'
+								: evidenceKind === 'synthetic-contract'
+									? 'Synthetic contract fixtures'
+									: 'Saved regression fixtures'}
+						>
+							{#each matchingFixtures as fixture (fixture.id)}
+								<option value={fixture.id}>{fixture.name}</option>
+							{/each}
+						</optgroup>
+					{/if}
 				{/each}
 			</select>
+			{#if selectedFixture?.evidenceKind === 'synthetic-contract'}
+				<small class="fixture-warning">Synthetic only · not production solver evidence</small>
+			{:else if selectedFixture?.description}
+				<small>{selectedFixture.description}</small>
+			{/if}
 		</label>
 
 		<button
@@ -159,6 +182,17 @@
 	label {
 		display: grid;
 		gap: var(--space-1);
+	}
+
+	label small {
+		max-width: 24rem;
+		color: var(--color-text-muted);
+		font-size: var(--font-size-xs);
+	}
+
+	label .fixture-warning {
+		color: var(--color-warning);
+		font-weight: 800;
 	}
 
 	select,

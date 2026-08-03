@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import type { RendererPlaybackInput } from '$lib/simulation/contracts';
-import { applyDynamicBodyPoses } from './dynamic-pose';
+import { applyDynamicBodyPoses, applyDynamicBodySelection } from './dynamic-pose';
 import { assertRecordedInspectionEligible, getPlaybackFrame, type PlaybackFrame } from './playback';
 import { toRenderSceneViewModel } from './render-scene-data';
 import { createSceneObjectResources } from './scene-object-resources';
@@ -22,6 +22,7 @@ const presentationSettings = {
 
 export interface MountedPlaybackScene {
 	setTime(time: number): PlaybackFrame;
+	setSelectedBody(bodyId: string | null): void;
 	destroy(): void;
 }
 
@@ -103,6 +104,10 @@ export function mountScene(host: HTMLElement, input: RendererPlaybackInput): Mou
 
 			render();
 			return frame;
+		},
+		setSelectedBody(bodyId) {
+			applyDynamicBodySelection(bodyId, sceneObjectResources.dynamicBodyMeshes);
+			render();
 		},
 		destroy() {
 			resizeObserver.disconnect();

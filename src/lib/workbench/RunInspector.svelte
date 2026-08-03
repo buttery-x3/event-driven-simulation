@@ -104,6 +104,18 @@
 				<dd>{counts.events}</dd>
 			</div>
 			<div>
+				<dt>Releases</dt>
+				<dd>{counts.releases}</dd>
+			</div>
+			<div>
+				<dt>Dynamic contacts</dt>
+				<dd>{counts.dynamicContacts}</dd>
+			</div>
+			<div>
+				<dt>Contact components</dt>
+				<dd>{counts.contactComponents}</dd>
+			</div>
+			<div>
 				<dt>Diagnostics</dt>
 				<dd>{counts.diagnostics}</dd>
 			</div>
@@ -119,7 +131,7 @@
 		<dl class="settings">
 			{#if submittedBody}
 				<div>
-					<dt>Ball radius</dt>
+					<dt>First body radius</dt>
 					<dd>{submittedBody.physicalShape.radius} m</dd>
 				</div>
 			{/if}

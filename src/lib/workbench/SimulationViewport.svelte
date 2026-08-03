@@ -8,13 +8,15 @@
 		time,
 		mode,
 		independentValidationPassed,
-		transportState
+		transportState,
+		selectedBodyId
 	}: {
 		input: RendererPlaybackInput;
 		time: number;
 		mode: InspectionMode;
 		independentValidationPassed: boolean;
 		transportState: 'playing' | 'paused' | 'ended';
+		selectedBodyId: string | null;
 	} = $props();
 
 	let sceneHost = $state<HTMLDivElement>();
@@ -36,6 +38,10 @@
 
 	$effect(() => {
 		sceneController?.setTime(time);
+	});
+
+	$effect(() => {
+		sceneController?.setSelectedBody(selectedBodyId);
 	});
 </script>
 
@@ -63,7 +69,7 @@
 			class="scene"
 			bind:this={sceneHost}
 			role="img"
-			aria-label={`Scene ${input.scene.id} replaying recorded ball trajectory data`}
+			aria-label={`Scene ${input.scene.id} replaying recorded body trajectory data`}
 		></div>
 		{#if mode !== 'completed-replay'}
 			<div class:invalid={mode === 'invalid-prefix'} class="restriction" role="status">

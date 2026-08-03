@@ -5,18 +5,37 @@ import {
 	serializeSimulationInputFixture
 } from '$lib/simulation/serialization/simulation-input';
 import { canonicalPlinkoScenarios } from '$lib/simulation/world';
+import { syntheticMultiBodyFixtures } from '../fixtures';
 import {
 	createSimulationInputDraft,
 	prepareSimulationInputSubmission,
+	type DynamicBodyDraft,
 	type SimulationInputDraft
 } from './simulation-input-draft';
 
 const angledScenario = canonicalPlinkoScenarios.find(({ id }) => id === 'angled-launch')!;
 
-function prepare(changes: Partial<SimulationInputDraft> = {}) {
+type DraftChanges = Partial<DynamicBodyDraft> & Partial<Omit<SimulationInputDraft, 'bodies'>>;
+
+function prepare(changes: DraftChanges = {}) {
+	const draft = createSimulationInputDraft(angledScenario.input);
+	const settingKeys = new Set([
+		'gravityX',
+		'gravityY',
+		'restitution',
+		'maximumSimulationTime',
+		'maximumEvents'
+	]);
+	const settings = Object.fromEntries(
+		Object.entries(changes).filter(([key]) => settingKeys.has(key))
+	) as Partial<Omit<SimulationInputDraft, 'bodies'>>;
+	const body = Object.fromEntries(
+		Object.entries(changes).filter(([key]) => !settingKeys.has(key))
+	) as Partial<DynamicBodyDraft>;
 	return prepareSimulationInputSubmission(angledScenario.input, {
-		...createSimulationInputDraft(angledScenario.input),
-		...changes
+		...draft,
+		...settings,
+		bodies: [{ ...draft.bodies[0]!, ...body }]
 	});
 }
 
@@ -25,12 +44,14 @@ describe('simulation input drafts', () => {
 		const draft = createSimulationInputDraft(angledScenario.input);
 		const body = angledScenario.input.initialDynamicBodies[0]!;
 
-		expect(draft).toMatchObject({
+		expect(draft.bodies[0]).toMatchObject({
 			radius: String(body.physicalShape.radius),
 			positionX: String(body.position[0]),
 			positionY: String(body.position[1]),
 			velocityX: String(body.velocity[0]),
-			velocityY: String(body.velocity[1]),
+			velocityY: String(body.velocity[1])
+		});
+		expect(draft).toMatchObject({
 			gravityX: String(angledScenario.input.settings.gravity[0]),
 			gravityY: String(angledScenario.input.settings.gravity[1]),
 			restitution: String(angledScenario.input.settings.restitution),
@@ -88,14 +109,14 @@ describe('simulation input drafts', () => {
 		expect(result).toEqual({
 			valid: false,
 			errors: expect.arrayContaining([
-				expect.objectContaining({ field: 'positionX', code: 'REQUIRED' }),
-				expect.objectContaining({ field: 'radius', code: 'INVALID_RADIUS' }),
+				expect.objectContaining({ field: 'body.0.positionX', code: 'REQUIRED' }),
+				expect.objectContaining({ field: 'body.0.radius', code: 'INVALID_RADIUS' }),
 				expect.objectContaining({ field: 'gravityX', code: 'NOT_FINITE' }),
 				expect.objectContaining({ field: 'gravityY', code: 'NOT_FINITE' }),
 				expect.objectContaining({ field: 'restitution', code: 'INVALID_RESTITUTION' }),
 				expect.objectContaining({ field: 'maximumSimulationTime', code: 'INVALID_MAXIMUM_TIME' }),
 				expect.objectContaining({ field: 'maximumEvents', code: 'INVALID_MAXIMUM_EVENTS' }),
-				expect.objectContaining({ field: 'speed', code: 'NEGATIVE_SPEED' })
+				expect.objectContaining({ field: 'body.0.speed', code: 'NEGATIVE_SPEED' })
 			])
 		});
 	});
@@ -105,7 +126,7 @@ describe('simulation input drafts', () => {
 		expect(result.valid).toBe(false);
 		if (result.valid) return;
 		expect(result.errors[0]).toMatchObject({
-			field: 'radius',
+			field: 'body.0.radius',
 			code: radius === '-1' || radius === '0' ? 'INVALID_RADIUS' : 'NOT_FINITE'
 		});
 	});
@@ -133,13 +154,19 @@ describe('simulation input drafts', () => {
 	});
 
 	it('snapshots all exposed values independently of later draft and scenario changes', () => {
+		const baseDraft = createSimulationInputDraft(angledScenario.input);
 		const draft = {
-			...createSimulationInputDraft(angledScenario.input),
-			radius: '0.37',
-			positionX: '-1.25',
-			velocityMode: 'components' as const,
-			velocityX: '2.5',
-			velocityY: '-0.75',
+			...baseDraft,
+			bodies: [
+				{
+					...baseDraft.bodies[0]!,
+					radius: '0.37',
+					positionX: '-1.25',
+					velocityMode: 'components' as const,
+					velocityX: '2.5',
+					velocityY: '-0.75'
+				}
+			],
 			gravityX: '4.25',
 			gravityY: '2.75',
 			restitution: '1',
@@ -154,8 +181,11 @@ describe('simulation input drafts', () => {
 		if (!result.valid) return;
 
 		const submittedJson = JSON.stringify(result.input);
-		const mutableDraft = draft as { radius: string; gravityX: string };
-		mutableDraft.radius = '1';
+		const mutableDraft = draft as unknown as {
+			bodies: [{ radius: string }];
+			gravityX: string;
+		};
+		mutableDraft.bodies[0].radius = '1';
 		mutableDraft.gravityX = '0';
 		(baseInput.settings.gravity as unknown as [number, number])[0] = -99;
 
@@ -196,6 +226,44 @@ describe('simulation input drafts', () => {
 		expect(restored).toEqual(submission.input);
 	});
 
+	it('snapshots and round-trips mass, radius, release state and velocity for every body', () => {
+		const baseInput = syntheticMultiBodyFixtures.find(
+			({ id }) => id === 'synthetic-two-body-contact'
+		)!.run.input;
+		const draft = createSimulationInputDraft(baseInput);
+		const submission = prepareSimulationInputSubmission(baseInput, {
+			...draft,
+			bodies: draft.bodies.map((body, index) =>
+				index === 1
+					? {
+							...body,
+							mass: '3.75',
+							radius: '0.45',
+							releaseTime: '1.25',
+							positionX: '4',
+							velocityMode: 'components' as const,
+							velocityX: '-2.5',
+							velocityY: '0.75'
+						}
+					: body
+			)
+		});
+
+		expect(submission.valid).toBe(true);
+		if (!submission.valid) return;
+		expect(submission.input.initialDynamicBodies[1]).toMatchObject({
+			mass: 3.75,
+			physicalShape: { radius: 0.45 },
+			releaseTime: 1.25,
+			position: [4, 5],
+			velocity: [-2.5, 0.75]
+		});
+		expect(parseSimulationInputFixture(serializeSimulationInputFixture(submission.input))).toEqual(
+			submission.input
+		);
+		expect(Object.isFrozen(submission.input.initialDynamicBodies[1])).toBe(true);
+	});
+
 	it('keeps an authoritative run separate from later draft edits', () => {
 		const draft = createSimulationInputDraft(angledScenario.input);
 		const submission = prepareSimulationInputSubmission(angledScenario.input, draft);
@@ -203,9 +271,13 @@ describe('simulation input drafts', () => {
 		if (!submission.valid) return;
 
 		const run = constructSingleBallRun(submission.input);
-		const updatedDraft = { ...draft, radius: '0.5', gravityY: '9.81' };
+		const updatedDraft = {
+			...draft,
+			bodies: [{ ...draft.bodies[0]!, radius: '0.5' }],
+			gravityY: '9.81'
+		};
 
-		expect(updatedDraft.radius).not.toBe(
+		expect(updatedDraft.bodies[0]!.radius).not.toBe(
 			run.input.initialDynamicBodies[0]!.physicalShape.radius.toString()
 		);
 		expect(run.input).toBe(submission.input);

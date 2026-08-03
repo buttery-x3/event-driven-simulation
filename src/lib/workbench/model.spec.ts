@@ -73,6 +73,9 @@ describe('workbench run presentation model', () => {
 			trajectories: 1,
 			segments: run.diagnostics.segmentCount,
 			events: run.diagnostics.eventCount,
+			releases: run.releases.length,
+			dynamicContacts: run.dynamicContacts.length,
+			contactComponents: run.contactComponents.length,
 			diagnostics: run.diagnostics.entries.length
 		});
 		expect(getSeverityCounts(run)).toEqual({
@@ -85,12 +88,17 @@ describe('workbench run presentation model', () => {
 
 	it('keeps recorded timestamps and source provenance explicit', () => {
 		expect(formatRecordedSeconds(0.123456789)).toBe('0.123456789 s');
-		expect(formatSource({ kind: 'repository', id: 'canonical', name: 'run.json' })).toBe(
-			'Repository fixture · run.json'
-		);
-		expect(formatSource({ kind: 'local', name: 'download.json' })).toBe(
-			'Local file · download.json'
-		);
+		expect(
+			formatSource({
+				kind: 'repository',
+				id: 'canonical',
+				name: 'run.json',
+				evidenceKind: 'production-run'
+			})
+		).toBe('Production-generated run · run.json');
+		expect(
+			formatSource({ kind: 'local', name: 'download.json', evidenceKind: 'imported-run' })
+		).toBe('Imported diagnostic run · download.json');
 		expect(formatSource({ kind: 'simulation', name: 'Offset drop' })).toBe(
 			'Calculated scenario · Offset drop'
 		);

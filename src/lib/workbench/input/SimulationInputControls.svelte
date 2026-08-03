@@ -17,6 +17,7 @@
 		onRun,
 		onLoadScenario,
 		onSaveScenario,
+		canRunProduction,
 		canExportDiagnostics,
 		exportFeedback,
 		onExportDiagnostics
@@ -30,6 +31,7 @@
 		onRun: () => void;
 		onLoadScenario: (file: File) => Promise<void>;
 		onSaveScenario: () => void;
+		canRunProduction: boolean;
 		canExportDiagnostics: boolean;
 		exportFeedback: { readonly kind: 'success' | 'error'; readonly message: string } | null;
 		onExportDiagnostics: () => void;
@@ -88,7 +90,13 @@
 		<SimulationSettingsControls {draft} {errors} {onChangeDraft} />
 
 		<div class="run-column">
-			<p>Edits remain drafts until Run snapshots and validates this input.</p>
+			<p>Edits remain drafts until Save or Run snapshots and validates the complete input.</p>
+			{#if !canRunProduction}
+				<p class="synthetic-note">
+					Multi-body inputs can be edited and saved, but the production runner remains single-body.
+					Replay the labelled synthetic record to inspect precomputed evidence.
+				</p>
+			{/if}
 			{#if lastSubmittedBody && lastSubmittedInput}
 				<p class="submitted">
 					Last submitted · radius {lastSubmittedBody.physicalShape.radius} m · p=({lastSubmittedBody
@@ -97,7 +105,9 @@
 						.settings.gravity[1]})
 				</p>
 			{/if}
-			<button type="button" class="run-button" onclick={onRun}>Run simulation</button>
+			<button type="button" class="run-button" onclick={onRun} disabled={!canRunProduction}
+				>Run simulation</button
+			>
 		</div>
 	</div>
 
@@ -177,6 +187,15 @@
 		background: var(--color-surface);
 		font-weight: 700;
 		cursor: pointer;
+	}
+
+	.run-button:disabled {
+		cursor: not-allowed;
+		opacity: 0.55;
+	}
+
+	.run-column .synthetic-note {
+		color: var(--color-warning);
 	}
 
 	.diagnostic-export {

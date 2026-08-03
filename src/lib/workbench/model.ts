@@ -12,11 +12,26 @@ export interface RepositoryRunFixture {
 	readonly id: string;
 	readonly name: string;
 	readonly json: string;
+	readonly evidenceKind: 'production-run' | 'synthetic-contract' | 'saved-regression';
+	readonly description?: string;
+}
+
+export function requireInitialRepositoryFixture(
+	fixtures: readonly RepositoryRunFixture[]
+): RepositoryRunFixture {
+	const fixture = fixtures[0];
+	if (!fixture) throw new Error('The workbench requires at least one repository fixture.');
+	return fixture;
 }
 
 export type RunSource =
-	| { readonly kind: 'repository'; readonly id: string; readonly name: string }
-	| { readonly kind: 'local'; readonly name: string }
+	| {
+			readonly kind: 'repository';
+			readonly id: string;
+			readonly name: string;
+			readonly evidenceKind: RepositoryRunFixture['evidenceKind'];
+	  }
+	| { readonly kind: 'local'; readonly name: string; readonly evidenceKind: 'imported-run' }
 	| { readonly kind: 'simulation'; readonly name: string };
 
 export type LoadFeedback =
@@ -32,6 +47,9 @@ export interface RunCounts {
 	readonly trajectories: number;
 	readonly segments: number;
 	readonly events: number;
+	readonly releases: number;
+	readonly dynamicContacts: number;
+	readonly contactComponents: number;
 	readonly diagnostics: number;
 }
 
@@ -107,6 +125,9 @@ export function getRunCounts(run: SimulationRunRecord): RunCounts {
 		trajectories: run.trajectories.length,
 		segments: run.trajectories.reduce((total, trajectory) => total + trajectory.segments.length, 0),
 		events: run.events.length,
+		releases: run.releases.length,
+		dynamicContacts: run.dynamicContacts.length,
+		contactComponents: run.contactComponents.length,
 		diagnostics: run.diagnostics.entries.length
 	};
 }
@@ -136,9 +157,13 @@ export function formatVector(vector: Vec2): string {
 export function formatSource(source: RunSource): string {
 	const label =
 		source.kind === 'repository'
-			? 'Repository fixture'
+			? source.evidenceKind === 'synthetic-contract'
+				? 'Synthetic contract fixture'
+				: source.evidenceKind === 'saved-regression'
+					? 'Saved regression fixture'
+					: 'Production-generated run'
 			: source.kind === 'local'
-				? 'Local file'
+				? 'Imported diagnostic run'
 				: 'Calculated scenario';
 	return `${label} · ${source.name}`;
 }

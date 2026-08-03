@@ -16,3 +16,13 @@ export function applyDynamicBodyPoses(
 		}
 	}
 }
+
+export function applyDynamicBodySelection(
+	selectedBodyId: EntityId | null,
+	meshesByEntityId: ReadonlyMap<EntityId, THREE.Object3D>
+): void {
+	for (const [bodyId, mesh] of meshesByEntityId) {
+		const scale = selectedBodyId === null ? 1 : bodyId === selectedBodyId ? 1.2 : 0.86;
+		mesh.scale.setScalar(scale);
+	}
+}

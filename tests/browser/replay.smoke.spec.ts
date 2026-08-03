@@ -37,7 +37,7 @@ test('presents a calculated run as a diagnostic workbench and seeks exact events
 	await expect(replay).toBeVisible();
 	await expect(
 		replay.getByRole('img', {
-			name: 'Scene canonical-plinko-board replaying recorded ball trajectory data'
+			name: 'Scene canonical-plinko-board replaying recorded body trajectory data'
 		})
 	).toBeVisible();
 	await expect(replay.locator('canvas')).toBeVisible();
@@ -50,7 +50,7 @@ test('presents a calculated run as a diagnostic workbench and seeks exact events
 	await expect(controls.getByRole('button', { name: 'Pause' })).toBeVisible();
 	await expect(replay.getByText('playing', { exact: true })).toBeVisible();
 
-	const event = page.getByRole('button', { name: /^Event 1, contact at / });
+	const event = page.getByRole('button', { name: /^History 2, Fixed-world contact at / });
 	await event.click();
 
 	await expect(event).toHaveAttribute('aria-current', 'true');
@@ -70,7 +70,9 @@ test('selects, edits, runs and replays a canonical launch without mutating the p
 	await expect(
 		page
 			.getByLabel('Current run source')
-			.getByText('Repository fixture · canonical-event-driven-offset-drop.json', { exact: true })
+			.getByText('Production-generated run · canonical-event-driven-offset-drop.json', {
+				exact: true
+			})
 	).toBeVisible();
 
 	const position = page.getByRole('group', { name: 'Initial position (m)' });
@@ -89,7 +91,9 @@ test('selects, edits, runs and replays a canonical launch without mutating the p
 		page.getByText(/^Run calculated · exited · \d+ events · \d+ ms wall time\.$/)
 	).toBeVisible();
 	await expect(page.getByText('Calculation completed before replay began.')).toBeVisible();
-	await expect(page.getByRole('button', { name: /^Event 1, contact at / })).toBeVisible();
+	await expect(
+		page.getByRole('button', { name: /^History 2, Fixed-world contact at / })
+	).toBeVisible();
 
 	const controls = page.getByRole('region', { name: 'Replay controls' });
 	await controls.getByRole('button', { name: 'Play' }).click();
@@ -151,7 +155,9 @@ test('rejects invalid physical settings with field-level feedback before simulat
 	await expect(
 		page
 			.getByLabel('Current run source')
-			.getByText('Repository fixture · canonical-event-driven-offset-drop.json', { exact: true })
+			.getByText('Production-generated run · canonical-event-driven-offset-drop.json', {
+				exact: true
+			})
 	).toBeVisible();
 });
 
@@ -244,6 +250,92 @@ test('downloads accepted run diagnostics separately from the editable scenario',
 	await expect(page.getByText(/^Exported .*diagnostics-.*\.json\.$/)).toBeVisible();
 });
 
+test('loads, filters, edits and exports labelled multi-body contract evidence', async ({
+	page
+}) => {
+	await page.goto('/');
+
+	const experimentSelector = page.getByLabel('Run or experiment');
+	await expect(
+		experimentSelector.locator('optgroup[label="Synthetic contract fixtures"] option')
+	).toHaveCount(5);
+	await experimentSelector.selectOption('synthetic-two-body-contact');
+
+	await expect(page.getByText('Synthetic only · not production solver evidence')).toBeVisible();
+	await expect(
+		page
+			.getByLabel('Current run source')
+			.getByText('Synthetic contract fixture · synthetic-two-body-contact.json')
+	).toBeVisible();
+	await expect(
+		page.getByRole('img', {
+			name: 'Scene synthetic-multi-body-workbench replaying recorded body trajectory data'
+		})
+	).toBeVisible();
+
+	const editor = page.getByRole('region', { name: 'Simulation controls' });
+	await expect(editor.getByLabel('Body to edit').locator('option')).toHaveCount(2);
+	await expect(editor.getByRole('button', { name: 'Run simulation' })).toBeDisabled();
+	await editor.getByLabel('Body to edit').selectOption('1');
+	await expect(editor.getByLabel('Body ID')).toHaveValue('contact-b');
+	await editor.getByLabel('Mass (kg)').fill('3.5');
+	await editor.getByLabel('Release time (s)').fill('1');
+
+	const savePromise = page.waitForEvent('download');
+	await editor.getByRole('button', { name: 'Save scenario' }).click();
+	const savedScenario = await savePromise;
+	const savedPath = await savedScenario.path();
+	if (!savedPath) throw new Error('Expected the multi-body scenario download to be retained.');
+	const savedDocument = JSON.parse((await readFile(savedPath)).toString('utf8')) as {
+		input: SimulationInput;
+	};
+	expect(savedDocument.input.initialDynamicBodies).toHaveLength(2);
+	expect(savedDocument.input.initialDynamicBodies[1]).toMatchObject({
+		id: 'contact-b',
+		mass: 3.5,
+		releaseTime: 1
+	});
+
+	const bodyInspector = page.getByRole('region', { name: 'Body inspector' });
+	await bodyInspector.getByLabel('Selected body').selectOption('contact-a');
+	await expect(bodyInspector.getByLabel('Selected body')).toHaveValue('contact-a');
+	await expect(bodyInspector.getByText('free-flight', { exact: true }).first()).toBeVisible();
+	const history = page.getByRole('region', { name: 'Physical history' });
+	await expect(
+		history.getByRole('button', { name: /Dynamic contact released at 2.5 s/ })
+	).toBeVisible();
+	await expect(history.getByRole('button', { name: /Prediction selected at 2.5 s/ })).toBeVisible();
+	await history.getByRole('button', { name: /Dynamic contact released at 2.5 s/ }).click();
+	await expect(page.getByRole('region', { name: 'Replay controls' }).locator('output')).toHaveText(
+		'2.500 s / 6.000 s'
+	);
+	await expect(bodyInspector.getByText('impact-a-b', { exact: true })).toBeVisible();
+
+	const diagnosticsPromise = page.waitForEvent('download');
+	await editor.getByRole('button', { name: 'Export diagnostics' }).click();
+	const diagnosticsDownload = await diagnosticsPromise;
+	const diagnosticsPath = await diagnosticsDownload.path();
+	if (!diagnosticsPath)
+		throw new Error('Expected the multi-body diagnostic export to be retained.');
+	const diagnosticBundle = JSON.parse(
+		(await readFile(diagnosticsPath)).toString('utf8')
+	) as DiagnosticExportV2;
+	expect(diagnosticBundle.submittedInput.initialDynamicBodies).toHaveLength(2);
+	expect(diagnosticBundle.authoritativeRun.dynamicContacts).toHaveLength(1);
+	expect(diagnosticBundle.authoritativeRun.contactComponents).toHaveLength(1);
+
+	await experimentSelector.selectOption('synthetic-staggered-releases');
+	await expect(editor.getByLabel('Body to edit').locator('option')).toHaveCount(20);
+	await expect(bodyInspector.getByLabel('Selected body').locator('option')).toHaveCount(21);
+
+	await experimentSelector.selectOption('synthetic-partial-multi-body-run');
+	await expect(page.getByRole('region', { name: 'Recorded-prefix inspection' })).toBeVisible();
+	await expect(page.getByRole('slider', { name: 'Seek recorded simulation time' })).toHaveAttribute(
+		'max',
+		'3.5'
+	);
+});
+
 test('groups verification scenarios, replaces worlds on Run and reports authoritative outcomes', async ({
 	page
 }) => {
@@ -290,7 +382,7 @@ test('groups verification scenarios, replaces worlds on Run and reports authorit
 		await expect(catalogue.getByText('Not run for this selection', { exact: true })).toBeVisible();
 		await expect(
 			page.getByRole('img', {
-				name: `Scene ${scenario.sceneId} replaying recorded ball trajectory data`
+				name: `Scene ${scenario.sceneId} replaying recorded body trajectory data`
 			})
 		).toHaveCount(0);
 
@@ -298,7 +390,7 @@ test('groups verification scenarios, replaces worlds on Run and reports authorit
 
 		await expect(
 			page.getByRole('img', {
-				name: `Scene ${scenario.sceneId} replaying recorded ball trajectory data`
+				name: `Scene ${scenario.sceneId} replaying recorded body trajectory data`
 			})
 		).toBeVisible();
 		await expect(catalogue.getByText(new RegExp(`^${scenario.outcome}.*permitted$`))).toBeVisible();
@@ -375,7 +467,9 @@ test('loads a local saved run and retains it after typed validation failures', a
 	});
 
 	await expect(
-		page.getByLabel('Current run source').getByText('Local file · local-run.json', { exact: true })
+		page
+			.getByLabel('Current run source')
+			.getByText('Imported diagnostic run · local-run.json', { exact: true })
 	).toBeVisible();
 	await expect(
 		page.getByText('Loaded local-run.json · contract v7', { exact: true })
@@ -398,7 +492,9 @@ test('loads a local saved run and retains it after typed validation failures', a
 	});
 
 	await expect(
-		page.getByLabel('Current run source').getByText('Local file · local-run.json', { exact: true })
+		page
+			.getByLabel('Current run source')
+			.getByText('Imported diagnostic run · local-run.json', { exact: true })
 	).toBeVisible();
 	await expect(page.getByRole('region', { name: 'Calculated run replay' })).toBeVisible();
 });
@@ -468,7 +564,7 @@ test('plays a zero-time-loop through its committed prefix and freezes at the bou
 	await expect(page.getByRole('heading', { name: 'Failure boundary' })).toBeVisible();
 	await expect(page.getByText('valid / unresolved', { exact: true })).toBeVisible();
 	await expect(page.getByText('Not accepted motion', { exact: true })).toBeVisible();
-	await expect(page.getByText('0 s', { exact: true })).toBeVisible();
+	await expect(page.getByLabel('Failure boundary').getByText('0 s', { exact: true })).toBeVisible();
 
 	const controls = page.getByRole('region', { name: 'Replay controls' });
 	await expect(controls.getByRole('button', { name: 'Play' })).toBeEnabled();
@@ -476,7 +572,7 @@ test('plays a zero-time-loop through its committed prefix and freezes at the bou
 		controls.getByRole('slider', { name: 'Seek recorded simulation time' })
 	).toBeEnabled();
 
-	await page.getByRole('button', { name: /^Event 1, contact at / }).click();
+	await page.getByRole('button', { name: /^History 2, Fixed-world contact at / }).click();
 	await expect(controls.locator('output')).toHaveText('0.386 s / 4.145 s');
 
 	const seek = controls.getByRole('slider', { name: 'Seek recorded simulation time' });
