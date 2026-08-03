@@ -48,8 +48,10 @@ export const prototypeSimulationInput = {
 			id: 'ball',
 			motionAuthority: 'dynamic',
 			physicalShape: { type: 'circle', radius: 0.34 },
+			mass: 1,
 			position: [0, 2.7],
-			velocity: [0, 0]
+			velocity: [0, 0],
+			releaseTime: 0
 		}
 	],
 	settings: {

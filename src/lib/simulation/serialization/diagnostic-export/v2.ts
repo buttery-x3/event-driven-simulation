@@ -3,14 +3,14 @@ import type {
 	DiagnosticExportIndependentValidation,
 	DiagnosticExportMetadata,
 	DiagnosticExportRunSummary,
-	DiagnosticExportV1
+	DiagnosticExportV2
 } from './types';
 
 export function createDiagnosticExport(
 	run: SimulationRunRecord,
 	metadata: DiagnosticExportMetadata,
 	independentValidation: DiagnosticExportIndependentValidation
-): DiagnosticExportV1 {
+): DiagnosticExportV2 {
 	const trajectorySegmentCount = run.trajectories.reduce(
 		(total, trajectory) => total + trajectory.segments.length,
 		0
@@ -36,7 +36,9 @@ export function createDiagnosticExport(
 			events: run.events.length,
 			contactSearches: run.diagnostics.contactSearches.length,
 			contactCandidates: contactCandidateCount,
-			diagnostics: run.diagnostics.entries.length
+			diagnostics: run.diagnostics.entries.length,
+			dynamicContacts: run.dynamicContacts.length,
+			contactComponents: run.contactComponents.length
 		},
 		runLimits: {
 			maximumEvents: run.input.settings.maximumEvents,
@@ -56,7 +58,7 @@ export function createDiagnosticExport(
 
 	return {
 		kind: 'simulation-diagnostic-export',
-		schemaVersion: 1,
+		schemaVersion: 2,
 		provenance: {
 			exportedAt: metadata.exportedAt,
 			runId: metadata.runId ?? null,
@@ -74,14 +76,19 @@ export function createDiagnosticExport(
 			validity: run.validity,
 			outcome: run.outcome,
 			terminalReason: run.terminalReason,
+			bodyStates: run.bodyStates,
 			trajectories: run.trajectories,
-			events: run.events
+			events: run.events,
+			releases: run.releases,
+			dynamicContacts: run.dynamicContacts,
+			contactComponents: run.contactComponents,
+			componentEvents: run.componentEvents
 		},
 		independentValidation,
 		diagnostics: run.diagnostics
 	};
 }
 
-export function serializeDiagnosticExport(bundle: DiagnosticExportV1): string {
+export function serializeDiagnosticExport(bundle: DiagnosticExportV2): string {
 	return `${JSON.stringify(bundle, null, 2)}\n`;
 }

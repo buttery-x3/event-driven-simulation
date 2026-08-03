@@ -49,7 +49,7 @@ export function validateContactGeometry(context: RunValidationContext): void {
 		const body = bodyFor(context.submittedInput, trajectory.bodyId);
 		if (!body) continue;
 		for (const [segmentIndex, segment] of trajectory.segments.entries()) {
-			if (segment.type === 'free-flight') continue;
+			if (segment.type === 'free-flight' || segment.type === 'stationary') continue;
 			validateConstrainedGeometry(context, body, segment, trajectoryIndex, segmentIndex);
 		}
 	}
@@ -159,7 +159,7 @@ function validateBoundaryEvidence(
 function validateConstrainedGeometry(
 	context: RunValidationContext,
 	body: InitialDynamicCircleBodyState,
-	segment: Exclude<MotionSegment, { type: 'free-flight' }>,
+	segment: Extract<MotionSegment, { type: 'linear-contact' | 'circular-contact' }>,
 	trajectoryIndex: number,
 	segmentIndex: number
 ): void {

@@ -95,7 +95,7 @@ function validateReferences(context: RunValidationContext): void {
 					}
 				);
 			}
-			if (segment.type !== 'free-flight') {
+			if (segment.type === 'linear-contact' || segment.type === 'circular-contact') {
 				checkReference(
 					context,
 					colliderIds,

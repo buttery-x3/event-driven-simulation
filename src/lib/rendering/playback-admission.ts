@@ -9,8 +9,13 @@ export function toRendererPlaybackInput(run: SimulationRunRecord): RendererPlayb
 		outcome: run.outcome,
 		terminalReason: run.terminalReason,
 		playableUntilTime: run.diagnostics.simulatedUntilTime,
+		bodyStates: run.bodyStates,
 		trajectories: run.trajectories,
 		events: run.events,
+		releases: run.releases,
+		dynamicContacts: run.dynamicContacts,
+		contactComponents: run.contactComponents,
+		componentEvents: run.componentEvents,
 		diagnostics: run.diagnostics
 	};
 }

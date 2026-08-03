@@ -34,8 +34,10 @@ const input: SimulationInput = {
 			id: 'ball',
 			motionAuthority: 'dynamic',
 			physicalShape: { type: 'circle', radius: 0.5 },
+			mass: 1,
 			position: [0, 0],
-			velocity: [0, 0]
+			velocity: [0, 0],
+			releaseTime: 0
 		}
 	],
 	settings: {

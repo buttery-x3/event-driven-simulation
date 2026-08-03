@@ -1,6 +1,11 @@
 import type {
 	BodyTrajectory,
+	BodyRunState,
+	ComponentLifecycleEvent,
+	ContactComponentRecord,
+	DynamicContactRecord,
 	PhysicalEvent,
+	ReleaseEvent,
 	RunDiagnostics,
 	RunOutcome,
 	RunTerminalReason,
@@ -33,6 +38,8 @@ export interface DiagnosticExportCounts {
 	readonly contactSearches: number;
 	readonly contactCandidates: number;
 	readonly diagnostics: number;
+	readonly dynamicContacts: number;
+	readonly contactComponents: number;
 }
 
 export interface DiagnosticExportRunSummary {
@@ -72,9 +79,9 @@ export interface DiagnosticExportIndependentValidation {
 	}[];
 }
 
-export interface DiagnosticExportV1 {
+export interface DiagnosticExportV2 {
 	readonly kind: 'simulation-diagnostic-export';
-	readonly schemaVersion: 1;
+	readonly schemaVersion: 2;
 	readonly provenance: {
 		readonly exportedAt: string;
 		readonly runId: string | null;
@@ -92,8 +99,13 @@ export interface DiagnosticExportV1 {
 		readonly validity: RunValidity;
 		readonly outcome: RunOutcome;
 		readonly terminalReason: RunTerminalReason;
+		readonly bodyStates: readonly BodyRunState[];
 		readonly trajectories: readonly BodyTrajectory[];
 		readonly events: readonly PhysicalEvent[];
+		readonly releases: readonly ReleaseEvent[];
+		readonly dynamicContacts: readonly DynamicContactRecord[];
+		readonly contactComponents: readonly ContactComponentRecord[];
+		readonly componentEvents: readonly ComponentLifecycleEvent[];
 	};
 	readonly independentValidation: DiagnosticExportIndependentValidation;
 	readonly diagnostics: RunDiagnostics;

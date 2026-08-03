@@ -65,16 +65,35 @@ export function finishRun(
 		0
 	);
 	return {
-		contractVersion: 6,
+		contractVersion: 7,
 		input: assembly.input,
 		validity,
 		outcome,
 		terminalReason,
+		bodyStates: bodyOrNull(assembly.input)
+			? [toBodyRunState(assembly.input.initialDynamicBodies[0]!.id, outcome, simulatedUntilTime)]
+			: [],
 		trajectories:
 			assembly.input.initialDynamicBodies.length === 1
 				? [{ bodyId: assembly.input.initialDynamicBodies[0]!.id, segments: assembly.segments }]
 				: [],
 		events: assembly.events,
+		releases: bodyOrNull(assembly.input)
+			? [
+					{
+						type: 'body-release',
+						time: 0,
+						bodyId: assembly.input.initialDynamicBodies[0]!.id,
+						position: assembly.input.initialDynamicBodies[0]!.position,
+						velocity: assembly.input.initialDynamicBodies[0]!.velocity,
+						status: validity === 'invalid' ? 'rejected' : 'released',
+						reason: validity === 'invalid' ? terminalReason.type : null
+					}
+				]
+			: [],
+		dynamicContacts: [],
+		contactComponents: [],
+		componentEvents: [],
 		diagnostics: {
 			iterations: assembly.contactSearches.length,
 			simulatedUntilTime,
@@ -83,8 +102,56 @@ export function finishRun(
 			segmentCount: assembly.segments.length,
 			simulationWallTimeMilliseconds: Math.max(0, Date.now() - assembly.wallTimeStart),
 			contactSearches: assembly.contactSearches,
+			bodyEventHorizons: [],
+			pairPredictions: [],
 			entries: assembly.entries
 		}
+	};
+}
+
+function toBodyRunState(
+	bodyId: string,
+	outcome: ReturnType<typeof getRunOutcome>,
+	recordedUntilTime: number
+): SimulationRunRecord['bodyStates'][number] {
+	if (outcome === 'exited') {
+		return {
+			bodyId,
+			lifecycle: 'completed',
+			releaseTime: 0,
+			activeFromTime: 0,
+			recordedUntilTime,
+			terminalOutcome: 'completed'
+		};
+	}
+	if (outcome === 'escaped') {
+		return {
+			bodyId,
+			lifecycle: 'escaped',
+			releaseTime: 0,
+			activeFromTime: 0,
+			recordedUntilTime,
+			terminalOutcome: 'escaped'
+		};
+	}
+	if (outcome === 'settled' || outcome === 'no-future-event') {
+		return {
+			bodyId,
+			lifecycle: 'resting',
+			releaseTime: 0,
+			activeFromTime: 0,
+			recordedUntilTime,
+			terminalOutcome: null
+		};
+	}
+	const terminalOutcome = outcome === 'invalid' ? 'invalid' : 'unresolved';
+	return {
+		bodyId,
+		lifecycle: terminalOutcome,
+		releaseTime: 0,
+		activeFromTime: outcome === 'invalid' ? null : 0,
+		recordedUntilTime: outcome === 'invalid' ? null : recordedUntilTime,
+		terminalOutcome
 	};
 }
 

@@ -6,7 +6,7 @@ import { createDiagnosticExport, serializeDiagnosticExport } from '..';
 
 const exportedAt = '2026-08-02T11:23:27.123Z';
 
-describe('diagnostic export v1', () => {
+describe('diagnostic export v2', () => {
 	it('preserves a successful run and its raw contact-search evidence', () => {
 		const run = constructSingleBallRun(defaultCanonicalPlinkoScenario.input);
 		const validation = validateSimulationRun(defaultCanonicalPlinkoScenario.input, run);
@@ -46,7 +46,7 @@ describe('diagnostic export v1', () => {
 		});
 		expect(parsed).toMatchObject({
 			kind: 'simulation-diagnostic-export',
-			schemaVersion: 1,
+			schemaVersion: 2,
 			provenance: {
 				exportedAt,
 				runId: 'run-123',

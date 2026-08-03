@@ -91,7 +91,7 @@ describe('render scene view-model adaptation', () => {
 	it('keeps playback dimensions consistent with the simulation input', () => {
 		const input = withBodyRadius(0.47);
 		const playback = {
-			contractVersion: 6,
+			contractVersion: 7,
 			scene: input.scene,
 			initialDynamicBodies: input.initialDynamicBodies,
 			validity: 'valid',
@@ -102,8 +102,13 @@ describe('render scene view-model adaptation', () => {
 				time: input.settings.maximumSimulationTime
 			},
 			playableUntilTime: input.settings.maximumSimulationTime,
+			bodyStates: [],
 			trajectories: [],
 			events: [],
+			releases: [],
+			dynamicContacts: [],
+			contactComponents: [],
+			componentEvents: [],
 			diagnostics: {
 				iterations: 0,
 				simulatedUntilTime: 0,
@@ -112,6 +117,8 @@ describe('render scene view-model adaptation', () => {
 				segmentCount: 0,
 				simulationWallTimeMilliseconds: 0,
 				contactSearches: [],
+				bodyEventHorizons: [],
+				pairPredictions: [],
 				entries: []
 			}
 		} as const satisfies RendererPlaybackInput;

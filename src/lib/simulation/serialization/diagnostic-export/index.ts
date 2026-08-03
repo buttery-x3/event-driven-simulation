@@ -1,9 +1,9 @@
-export { createDiagnosticExport, serializeDiagnosticExport } from './v1';
+export { createDiagnosticExport, serializeDiagnosticExport } from './v2';
 export type {
 	DiagnosticExportCounts,
 	DiagnosticExportIndependentValidation,
 	DiagnosticExportMetadata,
 	DiagnosticExportRunSummary,
 	DiagnosticExportSource,
-	DiagnosticExportV1
+	DiagnosticExportV2
 } from './types';

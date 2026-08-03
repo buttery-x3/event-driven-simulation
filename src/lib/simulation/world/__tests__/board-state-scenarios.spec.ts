@@ -40,7 +40,10 @@ describe('varied serialisable board-state scenarios', () => {
 						ballRadius: scenario.input.initialDynamicBodies[0]!.physicalShape.radius,
 						colliders: scenario.input.scene.staticColliders,
 						releasedContactColliderId:
-							previous && previous.type !== 'free-flight' ? previous.supportingColliderId : null,
+							previous &&
+							(previous.type === 'linear-contact' || previous.type === 'circular-contact')
+								? previous.supportingColliderId
+								: null,
 						searchUntilTime: certifiedUntil,
 						tolerances: {
 							...defaultFixedWorldContactTolerances,

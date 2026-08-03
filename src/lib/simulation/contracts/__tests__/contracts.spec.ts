@@ -10,6 +10,8 @@ const diagnostics = {
 	segmentCount: 1,
 	simulationWallTimeMilliseconds: 1,
 	contactSearches: [],
+	bodyEventHorizons: [],
+	pairPredictions: [],
 	entries: [
 		{
 			severity: 'info',
@@ -41,13 +43,27 @@ const trajectories = [
 describe('simulation and replay contracts', () => {
 	it('round-trips a representative run record as plain JSON data', () => {
 		const run = {
-			contractVersion: 6,
+			contractVersion: 7,
 			input: prototypeSimulationInput,
 			validity: 'valid',
 			outcome: 'exited',
 			terminalReason: { type: 'completion-region', regionId: 'prototype-exit', time: 0.5 },
+			bodyStates: [
+				{
+					bodyId: 'ball',
+					lifecycle: 'completed',
+					releaseTime: 0,
+					activeFromTime: 0,
+					recordedUntilTime: 0.5,
+					terminalOutcome: 'completed'
+				}
+			],
 			trajectories,
 			events: [],
+			releases: [],
+			dynamicContacts: [],
+			contactComponents: [],
+			componentEvents: [],
 			diagnostics
 		} as const satisfies SimulationRunRecord;
 
@@ -84,7 +100,7 @@ describe('simulation and replay contracts', () => {
 
 	it('keeps renderer playback input serialisable and explicit about incomplete runs', () => {
 		const playback = {
-			contractVersion: 6,
+			contractVersion: 7,
 			scene: prototypeSimulationInput.scene,
 			initialDynamicBodies: prototypeSimulationInput.initialDynamicBodies,
 			validity: 'valid',
@@ -95,8 +111,13 @@ describe('simulation and replay contracts', () => {
 				detail: 'Playback contains only the validated trajectory prefix.'
 			},
 			playableUntilTime: diagnostics.simulatedUntilTime,
+			bodyStates: [],
 			trajectories,
 			events: [],
+			releases: [],
+			dynamicContacts: [],
+			contactComponents: [],
+			componentEvents: [],
 			diagnostics
 		} as const satisfies RendererPlaybackInput;
 

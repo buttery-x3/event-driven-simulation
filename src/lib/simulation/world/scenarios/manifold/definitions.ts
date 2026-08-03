@@ -89,8 +89,10 @@ function input(
 				id: 'manifold-ball',
 				motionAuthority: 'dynamic',
 				physicalShape: { type: 'circle', radius: 0.1 },
+				mass: 1,
 				position,
-				velocity
+				velocity,
+				releaseTime: 0
 			}
 		],
 		settings: {

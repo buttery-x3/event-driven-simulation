@@ -2,6 +2,7 @@ import type { SimulationInput, SimulationRunRecord } from '../contracts';
 
 export const runValidationCategories = [
 	'record-structure',
+	'multi-body-structure',
 	'temporal-continuity',
 	'contact-geometry',
 	'collision-free-interval',
@@ -15,6 +16,16 @@ export type RunValidationCategory = (typeof runValidationCategories)[number];
 
 export type RunValidationFailureCode =
 	| 'NON_FINITE_VALUE'
+	| 'NON_FINITE_MULTIBODY_DATA'
+	| 'DUPLICATE_BODY_ID'
+	| 'INVALID_BODY_MASS'
+	| 'INVALID_RELEASE_TIME'
+	| 'UNRESOLVED_BODY_REFERENCE'
+	| 'TRAJECTORY_OUTSIDE_BODY_LIFETIME'
+	| 'OVERLAPPING_RELEASE_STATE'
+	| 'BODY_WORLD_OUTCOME_MISMATCH'
+	| 'INVALID_CONTACT_PARTICIPANT'
+	| 'MALFORMED_COMPONENT_MEMBERSHIP'
 	| 'SUBMITTED_INPUT_MISMATCH'
 	| 'UNRESOLVED_REFERENCE'
 	| 'DUPLICATE_REFERENCE'

@@ -3,7 +3,7 @@ import path from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import type { SimulationInput } from '../../src/lib/simulation/contracts';
 import { constructSingleBallRun } from '../../src/lib/simulation/run';
-import type { DiagnosticExportV1 } from '../../src/lib/simulation/serialization/diagnostic-export';
+import type { DiagnosticExportV2 } from '../../src/lib/simulation/serialization/diagnostic-export';
 
 interface FilePayload {
 	readonly name: string;
@@ -220,10 +220,10 @@ test('downloads accepted run diagnostics separately from the editable scenario',
 	);
 	const downloadPath = await download.path();
 	if (!downloadPath) throw new Error('Expected Playwright to retain the diagnostic download.');
-	const bundle = JSON.parse((await readFile(downloadPath)).toString('utf8')) as DiagnosticExportV1;
+	const bundle = JSON.parse((await readFile(downloadPath)).toString('utf8')) as DiagnosticExportV2;
 
 	expect(bundle.kind).toBe('simulation-diagnostic-export');
-	expect(bundle.schemaVersion).toBe(1);
+	expect(bundle.schemaVersion).toBe(2);
 	expect(bundle.provenance).toMatchObject({
 		runId: 'canonical-event-driven-offset-drop',
 		descriptiveName: 'canonical-event-driven-offset-drop.json',
@@ -378,7 +378,7 @@ test('loads a local saved run and retains it after typed validation failures', a
 		page.getByLabel('Current run source').getByText('Local file · local-run.json', { exact: true })
 	).toBeVisible();
 	await expect(
-		page.getByText('Loaded local-run.json · contract v6', { exact: true })
+		page.getByText('Loaded local-run.json · contract v7', { exact: true })
 	).toBeVisible();
 
 	await expectRejectedCandidate(page, {
@@ -429,7 +429,7 @@ test('labels independently invalid solver history as forensic evidence in playba
 	const download = await downloadPromise;
 	const downloadPath = await download.path();
 	if (!downloadPath) throw new Error('Expected Playwright to retain the diagnostic download.');
-	const bundle = JSON.parse((await readFile(downloadPath)).toString('utf8')) as DiagnosticExportV1;
+	const bundle = JSON.parse((await readFile(downloadPath)).toString('utf8')) as DiagnosticExportV2;
 
 	expect(bundle.summary).toMatchObject({
 		validity: 'invalid',
@@ -544,7 +544,7 @@ test('loads and seeks authoritative sustained circular contact with explicit mod
 		buffer: Buffer.from(JSON.stringify(run))
 	});
 
-	await expect(page.getByText('Loaded sustained-peg-run.json · contract v6')).toBeVisible();
+	await expect(page.getByText('Loaded sustained-peg-run.json · contract v7')).toBeVisible();
 	const entry = page.getByRole('button', { name: /impact to sliding/ });
 	const exit = page.getByRole('button', { name: /sliding to free-flight/ });
 	await expect(entry).toBeVisible();
@@ -689,8 +689,10 @@ function sustainedPegInput(): SimulationInput {
 				id: 'ball',
 				motionAuthority: 'dynamic',
 				physicalShape: { type: 'circle', radius: 0.1 },
+				mass: 1,
 				position: [0.08, 3],
-				velocity: [0, 0]
+				velocity: [0, 0],
+				releaseTime: 0
 			}
 		],
 		settings: {

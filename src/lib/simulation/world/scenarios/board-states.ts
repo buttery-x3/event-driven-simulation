@@ -267,8 +267,10 @@ function simulationInput(
 				id: 'ball-primary',
 				motionAuthority: 'dynamic',
 				physicalShape: { type: 'circle', radius: 0.12 },
+				mass: 1,
 				position,
-				velocity
+				velocity,
+				releaseTime: 0
 			}
 		],
 		settings

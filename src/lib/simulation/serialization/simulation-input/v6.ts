@@ -1,4 +1,4 @@
-import type { SimulationInput } from '../../contracts';
+import type { InitialDynamicCircleBodyState, SimulationInput } from '../../contracts';
 import { validateSceneDefinition } from '../../world';
 import {
 	createUnknownDataAssertions,
@@ -6,11 +6,18 @@ import {
 	type FieldValidationFailure
 } from '../structural-validation';
 
+export type LegacySimulationInputV6 = Omit<SimulationInput, 'initialDynamicBodies'> & {
+	readonly initialDynamicBodies: readonly Omit<
+		InitialDynamicCircleBodyState,
+		'mass' | 'releaseTime'
+	>[];
+};
+
 export function validateSimulationInputV6(
 	value: unknown,
 	path = '$',
 	fail: FieldValidationFailure = invalidSimulationInputField
-): SimulationInput {
+): LegacySimulationInputV6 {
 	const {
 		requireArray,
 		requireFiniteNumber,
@@ -51,7 +58,7 @@ export function validateSimulationInputV6(
 	requireFiniteNumber(tolerances.contactDistance, `${path}.settings.tolerances.contactDistance`);
 	requireFiniteNumber(tolerances.eventTime, `${path}.settings.tolerances.eventTime`);
 
-	return value as SimulationInput;
+	return value as LegacySimulationInputV6;
 }
 
 function validateCirclePhysicalShape(

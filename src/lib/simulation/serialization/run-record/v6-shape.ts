@@ -1,4 +1,4 @@
-import type { SimulationRunRecord } from '../../contracts';
+import type { LegacySimulationRunRecordV6 } from './v6';
 import { validateSimulationInputV6 } from '../simulation-input/v6';
 import { createUnknownDataAssertions, invalidRunRecordField } from '../structural-validation';
 
@@ -15,7 +15,7 @@ const {
 	validateVec2
 } = createUnknownDataAssertions(invalidRunRecordField);
 
-export function validateRunRecordShapeV6(value: unknown): SimulationRunRecord {
+export function validateRunRecordShapeV6(value: unknown): LegacySimulationRunRecordV6 {
 	const run = requireRecord(value, '$');
 
 	requireLiteral(run.contractVersion, 6, '$.contractVersion');
@@ -40,7 +40,7 @@ export function validateRunRecordShapeV6(value: unknown): SimulationRunRecord {
 	validateEvents(run.events, '$.events');
 	validateDiagnostics(run.diagnostics, '$.diagnostics');
 
-	return value as SimulationRunRecord;
+	return value as LegacySimulationRunRecordV6;
 }
 
 function validateTerminalReason(value: unknown, path: string): void {

@@ -425,8 +425,10 @@ function input({
 				id: 'ball-primary',
 				motionAuthority: 'dynamic',
 				physicalShape: { type: 'circle', radius },
+				mass: 1,
 				position,
-				velocity
+				velocity,
+				releaseTime: 0
 			}
 		],
 		settings: {

@@ -8,6 +8,8 @@ export interface SimulationInputDiagnostic {
 		| 'INVALID_BODY_ID'
 		| 'DUPLICATE_BODY_ID'
 		| 'INVALID_RADIUS'
+		| 'INVALID_MASS'
+		| 'UNSUPPORTED_RELEASE_TIME'
 		| 'INVALID_POSITION'
 		| 'INVALID_VELOCITY'
 		| 'POSITION_OUTSIDE_BOUNDS'
@@ -68,6 +70,24 @@ export function validateSingleBallInput(
 				code: 'INVALID_RADIUS',
 				path: '$.initialDynamicBodies[0].physicalShape.radius',
 				message: 'The dynamic body radius must be a positive finite number.'
+			}
+		];
+	}
+	if (!Number.isFinite(body.mass) || body.mass <= 0) {
+		return [
+			{
+				code: 'INVALID_MASS',
+				path: '$.initialDynamicBodies[0].mass',
+				message: 'The dynamic body mass must be a positive finite number.'
+			}
+		];
+	}
+	if (!Number.isFinite(body.releaseTime) || body.releaseTime !== 0) {
+		return [
+			{
+				code: 'UNSUPPORTED_RELEASE_TIME',
+				path: '$.initialDynamicBodies[0].releaseTime',
+				message: 'The single-ball runner currently requires release time zero.'
 			}
 		];
 	}

@@ -1,4 +1,4 @@
-import type { SimulationRunRecord } from '../../contracts';
+import type { LegacySimulationRunRecordV6 } from './v6';
 import {
 	getRunOutcome,
 	getTerminalDiagnosticCode,
@@ -6,7 +6,7 @@ import {
 } from '../../run';
 import { invalidRunRecordField } from '../structural-validation';
 
-export function validateRunConsistencyV6(record: SimulationRunRecord): void {
+export function validateRunConsistencyV6(record: LegacySimulationRunRecordV6): void {
 	const expectedOutcome = getRunOutcome(record.terminalReason);
 	if (record.outcome !== expectedOutcome) {
 		invalidRunRecordField(
@@ -86,7 +86,7 @@ export function validateRunConsistencyV6(record: SimulationRunRecord): void {
 	validateTerminalReference(record);
 }
 
-function validateTerminalReference(record: SimulationRunRecord): void {
+function validateTerminalReference(record: LegacySimulationRunRecordV6): void {
 	const reason = record.terminalReason;
 	if (reason.type === 'completion-region' || reason.type === 'escape-region') {
 		const region = record.input.scene.terminationRegions.find(({ id }) => id === reason.regionId);

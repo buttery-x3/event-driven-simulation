@@ -47,8 +47,10 @@ function makeRequest(): SustainedContactRequest {
 				id: 'ball',
 				motionAuthority: 'dynamic',
 				physicalShape: { type: 'circle', radius: 0.1 },
+				mass: 1,
 				position: [1, 0],
-				velocity: [0, 1]
+				velocity: [0, 1],
+				releaseTime: 0
 			}
 		],
 		settings: {

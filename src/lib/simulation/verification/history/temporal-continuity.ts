@@ -13,7 +13,15 @@ export function validateTemporalContinuity(context: RunValidationContext): void 
 			validateSegmentInterval(context, segment, trajectoryIndex, segmentIndex);
 			const previous = trajectory.segments[segmentIndex - 1];
 			if (previous) validateJoin(context, previous, segment, trajectoryIndex, segmentIndex);
-			else validateInitialState(context, segment, body.position, body.velocity, trajectoryIndex);
+			else
+				validateInitialState(
+					context,
+					segment,
+					body.position,
+					body.velocity,
+					body.releaseTime,
+					trajectoryIndex
+				);
 		}
 	}
 	validateEventStates(context);
@@ -150,15 +158,21 @@ function validateInitialState(
 	segment: MotionSegment,
 	position: Vec2,
 	velocity: Vec2,
+	releaseTime: number,
 	trajectoryIndex: number
 ): void {
 	const path = `$.trajectories[${trajectoryIndex}].segments[0]`;
-	if (Math.abs(segment.startTime) > timeTolerance(context)) {
-		fail(context, 'NON_MONOTONIC_TIME', 'The first committed segment must begin at time zero.', {
-			path: `${path}.startTime`,
-			time: segment.startTime,
-			bodyId: segment.bodyId
-		});
+	if (Math.abs(segment.startTime - releaseTime) > timeTolerance(context)) {
+		fail(
+			context,
+			'NON_MONOTONIC_TIME',
+			'The first committed segment must begin at the body release time.',
+			{
+				path: `${path}.startTime`,
+				time: segment.startTime,
+				bodyId: segment.bodyId
+			}
+		);
 	}
 	if (!nearVector(segment.startPosition, position, stateTolerance(context))) {
 		fail(
@@ -174,7 +188,7 @@ function validateInitialState(
 	}
 	if (
 		!nearVector(segment.startVelocity, velocity, stateTolerance(context)) &&
-		!hasContactAt(context, segment.bodyId, 0)
+		!hasContactAt(context, segment.bodyId, releaseTime)
 	) {
 		fail(
 			context,
@@ -182,7 +196,7 @@ function validateInitialState(
 			'The initial velocity changed without a time-zero contact.',
 			{
 				path: `${path}.startVelocity`,
-				time: 0,
+				time: releaseTime,
 				bodyId: segment.bodyId
 			}
 		);
@@ -233,11 +247,20 @@ function boundaryPosition(segment: MotionSegment, time: number): Vec2 {
 }
 
 function hasContactAt(context: RunValidationContext, bodyId: string, time: number): boolean {
-	return context.run.events.some(
-		(event) =>
-			event.type === 'contact' &&
-			event.bodyId === bodyId &&
-			Math.abs(event.time - time) <= timeTolerance(context)
+	return (
+		context.run.events.some(
+			(event) =>
+				event.type === 'contact' &&
+				event.bodyId === bodyId &&
+				Math.abs(event.time - time) <= timeTolerance(context)
+		) ||
+		context.run.dynamicContacts.some(
+			(event) =>
+				Math.abs(event.time - time) <= timeTolerance(context) &&
+				event.participants.some(
+					(participant) => participant.type === 'body' && participant.bodyId === bodyId
+				)
+		)
 	);
 }
 

@@ -42,8 +42,10 @@ const input = {
 			id: 'test-ball',
 			motionAuthority: 'dynamic',
 			physicalShape: { type: 'circle', radius: 0.2 },
+			mass: 1,
 			position: [0, 2],
-			velocity: [1, 0]
+			velocity: [1, 0],
+			releaseTime: 0
 		}
 	],
 	settings: {

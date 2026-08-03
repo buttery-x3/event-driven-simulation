@@ -109,8 +109,10 @@ function scenario(
 					id: 'ball-primary',
 					motionAuthority: 'dynamic',
 					physicalShape: { type: 'circle', radius: ballRadius },
+					mass: 1,
 					position,
-					velocity
+					velocity,
+					releaseTime: 0
 				}
 			],
 			settings: defaultSettings

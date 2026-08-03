@@ -10,6 +10,24 @@ describe('simulation input fixture boundary', () => {
 		expect(parseSimulationInputFixture(serializeSimulationInputFixture(input))).toEqual(input);
 	});
 
+	it('migrates version 6 single-body scenarios with explicit physical defaults', () => {
+		const legacy = JSON.parse(
+			serializeSimulationInputFixture(canonicalPlinkoScenarios[0].input)
+		) as {
+			contractVersion: number;
+			input: {
+				initialDynamicBodies: Array<{ mass?: number; releaseTime?: number }>;
+			};
+		};
+		legacy.contractVersion = 6;
+		delete legacy.input.initialDynamicBodies[0]!.mass;
+		delete legacy.input.initialDynamicBodies[0]!.releaseTime;
+
+		expect(
+			parseSimulationInputFixture(JSON.stringify(legacy)).initialDynamicBodies[0]
+		).toMatchObject({ mass: 1, releaseTime: 0 });
+	});
+
 	it('rejects structurally invalid and semantically unsupported inputs with typed paths', () => {
 		const structurallyInvalid = JSON.parse(
 			serializeSimulationInputFixture(canonicalPlinkoScenarios[0].input)
@@ -31,7 +49,7 @@ describe('simulation input fixture boundary', () => {
 		expect(() => parseSimulationInputFixture(JSON.stringify(outsideBounds))).toThrowError(
 			expect.objectContaining<Partial<RunFixtureError>>({
 				code: 'INVALID_SIMULATION_INPUT',
-				path: '$.initialDynamicBodies[0].position'
+				path: '$.input.initialDynamicBodies[0].position'
 			})
 		);
 	});

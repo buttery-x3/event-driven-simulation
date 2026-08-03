@@ -1,5 +1,10 @@
 import type { SimulationInput, SimulationRunRecord } from '../contracts';
-import { deepEqual, validateRecordIntegrity, validateTemporalContinuity } from './history';
+import {
+	deepEqual,
+	validateMultiBodyContracts,
+	validateRecordIntegrity,
+	validateTemporalContinuity
+} from './history';
 import {
 	validateCollisionFreeIntervals,
 	validateContactDynamics,
@@ -18,6 +23,7 @@ export function validateSimulationRun(
 	run: SimulationRunRecord
 ): RunValidationResult {
 	const context: RunValidationContext = { submittedInput, run, failures: [] };
+	validateMultiBodyContracts(context);
 	validateRecordIntegrity(context);
 	validateTemporalContinuity(context);
 	validateContactGeometry(context);
