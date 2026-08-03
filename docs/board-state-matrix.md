@@ -35,7 +35,7 @@ positions and preserve event times. Reversing collider order must preserve the c
 
 ## Public terminal outcomes
 
-Contract version 6 retains the top-level `RunOutcome` vocabulary:
+Contract version 7 retains the top-level world `RunOutcome` vocabulary:
 
 - `exited`: a continuous path entered a declared completion region;
 - `escaped`: a continuous path entered an escape region or crossed the supported scene bounds;

@@ -32,6 +32,15 @@ implementation, not every subdomain that may ever be permitted.
 src/lib/simulation/
     contracts/
         index.ts
+        geometry.ts
+        input.ts
+        motion.ts
+        history/
+            index.ts
+            events.ts
+            outcomes.ts
+            diagnostics.ts
+            run-record.ts
         __tests__/
 
     math/
@@ -126,7 +135,7 @@ src/lib/simulation/
         diagnostic-export/
             index.ts
             types.ts
-            v1.ts
+            v2.ts
             __tests__/
         structural-validation/
             index.ts
@@ -140,11 +149,19 @@ src/lib/simulation/
             v6.ts
             v6-shape.ts
             v6-consistency.ts
+            v7/
+                index.ts
+                validate.ts
+                shape.ts
+                multi-body-shape.ts
+                consistency.ts
+                migration-v6.ts
             __tests__/
         simulation-input/
             index.ts
             fixture.ts
             v6.ts
+            v7.ts
             __tests__/
 
     verification/
@@ -155,6 +172,7 @@ src/lib/simulation/
             index.ts
             record-integrity.ts
             temporal-continuity.ts
+            multi-body.ts
         physics/
             index.ts
             contact-geometry.ts

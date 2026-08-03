@@ -224,12 +224,18 @@ collision entry point remains the supported cross-subsystem boundary.
 
 ### Fixture validation
 
-`serialization/simulation-input/v6.ts` owns standalone version 6 input shape validation.
-`serialization/run-record/v6-shape.ts` owns run-record structural validation, while
-`v6-consistency.ts` owns cross-field invariants and terminal references. `run-record/v6.ts` only
-orchestrates those two phases. Reusable unknown-data assertions and typed fixture failures live in
-the narrowly named `serialization/structural-validation` subdomain and are exposed to sibling
-serialization modules through its local entry point.
+`serialization/simulation-input/v6.ts` retains the legacy version 6 input reader, while `v7.ts`
+owns current input shape, body identity, mass, release-time and declared common-release overlap
+validation. Legacy run shape and consistency remain in the version 6 files. The named
+`serialization/run-record/v7` subdomain owns current run shape, multi-body consistency and v6-to-v7
+migration assembly without enlarging the parent directory beyond its headroom threshold. Reusable
+unknown-data assertions and typed fixture failures live in the narrowly named
+`serialization/structural-validation` subdomain and are exposed through its local entry point.
+
+The public `contracts` entry point was decomposed for FLAME-48. `geometry.ts`, `input.ts` and
+`motion.ts` own their respective plain declarations; the named `contracts/history` subdomain owns
+events, per-body/world outcomes, diagnostics and run-record composition. `contracts/index.ts`
+remains the stable explicit public facade and contains no implementation logic.
 
 ## Extraction rules
 

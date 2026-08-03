@@ -113,10 +113,12 @@ outcomes. A match or mismatch is textual and visible alongside the expected valu
 different draft, or loading a saved run, clears that association without changing the accepted run;
 the renderer never decides whether an outcome is correct.
 
-Scenario input files use a versioned JSON envelope with `contractVersion: 6`,
+Scenario input files use a versioned JSON envelope with `contractVersion: 7`,
 `documentType: "simulation-input"` and an `input` value conforming to `SimulationInput`. Loading
-passes through structural and single-ball semantic validation. Saved run files continue through
-the separate saved-run boundary.
+passes through structural, identity, mass and declared-release validation; invoking the current
+single-ball runner then applies its narrower one-body, time-zero-release policy. Saved run files
+continue through the separate saved-run boundary. Version 6 scenario envelopes migrate explicitly
+to unit mass and release time zero.
 
 ### Inspection modes
 
@@ -193,11 +195,11 @@ The current source label is never replaced by the name of a rejected candidate. 
 attempt, feedback may say `Could not load candidate.json`, while the source continues to say
 `Repository fixture · canonical-event-driven-offset-drop.json`.
 
-Success feedback is short and non-sticky, for example `Loaded run.json · contract v6`. Rejection
+Success feedback is short and non-sticky, for example `Loaded run.json · contract v7`. Rejection
 feedback contains the typed error code, message and validation path when present:
 
 ```text
-UNSUPPORTED_CONTRACT_VERSION · expected version 6 · $.contractVersion
+UNSUPPORTED_CONTRACT_VERSION · expected version 6 or 7 · $.contractVersion
 ```
 
 The detailed run diagnostics console contains diagnostics from the current run only. Candidate file

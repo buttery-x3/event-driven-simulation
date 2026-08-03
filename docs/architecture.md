@@ -60,14 +60,16 @@ not invoke simulation or select solver behaviour; consumers receive it through `
 
 ## Contract responsibilities
 
-- `SimulationInput` groups the scene's `staticColliders`, `initialDynamicBodies` and all current
-  behavioural settings and numerical tolerances.
+- `SimulationInput` groups the scene's `staticColliders`, scheduled `initialDynamicBodies` and all
+  current behavioural settings and numerical tolerances. Every body has a stable ID, positive
+  finite mass and non-negative release time; an unreleased body is not physically present.
 - `MotionSegment`, `BodyTrajectory` and `PhysicalEvent` describe the calculated history without
   requiring frame-by-frame simulation during playback. Segment discriminants distinguish
-  `free-flight`, `linear-contact` and `circular-contact`; contact-mode transition events make entry
-  to and exit from resting or sliding states explicit.
+  `free-flight`, `linear-contact`, `circular-contact` and explicit `stationary` coverage;
+  contact-mode transition events make entry to and exit from resting or sliding states explicit.
 - `SimulationRunRecord` preserves the input, prefix validity, typed terminal reason, physical
-  events, trajectory prefix and diagnostics needed for saved runs and regression fixtures.
+  events, per-body lifecycle, release history, dynamic contacts, contact components, trajectory
+  prefix and diagnostics needed for saved runs and regression fixtures.
 - `RendererPlaybackInput` contains only plain data needed to present a run. It carries the same
   scene and initial body definitions as simulation input, so physical dimensions have one source
   of truth, and it retains validity and the terminal reason so incomplete output cannot silently
@@ -84,14 +86,16 @@ Run validity is `valid` or `invalid` and is deliberately separate from the stabl
 `no-future-event`, `time-limit`, `event-limit`, `unresolved`, and `invalid`. Detailed reasons retain
 the specific region, bounds edge, support collider, collision-search failure or explicit limit.
 
-`contractVersion` is `6` after FLAME-36 added first-class sustained-contact motion and transition
-events. Earlier fixtures are rejected rather than silently interpreted as version 6; the prototype
-has no external compatibility requirement. The contracts intentionally use
+`contractVersion` is `7` after FLAME-48 separated per-body lifecycle from the world outcome and
+added scheduled releases, mass, stationary intervals, dynamic contacts/components and prediction
+validity evidence. Version 6 single-body inputs and saved runs are validated and migrated with
+`mass: 1`, `releaseTime: 0` and empty multi-body evidence; other versions fail explicitly. The
+contracts intentionally use
 ordinary objects, arrays, strings, numbers and `null`. This keeps them JSON-serialisable and leaves
 the calculation implementation replaceable by a future worker or Rust/Wasm module without adding
 either transport today.
 
-Version 6 run records may carry additive coupled-contact evidence on contact events, transitions,
+Migrated version 6 run records may carry additive coupled-contact evidence on contact events, transitions,
 resting terminal reasons and contact-search diagnostics. Each member records geometry, incoming and
 outgoing normal velocity, and its non-negative impulse; resting manifolds additionally record the
 certified support reactions. Legacy version 6 fixtures without these optional forensic fields remain
@@ -102,16 +106,17 @@ valid.
 Saved run fixtures live under the repository-level `fixtures/` directory so headless tests and the
 browser renderer consume the same files. `src/lib/simulation/serialization/run-record/index.ts` is
 the narrow runtime entry point from unknown JSON data to `SimulationRunRecord`. JSON parsing, typed
-fixture errors, contract-version recognition and version 6 structural and consistency validation
-live in separate implementation modules behind that entry point. Version dispatch is intentionally
-explicit rather than a general schema registry.
+fixture errors and contract-version recognition live behind that entry point. Legacy version 6
+validation remains explicit; the named `run-record/v7` subdomain owns current shape, multi-body
+consistency and migration assembly. Version dispatch is intentionally explicit rather than a
+general schema registry.
 
 ## Independent run verification boundary
 
 `src/lib/simulation/verification/index.ts` exposes the reusable headless
 `validateSimulationRun(input, run)` capability. It compares an immutable submitted input with a
 public run record and returns stable failure categories, codes and record references. The private
-`history` subdomain owns record references, finiteness and temporal continuity. The private
+`history` subdomain owns record references, multi-body structure, finiteness and temporal continuity. The private
 `physics` subdomain owns submitted geometry, bounded collision-free samples, impact and support
 necessary conditions, and terminal semantics. The parent owns result collection, orchestration and
 JSON round-trip preservation.
@@ -133,7 +138,7 @@ never evaluates motion beyond the committed segment boundary.
 ## Diagnostic export boundary
 
 Diagnostic export is a separate versioned external representation under
-`simulation/serialization/diagnostic-export`. Version 1 uses the stable
+`simulation/serialization/diagnostic-export`. Version 2 uses the stable
 `simulation-diagnostic-export` discriminator and snapshots explicit provenance, the submitted
 `SimulationInput`, a derived run summary, authoritative trajectories and events, contact-search
 evidence, structured diagnostic entries and the workbench's independent run-validation result. It
@@ -281,8 +286,8 @@ a saved-regression home so defect fixtures can join through descriptors rather t
 UI. Outcome matching uses the returned run record; rendering remains presentation-only.
 
 `simulation/serialization/simulation-input` provides the versioned JSON boundary for scenario
-inputs. It owns the version 6 structural input validator and then applies the single-ball semantic
-validator. Saved run records use the independent `simulation/serialization/run-record` boundary,
+inputs. It retains the version 6 shape reader for migration and owns current version 7 structural
+and release-state validation. Saved run records use the independent `simulation/serialization/run-record` boundary,
 where version-specific shape and cross-field consistency validation have separate owners. Shared
 unknown-data assertions and typed fixture failures live in the private
 `simulation/serialization/structural-validation` subdomain and are consumed through its local entry

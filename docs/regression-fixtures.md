@@ -35,14 +35,17 @@ constructed run and independent validation result. Use this form when the histor
 already preserved externally or would add a large stale duplicate without strengthening the
 regression.
 
-There is deliberately no migration framework. If `contractVersion` changes, decide how to update
-or retain affected fixtures as part of that contract change.
+Version dispatch is explicit rather than a general migration framework. If `contractVersion`
+changes, decide how to update, reject or narrowly migrate affected fixtures as part of that change.
 
 FLAME-33 advanced the contract to version 5 so saved records expose the stable terminal outcome
 vocabulary and validate its agreement with validity, detailed terminal reason and diagnostics. The
 FLAME-36 advanced it to version 6 for discriminated free-flight and constrained-contact segments,
 explicit contact-mode transitions and resting-contact terminal data. Pre-release fixtures were
-updated in place; earlier data is intentionally rejected rather than guessed or migrated.
+updated in place; earlier data was intentionally rejected rather than guessed or migrated. FLAME-48
+advanced current input and run output to version 7. Version 6 single-body documents remain supported
+through an explicit migration that adds unit mass, release time zero, per-body lifecycle/release
+history and empty multi-body contact, component and prediction collections.
 
 `flame-27-high-speed-peg-contact.json` is a complete, minimal run record whose incoming motion
 segment crosses a fixed peg at 10,000 m/s. The focused circle-circle contact test loads that public

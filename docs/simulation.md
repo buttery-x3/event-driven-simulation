@@ -76,10 +76,12 @@ they deterministically produce `(speed × cos(angle), speed × sin(angle))`. Dir
 components remain available for exact regression reproduction. An explicit Run action validates
 and snapshots the resulting `SimulationInput` before invoking the headless solver.
 
-Scenario input JSON uses a version 6 `simulation-input` envelope. Its loader applies the same
-structural input validation used by saved-run contract validation, followed by the authoritative
-single-ball semantic validator. A loaded scenario never becomes renderer state directly: only the
-run record returned by the simulator can be adapted for replay.
+Scenario input JSON uses a version 7 `simulation-input` envelope. Its loader validates scene and
+body structure, stable identities, positive mass, non-negative release times and common-time body
+overlap. Version 6 single-body envelopes remain loadable through explicit defaults of unit mass and
+release time zero. The current single-ball runner separately requires exactly one body released at
+time zero. A loaded scenario never becomes renderer state directly: only the run record returned by
+the simulator can be adapted for replay.
 
 ## Ballistic motion and fixed-world contacts
 
@@ -224,7 +226,7 @@ exactly at the region boundary. Event and time limits, unresolved fixed-world se
 state, numerical failure and permanently stationary no-future-event states remain distinct typed
 terminal reasons.
 
-Contract version 6 records the stable top-level `outcome` vocabulary (`exited`, `escaped`,
+Contract version 7 retains the stable world-level `outcome` vocabulary (`exited`, `escaped`,
 `settled`, `no-future-event`, `time-limit`, `event-limit`, `unresolved`, or `invalid`) separately
 from the detailed `terminalReason`. Run `validity` records whether the retained prefix conforms to
 the public contract. Diagnostics retain each contact search's accepted and rejected candidates and
@@ -239,6 +241,33 @@ original classification. Contact events preserve the same complete manifold evid
 forensic fields remain diagnostic evidence only:
 instrumentation is written after selection and never participates in
 event selection or becomes authoritative trajectory motion.
+
+## Multi-body history contract
+
+Version 7 defines multi-body semantics without implementing a global scheduler or dynamic-body
+collision solver. Each input body has a unique ID, positive finite mass, radius, initial state and
+non-negative release time. Before that time it is `scheduled` and physically absent. Simultaneous
+releases form one semantic batch; serialized array order and diagnostic IDs cannot decide physical
+ordering or response. Exact fixed or dynamic touching is evidence for the applicable contact policy,
+while overlap beyond `contactDistance` is invalid.
+
+`bodyStates` records each body's current lifecycle independently of the world outcome:
+`scheduled`, `active`, `resting`, `completed`, `escaped`, `invalid` or `unresolved`. Completed or
+escaped bodies do not end a world while another body remains active. A completed world has no
+scheduled, active, invalid or unresolved bodies. An incomplete outcome preserves each body's
+certified `recordedUntilTime` and trajectory prefix.
+
+Released bodies have explicit release events. `stationary` motion segments provide authoritative
+position coverage when a dormant resting body remains present while other bodies continue. Dynamic
+contacts use two semantic participants—body/body or fixed-collider/body—and a normal directed from
+the first participant to the second, plus contact point, incoming/outgoing normal motion, impulse
+evidence and incoming/retained/released/rejected state. Component records identify exact-time impact
+or resting-anchored connectivity, active contacts and optional retained support reactions; lifecycle
+events record creation, split, merge and dissolution without exposing solver matrices.
+
+Diagnostic body horizons and pair predictions record a common validity interval, per-body revision
+stamps and selected/retained/invalidated/stale decisions. They are evidence only. Rendering evaluates
+the authoritative trajectories and never reconstructs motion from predictions or component IDs.
 
 Supported scene-bounds crossings are solved continuously alongside explicit completion and escape
 regions. A non-penetrating contact may enter sustained contact only when the contact normal can
