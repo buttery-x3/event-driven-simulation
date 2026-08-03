@@ -85,3 +85,8 @@ passes downward between two tangent pegs, rebounds elastically from a centred lo
 upward through the same throat. The corrected run must keep both throat roots non-impulsive, preserve
 zero horizontal velocity, avoid a zero-time loop, pass independent validation and survive saved-run
 serialization plus recorded-inspection replay admission.
+
+`flame-47-repeated-exact-fit-traversals.json` is the long dense-board follow-up with restitution
+`0.98`. It repeatedly returns through the exact-fit throat after centred lower-peg impacts. All
+throat candidates must remain certified grazing, all 200 committed contacts must belong to the
+lower peg, horizontal motion must remain zero and the event-limited run must validate and replay.

@@ -5,12 +5,14 @@ import type {
 	StaticCircleCollider,
 	Vec2
 } from '../../contracts';
+import type { IsolatedPolynomialRoot } from '../../math';
 import {
 	classifyCircleCircleRootTopology,
 	defaultCircleCircleContactTolerances,
 	findEarliestCircleCircleContact,
 	type CircleCircleContactQuery
 } from '../circle-circle';
+import { findToleranceContainedGrazingExit } from '../circle-circle/root-topology';
 import { parseSimulationRunFixture } from '../../serialization/run-record';
 
 const peg = {
@@ -181,6 +183,50 @@ describe('continuous ballistic circle-circle contact solving', () => {
 			expect(evidence.topology).toBe(topology);
 		}
 	);
+
+	it.each([
+		{ depth: 5e-4, expectedExit: true },
+		{ depth: 2e-3, expectedExit: false }
+	])(
+		'certifies a nondecisive root cluster only when penetration $depth stays within tolerance',
+		({ depth, expectedExit }) => {
+			const offset = Math.sqrt(depth);
+			const rootTimes = [0.5 - offset, 0.5 + offset];
+			const separationAt = (normalizedTime: number): number => (normalizedTime - 0.5) ** 2 - depth;
+			const roots = rootTimes.map((normalizedTime) => isolatedRoot(normalizedTime, separationAt));
+
+			const exit = findToleranceContainedGrazingExit(
+				roots,
+				0,
+				[0.25 - depth, -1, 1],
+				1e-12,
+				1e-12,
+				100,
+				1e-3,
+				separationAt
+			);
+
+			expect(exit === rootTimes[1]).toBe(expectedExit);
+		}
+	);
+
+	it('certifies one isolated tangent root from wider separated evidence', () => {
+		const separationAt = (normalizedTime: number): number => (normalizedTime - 0.5) ** 2;
+		const root = isolatedRoot(0.5, separationAt);
+
+		expect(
+			findToleranceContainedGrazingExit(
+				[root],
+				0,
+				[0.25, -1, 1],
+				1e-12,
+				1e-12,
+				100,
+				1e-3,
+				separationAt
+			)
+		).toBe(0.5);
+	});
 
 	it('preserves classification for mirror-equivalent circle paths', () => {
 		const leftToRight = findEarliestCircleCircleContact(query(segment([-2, 0.4], [1, 0]), 4));
@@ -379,3 +425,21 @@ describe('continuous ballistic circle-circle contact solving', () => {
 		expect(result.type).toBe('unresolved');
 	});
 });
+
+function isolatedRoot(
+	normalizedTime: number,
+	separationAt: (normalizedTime: number) => number
+): IsolatedPolynomialRoot {
+	const beforeTime = normalizedTime - 1e-3;
+	const afterTime = normalizedTime + 1e-3;
+	return {
+		normalizedTime,
+		source: 'bracketed-root',
+		refinementIterations: 1,
+		isolatingInterval: [beforeTime, afterTime],
+		neighbourhood: {
+			before: { normalizedTime: beforeTime, value: separationAt(beforeTime) },
+			after: { normalizedTime: afterTime, value: separationAt(afterTime) }
+		}
+	};
+}

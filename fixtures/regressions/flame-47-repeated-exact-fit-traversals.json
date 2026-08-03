@@ -1,0 +1,457 @@
+{
+	"contractVersion": 6,
+	"documentType": "simulation-input",
+	"input": {
+		"scene": {
+			"id": "dense-board",
+			"coordinateSystem": {
+				"origin": "centre-bottom",
+				"horizontalAxis": "right",
+				"verticalAxis": "up",
+				"lengthUnit": "metre"
+			},
+			"bounds": {
+				"width": 4.4,
+				"height": 4.2
+			},
+			"staticColliders": [
+				{
+					"id": "dense-peg-01-01",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [-1.68, 3.25]
+				},
+				{
+					"id": "dense-peg-01-02",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [-1.26, 3.25]
+				},
+				{
+					"id": "dense-peg-01-03",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [-0.84, 3.25]
+				},
+				{
+					"id": "dense-peg-01-04",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [-0.42, 3.25]
+				},
+				{
+					"id": "dense-peg-01-05",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [0, 3.25]
+				},
+				{
+					"id": "dense-peg-01-06",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [0.42, 3.25]
+				},
+				{
+					"id": "dense-peg-01-07",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [0.84, 3.25]
+				},
+				{
+					"id": "dense-peg-01-08",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [1.26, 3.25]
+				},
+				{
+					"id": "dense-peg-01-09",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [1.68, 3.25]
+				},
+				{
+					"id": "dense-peg-02-01",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [-1.47, 2.67]
+				},
+				{
+					"id": "dense-peg-02-02",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [-1.05, 2.67]
+				},
+				{
+					"id": "dense-peg-02-03",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [-0.63, 2.67]
+				},
+				{
+					"id": "dense-peg-02-04",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [-0.21, 2.67]
+				},
+				{
+					"id": "dense-peg-02-05",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [0.21, 2.67]
+				},
+				{
+					"id": "dense-peg-02-06",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [0.63, 2.67]
+				},
+				{
+					"id": "dense-peg-02-07",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [1.05, 2.67]
+				},
+				{
+					"id": "dense-peg-02-08",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [1.47, 2.67]
+				},
+				{
+					"id": "dense-peg-02-09",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [1.89, 2.67]
+				},
+				{
+					"id": "dense-peg-03-01",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [-1.68, 2.09]
+				},
+				{
+					"id": "dense-peg-03-02",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [-1.26, 2.09]
+				},
+				{
+					"id": "dense-peg-03-03",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [-0.84, 2.09]
+				},
+				{
+					"id": "dense-peg-03-04",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [-0.42, 2.09]
+				},
+				{
+					"id": "dense-peg-03-05",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [0, 2.09]
+				},
+				{
+					"id": "dense-peg-03-06",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [0.42, 2.09]
+				},
+				{
+					"id": "dense-peg-03-07",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [0.84, 2.09]
+				},
+				{
+					"id": "dense-peg-03-08",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [1.26, 2.09]
+				},
+				{
+					"id": "dense-peg-03-09",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [1.68, 2.09]
+				},
+				{
+					"id": "dense-peg-04-01",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [-1.47, 1.5100000000000002]
+				},
+				{
+					"id": "dense-peg-04-02",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [-1.05, 1.5100000000000002]
+				},
+				{
+					"id": "dense-peg-04-03",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [-0.63, 1.5100000000000002]
+				},
+				{
+					"id": "dense-peg-04-04",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [-0.21, 1.5100000000000002]
+				},
+				{
+					"id": "dense-peg-04-05",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [0.21, 1.5100000000000002]
+				},
+				{
+					"id": "dense-peg-04-06",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [0.63, 1.5100000000000002]
+				},
+				{
+					"id": "dense-peg-04-07",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [1.05, 1.5100000000000002]
+				},
+				{
+					"id": "dense-peg-04-08",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [1.47, 1.5100000000000002]
+				},
+				{
+					"id": "dense-peg-04-09",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [1.89, 1.5100000000000002]
+				},
+				{
+					"id": "dense-peg-05-01",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [-1.68, 0.9300000000000002]
+				},
+				{
+					"id": "dense-peg-05-02",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [-1.26, 0.9300000000000002]
+				},
+				{
+					"id": "dense-peg-05-03",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [-0.84, 0.9300000000000002]
+				},
+				{
+					"id": "dense-peg-05-04",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [-0.42, 0.9300000000000002]
+				},
+				{
+					"id": "dense-peg-05-05",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [0, 0.9300000000000002]
+				},
+				{
+					"id": "dense-peg-05-06",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [0.42, 0.9300000000000002]
+				},
+				{
+					"id": "dense-peg-05-07",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [0.84, 0.9300000000000002]
+				},
+				{
+					"id": "dense-peg-05-08",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [1.26, 0.9300000000000002]
+				},
+				{
+					"id": "dense-peg-05-09",
+					"motionAuthority": "static",
+					"physicalShape": {
+						"type": "circle",
+						"radius": 0.075
+					},
+					"centre": [1.68, 0.9300000000000002]
+				}
+			],
+			"terminationRegions": [
+				{
+					"id": "dense-exit",
+					"type": "axis-aligned-box",
+					"purpose": "complete",
+					"minimum": [-2.2, -0.25],
+					"maximum": [2.2, 0.1]
+				}
+			]
+		},
+		"initialDynamicBodies": [
+			{
+				"id": "ball-primary",
+				"motionAuthority": "dynamic",
+				"physicalShape": {
+					"type": "circle",
+					"radius": 0.135
+				},
+				"position": [0.63, 3.95],
+				"velocity": [0, 0]
+			}
+		],
+		"settings": {
+			"gravity": [0, -9.81],
+			"restitution": 0.98,
+			"maximumEvents": 200,
+			"maximumSimulationTime": 60,
+			"tolerances": {
+				"contactDistance": 1e-9,
+				"eventTime": 1e-9
+			}
+		}
+	}
+}

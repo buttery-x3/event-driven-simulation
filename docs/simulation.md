@@ -103,8 +103,12 @@ evaluates physical separation at those samples and classifies roots as entering,
 grazing, initial contact or indeterminate. Decisive separated/overlapping neighbourhood topology
 takes precedence over the derivative evaluated at the isolated root, so a tangent root separated on
 both sides remains grazing when root-location noise gives it a tiny signed normal velocity. Signed
-normal motion is used only when that local topology is unavailable or ambiguous. A certified
-entering root with definite incoming normal motion is an impact; an entering root inside the
+normal motion is used only when that local topology is unavailable or ambiguous. A nondecisive
+root and its consecutive isolated neighbours form one local topology cluster. The cluster is
+grazing only when wider samples certify separation on both sides and every derivative critical
+point keeps penetration within `contactDistance`; missing evidence, deeper penetration or
+contradictory topology fails closed. A certified entering root with definite incoming normal
+motion is an impact; an entering root inside the
 normal-velocity ambiguity band is a non-impulsive contact onset. External grazing and exiting roots
 are rejected, while indeterminate topology fails closed.
 

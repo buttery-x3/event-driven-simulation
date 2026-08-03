@@ -159,7 +159,10 @@ function selectEarliestEligibleRoot(
 			root.normalizedTime <= toleranceContainedGrazingThrough;
 		const toleranceContainedGrazingExit: number | null = inheritedToleranceContainedGrazing
 			? toleranceContainedGrazingThrough
-			: evidence.before === 'separated' && evidence.after === 'ambiguous'
+			: evidence.before !== null &&
+				  (evidence.before === 'ambiguous' ||
+						evidence.after === 'ambiguous' ||
+						evidence.after === null)
 				? findToleranceContainedGrazingExit(
 						roots,
 						rootIndex,
