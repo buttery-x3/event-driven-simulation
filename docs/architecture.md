@@ -53,12 +53,12 @@ The canonical board coordinate system, construction and named launch catalogue a
 diagnostics for unsupported geometry, duplicate IDs, malformed coordinates and invalid dimensions.
 
 The named `simulation/world/scenarios` subdomain owns human-readable canonical, board-state,
-adversarial, dynamic-pair, simultaneous-impact, dormant-component and sustained-path-interruption
-experiment definitions. Each scenario family that has its own descriptor vocabulary lives in a
-named local folder. The shared descriptor declares category, purpose, complete `SimulationInput`,
-permitted outcomes, relevant event/contact expectations, replay expectation, coverage and
-regression provenance. It may describe invalid or unresolved experiments, but it does not invoke
-simulation or select solver behaviour; consumers receive it through `world/index.ts`.
+adversarial, dynamic-pair, simultaneous-impact, dormant-component, sustained-path-interruption and
+dynamic-support experiment definitions. Each scenario family that has its own descriptor vocabulary
+lives in a named local folder. The shared descriptor declares category, purpose, complete
+`SimulationInput`, permitted outcomes, relevant event/contact expectations, replay expectation,
+coverage and regression provenance. It may describe invalid or unresolved experiments, but it does
+not invoke simulation or select solver behaviour; consumers receive it through `world/index.ts`.
 
 ## Contract responsibilities
 
@@ -185,6 +185,15 @@ Dormant bodies have stationary authoritative coverage and no local prediction un
 component impact reactivates them; the global scheduler remains responsible only for sequencing
 that transition with releases and other selected events.
 
+A retained dynamic body contact may become a sustained circular support only when the supporting
+body belongs to a fixed-anchored dormant component that remains support-feasible under the moving
+body's transmitted equal-and-opposite load. The private `scheduler/dynamic-support` subdomain owns
+admission, constrained prediction, exact reaction-loss boundaries, commitment, interruption and
+contract record construction for that state machine. It reuses the dormant support-equilibrium
+solver with the transmitted external load and the existing circular angular event search; it does
+not convert the support body to static geometry. A third-body impact interrupts the complete
+anchored component at the exact impact time before the component is rebuilt and re-certified.
+
 The sibling `dynamic-impact` subdomain owns the generalized-coordinate simultaneous-impact law.
 `generalised-reflections.ts` composes a maximum-dissipation inelastic endpoint, implicit-equality
 anti-locking projection, scale-aware terminating elastic reflections with energy renormalisation,
@@ -193,9 +202,9 @@ and equality projection; `nonnegative-qp.ts` owns deterministic bounded non-nega
 least-squares selection; `linear-algebra.ts` owns the small dense eigensolve and metric operations.
 The existing isolated response remains the closed-form reduction oracle. Solver diagnostics retain
 the complete contact gradients, projected/removed constraints, lineality basis, reflection subsets
-and invariant checks, endpoint energies, impulses and completion reason. Persistent dynamic contact
-that also retains fixed support remains an explicit `unsupported-body-body-response` boundary after
-the instantaneous response succeeds.
+and invariant checks, endpoint energies, impulses and completion reason. A persistent moving pair
+without a fixed-anchored support certificate remains an explicit `unsupported-body-body-response`
+boundary after the instantaneous response succeeds.
 
 This subdomain currently has six implementation files, triggering a headroom assessment but not a
 further split: its cohesive reason to change is the one simultaneous-impact operator, and the

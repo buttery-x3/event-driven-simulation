@@ -69,6 +69,9 @@ expectation, requirement-coverage tags and regression-fixture provenance. The ad
 uses focused named experiments for launch/path, initial-position, physical-setting and sustained-
 contact extremes; it is intentionally not a Cartesian parameter generator. Mirrored near-centre
 entries are constructed as an explicit pair and contract tests compare their authoritative evidence.
+The dynamic-support family adds six workbench experiments covering continued sliding on an anchored
+dynamic body, transmitted load that remains supported, exact loss of a fixed support reaction,
+third-body interruption, launch from the support and the explicit unsupported moving-pair boundary.
 
 The workbench may replace the selected scenario's editable input fields only in its draft copy.
 User-facing speed and angle controls use degrees measured from positive `x` toward positive `y`;
@@ -261,8 +264,8 @@ event selection or becomes authoritative trajectory motion.
 
 ## Multi-body history contract
 
-Version 7 defines multi-body semantics and continuous dynamic-circle pair discovery, but does not
-yet implement dynamic-body impulse response. Each input body has a unique ID, positive finite mass, radius, initial state and
+Version 7 defines multi-body semantics, continuous dynamic-circle pair discovery and frictionless
+dynamic-body response. Each input body has a unique ID, positive finite mass, radius, initial state and
 non-negative release time. Before that time it is `scheduled` and physically absent. Simultaneous
 releases form one semantic batch; serialized array order and diagnostic IDs cannot decide physical
 ordering or response. Exact fixed or dynamic touching is evidence for the applicable contact policy,
@@ -292,9 +295,9 @@ contact-polynomial coefficients, roots, candidate times, geometry residuals, top
 normal motion. It is evidence only. Rendering evaluates
 the authoritative trajectories and never reconstructs motion from predictions or component IDs.
 
-The pair search ends at the earlier local-event horizon. Circular-contact combinations are excluded
-because their rotating normals require a separate search. For a certified isolated incoming pair,
-the scheduler applies the issue-owned frictionless response
+The pair search ends at the earlier local-event horizon. Changing-normal circular paths use a
+bounded relative-speed isolation query rather than the polynomial reduction. For a certified
+isolated incoming pair, the scheduler applies the issue-owned frictionless response
 
 ```text
 g- = (vB- - vA-) dot n
@@ -310,9 +313,15 @@ new futures are built. Unrelated predictions retain their original revisions. St
 diagnostic but cannot be selected because every authoritative pair event must match both current
 revision stamps.
 
-If the exact-time component includes a third dynamic body, a fixed-world event for either
-participant or an active fixed support, the scheduler commits the connected valid prefix and stops
-with `unsupported-body-body-response`; ID order is used only to organize diagnostics.
+After the response, a retained body/body contact may continue only when one participant belongs to
+a fixed-anchored dormant component. The moving participant follows an authoritative circular path
+around the still-dynamic support body while its reaction is applied as an equal-and-opposite
+external load to the complete anchored component's support-equilibrium solve. The scheduler selects
+the exact first boundary at which the body/body normal reaction or any fixed support reaction
+reaches zero. A third-body impact at an earlier time invalidates the whole dynamic-support
+prediction and rebuilds the complete connected component at that exact event. A retained moving
+pair without this certificate stops explicitly with `unsupported-body-body-response`; ID order is
+used only to organize diagnostics.
 
 `schedulerSteps` records the local event that advanced world time, its body revision and the body
 IDs whose predictions were retained unchanged. A future release remains an external event even
@@ -371,6 +380,13 @@ proving gravity can be balanced by the full contact set; small speed alone is in
 Resting contact makes that body dormant. The world continues when a scheduled release or another
 active body remains, and one stationary segment covers the dormant interval without cuts at
 unrelated world events.
+
+Dynamic support does not turn the supporting body into a static collider. The circular segment
+identifies both the dynamic support body and its anchored component, while dynamic-contact,
+component-lifecycle and support diagnostics retain admission, transmitted load, fixed reactions,
+exact release reason and interruption evidence. Re-certification occurs at every selected boundary;
+loss of any required unilateral reaction dissolves the sustained-support component at that exact
+time before the released bodies receive new futures.
 
 When a constrained circular path reaches a new collider, the circular segment end state supplies
 the canonical event time, position and velocity directly to the manifold solve. The retained circle

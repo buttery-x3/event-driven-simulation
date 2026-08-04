@@ -249,6 +249,26 @@ and `support-equilibrium.ts` owns non-negative support certification. The local 
 the narrow scheduler-facing API. Focused dormant-component scenarios and verification protect the
 extraction; no compatibility wrapper remains at the old flat scheduler path.
 
+FLAME-56 introduced the distinct `scheduler/dynamic-support` state machine for a moving body held
+in circular contact by a dynamic body whose complete component remains fixed-anchored.
+`admission.ts` owns certification and promotion, `prediction.ts` owns constrained motion plus
+reaction-boundary search, `commit.ts` owns selected-boundary state transitions, `interruption.ts`
+owns exact-time external-impact invalidation, `records.ts` owns history and diagnostic construction,
+and `types.ts` owns private runtime vocabulary. The local `index.ts` preserves a narrow
+scheduler-facing API, while public run construction remains unchanged through `run/index.ts`.
+
+The subdomain is at the six-implementation-file headroom threshold. Its files remain cohesive parts
+of one independently changing support state machine and no production file exceeds the review
+threshold after record construction was extracted from commitment. A second constrained
+body/body geometry, a replaceable reaction-search backend or independently configurable
+certification policy would require a nested prediction or certification subdomain rather than a
+seventh sibling implementation file.
+
+Independent checks for dynamic support introduced `verification/physics/support` rather than
+adding another category to the physics orchestrator. `dynamic.ts` owns the body/body geometry,
+tangency, reaction, component-lifecycle and interruption checks; its local entry point leaves the
+public `verification/index.ts` API unchanged.
+
 FLAME-36 moved restitution response out of `construct.ts` when sustained contact introduced a
 second response mode. The orchestrator retains only state sequencing and run assembly.
 

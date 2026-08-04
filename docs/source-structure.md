@@ -109,6 +109,9 @@ src/lib/simulation/
             path-interruptions/
                 index.ts
                 definitions.ts
+            dynamic-supports/
+                index.ts
+                definitions.ts
             manifold/
                 index.ts
                 definitions.ts
@@ -136,6 +139,14 @@ src/lib/simulation/
                 rebuild.ts
                 records.ts
                 support-equilibrium.ts
+            dynamic-support/
+                index.ts
+                types.ts
+                admission.ts
+                prediction.ts
+                commit.ts
+                interruption.ts
+                records.ts
             __tests__/
         dynamic-impact/
             index.ts
@@ -238,6 +249,9 @@ src/lib/simulation/
             contact-dynamics.ts
             coupled-impact.ts
             dormant-component.ts
+            support/
+                index.ts
+                dynamic.ts
             terminal-outcome.ts
         __tests__/
 ```
@@ -268,14 +282,20 @@ circle paths. `query.ts` owns polynomial-path root selection, while `bounded-que
 deterministically bounded circular-path isolation using conservative relative-speed exclusion. The
 `run/dynamic-impact` subdomain owns isolated and simultaneous frictionless impact response. Inside
 the scheduler, `pairs` owns continuous pair selection, exact-time component construction and
-commitment, while `dormancy` owns support-equilibrium admission, post-impact component rebuilding,
-lifecycle records and retained-contact persistence. These are private run capabilities;
+commitment, `dormancy` owns support-equilibrium admission, post-impact component rebuilding,
+lifecycle records and retained-contact persistence, and `dynamic-support` owns certified moving
+body-on-anchored-body continuation and interruption. These are private run capabilities;
 cross-subsystem consumers continue to enter through `collision/index.ts` and `run/index.ts`.
 
+Within verification, the private `physics/support` subdomain owns independently calculated support
+evidence. Its dynamic validator checks recorded circular body/body geometry, tangency, load and
+reaction signs, exact component dissolution and impact interruption without importing run solver
+code.
+
 Scenario families with their own descriptor vocabulary live in named folders below
-`world/scenarios`. `dynamic-pairs`, `simultaneous-impact`, `dormant-components` and
-`path-interruptions` own declarative definitions only; they do not select solver policy or invoke
-private scheduler modules.
+`world/scenarios`. `dynamic-pairs`, `simultaneous-impact`, `dormant-components`,
+`path-interruptions` and `dynamic-supports` own declarative definitions only; they do not select
+solver policy or invoke private scheduler modules.
 
 These responsibilities refine the module descriptions already present in `architecture.md`; they do
 not replace the physical and renderer boundaries documented there.
@@ -437,12 +457,14 @@ contract, the definition modules own complete `SimulationInput` values, and
 `board-state-metadata.ts` keeps verification policy from further enlarging the substantial board
 geometry module. Consumers continue to use `world/index.ts`.
 
-FLAME-51 through FLAME-55 added the documented `collision/dynamic-pair`, `run/dynamic-impact`,
+FLAME-51 through FLAME-56 added the documented `collision/dynamic-pair`, `run/dynamic-impact`,
 `run/scheduler/pairs`, `run/scheduler/dormancy`, `world/scenarios/dynamic-pairs`,
 `world/scenarios/simultaneous-impact`, `world/scenarios/dormant-components` and
-`world/scenarios/path-interruptions` subdomains. Their local entry points are private capability
-boundaries; the stable cross-subsystem facades remain `collision/index.ts`, `run/index.ts` and
-`world/index.ts`.
+`world/scenarios/path-interruptions` subdomains. FLAME-56 additionally introduced
+`run/scheduler/dynamic-support`, `verification/physics/support` and
+`world/scenarios/dynamic-supports`. Their local entry points are private capability boundaries; the
+stable cross-subsystem facades remain `collision/index.ts`, `run/index.ts`, `verification/index.ts`
+and `world/index.ts`.
 
 The migration issue must also update the path references in `architecture.md`, `simulation.md`,
 `workflow.md`, ESLint rules and all imports. Do not leave documentation describing paths that no
