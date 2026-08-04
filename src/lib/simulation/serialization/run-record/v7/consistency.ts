@@ -76,7 +76,7 @@ function validateBodyStates(record: SimulationRunRecord): void {
 		record.bodyStates.some(
 			(state) =>
 				state.lifecycle === 'scheduled' ||
-				state.lifecycle === 'active' ||
+				(state.lifecycle === 'active' && record.outcome !== 'no-future-event') ||
 				state.lifecycle === 'invalid' ||
 				state.lifecycle === 'unresolved'
 		)
@@ -210,6 +210,15 @@ function validateContactsAndComponents(record: SimulationRunRecord): void {
 			new Set(component.activeContactIds).size !== component.activeContactIds.length
 		)
 			invalidRunRecordField(path, 'must not duplicate component membership');
+		if (
+			(component.revision !== undefined &&
+				(!Number.isInteger(component.revision) || component.revision < 0)) ||
+			(component.futureScheduledEventTimes ?? []).some(
+				(time, eventIndex, times) =>
+					time < component.createdAtTime || (eventIndex > 0 && time < times[eventIndex - 1]!)
+			)
+		)
+			invalidRunRecordField(path, 'contains invalid dormant runtime revision or future events');
 		component.bodyIds.forEach((id) => {
 			if (!bodyIds.has(id))
 				invalidRunRecordField(`${path}.bodyIds`, 'contains an unresolved body reference');
@@ -242,6 +251,12 @@ function validateContactsAndComponents(record: SimulationRunRecord): void {
 				invalidRunRecordField(
 					`$.componentEvents[${index}]`,
 					'contains an unresolved component reference'
+				);
+		for (const bodyId of event.reactivatedBodyIds ?? [])
+			if (!bodyIds.has(bodyId))
+				invalidRunRecordField(
+					`$.componentEvents[${index}].reactivatedBodyIds`,
+					'contains an unresolved body reference'
 				);
 	}
 }

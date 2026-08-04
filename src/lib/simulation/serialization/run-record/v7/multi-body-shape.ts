@@ -93,6 +93,12 @@ export function validateMultiBodyHistoryShape(run: Record<string, unknown>): voi
 				.requireArray(event[field], `${path}.${field}`)
 				.forEach((id, idIndex) => assertions.requireString(id, `${path}.${field}[${idIndex}]`));
 		}
+		if (event.reactivatedBodyIds !== undefined)
+			assertions
+				.requireArray(event.reactivatedBodyIds, `${path}.reactivatedBodyIds`)
+				.forEach((id, idIndex) =>
+					assertions.requireString(id, `${path}.reactivatedBodyIds[${idIndex}]`)
+				);
 	});
 }
 
@@ -114,6 +120,14 @@ function validateComponent(value: unknown, path: string): void {
 	);
 	assertions.requireFiniteNumber(component.createdAtTime, `${path}.createdAtTime`);
 	assertions.requireNullableFiniteNumber(component.dissolvedAtTime, `${path}.dissolvedAtTime`);
+	if (component.revision !== undefined)
+		assertions.requireFiniteNumber(component.revision, `${path}.revision`);
+	if (component.futureScheduledEventTimes !== undefined)
+		assertions
+			.requireArray(component.futureScheduledEventTimes, `${path}.futureScheduledEventTimes`)
+			.forEach((time, index) =>
+				assertions.requireFiniteNumber(time, `${path}.futureScheduledEventTimes[${index}]`)
+			);
 	for (const field of ['bodyIds', 'fixedColliderIds', 'activeContactIds'] as const) {
 		assertions
 			.requireArray(component[field], `${path}.${field}`)

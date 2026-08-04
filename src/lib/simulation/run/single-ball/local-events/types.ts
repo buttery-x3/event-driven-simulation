@@ -29,6 +29,7 @@ export interface LocalBodyRuntime {
 	committedTime: number;
 	state: ImpactNextState;
 	terminalReason: RunTerminalReason | null;
+	dormantComponentId: string | null;
 	prepared: PreparedLocalContinuation | null;
 	readonly segments: MotionSegment[];
 	readonly events: PhysicalEvent[];

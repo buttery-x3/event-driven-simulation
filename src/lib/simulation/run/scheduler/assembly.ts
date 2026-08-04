@@ -88,12 +88,21 @@ export function aggregateWorldReason(state: SchedulerState): RunTerminalReason {
 	const runtimes = [...state.runtimes.values()];
 	if (state.input.initialDynamicBodies.length === 1) return runtimes[0]!.terminalReason!;
 	const outcomes = runtimes.map((runtime) => getRunOutcome(runtime.terminalReason!));
+	const nonTerminal = runtimes.filter(
+		(runtime) =>
+			!runtime.terminalReason ||
+			!['completion-region', 'escape-region', 'bounds-escape'].includes(runtime.terminalReason.type)
+	);
+	const allDormant =
+		nonTerminal.length > 0 && nonTerminal.every((runtime) => runtime.dormantComponentId !== null);
 	const outcome: Extract<RunOutcome, 'exited' | 'escaped' | 'settled' | 'no-future-event'> =
-		outcomes.some((value) => value === 'settled' || value === 'no-future-event')
+		allDormant
 			? 'settled'
-			: outcomes.some((value) => value === 'exited')
-				? 'exited'
-				: 'escaped';
+			: outcomes.some((value) => value === 'no-future-event')
+				? 'no-future-event'
+				: outcomes.some((value) => value === 'exited')
+					? 'exited'
+					: 'escaped';
 	return {
 		type: 'world-complete',
 		time: state.worldTime,
@@ -124,6 +133,9 @@ function bodyState(state: SchedulerState, body: InitialDynamicCircleBodyState): 
 			terminalOutcome: null
 		};
 	}
+	if (runtime.dormantComponentId) {
+		return releasedState(body, 'resting', state.worldTime, null);
+	}
 	if (
 		state.dynamicContacts.some(
 			(contact) =>
@@ -148,9 +160,11 @@ function bodyState(state: SchedulerState, body: InitialDynamicCircleBodyState): 
 	if (reason.type === 'escape-region' || reason.type === 'bounds-escape') {
 		return releasedState(body, 'escaped', reason.time, 'escaped');
 	}
-	if (reason.type === 'resting-contact' || reason.type === 'no-future-event') {
+	if (reason.type === 'resting-contact') {
 		return releasedState(body, 'resting', state.worldTime, null);
 	}
+	if (reason.type === 'no-future-event')
+		return releasedState(body, 'active', state.worldTime, null);
 	if (reason.type === 'invalid-state') {
 		return releasedState(body, 'invalid', reason.time ?? runtime.committedTime, 'invalid');
 	}
@@ -179,6 +193,22 @@ function trajectorySegments(
 ): readonly MotionSegment[] {
 	const segments = [...runtime.segments];
 	const reason = runtime.terminalReason;
+	if (runtime.dormantComponentId && worldTime > runtime.committedTime) {
+		const startPosition =
+			reason?.type === 'resting-contact' ? reason.position : runtime.state.position;
+		const stationary: StationaryMotionSegment = {
+			type: 'stationary',
+			bodyId: runtime.body.id,
+			startTime: runtime.committedTime,
+			endTime: worldTime,
+			startPosition,
+			startVelocity: [0, 0],
+			reason: 'dormant-component',
+			componentId: runtime.dormantComponentId
+		};
+		segments.push(stationary);
+		return segments;
+	}
 	if (
 		reason &&
 		(reason.type === 'resting-contact' || reason.type === 'no-future-event') &&

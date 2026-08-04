@@ -170,6 +170,20 @@ function polynomialPath(
 	runtime: LocalBodyRuntime,
 	prediction: LocalBodyPrediction | null
 ): PolynomialDynamicCirclePath | null {
+	if (runtime.dormantComponentId) {
+		const component = state.contactComponents.find(({ id }) => id === runtime.dormantComponentId);
+		const stationary: StationaryMotionSegment = {
+			type: 'stationary',
+			bodyId: runtime.body.id,
+			startTime: component?.createdAtTime ?? runtime.committedTime,
+			endTime: state.input.settings.maximumSimulationTime,
+			startPosition: runtime.state.position,
+			startVelocity: [0, 0],
+			reason: 'dormant-component',
+			componentId: runtime.dormantComponentId
+		};
+		return stationary;
+	}
 	const reason = runtime.terminalReason;
 	if (reason?.type === 'resting-contact' || reason?.type === 'no-future-event') {
 		const stationary: StationaryMotionSegment = {
