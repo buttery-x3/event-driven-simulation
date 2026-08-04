@@ -36,3 +36,17 @@ export {
 	type CircleCircleRootTopology,
 	type CircleCircleRootTopologyEvidence
 } from './circle-circle';
+export {
+	buildDynamicPairContactPolynomial,
+	defaultDynamicPairContactTolerances,
+	findEarliestDynamicPairContact,
+	type DynamicCirclePathParticipant,
+	type DynamicPairCandidateClassification,
+	type DynamicPairContactCandidateDiagnostic,
+	type DynamicPairContactDiagnostics,
+	type DynamicPairContactQuery,
+	type DynamicPairContactQueryResult,
+	type DynamicPairContactState,
+	type DynamicPairContactTolerances,
+	type PolynomialDynamicCirclePath
+} from './dynamic-pair';
