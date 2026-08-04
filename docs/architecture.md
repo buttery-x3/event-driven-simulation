@@ -52,11 +52,13 @@ The canonical board coordinate system, construction and named launch catalogue a
 [`simulation.md`](simulation.md). Scene validation is headless and returns typed, path-specific
 diagnostics for unsupported geometry, duplicate IDs, malformed coordinates and invalid dimensions.
 
-The named `simulation/world/scenarios` subdomain owns human-readable canonical, board-state and
-adversarial experiment definitions. Its shared descriptor declares category, purpose, complete
-`SimulationInput`, permitted outcomes, relevant event/contact expectations, replay expectation,
-coverage and regression provenance. It may describe invalid or unresolved experiments, but it does
-not invoke simulation or select solver behaviour; consumers receive it through `world/index.ts`.
+The named `simulation/world/scenarios` subdomain owns human-readable canonical, board-state,
+adversarial, dynamic-pair, simultaneous-impact and dormant-component experiment definitions. Each
+scenario family that has its own descriptor vocabulary lives in a named local folder. The shared
+descriptor declares category, purpose, complete `SimulationInput`, permitted outcomes, relevant
+event/contact expectations, replay expectation, coverage and regression provenance. It may describe
+invalid or unresolved experiments, but it does not invoke simulation or select solver behaviour;
+consumers receive it through `world/index.ts`.
 
 ## Contract responsibilities
 
@@ -175,6 +177,13 @@ private `scheduler/pairs/component.ts` module owns this geometry-to-component bo
 `coupled-commit.ts` owns prefix commitment, future invalidation, contact/component records and
 post-impact runtime state. Disconnected simultaneous components are committed independently, while
 nearby positive-time events remain ordered.
+
+Certified stationary components with fixed support become persistent dormant components. The
+private `scheduler/dormancy` subdomain owns their admission, support-equilibrium certification,
+post-impact retirement/rebuilding, split/merge lifecycle evidence and retained contact records.
+Dormant bodies have stationary authoritative coverage and no local prediction until an exact-time
+component impact reactivates them; the global scheduler remains responsible only for sequencing
+that transition with releases and other selected events.
 
 The sibling `dynamic-impact` subdomain owns the generalized-coordinate simultaneous-impact law.
 `generalised-reflections.ts` composes a maximum-dissipation inelastic endpoint, implicit-equality

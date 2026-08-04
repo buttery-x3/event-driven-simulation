@@ -82,7 +82,13 @@ export type ScenarioCoverageId =
 	| 'impact.implicit-equality'
 	| 'impact.scale-invariance'
 	| 'impact.multi-body-lineality'
-	| 'impact.termination-certification-failure';
+	| 'impact.termination-certification-failure'
+	| 'dormant.wedged-remains-anchored'
+	| 'dormant.wedged-dislodged'
+	| 'dormant.stack-reactivated'
+	| 'dormant.component-split'
+	| 'dormant.world-continues'
+	| 'dormant.unsupported-floating';
 
 export type ScenarioMotionMode = 'free-flight' | 'linear-contact' | 'circular-contact';
 

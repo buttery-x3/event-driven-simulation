@@ -73,6 +73,12 @@ src/lib/simulation/
             query-validation.ts
             root-topology.ts
             types.ts
+        dynamic-pair/
+            index.ts
+            types.ts
+            query.ts
+            query-validation.ts
+            contact-polynomial.ts
         __tests__/
 
     world/
@@ -90,6 +96,15 @@ src/lib/simulation/
             independent-bodies/
                 index.ts
                 definitions.ts
+            dynamic-pairs/
+                index.ts
+                definitions.ts
+            simultaneous-impact/
+                index.ts
+                definitions.ts
+            dormant-components/
+                index.ts
+                definitions.ts
             manifold/
                 index.ts
                 definitions.ts
@@ -104,6 +119,28 @@ src/lib/simulation/
             construct.ts
             release.ts
             assembly.ts
+            predictions.ts
+            pairs/
+                index.ts
+                selection.ts
+                component.ts
+                commit.ts
+                coupled-commit.ts
+            dormancy/
+                index.ts
+                admission.ts
+                rebuild.ts
+                records.ts
+                support-equilibrium.ts
+            __tests__/
+        dynamic-impact/
+            index.ts
+            types.ts
+            response.ts
+            generalised-reflections.ts
+            lineality.ts
+            nonnegative-qp.ts
+            linear-algebra.ts
             __tests__/
         single-ball/
             index.ts
@@ -192,8 +229,11 @@ src/lib/simulation/
         physics/
             index.ts
             contact-geometry.ts
+            body-contact.ts
             collision-free.ts
             contact-dynamics.ts
+            coupled-impact.ts
+            dormant-component.ts
             terminal-outcome.ts
         __tests__/
 ```
@@ -218,6 +258,18 @@ The `serialization/diagnostic-export` subdomain owns construction and formatted 
 the versioned, immutable diagnostic evidence bundle. It consumes an accepted run record and
 explicit workbench provenance; it does not load scenarios, validate saved runs, invoke simulation,
 or depend on browser download APIs.
+
+The `collision/dynamic-pair` subdomain owns synchronized continuous contact queries for two dynamic
+circle paths. The `run/dynamic-impact` subdomain owns isolated and simultaneous frictionless impact
+response. Inside the scheduler, `pairs` owns continuous pair selection, exact-time component
+construction and commitment, while `dormancy` owns support-equilibrium admission, post-impact
+component rebuilding, lifecycle records and retained-contact persistence. These are private run
+capabilities; cross-subsystem consumers continue to enter through `collision/index.ts` and
+`run/index.ts`.
+
+Scenario families with their own descriptor vocabulary live in named folders below
+`world/scenarios`. `dynamic-pairs`, `simultaneous-impact` and `dormant-components` own declarative
+definitions only; they do not select solver policy or invoke private scheduler modules.
 
 These responsibilities refine the module descriptions already present in `architecture.md`; they do
 not replace the physical and renderer boundaries documented there.
@@ -378,6 +430,12 @@ into the named `world/scenarios` subdomain. `types.ts` owns their shared seriali
 contract, the definition modules own complete `SimulationInput` values, and
 `board-state-metadata.ts` keeps verification policy from further enlarging the substantial board
 geometry module. Consumers continue to use `world/index.ts`.
+
+FLAME-51 through FLAME-54 added the documented `collision/dynamic-pair`, `run/dynamic-impact`,
+`run/scheduler/pairs`, `run/scheduler/dormancy`, `world/scenarios/dynamic-pairs`,
+`world/scenarios/simultaneous-impact` and `world/scenarios/dormant-components` subdomains. Their
+local entry points are private capability boundaries; the stable cross-subsystem facades remain
+`collision/index.ts`, `run/index.ts` and `world/index.ts`.
 
 The migration issue must also update the path references in `architecture.md`, `simulation.md`,
 `workflow.md`, ESLint rules and all imports. Do not leave documentation describing paths that no

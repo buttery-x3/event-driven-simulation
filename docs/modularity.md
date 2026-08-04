@@ -225,6 +225,30 @@ and `types.ts` owns only their scheduler state vocabulary. This boundary is evid
 global state machine, scheduled releases, later body-pair interruption consumer and independent
 world/body outcomes; it is not a speculative layer.
 
+FLAME-52 introduced enough pair-event policy to require the private `scheduler/pairs` subdomain.
+`selection.ts` owns continuous prediction ordering, `component.ts` owns exact-time contact graph
+construction, `commit.ts` owns isolated pair commitment and `coupled-commit.ts` owns simultaneous
+component commitment. Its local `index.ts` is an explicit internal facade. Scheduler construction
+continues to own global sequencing and imports this capability without re-exporting its internal
+types from `run/index.ts`.
+
+FLAME-53 introduced the sibling `run/dynamic-impact` numerical subdomain. `response.ts` preserves
+the isolated closed-form response, `generalised-reflections.ts` owns the generalized simultaneous
+impact operator, `lineality.ts` owns cone-lineality policy, `nonnegative-qp.ts` owns constrained
+selection, and `linear-algebra.ts` owns small dense metric operations. The directory is at its
+headroom-assessment threshold, but those modules still have one cohesive reason to change: the
+frictionless dynamic-impact law. Rotational coordinates, sparse backends or independently
+versioned solver policies would require a nested numerical subdomain rather than another sibling
+implementation file.
+
+FLAME-54 introduced a persistent dormant-component state machine and therefore the private
+`scheduler/dormancy` subdomain rather than adding that lifecycle to the scheduler orchestrator.
+`admission.ts` owns initial and single-body promotion, `rebuild.ts` owns post-impact retirement,
+split/merge/recreation and reactivation, `records.ts` owns stable component/contact persistence,
+and `support-equilibrium.ts` owns non-negative support certification. The local `index.ts` preserves
+the narrow scheduler-facing API. Focused dormant-component scenarios and verification protect the
+extraction; no compatibility wrapper remains at the old flat scheduler path.
+
 FLAME-36 moved restitution response out of `construct.ts` when sustained contact introduced a
 second response mode. The orchestrator retains only state sequencing and run assembly.
 
@@ -251,6 +275,14 @@ candidate geometry, `query.ts` owns root isolation and earliest eligible contact
 entering, exiting, grazing, initial/release-owned and indeterminate policy, while `types.ts` owns
 contract-only declarations. The local `index.ts` exposes geometry-pair terminology while the parent
 collision entry point remains the supported cross-subsystem boundary.
+
+### Dynamic-pair contact
+
+FLAME-51 introduced continuous collision discovery between two moving circles as the named
+`collision/dynamic-pair` subdomain. `contact-polynomial.ts` owns swap-invariant relative geometry,
+`query-validation.ts` owns synchronized-path input policy, `query.ts` owns bounded root selection
+and result construction, and `types.ts` owns the local path/result contracts. The local and parent
+entry points preserve an explicit public collision capability without exposing scheduler state.
 
 ### Fixture validation
 
