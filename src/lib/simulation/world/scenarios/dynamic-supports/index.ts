@@ -1,0 +1,1 @@
+export { dynamicSupportScenarios } from './definitions';

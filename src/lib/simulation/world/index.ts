@@ -13,6 +13,7 @@ export {
 	simultaneousImpactScenarios,
 	dormantComponentScenarios,
 	pathInterruptionScenarios,
+	dynamicSupportScenarios,
 	canonicalPlinkoScenarios,
 	defaultCanonicalPlinkoScenario,
 	type BoardStateScenario,

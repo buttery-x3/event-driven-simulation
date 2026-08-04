@@ -5,3 +5,4 @@ export { validateTerminalOutcome } from './terminal-outcome';
 export { validateDynamicBodyContacts } from './body-contact';
 export { validateCoupledImpacts } from './coupled-impact';
 export { validateDormantComponents } from './dormant-component';
+export { validateDynamicSupports } from './support';

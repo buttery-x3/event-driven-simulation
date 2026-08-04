@@ -75,7 +75,7 @@ export function findCircularMotionBoundary(seed: CircularContactSeed): AngularEv
 	return null;
 }
 
-function findEarliestAngularSceneEvent(
+export function findEarliestAngularSceneEvent(
 	request: SustainedContactRequest,
 	seed: CircularContactSeed,
 	endAngle: number

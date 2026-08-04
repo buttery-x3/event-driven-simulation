@@ -15,6 +15,7 @@ export interface ContactEvent {
 	readonly time: number;
 	readonly bodyId: EntityId;
 	readonly colliderId: EntityId;
+	readonly supportingBodyId?: EntityId;
 	readonly position: Vec2;
 	readonly normal: Vec2;
 	readonly contacts?: readonly ContactManifoldMember[];
@@ -29,6 +30,7 @@ export interface ContactModeTransitionEvent {
 	readonly time: number;
 	readonly bodyId: EntityId;
 	readonly colliderId: EntityId;
+	readonly supportingBodyId?: EntityId;
 	readonly from: ContactMode;
 	readonly to: ContactMode;
 	readonly reason:
@@ -76,11 +78,12 @@ export interface DynamicContactRecord {
 	readonly impulseOnFirst?: Vec2 | null;
 	readonly impulseOnSecond?: Vec2 | null;
 	readonly state: 'incoming' | 'retained' | 'released' | 'rejected';
+	readonly releaseReason?: 'impact-separation' | 'support-reaction-zero' | 'interrupted';
 }
 
 export interface ContactComponentRecord {
 	readonly id: string;
-	readonly type: 'exact-time-impact' | 'resting-anchored';
+	readonly type: 'exact-time-impact' | 'resting-anchored' | 'dynamic-sustained-support';
 	readonly createdAtTime: number;
 	readonly dissolvedAtTime: number | null;
 	readonly bodyIds: readonly EntityId[];
@@ -92,6 +95,12 @@ export interface ContactComponentRecord {
 	}[];
 	readonly revision?: number;
 	readonly futureScheduledEventTimes?: readonly number[];
+	readonly dynamicSupport?: {
+		readonly movingBodyId: EntityId;
+		readonly supportBodyId: EntityId;
+		readonly anchoredBodyIds: readonly EntityId[];
+		readonly bodyBodyContactId: string;
+	};
 }
 
 export interface ComponentLifecycleEvent {

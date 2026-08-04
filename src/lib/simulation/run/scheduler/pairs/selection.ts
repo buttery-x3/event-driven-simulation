@@ -15,7 +15,9 @@ import {
 	type LocalBodyPrediction,
 	type LocalBodyRuntime
 } from '../../single-ball/local-events';
+import { evaluateMotionSegmentPosition } from '../../../motion';
 import type { SchedulerState } from '../types';
+import { dynamicSupportPathForBody } from '../dynamic-support/prediction';
 
 export interface PairContactSelection {
 	readonly type: 'contact';
@@ -40,6 +42,8 @@ export function predictEarliestBodyPair(state: SchedulerState): PairSchedulerSel
 		for (let secondIndex = firstIndex + 1; secondIndex < participants.length; secondIndex += 1) {
 			const first = participants[firstIndex]!;
 			const second = participants[secondIndex]!;
+			if (isActiveSupportPair(state, first.bodyId, second.bodyId)) continue;
+			if (skipReleasedPair(state, first, second)) continue;
 			const result = queryPair(state, first, second);
 			const diagnostic = toPairDiagnostic(result);
 			recordDiagnostic(state, diagnostic);
@@ -66,13 +70,63 @@ export function predictEarliestBodyPair(state: SchedulerState): PairSchedulerSel
 		}
 	}
 	const selected = contacts
-		.filter(({ state }) => state.response === 'impact')
+		.filter(
+			(contact) =>
+				contact.state.response === 'impact' ||
+				(contact.state.response === 'non-impulsive-contact' &&
+					isCertifiedAnchoredPair(state, contact.first.bodyId, contact.second.bodyId))
+		)
 		.sort(contactOrder)[0];
 	if (!selected) return null;
 	return {
 		...selected,
 		simultaneousContacts: contacts.filter(({ time }) => time === selected.time)
 	};
+}
+
+function skipReleasedPair(
+	state: SchedulerState,
+	first: DynamicCirclePathParticipant,
+	second: DynamicCirclePathParticipant
+): boolean {
+	const key = [first.bodyId, second.bodyId].sort().join('\u0000');
+	if (!state.releasedDynamicPairs.has(key)) return false;
+	const firstPosition = evaluateMotionSegmentPosition(first.path, state.worldTime);
+	const secondPosition = evaluateMotionSegmentPosition(second.path, state.worldTime);
+	const separation =
+		Math.hypot(secondPosition[0] - firstPosition[0], secondPosition[1] - firstPosition[1]) -
+		first.radius -
+		second.radius;
+	if (separation <= state.input.settings.tolerances.contactDistance) return true;
+	state.releasedDynamicPairs.delete(key);
+	return false;
+}
+
+function isCertifiedAnchoredPair(
+	state: SchedulerState,
+	firstBodyId: string,
+	secondBodyId: string
+): boolean {
+	const anchored = (bodyId: string) =>
+		state.contactComponents.some(
+			(component) =>
+				component.type === 'resting-anchored' &&
+				component.dissolvedAtTime === null &&
+				component.bodyIds.includes(bodyId)
+		);
+	return anchored(firstBodyId) !== anchored(secondBodyId);
+}
+
+function isActiveSupportPair(
+	state: SchedulerState,
+	firstBodyId: string,
+	secondBodyId: string
+): boolean {
+	return [...state.dynamicSupports.values()].some(
+		(support) =>
+			(support.movingBodyId === firstBodyId && support.supportBodyId === secondBodyId) ||
+			(support.movingBodyId === secondBodyId && support.supportBodyId === firstBodyId)
+	);
 }
 
 export function selectPairDiagnostics(
@@ -169,6 +223,8 @@ function polynomialPath(
 	runtime: LocalBodyRuntime,
 	prediction: LocalBodyPrediction | null
 ): DynamicCirclePathParticipant['path'] | null {
+	const dynamicSupportPath = dynamicSupportPathForBody(state, runtime.body.id);
+	if (dynamicSupportPath) return dynamicSupportPath;
 	if (runtime.dormantComponentId) {
 		const component = state.contactComponents.find(({ id }) => id === runtime.dormantComponentId);
 		const stationary: StationaryMotionSegment = {

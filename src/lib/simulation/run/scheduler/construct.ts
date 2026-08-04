@@ -14,6 +14,7 @@ import {
 	type LocalBodyRuntime
 } from '../single-ball/local-events';
 import { aggregateWorldReason, finishScheduledRun } from './assembly';
+import { commitDynamicSupportPrediction, predictEarliestDynamicSupport } from './dynamic-support';
 import { promoteStationaryContactComponents, registerSingleBodyDormancy } from './dormancy';
 import { commitBodyPairEvent, invalidatePairDiagnostics, predictEarliestBodyPair } from './pairs';
 import { refreshBodyPrediction, selectLocalPrediction } from './predictions';
@@ -27,6 +28,7 @@ export function constructSimulationRun(input: SimulationInput): SimulationRunRec
 
 	while (true) {
 		const nextPair = predictEarliestBodyPair(state);
+		const nextDynamicSupport = predictEarliestDynamicSupport(state);
 		if (nextPair?.type === 'failure') {
 			return finishScheduledRun(
 				state,
@@ -34,7 +36,12 @@ export function constructSimulationRun(input: SimulationInput): SimulationRunRec
 				nextPair.reason
 			);
 		}
-		if (!nextPair && state.predictions.size === 0 && state.scheduled.length === 0) {
+		if (
+			!nextPair &&
+			!nextDynamicSupport &&
+			state.predictions.size === 0 &&
+			state.scheduled.length === 0
+		) {
 			return finishScheduledRun(state, 'valid', aggregateWorldReason(state));
 		}
 		const nextReleaseTime = state.scheduled[0]?.releaseTime ?? Number.POSITIVE_INFINITY;
@@ -43,10 +50,12 @@ export function constructSimulationRun(input: SimulationInput): SimulationRunRec
 			Number.POSITIVE_INFINITY
 		);
 		const nextPairTime = nextPair?.time ?? Number.POSITIVE_INFINITY;
+		const nextDynamicSupportTime = nextDynamicSupport?.segment.endTime ?? Number.POSITIVE_INFINITY;
 		const nextTime = Math.min(
 			nextReleaseTime,
 			nextLocalTime,
 			nextPairTime,
+			nextDynamicSupportTime,
 			input.settings.maximumSimulationTime
 		);
 		if (nextTime < state.worldTime) {
@@ -62,7 +71,8 @@ export function constructSimulationRun(input: SimulationInput): SimulationRunRec
 			nextTime === input.settings.maximumSimulationTime &&
 			nextReleaseTime > nextTime &&
 			nextLocalTime > nextTime &&
-			nextPairTime > nextTime
+			nextPairTime > nextTime &&
+			nextDynamicSupportTime > nextTime
 		) {
 			return finishScheduledRun(state, 'valid', timeLimit(input));
 		}
@@ -83,6 +93,12 @@ export function constructSimulationRun(input: SimulationInput): SimulationRunRec
 					limit: input.settings.maximumEvents
 				});
 			}
+			continue;
+		}
+
+		if (nextDynamicSupport && nextDynamicSupport.segment.endTime === nextTime) {
+			const result = commitDynamicSupportPrediction(state, nextDynamicSupport);
+			if (result.type === 'terminal') return finishScheduledRun(state, 'valid', result.reason);
 			continue;
 		}
 
@@ -107,7 +123,11 @@ export function constructSimulationRun(input: SimulationInput): SimulationRunRec
 			}
 		}
 
-		if (state.predictions.size === 0 && state.scheduled.length === 0) {
+		if (
+			state.predictions.size === 0 &&
+			state.dynamicSupportPredictions.size === 0 &&
+			state.scheduled.length === 0
+		) {
 			return finishScheduledRun(state, 'valid', aggregateWorldReason(state));
 		}
 	}
@@ -131,6 +151,10 @@ function createSchedulerState(input: SimulationInput): SchedulerState {
 		contactComponents: [],
 		componentEvents: [],
 		impactSolves: [],
+		dynamicSupports: new Map(),
+		dynamicSupportPredictions: new Map(),
+		dynamicSupportDiagnostics: [],
+		releasedDynamicPairs: new Set(),
 		rejectedBodyIds: new Set()
 	};
 }

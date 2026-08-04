@@ -98,7 +98,7 @@ function validateReferences(context: RunValidationContext): void {
 			if (segment.type === 'linear-contact' || segment.type === 'circular-contact') {
 				checkReference(
 					context,
-					colliderIds,
+					segment.type === 'circular-contact' && segment.supportingBodyId ? bodyIds : colliderIds,
 					segment.supportingColliderId,
 					`${path}.supportingColliderId`
 				);
@@ -109,7 +109,12 @@ function validateReferences(context: RunValidationContext): void {
 	for (const [eventIndex, event] of context.run.events.entries()) {
 		const path = `$.events[${eventIndex}]`;
 		checkReference(context, bodyIds, event.bodyId, `${path}.bodyId`);
-		checkReference(context, colliderIds, event.colliderId, `${path}.colliderId`);
+		checkReference(
+			context,
+			event.supportingBodyId ? bodyIds : colliderIds,
+			event.colliderId,
+			`${path}.colliderId`
+		);
 		validateContactReferences(context, event.contacts, `${path}.contacts`, colliderIds);
 	}
 

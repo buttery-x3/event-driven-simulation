@@ -147,6 +147,13 @@ function validateTrajectories(value: unknown, path: string): void {
 						item.supportingColliderId,
 						`${segmentPath}.supportingColliderId`
 					);
+					if (item.supportingBodyId !== undefined)
+						assertions.requireString(item.supportingBodyId, `${segmentPath}.supportingBodyId`);
+					if (item.supportingComponentId !== undefined)
+						assertions.requireString(
+							item.supportingComponentId,
+							`${segmentPath}.supportingComponentId`
+						);
 					assertions.validateVec2(item.centre, `${segmentPath}.centre`);
 					for (const field of [
 						'contactRadius',
@@ -190,6 +197,8 @@ function validatePhysicalEvents(value: unknown, path: string): void {
 		assertions.requireFiniteNumber(record.time, `${eventPath}.time`);
 		assertions.requireString(record.bodyId, `${eventPath}.bodyId`);
 		assertions.requireString(record.colliderId, `${eventPath}.colliderId`);
+		if (record.supportingBodyId !== undefined)
+			assertions.requireString(record.supportingBodyId, `${eventPath}.supportingBodyId`);
 		assertions.validateVec2(record.position, `${eventPath}.position`);
 		assertions.validateVec2(record.normal, `${eventPath}.normal`);
 		if (record.contacts !== undefined)
@@ -320,6 +329,70 @@ function validateDiagnostics(value: unknown, path: string): void {
 					.forEach((bodyId, bodyIndex) =>
 						assertions.requireString(bodyId, `${itemPath}.retainedBodyIds[${bodyIndex}]`)
 					);
+			});
+	}
+	if (diagnostics.dynamicSupports !== undefined) {
+		assertions
+			.requireArray(diagnostics.dynamicSupports, `${path}.dynamicSupports`)
+			.forEach((entry, index) => {
+				const itemPath = `${path}.dynamicSupports[${index}]`;
+				const item = assertions.requireRecord(entry, itemPath);
+				for (const field of [
+					'id',
+					'contactId',
+					'movingBodyId',
+					'supportBodyId',
+					'anchoredComponentId'
+				] as const)
+					assertions.requireString(item[field], `${itemPath}.${field}`);
+				validateInterval(item.interval, `${itemPath}.interval`);
+				for (const field of [
+					'startNormal',
+					'endNormal',
+					'startLoadOnSupport',
+					'endLoadOnSupport'
+				] as const)
+					assertions.validateVec2(item[field], `${itemPath}.${field}`);
+				for (const field of [
+					'startTangentialSpeed',
+					'endTangentialSpeed',
+					'startBodyBodyReaction',
+					'endBodyBodyReaction'
+				] as const)
+					assertions.requireFiniteNumber(item[field], `${itemPath}.${field}`);
+				for (const field of [
+					'anchoredBodyIds',
+					'retainedContactIds',
+					'releasedContactIds'
+				] as const)
+					assertions
+						.requireArray(item[field], `${itemPath}.${field}`)
+						.forEach((id, idIndex) =>
+							assertions.requireString(id, `${itemPath}.${field}[${idIndex}]`)
+						);
+				for (const field of ['fixedSupportReactionsAtStart', 'fixedSupportReactionsAtEnd'] as const)
+					assertions
+						.requireArray(item[field], `${itemPath}.${field}`)
+						.forEach((reactionEntry, reactionIndex) => {
+							const reactionPath = `${itemPath}.${field}[${reactionIndex}]`;
+							const reaction = assertions.requireRecord(reactionEntry, reactionPath);
+							assertions.requireString(reaction.contactId, `${reactionPath}.contactId`);
+							assertions.requireFiniteNumber(reaction.reaction, `${reactionPath}.reaction`);
+						});
+				assertions.requireOneOf(
+					item.outcome,
+					[
+						'retained',
+						'turning-point',
+						'detached',
+						'support-contact-released',
+						'fixed-contact',
+						'terminal',
+						'interrupted',
+						'unresolved'
+					],
+					`${itemPath}.outcome`
+				);
 			});
 	}
 }

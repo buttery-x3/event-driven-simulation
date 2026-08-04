@@ -30,6 +30,10 @@ export interface CircularContactMotionSegment {
 	readonly startPosition: Vec2;
 	readonly startVelocity: Vec2;
 	readonly supportingColliderId: EntityId;
+	/** Present when the circular boundary is supplied by a certified stationary dynamic body. */
+	readonly supportingBodyId?: EntityId;
+	/** Identifies the anchored component that certifies a dynamic supporting body as stationary. */
+	readonly supportingComponentId?: string;
 	readonly centre: Vec2;
 	readonly contactRadius: number;
 	readonly startAngle: number;

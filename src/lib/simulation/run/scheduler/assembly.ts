@@ -78,6 +78,7 @@ export function finishScheduledRun(
 			bodyEventHorizons: state.horizons,
 			pairPredictions: state.pairPredictions,
 			impactSolves: state.impactSolves,
+			dynamicSupports: state.dynamicSupportDiagnostics,
 			schedulerSteps: state.steps,
 			entries
 		}

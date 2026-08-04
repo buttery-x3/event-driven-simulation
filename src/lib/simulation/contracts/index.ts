@@ -49,6 +49,8 @@ export type {
 	SimulationRunRecord,
 	WorldRunOutcome,
 	DiagnosticEntry,
+	DynamicSupportDiagnostic,
+	DynamicSupportReactionEvidence,
 	ImpactReflectionDiagnostic,
 	ImpactSolveDiagnostic,
 	BodyEventHorizonDiagnostic,

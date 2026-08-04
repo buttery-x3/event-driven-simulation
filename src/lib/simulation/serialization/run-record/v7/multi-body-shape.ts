@@ -74,6 +74,12 @@ export function validateMultiBodyHistoryShape(run: Record<string, unknown>): voi
 			['incoming', 'retained', 'released', 'rejected'],
 			`${path}.state`
 		);
+		if (contact.releaseReason !== undefined)
+			assertions.requireOneOf(
+				contact.releaseReason,
+				['impact-separation', 'support-reaction-zero', 'interrupted'],
+				`${path}.releaseReason`
+			);
 	});
 	assertions
 		.requireArray(run.contactComponents, '$.contactComponents')
@@ -115,7 +121,7 @@ function validateComponent(value: unknown, path: string): void {
 	assertions.requireString(component.id, `${path}.id`);
 	assertions.requireOneOf(
 		component.type,
-		['exact-time-impact', 'resting-anchored'],
+		['exact-time-impact', 'resting-anchored', 'dynamic-sustained-support'],
 		`${path}.type`
 	);
 	assertions.requireFiniteNumber(component.createdAtTime, `${path}.createdAtTime`);
@@ -141,4 +147,15 @@ function validateComponent(value: unknown, path: string): void {
 			assertions.requireString(reaction.contactId, `${reactionPath}.contactId`);
 			assertions.requireFiniteNumber(reaction.impulsePerTime, `${reactionPath}.impulsePerTime`);
 		});
+	if (component.dynamicSupport !== undefined) {
+		const support = assertions.requireRecord(component.dynamicSupport, `${path}.dynamicSupport`);
+		for (const field of ['movingBodyId', 'supportBodyId', 'bodyBodyContactId'] as const) {
+			assertions.requireString(support[field], `${path}.dynamicSupport.${field}`);
+		}
+		assertions
+			.requireArray(support.anchoredBodyIds, `${path}.dynamicSupport.anchoredBodyIds`)
+			.forEach((id, index) =>
+				assertions.requireString(id, `${path}.dynamicSupport.anchoredBodyIds[${index}]`)
+			);
+	}
 }

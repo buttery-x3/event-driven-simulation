@@ -12,6 +12,7 @@ import {
 } from '../../../motion';
 import { predictionSegments, type LocalBodyRuntime } from '../../single-ball/local-events';
 import type { SchedulerState } from '../types';
+import { dynamicSupportPathForBody } from '../dynamic-support/prediction';
 import type { PairContactSelection, PairSchedulerSelection } from './selection';
 
 export interface ComponentBodyState {
@@ -170,6 +171,22 @@ function bodyStateAt(
 	time: number
 ): ComponentBodyState | null {
 	if (time < runtime.body.releaseTime) return null;
+	const dynamicSupportPath = dynamicSupportPathForBody(state, runtime.body.id);
+	if (
+		dynamicSupportPath &&
+		time >= dynamicSupportPath.startTime &&
+		time <= dynamicSupportPath.endTime
+	) {
+		return {
+			id: runtime.body.id,
+			mass: runtime.body.mass,
+			radius: runtime.body.physicalShape.radius,
+			position: evaluateMotionSegmentPosition(dynamicSupportPath, time),
+			velocity: evaluateMotionSegmentVelocity(dynamicSupportPath, time),
+			prefixSegment:
+				time > dynamicSupportPath.startTime ? truncateSegment(dynamicSupportPath, time) : null
+		};
+	}
 	const reason = runtime.terminalReason;
 	if (reason?.type === 'resting-contact' || reason?.type === 'no-future-event') {
 		const startTime = reason.time ?? runtime.committedTime;

@@ -162,6 +162,42 @@ export interface ImpactSolveDiagnostic {
 	readonly failureReason: string | null;
 }
 
+export interface DynamicSupportReactionEvidence {
+	readonly contactId: string;
+	readonly reaction: number;
+}
+
+export interface DynamicSupportDiagnostic {
+	readonly id: string;
+	readonly contactId: string;
+	readonly movingBodyId: EntityId;
+	readonly supportBodyId: EntityId;
+	readonly anchoredComponentId: string;
+	readonly anchoredBodyIds: readonly EntityId[];
+	readonly interval: readonly [startTime: number, endTime: number];
+	readonly startNormal: Vec2;
+	readonly endNormal: Vec2;
+	readonly startTangentialSpeed: number;
+	readonly endTangentialSpeed: number;
+	readonly startBodyBodyReaction: number;
+	readonly endBodyBodyReaction: number;
+	readonly startLoadOnSupport: Vec2;
+	readonly endLoadOnSupport: Vec2;
+	readonly fixedSupportReactionsAtStart: readonly DynamicSupportReactionEvidence[];
+	readonly fixedSupportReactionsAtEnd: readonly DynamicSupportReactionEvidence[];
+	readonly outcome:
+		| 'retained'
+		| 'turning-point'
+		| 'detached'
+		| 'support-contact-released'
+		| 'fixed-contact'
+		| 'terminal'
+		| 'interrupted'
+		| 'unresolved';
+	readonly retainedContactIds: readonly string[];
+	readonly releasedContactIds: readonly string[];
+}
+
 export interface RunDiagnostics {
 	readonly iterations: number;
 	readonly simulatedUntilTime: number;
@@ -173,6 +209,7 @@ export interface RunDiagnostics {
 	readonly bodyEventHorizons: readonly BodyEventHorizonDiagnostic[];
 	readonly pairPredictions: readonly PairPredictionDiagnostic[];
 	readonly impactSolves?: readonly ImpactSolveDiagnostic[];
+	readonly dynamicSupports?: readonly DynamicSupportDiagnostic[];
 	readonly schedulerSteps?: readonly WorldSchedulerStepDiagnostic[];
 	readonly entries: readonly DiagnosticEntry[];
 }

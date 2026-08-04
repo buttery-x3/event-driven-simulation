@@ -1,6 +1,7 @@
 import type {
 	BodyEventHorizonDiagnostic,
 	DynamicContactRecord,
+	DynamicSupportDiagnostic,
 	ComponentLifecycleEvent,
 	ContactComponentRecord,
 	ImpactSolveDiagnostic,
@@ -11,6 +12,7 @@ import type {
 	WorldSchedulerStepDiagnostic
 } from '../../contracts';
 import type { LocalBodyPrediction, LocalBodyRuntime } from '../single-ball/local-events';
+import type { DynamicSupportPrediction, DynamicSupportRuntime } from './dynamic-support/types';
 
 export interface SchedulerState {
 	readonly input: SimulationInput;
@@ -27,5 +29,9 @@ export interface SchedulerState {
 	readonly contactComponents: ContactComponentRecord[];
 	readonly componentEvents: ComponentLifecycleEvent[];
 	readonly impactSolves: ImpactSolveDiagnostic[];
+	readonly dynamicSupports: Map<string, DynamicSupportRuntime>;
+	readonly dynamicSupportPredictions: Map<string, DynamicSupportPrediction>;
+	readonly dynamicSupportDiagnostics: DynamicSupportDiagnostic[];
+	readonly releasedDynamicPairs: Set<string>;
 	readonly rejectedBodyIds: Set<string>;
 }

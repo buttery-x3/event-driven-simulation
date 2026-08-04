@@ -94,7 +94,13 @@ export type ScenarioCoverageId =
 	| 'path-interruption.linear-side-impact'
 	| 'path-interruption.slider-reactivates-resting'
 	| 'path-interruption.circular-circular'
-	| 'path-interruption.unsupported-dynamic-support';
+	| 'path-interruption.unsupported-dynamic-support'
+	| 'dynamic-support.circular-slide'
+	| 'dynamic-support.transmitted-load-retained'
+	| 'dynamic-support.transmitted-load-release'
+	| 'dynamic-support.external-impact'
+	| 'dynamic-support.detachment'
+	| 'dynamic-support.unsupported-moving-pair';
 
 export type ScenarioMotionMode = 'free-flight' | 'linear-contact' | 'circular-contact';
 

@@ -280,10 +280,21 @@ function validateComponents(context: RunValidationContext, bodyIds: ReadonlySet<
 				(time, eventIndex, times) =>
 					time < component.createdAtTime || (eventIndex > 0 && time < times[eventIndex - 1]!)
 			);
+		const invalidDynamicSupport =
+			component.type === 'dynamic-sustained-support'
+				? !component.dynamicSupport ||
+					!component.bodyIds.includes(component.dynamicSupport.movingBodyId) ||
+					!component.bodyIds.includes(component.dynamicSupport.supportBodyId) ||
+					!component.dynamicSupport.anchoredBodyIds.includes(
+						component.dynamicSupport.supportBodyId
+					) ||
+					!component.activeContactIds.includes(component.dynamicSupport.bodyBodyContactId)
+				: component.dynamicSupport !== undefined;
 		if (
 			componentIds.has(component.id) ||
 			duplicateMembership ||
 			invalidRuntimeEvidence ||
+			invalidDynamicSupport ||
 			component.bodyIds.some((id) => !bodyIds.has(id)) ||
 			component.fixedColliderIds.some((id) => !colliderIds.has(id)) ||
 			component.activeContactIds.some((id) => !contactIds.has(id))

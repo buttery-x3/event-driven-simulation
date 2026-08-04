@@ -244,6 +244,26 @@ function validateContactsAndComponents(record: SimulationRunRecord): void {
 					'contains invalid support evidence'
 				);
 		});
+		if (component.type === 'dynamic-sustained-support') {
+			const support = component.dynamicSupport;
+			if (
+				!support ||
+				!component.bodyIds.includes(support.movingBodyId) ||
+				!component.bodyIds.includes(support.supportBodyId) ||
+				!support.anchoredBodyIds.includes(support.supportBodyId) ||
+				support.anchoredBodyIds.some((bodyId) => !component.bodyIds.includes(bodyId)) ||
+				!component.activeContactIds.includes(support.bodyBodyContactId)
+			)
+				invalidRunRecordField(
+					`${path}.dynamicSupport`,
+					'must identify the moving body, dynamic support and anchored contact membership'
+				);
+		} else if (component.dynamicSupport !== undefined) {
+			invalidRunRecordField(
+				`${path}.dynamicSupport`,
+				'may appear only on a dynamic sustained-support component'
+			);
+		}
 	}
 	for (const [index, event] of record.componentEvents.entries()) {
 		for (const id of [...event.componentIds, ...event.resultingComponentIds])

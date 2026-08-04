@@ -83,6 +83,7 @@ export function validateContactGeometry(context: RunValidationContext): void {
 		);
 		if (
 			exactImpact &&
+			contact.releaseReason !== 'support-reaction-zero' &&
 			normalVelocity !== null &&
 			((contact.state === 'retained' && normalVelocity > tolerance) ||
 				(contact.state === 'released' && normalVelocity <= tolerance))

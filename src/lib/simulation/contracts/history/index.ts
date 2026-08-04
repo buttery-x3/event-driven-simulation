@@ -22,6 +22,8 @@ export type {
 export type {
 	BodyEventHorizonDiagnostic,
 	DiagnosticEntry,
+	DynamicSupportDiagnostic,
+	DynamicSupportReactionEvidence,
 	ImpactReflectionDiagnostic,
 	ImpactSolveDiagnostic,
 	PairPredictionDiagnostic,

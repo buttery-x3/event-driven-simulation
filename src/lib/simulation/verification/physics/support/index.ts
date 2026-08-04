@@ -1,0 +1,1 @@
+export { validateDynamicSupports } from './dynamic';

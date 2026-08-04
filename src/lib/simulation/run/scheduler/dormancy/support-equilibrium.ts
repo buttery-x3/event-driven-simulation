@@ -12,7 +12,8 @@ export function certifySupportEquilibrium(
 	bodies: ExactTimeComponent['bodies'],
 	contacts: readonly ActiveComponentContact[],
 	gravity: Vec2,
-	tolerance: number
+	tolerance: number,
+	externalLoads: ReadonlyMap<string, Vec2> = new Map()
 ): SupportReactionSolution | null {
 	if (!contacts.some((contact) => contact.type === 'body-fixed')) return null;
 	const orderedBodies = [...bodies].sort((left, right) => left.id.localeCompare(right.id));
@@ -35,7 +36,10 @@ export function certifySupportEquilibrium(
 		}
 		return column;
 	});
-	const target = orderedBodies.flatMap(({ mass }) => [-mass * gravity[0], -mass * gravity[1]]);
+	const target = orderedBodies.flatMap(({ id, mass }) => {
+		const load = externalLoads.get(id) ?? [0, 0];
+		return [-mass * gravity[0] - load[0], -mass * gravity[1] - load[1]];
+	});
 	const solution = solveNonnegativeLeastSquares(columns, target, tolerance);
 	if (!solution) return null;
 	const forceScale = Math.max(1, ...target.map(Math.abs));

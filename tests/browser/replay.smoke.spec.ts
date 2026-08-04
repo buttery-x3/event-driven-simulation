@@ -346,7 +346,7 @@ test('groups verification scenarios, replaces worlds on Run and reports authorit
 	await expect(selector.locator('optgroup[label="Canonical launches"] option')).toHaveCount(5);
 	await expect(selector.locator('optgroup[label="Board layouts"] option')).toHaveCount(8);
 	await expect(selector.locator('optgroup[label="Physical settings"] option')).toHaveCount(13);
-	await expect(selector.locator('optgroup[label="Multi-body scheduler"] option')).toHaveCount(34);
+	await expect(selector.locator('optgroup[label="Multi-body scheduler"] option')).toHaveCount(40);
 	await expect(selector.locator('optgroup[label="Adversarial contacts"] option')).toHaveCount(18);
 
 	await selector.selectOption('staggered-independent-drops');
@@ -371,6 +371,36 @@ test('groups verification scenarios, replaces worlds on Run and reports authorit
 	await expect(page.getByText(/active component \(3 bodies \/ 2 contacts\)/)).toBeVisible();
 
 	const scenarios = [
+		{
+			id: 'ball-slides-on-wedged-ball',
+			sceneId: 'ball-slides-on-wedged-ball-board',
+			outcome: 'time-limit'
+		},
+		{
+			id: 'transmitted-load-remains-supported',
+			sceneId: 'transmitted-load-remains-supported-board',
+			outcome: 'time-limit'
+		},
+		{
+			id: 'transmitted-load-releases-support',
+			sceneId: 'transmitted-load-releases-support-board',
+			outcome: 'time-limit'
+		},
+		{
+			id: 'third-ball-hits-dynamic-support',
+			sceneId: 'third-ball-hits-dynamic-support-board',
+			outcome: 'time-limit'
+		},
+		{
+			id: 'slider-launched-from-support',
+			sceneId: 'slider-launched-from-support-board',
+			outcome: 'settled'
+		},
+		{
+			id: 'unsupported-free-moving-pair',
+			sceneId: 'unsupported-free-moving-pair-board',
+			outcome: 'unresolved'
+		},
 		{
 			id: 'free-ball-hits-peg-slider',
 			sceneId: 'free-ball-hits-peg-slider-board',

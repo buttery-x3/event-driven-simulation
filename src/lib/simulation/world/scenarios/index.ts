@@ -11,6 +11,7 @@ export { dynamicPairScenarios } from './dynamic-pairs';
 export { simultaneousImpactScenarios } from './simultaneous-impact';
 export { dormantComponentScenarios } from './dormant-components';
 export { pathInterruptionScenarios } from './path-interruptions';
+export { dynamicSupportScenarios } from './dynamic-supports';
 export type {
 	ScenarioCategoryId,
 	ScenarioContactModeTransitionExpectation,
