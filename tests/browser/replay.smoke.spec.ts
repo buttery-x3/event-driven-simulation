@@ -346,7 +346,7 @@ test('groups verification scenarios, replaces worlds on Run and reports authorit
 	await expect(selector.locator('optgroup[label="Canonical launches"] option')).toHaveCount(5);
 	await expect(selector.locator('optgroup[label="Board layouts"] option')).toHaveCount(8);
 	await expect(selector.locator('optgroup[label="Physical settings"] option')).toHaveCount(13);
-	await expect(selector.locator('optgroup[label="Multi-body scheduler"] option')).toHaveCount(5);
+	await expect(selector.locator('optgroup[label="Multi-body scheduler"] option')).toHaveCount(11);
 	await expect(selector.locator('optgroup[label="Adversarial contacts"] option')).toHaveCount(18);
 
 	await selector.selectOption('staggered-independent-drops');
@@ -356,6 +356,13 @@ test('groups verification scenarios, replaces worlds on Run and reports authorit
 	await expect(
 		page.getByRole('button', { name: /Scheduler selected termination/ }).first()
 	).toBeVisible();
+
+	await selector.selectOption('predicted-head-on-contact');
+	await page.getByRole('button', { name: 'Run simulation' }).click();
+	await expect(catalogue.getByText(/^unresolved.*permitted$/)).toBeVisible();
+	await expect(page.getByRole('region', { name: 'Recorded-prefix inspection' })).toBeVisible();
+	await expect(page.getByRole('button', { name: /Dynamic contact incoming/ })).toBeVisible();
+	await expect(page.getByRole('button', { name: /Prediction selected/ })).toBeVisible();
 
 	const scenarios = [
 		{ id: 'no-pegs', sceneId: 'no-pegs-board', outcome: 'exited' },

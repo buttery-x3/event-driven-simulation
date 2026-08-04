@@ -163,7 +163,10 @@ deterministic scan, commits only the selected body's certified prefix, retains u
 predictions without segmentation, and processes exact-time independent events in body-ID order.
 It rejects overlapping release batches and fails the world conservatively when a released body
 becomes invalid or unresolved. Its `release.ts` owns fixed/body overlap admission, `assembly.ts`
-owns world outcome and per-body lifecycle construction, and `construct.ts` owns global selection.
+owns world outcome and per-body lifecycle construction, `pairs.ts` owns supported pair prediction
+and exact prefix commitment, and `construct.ts` owns global selection. A certified pair contact is
+an exact world boundary; until isolated body response exists, the scheduler records incoming contact
+evidence and terminates with `unsupported-body-body-response`.
 
 `src/lib/simulation/run/single-ball/local-events` exposes the fixed-world local prediction and
 commit boundary used by the scheduler. It sequences free flight, impact and sustained contact,
@@ -208,6 +211,11 @@ validates its query contract, and `boundary-candidate.ts` classifies face and en
 The named `fixed-world` subdomain evaluates every collider, compares their common typed candidates,
 and certifies exact-time touching contacts at the common earliest state. Tolerance-near candidates
 whose ordering cannot be distinguished from simultaneity fail closed.
+The named `dynamic-pair` subdomain synchronizes two polynomial motion paths over their shared local
+horizon, builds one swap-invariant relative contact polynomial, reuses the same normalized root
+isolation and circle topology policy, and returns typed contact/no-contact/invalid/unresolved
+results. It supports free-flight, linear-contact and stationary paths; changing-normal circular
+paths remain outside this boundary.
 `simulation/math/polynomial-roots.ts` contains the shared interval root isolation and exposes
 geometry-neutral isolating intervals and neighbouring polynomial samples to both geometry solvers.
 None of these modules advances state through fixed timesteps or imports rendering code. Renderer

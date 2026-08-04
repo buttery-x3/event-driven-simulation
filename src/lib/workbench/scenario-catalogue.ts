@@ -3,6 +3,7 @@ import {
 	adversarialScenarios,
 	boardStateScenarios,
 	canonicalPlinkoScenarios,
+	dynamicPairScenarios,
 	independentBodySchedulerScenarios,
 	manifoldContactScenarios,
 	type ScenarioCategoryId,
@@ -36,6 +37,7 @@ export const workbenchScenarios = [
 	...boardStateScenarios,
 	...manifoldContactScenarios,
 	...independentBodySchedulerScenarios,
+	...dynamicPairScenarios,
 	...adversarialScenarios
 ] as const satisfies readonly WorkbenchScenarioDescriptor[];
 

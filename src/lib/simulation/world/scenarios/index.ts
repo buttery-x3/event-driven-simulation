@@ -7,6 +7,7 @@ export { boardStateScenarios, type BoardStateScenario } from './board-states';
 export { adversarialScenarios } from './adversarial';
 export { manifoldContactScenarios } from './manifold';
 export { independentBodySchedulerScenarios } from './independent-bodies';
+export { dynamicPairScenarios } from './dynamic-pairs';
 export type {
 	ScenarioCategoryId,
 	ScenarioContactModeTransitionExpectation,

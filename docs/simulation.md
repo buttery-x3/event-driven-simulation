@@ -197,8 +197,8 @@ evidence but is not committed as the result.
 
 `constructSimulationRun` is the authoritative producer. It accepts one immutable
 `SimulationInput` and maintains one local state, revision and certified prediction per released
-body. A deterministic scan chooses the earliest exact time across scheduled releases and local
-fixed-world events. Only the selected body's prefix is committed; every unrelated body retains its
+body. A deterministic scan chooses the earliest exact time across scheduled releases, local
+fixed-world events and supported continuous body-pair contacts. Only the selected body's prefix is committed; every unrelated body retains its
 existing continuous prediction across that world event. Exact-time independent candidates are
 processed as a body-ID-ordered batch without tolerance-merging distinct times. The compatibility
 name `constructSingleBallRun` routes through this same scheduler.
@@ -253,8 +253,8 @@ event selection or becomes authoritative trajectory motion.
 
 ## Multi-body history contract
 
-Version 7 defines multi-body semantics and the independent-body global scheduler, but does not yet
-implement dynamic-body collision search or response. Each input body has a unique ID, positive finite mass, radius, initial state and
+Version 7 defines multi-body semantics and continuous dynamic-circle pair discovery, but does not
+yet implement dynamic-body impulse response. Each input body has a unique ID, positive finite mass, radius, initial state and
 non-negative release time. Before that time it is `scheduled` and physically absent. Simultaneous
 releases form one semantic batch; serialized array order and diagnostic IDs cannot decide physical
 ordering or response. Exact fixed or dynamic touching is evidence for the applicable contact policy,
@@ -275,8 +275,18 @@ or resting-anchored connectivity, active contacts and optional retained support 
 events record creation, split, merge and dissolution without exposing solver matrices.
 
 Diagnostic body horizons and pair predictions record a common validity interval, per-body revision
-stamps and selected/retained/invalidated/stale decisions. They are evidence only. Rendering evaluates
+stamps and selected/retained/invalidated/stale decisions. Supported free-flight, linear-contact and
+stationary path pairs are synchronized at the shared search start and reduced to one normalized
+relative polynomial. The existing polynomial root isolator and circle-root topology policy select
+the earliest entering contact without sampled advancement. Pair evidence retains relative and
+contact-polynomial coefficients, roots, candidate times, geometry residuals, topology and incoming
+normal motion. It is evidence only. Rendering evaluates
 the authoritative trajectories and never reconstructs motion from predictions or component IDs.
+
+The pair search ends at the earlier local-event horizon. Circular-contact combinations are excluded
+because their rotating normals require a separate search. A selected pair contact commits both
+paths exactly through contact, records an incoming dynamic contact, and terminates the valid prefix
+with `unsupported-body-body-response`; bodies cannot interpenetrate while response remains absent.
 
 `schedulerSteps` records the local event that advanced world time, its body revision and the body
 IDs whose predictions were retained unchanged. A future release remains an external event even

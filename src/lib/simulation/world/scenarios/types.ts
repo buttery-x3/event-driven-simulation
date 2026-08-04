@@ -64,7 +64,13 @@ export type ScenarioCoverageId =
 	| 'scheduler.mixed-outcomes'
 	| 'scheduler.resting-continuation'
 	| 'scheduler.simultaneous-events'
-	| 'scheduler.single-body-equivalence';
+	| 'scheduler.single-body-equivalence'
+	| 'pair.head-on-contact'
+	| 'pair.glancing-contact'
+	| 'pair.near-miss'
+	| 'pair.clipped-by-local-event'
+	| 'pair.linear-contact-path'
+	| 'pair.swapped-equivalence';
 
 export type ScenarioMotionMode = 'free-flight' | 'linear-contact' | 'circular-contact';
 

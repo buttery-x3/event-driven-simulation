@@ -3,6 +3,7 @@ import {
 	adversarialScenarios,
 	boardStateScenarios,
 	canonicalPlinkoScenarios,
+	dynamicPairScenarios,
 	independentBodySchedulerScenarios,
 	manifoldContactScenarios
 } from '$lib/simulation/world';
@@ -21,6 +22,7 @@ describe('workbench scenario catalogue', () => {
 				boardStateScenarios.length +
 				manifoldContactScenarios.length +
 				independentBodySchedulerScenarios.length +
+				dynamicPairScenarios.length +
 				adversarialScenarios.length
 		);
 		expect(new Set(workbenchScenarios.map(({ id }) => id)).size).toBe(workbenchScenarios.length);
@@ -30,6 +32,7 @@ describe('workbench scenario catalogue', () => {
 			...boardStateScenarios,
 			...manifoldContactScenarios,
 			...independentBodySchedulerScenarios,
+			...dynamicPairScenarios,
 			...adversarialScenarios
 		]) {
 			expect(getWorkbenchScenario(source.id)?.input).toBe(source.input);
