@@ -66,7 +66,9 @@ export function predictEarliestBodyPair(state: SchedulerState): PairSchedulerSel
 			}
 		}
 	}
-	const selected = contacts.sort(contactOrder)[0];
+	const selected = contacts
+		.filter(({ state }) => state.response === 'impact')
+		.sort(contactOrder)[0];
 	if (!selected) return null;
 	return {
 		...selected,
@@ -258,5 +260,12 @@ function recordDiagnostic(state: SchedulerState, diagnostic: PairPredictionDiagn
 }
 
 function contactOrder(left: PairContactSelection, right: PairContactSelection): number {
-	return left.time - right.time || left.diagnosticId.localeCompare(right.diagnosticId);
+	return (
+		left.time - right.time ||
+		(left.state.response === right.state.response
+			? left.diagnosticId.localeCompare(right.diagnosticId)
+			: left.state.response === 'impact'
+				? -1
+				: 1)
+	);
 }

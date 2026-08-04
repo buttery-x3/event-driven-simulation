@@ -1,4 +1,4 @@
-import type { Vec2 } from '../../contracts';
+import type { ImpactReflectionDiagnostic, ImpactSolveDiagnostic, Vec2 } from '../../contracts';
 
 export interface CoupledImpactBody {
 	readonly id: string;
@@ -43,49 +43,8 @@ export interface CoupledImpactContactResult {
 	readonly postImpactNormalVelocity: number;
 }
 
-export interface ReflectionDiagnostic {
-	readonly iteration: number;
-	readonly violatingContactIds: readonly string[];
-	readonly impulse: readonly number[];
-	readonly energyBefore: number;
-	readonly energyAfterTentative: number;
-	readonly energyAfterRenormalisation: number;
-	readonly energyRenormalisationFactor: number;
-	readonly maximumSignificantViolationBefore: number;
-	readonly maximumSignificantViolationAfter: number;
-	readonly checks: {
-		readonly norm: boolean;
-		readonly kin: boolean;
-		readonly one: boolean;
-		readonly vio: boolean;
-		readonly mod: boolean;
-	};
-}
-
-export interface CoupledImpactDiagnostic {
-	readonly bodyIds: readonly string[];
-	readonly contactIds: readonly string[];
-	readonly masses: readonly number[];
-	readonly preImpactVelocity: readonly number[];
-	readonly preImpactMomentum: readonly number[];
-	readonly contactGradients: readonly (readonly number[])[];
-	readonly linealityDimension: number;
-	readonly linealityContactIds: readonly string[];
-	readonly equalityBasis: readonly (readonly number[])[];
-	readonly projectedVelocity: readonly number[];
-	readonly projectedContactGradients: readonly (readonly number[])[];
-	readonly removedContactIds: readonly string[];
-	readonly violationThreshold: number;
-	readonly relativeViolationEpsilon: number;
-	readonly absoluteNormalVelocityFloor: number;
-	readonly reflections: readonly ReflectionDiagnostic[];
-	readonly inelasticVelocity: readonly number[];
-	readonly elasticVelocity: readonly number[];
-	readonly finalVelocity: readonly number[];
-	readonly restitution: number;
-	readonly completion: 'complete' | 'impact-termination-certification-failed';
-	readonly failureReason: string | null;
-}
+export type ReflectionDiagnostic = ImpactReflectionDiagnostic;
+export type CoupledImpactDiagnostic = ImpactSolveDiagnostic;
 
 export interface CoupledImpactResponse {
 	readonly bodyVelocities: readonly { readonly bodyId: string; readonly velocity: Vec2 }[];

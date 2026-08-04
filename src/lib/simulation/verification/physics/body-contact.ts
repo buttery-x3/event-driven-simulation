@@ -45,6 +45,10 @@ function validateResolvedResponse(
 	contactIndex: number
 ): void {
 	if (contact.state !== 'released') return;
+	const component = context.run.contactComponents.find(({ activeContactIds }) =>
+		activeContactIds.includes(contact.id)
+	);
+	if (component && component.activeContactIds.length > 1) return;
 	const path = `$.dynamicContacts[${contactIndex}]`;
 	const before = contact.preImpactVelocities;
 	const after = contact.postImpactVelocities;
@@ -183,10 +187,13 @@ function validateContactState(
 		firstState.position[0] + normal[0] * first.physicalShape.radius,
 		firstState.position[1] + normal[1] * first.physicalShape.radius
 	];
-	const relativeVelocity: Vec2 = [
-		secondState.velocity[0] - firstState.velocity[0],
-		secondState.velocity[1] - firstState.velocity[1]
-	];
+	const recordedBefore = contact.preImpactVelocities;
+	const relativeVelocity: Vec2 = recordedBefore
+		? [recordedBefore[1][0] - recordedBefore[0][0], recordedBefore[1][1] - recordedBefore[0][1]]
+		: [
+				secondState.velocity[0] - firstState.velocity[0],
+				secondState.velocity[1] - firstState.velocity[1]
+			];
 	const normalMotion = relativeVelocity[0] * normal[0] + relativeVelocity[1] * normal[1];
 	if (
 		!nearVector(expectedPoint, contact.contactPoint, tolerance * 8) ||
@@ -212,6 +219,10 @@ function validateSharedHorizon(
 	second: InitialDynamicCircleBodyState,
 	contactIndex: number
 ): void {
+	const component = context.run.contactComponents.find(({ activeContactIds }) =>
+		activeContactIds.includes(contact.id)
+	);
+	if (component && component.activeContactIds.length > 1) return;
 	const prediction = context.run.diagnostics.pairPredictions.find(
 		(candidate) =>
 			candidate.decision === 'selected' &&

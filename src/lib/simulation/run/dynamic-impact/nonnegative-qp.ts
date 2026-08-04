@@ -1,4 +1,9 @@
-import { dot, gramMatrix, multiplyMatrixVector, pseudoInverseSolveSymmetric } from './linear-algebra';
+import {
+	dot,
+	gramMatrix,
+	multiplyMatrixVector,
+	pseudoInverseSolveSymmetric
+} from './linear-algebra';
 
 export interface NonnegativeQuadraticSolution {
 	readonly values: readonly number[];
@@ -15,7 +20,7 @@ export function solveNonnegativeQuadratic(
 	let best: NonnegativeQuadraticSolution | null = null;
 	for (let mask = 0; mask < 2 ** size; mask += 1) {
 		const active = Array.from({ length: size }, (_, index) => index).filter(
-			(index) => (mask & 2 ** index) !== 0
+			(index) => (mask & (2 ** index)) !== 0
 		);
 		const values = linear.map(() => 0);
 		if (active.length > 0) {
@@ -33,10 +38,11 @@ export function solveNonnegativeQuadratic(
 		const gradient = multiplyMatrixVector(hessian, values).map(
 			(value, index) => value + linear[index]!
 		);
-		if (gradient.some((value) => value < -tolerance)) continue;
+		if (gradient.some((value) => value < -tolerance * 16)) continue;
 		if (active.some((index) => Math.abs(gradient[index]!) > tolerance * 16)) continue;
 		const normalized = values.map((value) => (Math.abs(value) <= tolerance ? 0 : value));
-		const objective = 0.5 * dot(normalized, multiplyMatrixVector(hessian, normalized)) + dot(linear, normalized);
+		const objective =
+			0.5 * dot(normalized, multiplyMatrixVector(hessian, normalized)) + dot(linear, normalized);
 		const candidate = { values: normalized, objective };
 		if (isPreferred(candidate, best, tolerance)) best = candidate;
 	}

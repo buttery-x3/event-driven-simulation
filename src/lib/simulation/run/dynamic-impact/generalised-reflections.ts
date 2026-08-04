@@ -36,7 +36,8 @@ export function resolveCoupledImpact(input: CoupledImpactInput): CoupledImpactRe
 	const problem = prepare(input);
 	const tolerance = effectiveTolerance(input);
 	const inelastic = solveInelastic(problem, tolerance);
-	if (!inelastic) return { type: 'rejected', reason: 'The maximum-dissipation endpoint could not be certified.' };
+	if (!inelastic)
+		return { type: 'rejected', reason: 'The maximum-dissipation endpoint could not be certified.' };
 	const elastic = solveElastic(input, problem, tolerance);
 	if (typeof elastic === 'string') {
 		return {
@@ -48,28 +49,45 @@ export function resolveCoupledImpact(input: CoupledImpactInput): CoupledImpactRe
 	const finalVelocity = inelastic.map(
 		(value, index) => (1 - input.restitution) * value + input.restitution * elastic.velocity[index]!
 	);
-	const feasibilityTolerance = tolerance * Math.max(1, weightedNorm(finalVelocity, problem.masses)) * 64;
-	if (normalVelocities(problem.gradients, finalVelocity).some((value) => value < -feasibilityTolerance))
+	const feasibilityTolerance =
+		tolerance * Math.max(1, weightedNorm(finalVelocity, problem.masses)) * 64;
+	if (
+		normalVelocities(problem.gradients, finalVelocity).some(
+			(value) => value < -feasibilityTolerance
+		)
+	)
 		return { type: 'rejected', reason: 'The energetic-restitution endpoint is infeasible.' };
 	const momentumDelta = finalVelocity.map(
 		(value, index) => problem.masses[index]! * (value - problem.velocity[index]!)
 	);
 	const impulses = solveNonnegativeLeastSquares(problem.gradients, momentumDelta, tolerance);
 	if (!impulses || impulses.residualNorm > feasibilityTolerance)
-		return { type: 'rejected', reason: 'The final momentum change has no certified non-negative impulse representation.' };
+		return {
+			type: 'rejected',
+			reason: 'The final momentum change has no certified non-negative impulse representation.'
+		};
 	const diagnostic = completeDiagnostic(input, problem, inelastic, elastic, finalVelocity);
 	return {
 		type: 'response',
 		response: {
 			bodyVelocities: input.bodies.map((body, index) => ({
 				bodyId: body.id,
-				velocity: [finalVelocity[index * 2]!, finalVelocity[index * 2 + 1]!] as Vec2
+				velocity: [
+					normalizeCoordinate(finalVelocity[index * 2]!, feasibilityTolerance),
+					normalizeCoordinate(finalVelocity[index * 2 + 1]!, feasibilityTolerance)
+				] as Vec2
 			})),
 			contacts: input.contacts.map((contact, index) => ({
 				contactId: contact.id,
 				impulse: normalize(impulses.values[index] ?? 0, feasibilityTolerance),
-				preImpactNormalVelocity: normalize(dot(problem.gradients[index]!, problem.velocity), feasibilityTolerance),
-				postImpactNormalVelocity: normalize(dot(problem.gradients[index]!, finalVelocity), feasibilityTolerance)
+				preImpactNormalVelocity: normalize(
+					dot(problem.gradients[index]!, problem.velocity),
+					feasibilityTolerance
+				),
+				postImpactNormalVelocity: normalize(
+					dot(problem.gradients[index]!, finalVelocity),
+					feasibilityTolerance
+				)
 			})),
 			inelasticVelocity: inelastic,
 			elasticVelocity: elastic.velocity,
@@ -105,7 +123,8 @@ function solveElastic(
 		problem.inverseMasses,
 		tolerance
 	);
-	if (!projectedVelocity) return 'impact-termination-certification-failed: anti-locking projection failed.';
+	if (!projectedVelocity)
+		return 'impact-termination-certification-failed: anti-locking projection failed.';
 	const projected: { readonly index: number; readonly gradient: readonly number[] }[] = [];
 	const removedIndices: number[] = [];
 	for (let index = 0; index < problem.gradients.length; index += 1) {
@@ -180,6 +199,9 @@ function solveElastic(
 			iteration,
 			violatingContactIds: violating.map(({ index }) => input.contacts[index]!.id),
 			impulse: solution.values,
+			velocityBefore: velocity,
+			tentativeVelocity,
+			velocityAfter: next,
 			energyBefore,
 			energyAfterTentative,
 			energyAfterRenormalisation: energyAfter,
@@ -196,11 +218,14 @@ function solveElastic(
 }
 
 function validate(input: CoupledImpactInput): string | null {
-	if (input.bodies.length === 0 || input.contacts.length === 0) return 'A coupled impact requires bodies and contacts.';
-	if (input.contacts.length > 16) return 'The coupled impact exceeds the supported contact resource boundary.';
+	if (input.bodies.length === 0 || input.contacts.length === 0)
+		return 'A coupled impact requires bodies and contacts.';
+	if (input.contacts.length > 16)
+		return 'The coupled impact exceeds the supported contact resource boundary.';
 	if (input.restitution < 0 || input.restitution > 1 || !Number.isFinite(input.restitution))
 		return 'Restitution must lie in [0, 1].';
-	if (input.tolerances.maximumReflections <= 0) return 'The reflection resource cap must be positive.';
+	if (input.tolerances.maximumReflections <= 0)
+		return 'The reflection resource cap must be positive.';
 	const ids = new Set(input.bodies.map(({ id }) => id));
 	if (ids.size !== input.bodies.length) return 'Coupled-impact body IDs must be unique.';
 	for (const body of input.bodies) {
@@ -208,10 +233,15 @@ function validate(input: CoupledImpactInput): string | null {
 			return `Body ${body.id} has invalid mass or velocity.`;
 	}
 	for (const contact of input.contacts) {
-		const bodyIds = contact.type === 'body-body' ? [contact.firstBodyId, contact.secondBodyId] : [contact.bodyId];
-		if (bodyIds.some((id) => !ids.has(id))) return `Contact ${contact.id} references an unknown body.`;
+		const bodyIds =
+			contact.type === 'body-body' ? [contact.firstBodyId, contact.secondBodyId] : [contact.bodyId];
+		if (bodyIds.some((id) => !ids.has(id)))
+			return `Contact ${contact.id} references an unknown body.`;
 		const normal = contact.type === 'body-body' ? contact.normalFromFirstToSecond : contact.normal;
-		if (!normal.every(Number.isFinite) || Math.abs(Math.hypot(...normal) - 1) > effectiveTolerance(input) * 16)
+		if (
+			!normal.every(Number.isFinite) ||
+			Math.abs(Math.hypot(...normal) - 1) > effectiveTolerance(input) * 16
+		)
 			return `Contact ${contact.id} has a non-unit normal.`;
 	}
 	return null;
@@ -222,7 +252,9 @@ function prepare(input: CoupledImpactInput): PreparedProblem {
 	const masses = input.bodies.flatMap(({ mass }) => [mass, mass]);
 	const inverseMasses = masses.map((mass) => 1 / mass);
 	const velocity = input.bodies.flatMap(({ velocity: [x, y] }) => [x, y]);
-	const gradients = input.contacts.map((contact) => contactGradient(contact, bodyIndex, masses.length));
+	const gradients = input.contacts.map((contact) =>
+		contactGradient(contact, bodyIndex, masses.length)
+	);
 	return {
 		bodyIndex,
 		masses,
@@ -247,8 +279,8 @@ function contactGradient(
 	}
 	const first = bodyIndex.get(contact.firstBodyId)! * 2;
 	const second = bodyIndex.get(contact.secondBodyId)! * 2;
-	result[first] = -contact.normalFromFirstToSecond[0];
-	result[first + 1] = -contact.normalFromFirstToSecond[1];
+	result[first] = cleanZero(-contact.normalFromFirstToSecond[0]);
+	result[first + 1] = cleanZero(-contact.normalFromFirstToSecond[1]);
 	result[second] = contact.normalFromFirstToSecond[0];
 	result[second + 1] = contact.normalFromFirstToSecond[1];
 	return result;
@@ -295,6 +327,9 @@ function completeDiagnostic(
 		equalityBasis: elastic.equalityBasis,
 		projectedVelocity: elastic.projectedVelocity,
 		projectedContactGradients: elastic.projectedGradients,
+		projectedContactIds: input.contacts
+			.filter((_, index) => !elastic.removedIndices.includes(index))
+			.map(({ id }) => id),
 		removedContactIds: elastic.removedIndices.map((index) => input.contacts[index]!.id),
 		violationThreshold: elastic.threshold,
 		relativeViolationEpsilon: input.tolerances.relativeViolationEpsilon,
@@ -327,6 +362,7 @@ function failureDiagnostic(
 		equalityBasis: [],
 		projectedVelocity: problem.velocity,
 		projectedContactGradients: [],
+		projectedContactIds: [],
 		removedContactIds: [],
 		violationThreshold: 0,
 		relativeViolationEpsilon: input.tolerances.relativeViolationEpsilon,
@@ -343,4 +379,14 @@ function failureDiagnostic(
 
 function normalize(value: number, tolerance: number): number {
 	return Math.abs(value) <= tolerance ? 0 : value;
+}
+
+function cleanZero(value: number): number {
+	return value === 0 ? 0 : value;
+}
+
+function normalizeCoordinate(value: number, tolerance: number): number {
+	if (Math.abs(value) <= tolerance) return 0;
+	const integer = Math.round(value);
+	return Math.abs(value - integer) <= tolerance * Math.max(1, Math.abs(value)) ? integer : value;
 }

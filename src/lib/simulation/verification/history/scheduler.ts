@@ -94,6 +94,11 @@ function validateSchedulerSteps(context: RunValidationContext): void {
 					(revision) => revision.bodyId === step.bodyId && revision.revision === step.revision
 				)
 		);
+		const component = context.run.contactComponents.find(
+			(candidate) =>
+				Math.abs(candidate.createdAtTime - step.worldTime) <= timeTolerance(context) &&
+				candidate.bodyIds.includes(step.bodyId)
+		);
 		if (
 			!bodyIds.has(step.bodyId) ||
 			step.retainedBodyIds.some((bodyId) => !bodyIds.has(bodyId) || bodyId === step.bodyId) ||
@@ -108,7 +113,10 @@ function validateSchedulerSteps(context: RunValidationContext): void {
 				step.bodyId
 			);
 		}
-		if (step.eventType !== 'release' && (step.eventType === 'body-contact' ? !pair : !horizon)) {
+		if (
+			step.eventType !== 'release' &&
+			(step.eventType === 'body-contact' ? !pair && !component : !horizon)
+		) {
 			fail(
 				context,
 				'NON_MONOTONIC_TIME',
@@ -206,14 +214,19 @@ function validatePredictionDecisions(context: RunValidationContext): void {
 				);
 		}
 		for (const retainedTime of prediction.retainedThroughWorldTimes ?? []) {
-			const retained = steps.some(
+			const retainedByStep = steps.some(
 				(step) =>
 					step.eventType === 'body-contact' &&
 					Math.abs(step.worldTime - retainedTime) <= tolerance &&
 					!prediction.bodyIds.includes(step.bodyId) &&
 					prediction.bodyIds.every((bodyId) => step.retainedBodyIds.includes(bodyId))
 			);
-			if (!retained)
+			const retainedByComponent = context.run.contactComponents.some(
+				(component) =>
+					Math.abs(component.createdAtTime - retainedTime) <= tolerance &&
+					prediction.bodyIds.every((bodyId) => !component.bodyIds.includes(bodyId))
+			);
+			if (!retainedByStep && !retainedByComponent)
 				fail(
 					context,
 					'INVALID_INTERVAL',

@@ -124,6 +124,9 @@ function createSchedulerState(input: SimulationInput): SchedulerState {
 		steps: [],
 		pairPredictions: [],
 		dynamicContacts: [],
+		contactComponents: [],
+		componentEvents: [],
+		impactSolves: [],
 		rejectedBodyIds: new Set()
 	};
 }

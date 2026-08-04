@@ -106,6 +106,62 @@ export interface PairPredictionDiagnostic {
 	}[];
 }
 
+export interface ImpactReflectionDiagnostic {
+	readonly iteration: number;
+	readonly violatingContactIds: readonly string[];
+	readonly impulse: readonly number[];
+	readonly velocityBefore: readonly number[];
+	readonly tentativeVelocity: readonly number[];
+	readonly velocityAfter: readonly number[];
+	readonly energyBefore: number;
+	readonly energyAfterTentative: number;
+	readonly energyAfterRenormalisation: number;
+	readonly energyRenormalisationFactor: number;
+	readonly maximumSignificantViolationBefore: number;
+	readonly maximumSignificantViolationAfter: number;
+	readonly checks: {
+		readonly norm: boolean;
+		readonly kin: boolean;
+		readonly one: boolean;
+		readonly vio: boolean;
+		readonly mod: boolean;
+	};
+}
+
+export interface ImpactSolveDiagnostic {
+	readonly componentId?: string;
+	readonly candidateEvidence?: readonly {
+		readonly id: string;
+		readonly type: 'body-body' | 'body-fixed';
+		readonly separation: number;
+		readonly active: boolean;
+		readonly reason: string;
+	}[];
+	readonly bodyIds: readonly string[];
+	readonly contactIds: readonly string[];
+	readonly masses: readonly number[];
+	readonly preImpactVelocity: readonly number[];
+	readonly preImpactMomentum: readonly number[];
+	readonly contactGradients: readonly (readonly number[])[];
+	readonly linealityDimension: number;
+	readonly linealityContactIds: readonly string[];
+	readonly equalityBasis: readonly (readonly number[])[];
+	readonly projectedVelocity: readonly number[];
+	readonly projectedContactGradients: readonly (readonly number[])[];
+	readonly projectedContactIds: readonly string[];
+	readonly removedContactIds: readonly string[];
+	readonly violationThreshold: number;
+	readonly relativeViolationEpsilon: number;
+	readonly absoluteNormalVelocityFloor: number;
+	readonly reflections: readonly ImpactReflectionDiagnostic[];
+	readonly inelasticVelocity: readonly number[];
+	readonly elasticVelocity: readonly number[];
+	readonly finalVelocity: readonly number[];
+	readonly restitution: number;
+	readonly completion: 'complete' | 'impact-termination-certification-failed';
+	readonly failureReason: string | null;
+}
+
 export interface RunDiagnostics {
 	readonly iterations: number;
 	readonly simulatedUntilTime: number;
@@ -116,6 +172,7 @@ export interface RunDiagnostics {
 	readonly contactSearches: readonly RunContactSearchDiagnostic[];
 	readonly bodyEventHorizons: readonly BodyEventHorizonDiagnostic[];
 	readonly pairPredictions: readonly PairPredictionDiagnostic[];
+	readonly impactSolves?: readonly ImpactSolveDiagnostic[];
 	readonly schedulerSteps?: readonly WorldSchedulerStepDiagnostic[];
 	readonly entries: readonly DiagnosticEntry[];
 }

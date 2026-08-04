@@ -8,6 +8,7 @@ import {
 } from './history';
 import {
 	validateCollisionFreeIntervals,
+	validateCoupledImpacts,
 	validateContactDynamics,
 	validateContactGeometry,
 	validateDynamicBodyContacts,
@@ -31,6 +32,7 @@ export function validateSimulationRun(
 	validateSchedulerHistory(context);
 	validateContactGeometry(context);
 	validateDynamicBodyContacts(context);
+	validateCoupledImpacts(context);
 	validateCollisionFreeIntervals(context);
 	validateContactDynamics(context);
 	validateTerminalOutcome(context);

@@ -62,8 +62,8 @@ export function finishScheduledRun(
 			(left, right) => left.time - right.time || left.bodyId.localeCompare(right.bodyId)
 		),
 		dynamicContacts: state.dynamicContacts,
-		contactComponents: [],
-		componentEvents: [],
+		contactComponents: state.contactComponents,
+		componentEvents: state.componentEvents,
 		diagnostics: {
 			iterations: contactSearches.length,
 			simulatedUntilTime: state.worldTime,
@@ -77,6 +77,7 @@ export function finishScheduledRun(
 			contactSearches,
 			bodyEventHorizons: state.horizons,
 			pairPredictions: state.pairPredictions,
+			impactSolves: state.impactSolves,
 			schedulerSteps: state.steps,
 			entries
 		}
@@ -126,7 +127,9 @@ function bodyState(state: SchedulerState, body: InitialDynamicCircleBodyState): 
 	if (
 		state.dynamicContacts.some(
 			(contact) =>
-				(contact.state === 'incoming' || contact.state === 'rejected') &&
+				(contact.state === 'incoming' ||
+					contact.state === 'rejected' ||
+					contact.state === 'retained') &&
 				contact.time === state.worldTime &&
 				contact.participants.some(
 					(participant) => participant.type === 'body' && participant.bodyId === body.id
