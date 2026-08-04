@@ -346,7 +346,7 @@ test('groups verification scenarios, replaces worlds on Run and reports authorit
 	await expect(selector.locator('optgroup[label="Canonical launches"] option')).toHaveCount(5);
 	await expect(selector.locator('optgroup[label="Board layouts"] option')).toHaveCount(8);
 	await expect(selector.locator('optgroup[label="Physical settings"] option')).toHaveCount(13);
-	await expect(selector.locator('optgroup[label="Multi-body scheduler"] option')).toHaveCount(12);
+	await expect(selector.locator('optgroup[label="Multi-body scheduler"] option')).toHaveCount(22);
 	await expect(selector.locator('optgroup[label="Adversarial contacts"] option')).toHaveCount(18);
 
 	await selector.selectOption('staggered-independent-drops');
@@ -363,6 +363,12 @@ test('groups verification scenarios, replaces worlds on Run and reports authorit
 	await expect(page.getByRole('region', { name: 'Recorded-prefix inspection' })).toBeVisible();
 	await expect(page.getByRole('button', { name: /Dynamic contact released/ })).toBeVisible();
 	await expect(page.getByRole('button', { name: /Prediction selected/ })).toBeVisible();
+
+	await selector.selectOption('three-ball-newtons-cradle');
+	await page.getByRole('button', { name: 'Run simulation' }).click();
+	await expect(catalogue.getByText(/^time-limit.*permitted$/)).toBeVisible();
+	await expect(page.getByText('Coupled impact flow', { exact: true })).toBeVisible();
+	await expect(page.getByText(/active component \(3 bodies \/ 2 contacts\)/)).toBeVisible();
 
 	const scenarios = [
 		{ id: 'no-pegs', sceneId: 'no-pegs-board', outcome: 'exited' },
