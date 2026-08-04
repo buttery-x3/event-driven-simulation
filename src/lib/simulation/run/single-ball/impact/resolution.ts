@@ -2,7 +2,6 @@ import type {
 	ContactEvent,
 	FreeFlightMotionSegment,
 	InitialDynamicCircleBodyState,
-	RunTerminalReason,
 	SimulationInput,
 	Vec2
 } from '../../../contracts';
@@ -12,24 +11,12 @@ import { acquireAlternatingContactLimit, solveSupportReactions } from '../manifo
 import { appendSustainedContact, type RunAssembly } from '../run-assembly';
 import { continueSustainedContact } from '../sustained-contact';
 import { commitAlternatingLimitRelease } from './alternating-limit';
-import { recordAlternatingLimitEvidence, recordImpactEvidence } from './evidence';
+import { recordImpactEvidence } from './evidence';
+import { tryGeneralAccumulation } from './general-accumulation';
 import { isContractingAlternatingImpactSequence, resolveImpactResponse } from './response';
+import type { ImpactNextState, ImpactResolution } from './types';
 
-export interface ImpactNextState {
-	readonly time: number;
-	readonly position: Vec2;
-	readonly velocity: Vec2;
-	readonly releasedContactColliderId: string | null;
-	readonly releasedContactColliderIds: readonly string[];
-	readonly retainedSupportCandidates: readonly FixedWorldContactCandidate[];
-	readonly pendingContactCandidates: readonly FixedWorldContactCandidate[];
-	readonly acceptInitialContact: boolean;
-	readonly toleranceContainedReleaseColliderIds?: readonly string[];
-}
-
-export type ImpactResolution =
-	| { readonly type: 'terminal'; readonly reason: RunTerminalReason; readonly time: number }
-	| { readonly type: 'continue'; readonly nextState: ImpactNextState };
+export type { ImpactNextState, ImpactResolution } from './types';
 
 export function resolvePendingContact(
 	input: SimulationInput,
@@ -67,6 +54,11 @@ export function resolveContact(
 			'The selected contact state could not be evaluated as finite numbers.'
 		);
 	}
+
+	const accumulation = tryGeneralAccumulation(input, body, event, candidates, state, assembly);
+	if (accumulation) return accumulation;
+
+	// Legacy FLAME-46 path retained until general accumulation covers all boundary cases.
 	const alternating = isContractingAlternatingImpactSequence(
 		event.time,
 		candidates,
@@ -169,7 +161,7 @@ export function resolveContact(
 	const mayRest =
 		Math.hypot(...response.outgoingVelocity) <= input.settings.tolerances.eventTime ||
 		response.collapseReason === 'contracting-impacts' ||
-		response.collapseReason === 'alternating-contact-limit';
+		acquisition !== null;
 	const support = mayRest
 		? (acquisitionSupport ??
 			solveSupportReactions(
@@ -179,14 +171,27 @@ export function resolveContact(
 			))
 		: null;
 	if (acquisition) {
-		recordAlternatingLimitEvidence(
-			assembly,
-			body,
-			event.time,
-			acquisition,
-			support !== null,
-			retainedAfterImpact.length === 0
-		);
+		const classification = support
+			? 'supported rest'
+			: retainedAfterImpact.length === 0
+				? 'unsupported release'
+				: 'unresolved pressing manifold';
+		const contactIds = acquisition.candidates.map(({ colliderId }) => colliderId).join(', ');
+		assembly.entries.push({
+			severity: classification.startsWith('unresolved') ? 'warning' : 'info',
+			code: 'ALTERNATING_CONTACT_LIMIT',
+			message: `Detected contracting alternating contacts (${acquisition.sequenceColliderIds.join(', ')}) with intervals [${acquisition.intervals.join(', ')}] s. Acquired candidate accumulation manifold at [${acquisition.position.join(', ')}] m with contacts (${contactIds}), state distance ${acquisition.stateDistance} m, and support-feasibility classification: ${classification}.`,
+			time: event.time,
+			bodyId: body.id
+		});
+		assembly.entries.push({
+			severity: 'info',
+			code: 'ACCUMULATION_LEGACY_PATH',
+			message:
+				'Used legacy FLAME-46 alternating-contact path; general accumulation did not certify this candidate.',
+			time: event.time,
+			bodyId: body.id
+		});
 	}
 	if (support) return restingManifold(body, event, response, support.reactions, assembly);
 	if (acquisition && retainedAfterImpact.length > 0) {

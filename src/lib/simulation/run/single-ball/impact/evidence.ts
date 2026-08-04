@@ -1,7 +1,7 @@
 import type { ContactEvent, InitialDynamicCircleBodyState, Vec2 } from '../../../contracts';
 import type { FixedWorldContactCandidate } from '../../../collision';
+import type { AccumulationLimit } from '../../accumulation';
 import { withManifoldEvidence } from '../diagnostics';
-import type { AlternatingContactLimit } from '../manifold';
 import type { RunAssembly } from '../run-assembly';
 import { impactObservation, type ImpactResponse } from './response';
 
@@ -49,23 +49,47 @@ export function recordImpactEvidence(
 	assembly.impactHistory.push(impactObservation(candidates, event.time, response.contacts));
 }
 
-export function recordAlternatingLimitEvidence(
+export function recordAccumulationEvidence(
 	assembly: RunAssembly,
 	body: InitialDynamicCircleBodyState,
 	time: number,
-	acquisition: AlternatingContactLimit,
-	supported: boolean,
-	released: boolean
+	limit: AccumulationLimit,
+	resolution: {
+		readonly supported: boolean;
+		readonly released: boolean;
+		readonly impactSolveId: string;
+		readonly linealityContactIds: readonly string[];
+		readonly outgoingVelocity: Vec2;
+	}
 ): void {
-	const classification = supported
+	const classification = resolution.supported
 		? 'supported rest'
-		: released
+		: resolution.released
 			? 'unsupported release'
 			: 'unresolved pressing manifold';
+	const contactIds = limit.activeLimitContacts
+		.map(({ colliderId, secondBodyId, id }) => colliderId ?? secondBodyId ?? id)
+		.join(', ');
+	assembly.entries.push({
+		severity: classification.startsWith('unresolved') ? 'warning' : 'info',
+		code: 'ACCUMULATION_CERTIFIED',
+		message: `Certified contracting physical-event accumulation (${limit.certificationMethod}) for bodies [${limit.participantBodyIds.join(', ')}] with intervals [${limit.temporal.intervals.join(', ')}] s, remaining-time upper bound ${limit.remainingTimeUpperBound} s, candidate limit time ${limit.candidateLimitTime} s, limit contacts (${contactIds}), max relative normal speed ${limit.maxRelativeNormalSpeed} m/s, path=${limit.path}.`,
+		time,
+		bodyId: body.id
+	});
+	assembly.entries.push({
+		severity: classification.startsWith('unresolved') ? 'warning' : 'info',
+		code: 'ACCUMULATION_PROMOTED',
+		message: `Promoted limiting contact component through FLAME-53 impact solve ${resolution.impactSolveId} (lineality contacts: ${resolution.linealityContactIds.join(', ') || 'none'}); outgoing velocity [${resolution.outgoingVelocity.join(', ')}] m/s; support classification: ${classification}.`,
+		time,
+		bodyId: body.id
+	});
+	// Preserve the historical diagnostic code so FLAME-46 regression fixtures remain inspectable
+	// during and after migration to the general accumulation path.
 	assembly.entries.push({
 		severity: classification.startsWith('unresolved') ? 'warning' : 'info',
 		code: 'ALTERNATING_CONTACT_LIMIT',
-		message: `Detected contracting alternating contacts (${acquisition.sequenceColliderIds.join(', ')}) with intervals [${acquisition.intervals.join(', ')}] s. Acquired candidate accumulation manifold at [${acquisition.position.join(', ')}] m with contacts (${acquisition.candidates.map(({ colliderId }) => colliderId).join(', ')}), state distance ${acquisition.stateDistance} m, and support-feasibility classification: ${classification}.`,
+		message: `Detected contracting alternating contacts (${limit.candidateFixedColliderIds.join(', ')}) with intervals [${limit.temporal.intervals.join(', ')}] s. Acquired candidate accumulation manifold at [${limit.limitingBodyStates[0]?.position.join(', ') ?? 'n/a'}] m with contacts (${contactIds}), state distance ${limit.stateResiduals[0]?.positionDistance ?? 0} m, and support-feasibility classification: ${classification}.`,
 		time,
 		bodyId: body.id
 	});

@@ -217,9 +217,13 @@ commit boundary used by the scheduler. It sequences free flight, impact and sust
 including prepared constrained-motion horizons that remain interruptible until selected. The
 private `impact` subdomain owns contact-event
 commitment and classification: `response.ts` owns restitution and conservative manifold-level
-contracting-impact collapse, `evidence.ts` owns impact and accumulation diagnostics,
-`alternating-limit.ts` owns the acquired-manifold release transition, and `resolution.ts` owns
-support selection, rest classification and construction of the next authoritative state. The private `manifold` subdomain
+contracting-impact collapse, `evidence.ts` owns impact diagnostics, `general-accumulation.ts`
+routes certified limits into ordinary impact resolution, `alternating-limit.ts` retains the legacy
+FLAME-46 release path during migration, and `resolution.ts` owns support selection, rest
+classification and construction of the next authoritative state. The sibling `run/accumulation`
+subdomain owns contracting positive-time event certification, finite temporal-tail bounds, limiting
+state reconstruction and the `AccumulationLimit` contract; it does not implement FLAME-53 impact
+laws or FLAME-54/56 support classification. The private `manifold` subdomain
 owns deterministic active-set normal-impulse solving, geometry/history-based acquisition of a
 fixed-circle accumulation manifold, and non-negative support-reaction certification for one dynamic
 circle against fixed contacts. The named `sustained-contact` subdomain owns

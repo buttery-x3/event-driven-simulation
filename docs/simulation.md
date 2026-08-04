@@ -345,21 +345,25 @@ impact intervals and approach speeds, a sufficiently small normal speed derived 
 distance and pressing acceleration, and a finite nearby predicted accumulation time. This policy
 never adds a position nudge, random direction, damping step or synthetic time advance.
 
-An alternating two-collider sequence is also eligible when five consecutive single-contact
-observations prove an A-B-A-B-A pattern with shrinking intervals and normal approach speeds. The
-manifold acquisition policy intersects the two expanded fixed-circle constraints, selects the
-geometric limit nearest the resolved state, rejects any limit that penetrates another collider, and
-retains every collider touching there. The configured contact distance determines how close the
-resolved state must be to that limit; exact tangent constraints use the corresponding
-curvature-derived position bound rather than a ball-radius threshold.
+A general accumulation detector certifies contracting sequences of distinct positive-time physical
+events for a connected participant cluster. Evidence requires positive event intervals, a certifiable
+finite upper bound on the unresolved temporal tail (for example geometric interval contraction),
+converging participant geometry and finite limiting body states. Event-count, low speed or
+restitution alone is never sufficient. Solver-internal Generalised Reflections iterations are never
+counted as physical accumulation events.
 
-The acquired normals are solved at zero restitution to remove the collapsing normal chatter while
-preserving common tangent motion. A non-negative reaction solve against gravity decides supported
-rest. If no support exists and the projected motion is a common escape direction, the transition
-records the complete candidate manifold and releases it into free flight. A pressing manifold with
-neither certified support nor a common release remains unresolved instead of selecting one
-collider. Diagnostics record the alternating collider set, contracting intervals, candidate limit,
-retained contacts, state distance, support-feasibility result and final classification.
+When an accumulation is certified, the complete limiting contact graph is reconstructed from
+limiting geometry rather than copied from recent collider IDs, then handed to the ordinary exact-time
+impact component machinery (FLAME-53) and support/sustained-contact classification (FLAME-54/56).
+Promotion may produce free-flight release, separation, supported motion, rest or an explicit
+unresolved result; settlement is not assumed. Trajectory state remains at the last certified event
+when the remaining temporal and state tails lie inside declared tolerances; the limiting manifold is
+recorded on the same-time transition evidence.
+
+The FLAME-46 alternating two-peg path remains available as a migration fallback while general
+accumulation reaches full boundary parity. Both FLAME-46 regression fixtures route through the
+general interface when certified; diagnostics distinguish `ACCUMULATION_CERTIFIED` /
+`ACCUMULATION_PROMOTED` from the legacy `ALTERNATING_CONTACT_LIMIT` path.
 
 A single pressing impact also retains its support immediately when the outgoing normal excursion
 bound `vₙ² / (2aₙ)` is no greater than the configured `contactDistance`. Such a release cannot

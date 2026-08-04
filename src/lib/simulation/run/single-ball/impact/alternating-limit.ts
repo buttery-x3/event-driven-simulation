@@ -8,9 +8,13 @@ import type { FixedWorldContactCandidate } from '../../../collision';
 import { withManifoldEvidence } from '../diagnostics';
 import type { AlternatingContactLimit } from '../manifold';
 import type { RunAssembly } from '../run-assembly';
-import { recordAlternatingLimitEvidence, recordImpactEvidence } from './evidence';
+import { recordImpactEvidence } from './evidence';
 import { resolveImpactResponse, type ImpactResponse } from './response';
 
+/**
+ * Legacy FLAME-46 alternating-limit release path retained until general accumulation reaches
+ * full behavioural parity on boundary cases.
+ */
 export function commitAlternatingLimitRelease(
 	input: SimulationInput,
 	body: InitialDynamicCircleBodyState,
@@ -27,8 +31,7 @@ export function commitAlternatingLimitRelease(
 		event.time,
 		observedCandidates,
 		incomingVelocity,
-		assembly.impactHistory,
-		'alternating-contact-limit'
+		assembly.impactHistory
 	);
 	if (!observedResponse) return false;
 
@@ -73,7 +76,21 @@ export function commitAlternatingLimitRelease(
 		time: event.time,
 		bodyId: body.id
 	});
-	recordAlternatingLimitEvidence(assembly, body, event.time, acquisition, false, true);
+	assembly.entries.push({
+		severity: 'info',
+		code: 'ALTERNATING_CONTACT_LIMIT',
+		message: `Detected contracting alternating contacts (${acquisition.sequenceColliderIds.join(', ')}) with intervals [${acquisition.intervals.join(', ')}] s. Acquired candidate accumulation manifold at [${acquisition.position.join(', ')}] m with contacts (${acquisition.candidates.map(({ colliderId }) => colliderId).join(', ')}), state distance ${acquisition.stateDistance} m, and support-feasibility classification: unsupported release.`,
+		time: event.time,
+		bodyId: body.id
+	});
+	assembly.entries.push({
+		severity: 'info',
+		code: 'ACCUMULATION_LEGACY_PATH',
+		message:
+			'Used legacy FLAME-46 alternating-contact path; general accumulation did not certify this candidate.',
+		time: event.time,
+		bodyId: body.id
+	});
 	return true;
 }
 

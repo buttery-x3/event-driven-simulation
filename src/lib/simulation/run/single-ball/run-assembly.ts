@@ -1,5 +1,6 @@
 import type {
 	DiagnosticEntry,
+	ImpactSolveDiagnostic,
 	MotionSegment,
 	RunContactSearchDiagnostic,
 	RunTerminalReason,
@@ -20,6 +21,7 @@ export interface RunAssembly {
 	readonly entries: DiagnosticEntry[];
 	readonly contactSearches: RunContactSearchDiagnostic[];
 	readonly impactHistory: ImpactObservation[];
+	readonly impactSolves: ImpactSolveDiagnostic[];
 }
 
 export function createRunAssembly(input: SimulationInput): RunAssembly {
@@ -30,7 +32,8 @@ export function createRunAssembly(input: SimulationInput): RunAssembly {
 		events: [],
 		entries: [],
 		contactSearches: [],
-		impactHistory: []
+		impactHistory: [],
+		impactSolves: []
 	};
 }
 
@@ -104,6 +107,7 @@ export function finishRun(
 			contactSearches: assembly.contactSearches,
 			bodyEventHorizons: [],
 			pairPredictions: [],
+			impactSolves: assembly.impactSolves,
 			entries: assembly.entries
 		}
 	};

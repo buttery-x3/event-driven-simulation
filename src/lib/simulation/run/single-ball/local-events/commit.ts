@@ -1,5 +1,9 @@
 import type { MotionSegment, RunTerminalReason, Vec2 } from '../../../contracts';
 import { evaluateMotionSegmentPosition, evaluateMotionSegmentVelocity } from '../../../motion';
+import {
+	isAccumulationSequenceCandidate,
+	physicalEventsFromImpactHistory
+} from '../../accumulation';
 import { createRunAssembly } from '../run-assembly';
 import {
 	isContractingAlternatingImpactSequence,
@@ -220,13 +224,32 @@ function isUnresolvedZeroTimeContact(
 		) &&
 		!(
 			elapsed > 0 &&
-			isContractingAlternatingImpactSequence(
+			(isContractingAlternatingImpactSequence(
 				prediction.time,
 				prediction.result.activeCandidates,
 				runtime.impactHistory
-			)
+			) ||
+				isCertifiableAccumulationContact(runtime, prediction))
 		)
 	);
+}
+
+function isCertifiableAccumulationContact(
+	runtime: LocalBodyRuntime,
+	prediction: Extract<LocalBodyPrediction, { readonly kind: 'contact' }>
+): boolean {
+	const physicalEvents = physicalEventsFromImpactHistory(runtime.impactHistory, {
+		time: prediction.time,
+		bodyId: runtime.body.id,
+		mass: runtime.body.mass,
+		radius: runtime.body.physicalShape.radius,
+		position: prediction.result.event.position,
+		velocity: runtime.state.velocity,
+		candidates: prediction.result.activeCandidates
+	});
+	// Temporal/cluster candidacy keeps contracting cascades out of the zero-time-loop
+	// classifier while geometry is still approaching the limiting manifold.
+	return isAccumulationSequenceCandidate(runtime.input, physicalEvents, 5);
 }
 
 function bodyIsAbsentAfterTerminal(runtime: LocalBodyRuntime, time: number): boolean {

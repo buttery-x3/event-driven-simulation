@@ -112,6 +112,9 @@ src/lib/simulation/
             dynamic-supports/
                 index.ts
                 definitions.ts
+            accumulations/
+                index.ts
+                definitions.ts
             manifold/
                 index.ts
                 definitions.ts
@@ -120,6 +123,17 @@ src/lib/simulation/
     run/
         index.ts
         outcome.ts
+        accumulation/
+            index.ts
+            types.ts
+            temporal.ts
+            cluster.ts
+            limit-geometry.ts
+            components.ts
+            certify.ts
+            from-impact-history.ts
+            promote-single-body.ts
+            __tests__/
         scheduler/
             index.ts
             types.ts
@@ -133,6 +147,7 @@ src/lib/simulation/
                 component.ts
                 commit.ts
                 coupled-commit.ts
+                accumulation-bridge.ts
             dormancy/
                 index.ts
                 admission.ts
@@ -171,8 +186,10 @@ src/lib/simulation/
 				commit.ts
 			impact/
 				index.ts
+				types.ts
 				alternating-limit.ts
 				evidence.ts
+				general-accumulation.ts
 				response.ts
 				resolution.ts
             manifold/

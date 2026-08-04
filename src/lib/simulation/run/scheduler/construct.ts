@@ -155,7 +155,8 @@ function createSchedulerState(input: SimulationInput): SchedulerState {
 		dynamicSupportPredictions: new Map(),
 		dynamicSupportDiagnostics: [],
 		releasedDynamicPairs: new Set(),
-		rejectedBodyIds: new Set()
+		rejectedBodyIds: new Set(),
+		physicalEventHistory: []
 	};
 }
 

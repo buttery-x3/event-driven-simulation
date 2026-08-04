@@ -4,6 +4,7 @@ import { invalidateLocalPrediction, refreshBodyPrediction } from '../predictions
 import type { SchedulerState } from '../types';
 import { rebuildDormantComponents, upsertDynamicContacts } from '../dormancy';
 import { admitCertifiedDynamicSupports, interruptDynamicSupports } from '../dynamic-support';
+import { maybePromoteAccumulatingComponent, recordPhysicalEvent } from './accumulation-bridge';
 import type { PairCommitResult } from './commit';
 import type { ActiveComponentContact, ComponentBodyState, ExactTimeComponent } from './component';
 import {
@@ -16,9 +17,11 @@ import {
 export function commitCoupledImpact(
 	state: SchedulerState,
 	selection: Extract<PairSchedulerSelection, { readonly type: 'contact' }>,
-	component: ExactTimeComponent
+	incomingComponent: ExactTimeComponent
 ): PairCommitResult {
 	const tolerance = Math.max(state.input.settings.tolerances.contactDistance, Number.EPSILON * 256);
+	const promotion = maybePromoteAccumulatingComponent(state, incomingComponent, tolerance);
+	const component = promotion.component;
 	const result = resolveCoupledImpact({
 		bodies: component.bodies.map(({ id, mass, velocity }) => ({ id, mass, velocity })),
 		contacts: component.contacts.map((contact) =>
@@ -38,7 +41,7 @@ export function commitCoupledImpact(
 						normal: contact.normal
 					}
 		),
-		restitution: state.input.settings.restitution,
+		restitution: promotion.restitution,
 		tolerances: {
 			numerical: tolerance,
 			absoluteNormalVelocityFloor: Math.max(tolerance, Number.EPSILON * 512),
@@ -83,6 +86,7 @@ export function commitCoupledImpact(
 		component.contacts.map((contact) => resolvedContact(component, contact, response, tolerance))
 	);
 	recordComponent(state, component);
+	recordPhysicalEvent(state, promotion.physicalEvent);
 	applyResponse(state, component, response, tolerance);
 	for (const body of component.bodies) state.runtimes.get(body.id)!.revision += 1;
 	const dormantBodyIds = rebuildDormantComponents(state, component, response, tolerance);

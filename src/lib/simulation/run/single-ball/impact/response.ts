@@ -18,7 +18,6 @@ export interface ImpactResponse {
 	readonly collapseReason:
 		| 'zero-restitution'
 		| 'contracting-impacts'
-		| 'alternating-contact-limit'
 		| 'initial-supported-state'
 		| 'sub-tolerance-release'
 		| null;
@@ -49,7 +48,7 @@ export function resolveImpactResponse(
 		tolerance
 	);
 	if (!solution) return null;
-	if (forcedCollapse) return response(solution, true, forcedCollapse);
+	if (forcedCollapse) return response(solution, true, 'contracting-impacts');
 	const manifoldKey = contactManifoldKey(candidates);
 	const pressingAcceleration = Math.max(
 		0,

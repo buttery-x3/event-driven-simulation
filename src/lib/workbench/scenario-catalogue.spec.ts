@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+	accumulationScenarios,
 	adversarialScenarios,
 	boardStateScenarios,
 	canonicalPlinkoScenarios,
@@ -31,6 +32,7 @@ describe('workbench scenario catalogue', () => {
 				dynamicSupportScenarios.length +
 				pathInterruptionScenarios.length +
 				simultaneousImpactScenarios.length +
+				accumulationScenarios.length +
 				adversarialScenarios.length
 		);
 		expect(new Set(workbenchScenarios.map(({ id }) => id)).size).toBe(workbenchScenarios.length);
@@ -45,6 +47,7 @@ describe('workbench scenario catalogue', () => {
 			...dynamicSupportScenarios,
 			...pathInterruptionScenarios,
 			...simultaneousImpactScenarios,
+			...accumulationScenarios,
 			...adversarialScenarios
 		]) {
 			expect(getWorkbenchScenario(source.id)?.input).toBe(source.input);
