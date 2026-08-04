@@ -82,7 +82,19 @@ export type ScenarioCoverageId =
 	| 'impact.implicit-equality'
 	| 'impact.scale-invariance'
 	| 'impact.multi-body-lineality'
-	| 'impact.termination-certification-failure';
+	| 'impact.termination-certification-failure'
+	| 'dormant.wedged-remains-anchored'
+	| 'dormant.wedged-dislodged'
+	| 'dormant.stack-reactivated'
+	| 'dormant.component-split'
+	| 'dormant.world-continues'
+	| 'dormant.unsupported-floating'
+	| 'path-interruption.free-circular'
+	| 'path-interruption.before-detachment'
+	| 'path-interruption.linear-side-impact'
+	| 'path-interruption.slider-reactivates-resting'
+	| 'path-interruption.circular-circular'
+	| 'path-interruption.unsupported-dynamic-support';
 
 export type ScenarioMotionMode = 'free-flight' | 'linear-contact' | 'circular-contact';
 

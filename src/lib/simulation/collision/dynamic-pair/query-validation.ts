@@ -20,13 +20,7 @@ export function validateDynamicPairContactQuery(
 			participant.path.endTime < participant.path.startTime
 		)
 			return 'Motion paths must have finite non-reversed intervals.';
-		if (
-			![
-				...participant.path.startPosition,
-				...participant.path.startVelocity,
-				...(participant.path.type === 'stationary' ? [] : participant.path.acceleration)
-			].every(Number.isFinite)
-		)
+		if (!pathNumbers(participant.path).every(Number.isFinite))
 			return 'Motion path state must contain finite numbers.';
 	}
 	if (!Number.isFinite(query.currentTime)) return 'Current world time must be finite.';
@@ -45,4 +39,22 @@ export function validateDynamicPairContactQuery(
 	)
 		return 'The maximum refinement iteration count must be a positive integer.';
 	return null;
+}
+
+function pathNumbers(path: DynamicPairContactQuery['first']['path']): readonly number[] {
+	if (path.type === 'stationary') return [...path.startPosition, ...path.startVelocity];
+	if (path.type !== 'circular-contact') {
+		return [...path.startPosition, ...path.startVelocity, ...path.acceleration];
+	}
+	return [
+		...path.startPosition,
+		...path.startVelocity,
+		...path.centre,
+		path.contactRadius,
+		path.startAngle,
+		path.endAngle,
+		path.direction,
+		path.startTangentialSpeed,
+		...path.gravity
+	];
 }

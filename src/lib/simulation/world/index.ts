@@ -11,6 +11,8 @@ export {
 	independentBodySchedulerScenarios,
 	dynamicPairScenarios,
 	simultaneousImpactScenarios,
+	dormantComponentScenarios,
+	pathInterruptionScenarios,
 	canonicalPlinkoScenarios,
 	defaultCanonicalPlinkoScenario,
 	type BoardStateScenario,

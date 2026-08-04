@@ -92,8 +92,8 @@ export const simultaneousImpactScenarios = [
 	),
 	scenario(
 		'unsupported-retained-dynamic-contact',
-		'Unsupported retained dynamic contact',
-		'Instantaneous response succeeds before fixed support exposes the later persistent dynamic-contact boundary.',
+		'Retained dynamic support contact',
+		'Instantaneous response promotes a retained body-body graph with fixed support into a dormant component.',
 		'impact.unsupported-retained-contact',
 		input(
 			'unsupported-retained-dynamic-contact-board',
@@ -101,7 +101,7 @@ export const simultaneousImpactScenarios = [
 			[horizontalLine('floor', 0), horizontalLine('ceiling', 2)],
 			1
 		),
-		['unresolved']
+		['settled']
 	),
 	scenario(
 		'implicit-equality-anti-locking',
@@ -140,7 +140,7 @@ export const simultaneousImpactScenarios = [
 			[verticalLine('left-stop', -1.5), verticalLine('right-stop', 1.5)],
 			1
 		),
-		['unresolved']
+		['settled']
 	),
 	scenario(
 		'termination-certification-failure',

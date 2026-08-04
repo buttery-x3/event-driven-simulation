@@ -5,7 +5,11 @@ import type {
 	Vec2
 } from '../../../contracts';
 import type { FixedWorldContactCandidate } from '../../../collision';
-import { evaluateMotionSegmentPosition, evaluateMotionSegmentVelocity } from '../../../motion';
+import {
+	evaluateCircularContactState,
+	evaluateMotionSegmentPosition,
+	evaluateMotionSegmentVelocity
+} from '../../../motion';
 import { predictionSegments, type LocalBodyRuntime } from '../../single-ball/local-events';
 import type { SchedulerState } from '../types';
 import type { PairContactSelection, PairSchedulerSelection } from './selection';
@@ -94,6 +98,72 @@ export function buildExactTimeComponent(
 	};
 }
 
+export function buildStationaryContactComponents(
+	state: SchedulerState,
+	time: number
+): readonly ExactTimeComponent[] {
+	const tolerance = Math.max(state.input.settings.tolerances.contactDistance, Number.EPSILON * 256);
+	const bodies = [...state.runtimes.values()]
+		.filter((runtime) => runtime.dormantComponentId === null)
+		.map((runtime) => bodyStateAt(state, runtime, time))
+		.filter(
+			(body): body is ComponentBodyState =>
+				body !== null && Math.hypot(...body.velocity) <= tolerance
+		)
+		.sort(bodyGeometryOrder);
+	if (bodies.length === 0) return [];
+	const dynamicCandidates = bodyPairCandidates(bodies, null, time, tolerance);
+	const dynamicContacts = dynamicCandidates.flatMap(({ contact }) => (contact ? [contact] : []));
+	const groups: Set<string>[] = [];
+	const remaining = new Set(bodies.map(({ id }) => id));
+	while (remaining.size > 0) {
+		const seed = [...remaining].sort()[0]!;
+		const group = new Set([seed]);
+		remaining.delete(seed);
+		let changed = true;
+		while (changed) {
+			changed = false;
+			for (const contact of dynamicContacts) {
+				if (!group.has(contact.firstBodyId) && !group.has(contact.secondBodyId)) continue;
+				for (const id of [contact.firstBodyId, contact.secondBodyId]) {
+					if (!remaining.delete(id)) continue;
+					group.add(id);
+					changed = true;
+				}
+			}
+		}
+		groups.push(group);
+	}
+	return groups.map((bodyIds, index) => {
+		const members = bodies.filter(({ id }) => bodyIds.has(id));
+		const bodyContacts = dynamicContacts.filter(
+			(contact) => bodyIds.has(contact.firstBodyId) && bodyIds.has(contact.secondBodyId)
+		);
+		const fixedCandidates = members.flatMap((body) =>
+			state.input.scene.staticColliders.map((collider) =>
+				fixedCandidate(body, collider, time, tolerance)
+			)
+		);
+		return {
+			id: `stationary-candidate:${time}:${index}:${[...bodyIds].sort().join('+')}`,
+			time,
+			bodies: members,
+			contacts: [
+				...bodyContacts,
+				...fixedCandidates.flatMap(({ contact }) => (contact ? [contact] : []))
+			],
+			candidateEvidence: [
+				...dynamicCandidates
+					.filter(({ contact }) =>
+						contact ? bodyIds.has(contact.firstBodyId) && bodyIds.has(contact.secondBodyId) : false
+					)
+					.map(({ evidence }) => evidence),
+				...fixedCandidates.map(({ evidence }) => evidence)
+			]
+		};
+	});
+}
+
 function bodyStateAt(
 	state: SchedulerState,
 	runtime: LocalBodyRuntime,
@@ -120,7 +190,7 @@ function bodyStateAt(
 							startPosition: position,
 							startVelocity: [0, 0],
 							reason: 'resting-contact',
-							componentId: null
+							componentId: runtime.dormantComponentId
 						}
 					: null
 		};
@@ -138,14 +208,22 @@ function bodyStateAt(
 		radius: runtime.body.physicalShape.radius,
 		position: segment ? evaluateMotionSegmentPosition(segment, time) : runtime.state.position,
 		velocity: segment ? evaluateMotionSegmentVelocity(segment, time) : runtime.state.velocity,
-		prefixSegment:
-			segment && time > segment.startTime ? ({ ...segment, endTime: time } as MotionSegment) : null
+		prefixSegment: segment && time > segment.startTime ? truncateSegment(segment, time) : null
+	};
+}
+
+function truncateSegment(segment: MotionSegment, endTime: number): MotionSegment {
+	if (segment.type !== 'circular-contact') return { ...segment, endTime };
+	return {
+		...segment,
+		endTime,
+		endAngle: evaluateCircularContactState(segment, endTime).angle
 	};
 }
 
 function bodyPairCandidates(
 	bodies: readonly ComponentBodyState[],
-	selection: Extract<PairSchedulerSelection, { readonly type: 'contact' }>,
+	selection: Extract<PairSchedulerSelection, { readonly type: 'contact' }> | null,
 	time: number,
 	tolerance: number
 ): readonly {
@@ -153,7 +231,7 @@ function bodyPairCandidates(
 	readonly evidence: NonNullable<ImpactSolveDiagnostic['candidateEvidence']>[number];
 }[] {
 	const selections = new Map(
-		selection.simultaneousContacts.map((contact) => [
+		(selection?.simultaneousContacts ?? []).map((contact) => [
 			pairKey(contact.first.bodyId, contact.second.bodyId),
 			contact
 		])
@@ -255,12 +333,15 @@ function fixedCandidate(
 	const active =
 		geometry.distance > tolerance && separation <= tolerance && separation >= -tolerance * 8;
 	const id = `fixed-contact:${body.id}:${collider.id}:${geometry.feature}:${time}`;
-	const normal: Vec2 = active
-		? [
-				(body.position[0] - geometry.contactPoint[0]) / geometry.distance,
-				(body.position[1] - geometry.contactPoint[1]) / geometry.distance
-			]
-		: [0, 0];
+	const normalOffset: Vec2 = [
+		body.position[0] - geometry.contactPoint[0],
+		body.position[1] - geometry.contactPoint[1]
+	];
+	const normalDistance = Math.hypot(...normalOffset);
+	const normal: Vec2 =
+		active && normalDistance > tolerance
+			? [normalOffset[0] / normalDistance, normalOffset[1] / normalDistance]
+			: [0, 0];
 	const normalVelocity = body.velocity[0] * normal[0] + body.velocity[1] * normal[1];
 	const candidate: FixedWorldContactCandidate = {
 		type: 'contact-candidate',

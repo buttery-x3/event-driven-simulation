@@ -14,6 +14,10 @@ import {
 	type LocalBodyRuntime
 } from '../single-ball/local-events';
 import { aggregateWorldReason, finishScheduledRun } from './assembly';
+import {
+	promoteStationaryContactComponents,
+	registerSingleBodyDormancy
+} from './dormant-components';
 import { commitBodyPairEvent, invalidatePairDiagnostics, predictEarliestBodyPair } from './pairs';
 import { refreshBodyPrediction, selectLocalPrediction } from './predictions';
 import { releaseOverlapReasons } from './release';
@@ -32,6 +36,9 @@ export function constructSimulationRun(input: SimulationInput): SimulationRunRec
 				nextPair.reason.type === 'invalid-state' ? 'invalid' : 'valid',
 				nextPair.reason
 			);
+		}
+		if (!nextPair && state.predictions.size === 0 && state.scheduled.length === 0) {
+			return finishScheduledRun(state, 'valid', aggregateWorldReason(state));
 		}
 		const nextReleaseTime = state.scheduled[0]?.releaseTime ?? Number.POSITIVE_INFINITY;
 		const nextLocalTime = Math.min(
@@ -158,6 +165,7 @@ function commitReleaseBatch(state: SchedulerState, time: number): RunTerminalRea
 		if (reason) state.rejectedBodyIds.add(body.id);
 		else activateBody(state, body);
 	}
+	if (overlaps.size === 0) promoteStationaryContactComponents(state, time);
 	if (overlaps.size === 0) return null;
 	return {
 		type: 'invalid-state',
@@ -203,6 +211,9 @@ function commitLocalBatch(
 		state.predictions.delete(prediction.bodyId);
 		if (runtime.terminalReason) {
 			recordBodyTerminal(runtime);
+			if (runtime.terminalReason.type === 'resting-contact') {
+				registerSingleBodyDormancy(state, runtime.body.id, runtime.terminalReason);
+			}
 			if (worldMustFail(runtime.terminalReason)) {
 				failures.push({ bodyId: prediction.bodyId, reason: runtime.terminalReason });
 			}

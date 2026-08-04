@@ -8,8 +8,7 @@ import {
 	type DynamicCirclePathParticipant,
 	type DynamicPairContactDiagnostics,
 	type DynamicPairContactQueryResult,
-	type DynamicPairContactState,
-	type PolynomialDynamicCirclePath
+	type DynamicPairContactState
 } from '../../../collision';
 import {
 	predictionSegments,
@@ -169,7 +168,21 @@ function polynomialPath(
 	state: SchedulerState,
 	runtime: LocalBodyRuntime,
 	prediction: LocalBodyPrediction | null
-): PolynomialDynamicCirclePath | null {
+): DynamicCirclePathParticipant['path'] | null {
+	if (runtime.dormantComponentId) {
+		const component = state.contactComponents.find(({ id }) => id === runtime.dormantComponentId);
+		const stationary: StationaryMotionSegment = {
+			type: 'stationary',
+			bodyId: runtime.body.id,
+			startTime: component?.createdAtTime ?? runtime.committedTime,
+			endTime: state.input.settings.maximumSimulationTime,
+			startPosition: runtime.state.position,
+			startVelocity: [0, 0],
+			reason: 'dormant-component',
+			componentId: runtime.dormantComponentId
+		};
+		return stationary;
+	}
 	const reason = runtime.terminalReason;
 	if (reason?.type === 'resting-contact' || reason?.type === 'no-future-event') {
 		const stationary: StationaryMotionSegment = {
@@ -188,9 +201,7 @@ function polynomialPath(
 	const path = predictionSegments(runtime, prediction).find(
 		(segment) => segment.startTime <= state.worldTime && segment.endTime >= state.worldTime
 	);
-	return path && path.type !== 'circular-contact'
-		? { ...path, endTime: Math.min(path.endTime, prediction.time) }
-		: null;
+	return path ? { ...path, endTime: Math.min(path.endTime, prediction.time) } : null;
 }
 
 function bodyIsAbsent(runtime: LocalBodyRuntime): boolean {

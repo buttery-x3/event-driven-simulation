@@ -4,6 +4,8 @@ import {
 	boardStateScenarios,
 	canonicalPlinkoScenarios,
 	dynamicPairScenarios,
+	dormantComponentScenarios,
+	pathInterruptionScenarios,
 	independentBodySchedulerScenarios,
 	manifoldContactScenarios,
 	simultaneousImpactScenarios
@@ -24,6 +26,8 @@ describe('workbench scenario catalogue', () => {
 				manifoldContactScenarios.length +
 				independentBodySchedulerScenarios.length +
 				dynamicPairScenarios.length +
+				dormantComponentScenarios.length +
+				pathInterruptionScenarios.length +
 				simultaneousImpactScenarios.length +
 				adversarialScenarios.length
 		);
@@ -35,6 +39,8 @@ describe('workbench scenario catalogue', () => {
 			...manifoldContactScenarios,
 			...independentBodySchedulerScenarios,
 			...dynamicPairScenarios,
+			...dormantComponentScenarios,
+			...pathInterruptionScenarios,
 			...simultaneousImpactScenarios,
 			...adversarialScenarios
 		]) {

@@ -13,8 +13,8 @@ export interface RelativePairPolynomial {
 }
 
 export function buildDynamicPairContactPolynomial(
-	first: DynamicCirclePathParticipant,
-	second: DynamicCirclePathParticipant,
+	first: DynamicCirclePathParticipant & { readonly path: PolynomialDynamicCirclePath },
+	second: DynamicCirclePathParticipant & { readonly path: PolynomialDynamicCirclePath },
 	startTime: number,
 	duration: number
 ): RelativePairPolynomial {

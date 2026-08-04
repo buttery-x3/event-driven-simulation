@@ -130,6 +130,51 @@ describe('continuous dynamic circle-path contact solving', () => {
 		expect(result.diagnostics.pathTypes).toEqual(['free-flight', 'stationary']);
 	});
 
+	it('isolates free-flight contact against a circular sustained path without stepping', () => {
+		const circular = circularPath('slider', [0, 0], 2, 0, Math.PI / 2, 1);
+		const target: Vec2 = [Math.SQRT1_2, 3 * Math.SQRT1_2];
+		const free = path('free', target, [0, 0], [0, 0], 'free-flight', 0, Math.PI);
+		const result = findEarliestDynamicPairContact({
+			first: { ...participant(circular), radius: 0.5 },
+			second: { ...participant(free), radius: 0.5 },
+			currentTime: 0
+		});
+
+		expect(result.type).toBe('contact');
+		if (result.type !== 'contact') return;
+		expect(result.state.time).toBeCloseTo(Math.PI / 2, 7);
+		expect(result.state.relativeNormalMotion).toBeLessThan(-0.99);
+		expect(result.diagnostics.pathTypes).toEqual(['circular-contact', 'free-flight']);
+		expect(result.diagnostics.candidates[0]?.source).toBe('bounded-interval');
+	});
+
+	it('isolates linear fixed-world contact against a circular sustained path', () => {
+		const circular = circularPath('circular', [0, 0], 2, 0, Math.PI / 2, 1);
+		const target: Vec2 = [Math.SQRT1_2, 3 * Math.SQRT1_2];
+		const linear = path('linear', target, [0, 0], [0, 0], 'linear-contact', 0, Math.PI);
+		const result = findEarliestDynamicPairContact({
+			first: participant(circular),
+			second: participant(linear),
+			currentTime: 0
+		});
+
+		expect(result.type).toBe('contact');
+		if (result.type !== 'contact') return;
+		expect(result.state.time).toBeCloseTo(Math.PI / 2, 7);
+		expect(result.diagnostics.searchInterval).toEqual([0, Math.PI]);
+	});
+
+	it('certifies separated circular paths over their common bounded horizon', () => {
+		const result = findEarliestDynamicPairContact({
+			first: participant(circularPath('first', [-5, 0], 1, 0, Math.PI / 2, 1)),
+			second: participant(circularPath('second', [5, 0], 1, Math.PI, Math.PI / 2, -1)),
+			currentTime: 0
+		});
+
+		expect(result.type).toBe('no-contact');
+		expect(result.diagnostics.pathTypes).toEqual(['circular-contact', 'circular-contact']);
+	});
+
 	it('clips the search to the earlier local path horizon', () => {
 		const first = path('a', [-2, 0], [1, 0], [0, 0], 'free-flight', 0, 1);
 		const second = path('b', [2, 0], [-1, 0], [0, 0], 'free-flight', 0, 4);
@@ -193,13 +238,50 @@ function query(firstPath: MotionSegment, secondPath: MotionSegment): DynamicPair
 	};
 }
 
-function participant(pathValue: Exclude<MotionSegment, { type: 'circular-contact' }>) {
+function participant<T extends MotionSegment>(
+	pathValue: T
+): DynamicCirclePathParticipant & { readonly path: T } {
 	return {
 		bodyId: pathValue.bodyId,
 		revision: 0,
 		radius: 0.5,
 		path: pathValue
-	} as const satisfies DynamicCirclePathParticipant;
+	};
+}
+
+function circularPath(
+	bodyId: string,
+	centre: Vec2,
+	contactRadius: number,
+	startAngle: number,
+	endAngle: number,
+	direction: -1 | 1
+): Extract<MotionSegment, { type: 'circular-contact' }> {
+	const startPosition: Vec2 = [
+		centre[0] + contactRadius * Math.cos(startAngle),
+		centre[1] + contactRadius * Math.sin(startAngle)
+	];
+	const startTangentialSpeed = 1;
+	const angularDistance = direction * (endAngle - startAngle);
+	return {
+		type: 'circular-contact',
+		bodyId,
+		startTime: 0,
+		endTime: (contactRadius * angularDistance) / startTangentialSpeed,
+		startPosition,
+		startVelocity: [
+			-Math.sin(startAngle) * direction * startTangentialSpeed,
+			Math.cos(startAngle) * direction * startTangentialSpeed
+		],
+		supportingColliderId: `${bodyId}-support`,
+		centre,
+		contactRadius,
+		startAngle,
+		endAngle,
+		direction,
+		startTangentialSpeed,
+		gravity: [0, 0]
+	};
 }
 
 function path(

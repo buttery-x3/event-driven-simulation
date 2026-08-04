@@ -38,6 +38,7 @@ export function createLocalBodyRuntime(
 			acceptInitialContact: true
 		},
 		terminalReason: null,
+		dormantComponentId: null,
 		prepared: null,
 		segments: [],
 		events: [],

@@ -219,10 +219,6 @@ function validateSharedHorizon(
 	second: InitialDynamicCircleBodyState,
 	contactIndex: number
 ): void {
-	const component = context.run.contactComponents.find(({ activeContactIds }) =>
-		activeContactIds.includes(contact.id)
-	);
-	if (component && component.activeContactIds.length > 1) return;
 	const prediction = context.run.diagnostics.pairPredictions.find(
 		(candidate) =>
 			candidate.decision === 'selected' &&
@@ -230,15 +226,23 @@ function validateSharedHorizon(
 			candidate.bodyIds[0] === first.id &&
 			candidate.bodyIds[1] === second.id
 	);
+	const component = context.run.contactComponents.find(({ activeContactIds }) =>
+		activeContactIds.includes(contact.id)
+	);
+	if (!prediction && component && component.activeContactIds.length > 1) return;
+	const localHorizon = prediction?.localEventHorizons
+		? Math.min(...prediction.localEventHorizons)
+		: null;
 	if (
 		!prediction ||
 		contact.time < prediction.validInterval[0] - timeTolerance(context) ||
-		contact.time > prediction.validInterval[1] + timeTolerance(context)
+		contact.time > prediction.validInterval[1] + timeTolerance(context) ||
+		(localHorizon !== null && prediction.validInterval[1] > localHorizon + timeTolerance(context))
 	) {
 		fail(
 			context,
 			'INVALID_INTERVAL',
-			'The selected body contact must lie inside its shared local-event horizon.',
+			'The selected body contact and pair search must lie inside the earlier local-event horizon.',
 			`$.dynamicContacts[${contactIndex}]`,
 			contact.time
 		);

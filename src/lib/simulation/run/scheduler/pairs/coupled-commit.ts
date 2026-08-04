@@ -2,6 +2,7 @@ import type { DynamicContactRecord, RunTerminalReason, Vec2 } from '../../../con
 import { resolveCoupledImpact, type CoupledImpactResponse } from '../../dynamic-impact';
 import { invalidateLocalPrediction, refreshBodyPrediction } from '../predictions';
 import type { SchedulerState } from '../types';
+import { rebuildDormantComponents, upsertDynamicContacts } from '../dormant-components';
 import type { PairCommitResult } from './commit';
 import type { ActiveComponentContact, ComponentBodyState, ExactTimeComponent } from './component';
 import {
@@ -55,8 +56,9 @@ export function commitCoupledImpact(
 				componentId: component.id,
 				candidateEvidence: component.candidateEvidence
 			});
-		state.dynamicContacts.push(
-			...component.contacts.map((contact) => unresolvedContact(component, contact))
+		upsertDynamicContacts(
+			state,
+			component.contacts.map((contact) => unresolvedContact(component, contact))
 		);
 		recordComponent(state, component);
 		return {
@@ -74,17 +76,19 @@ export function commitCoupledImpact(
 		componentId: component.id,
 		candidateEvidence: component.candidateEvidence
 	});
-	state.dynamicContacts.push(
-		...component.contacts.map((contact) => resolvedContact(component, contact, response, tolerance))
+	upsertDynamicContacts(
+		state,
+		component.contacts.map((contact) => resolvedContact(component, contact, response, tolerance))
 	);
 	recordComponent(state, component);
 	applyResponse(state, component, response, tolerance);
-	const unsupported = persistentDynamicReason(component, response, tolerance);
+	const dormantBodyIds = rebuildDormantComponents(state, component, response, tolerance);
+	const unsupported = persistentDynamicReason(component, response, tolerance, dormantBodyIds);
 	if (unsupported) return { type: 'terminal', reason: unsupported };
 	for (const body of component.bodies) {
 		const runtime = state.runtimes.get(body.id)!;
 		runtime.revision += 1;
-		refreshBodyPrediction(state, runtime);
+		if (!runtime.dormantComponentId) refreshBodyPrediction(state, runtime);
 	}
 	return { type: 'continued' };
 }
@@ -125,6 +129,7 @@ function applyResponse(
 		);
 		runtime.prepared = null;
 		runtime.terminalReason = null;
+		runtime.dormantComponentId = null;
 		runtime.impactHistory.splice(0);
 		runtime.state = {
 			...runtime.state,
@@ -229,13 +234,16 @@ function participantVelocities(
 function persistentDynamicReason(
 	component: ExactTimeComponent,
 	response: CoupledImpactResponse,
-	tolerance: number
+	tolerance: number,
+	dormantBodyIds: ReadonlySet<string>
 ): RunTerminalReason | null {
 	const results = new Map(response.contacts.map((contact) => [contact.contactId, contact]));
 	const retainedDynamic = component.contacts.find(
 		(contact) =>
 			contact.type === 'body-body' &&
-			(results.get(contact.id)?.postImpactNormalVelocity ?? Number.POSITIVE_INFINITY) <= tolerance
+			(results.get(contact.id)?.postImpactNormalVelocity ?? Number.POSITIVE_INFINITY) <=
+				tolerance &&
+			(!dormantBodyIds.has(contact.firstBodyId) || !dormantBodyIds.has(contact.secondBodyId))
 	);
 	const retainedFixed = component.contacts.some(
 		(contact) =>
@@ -325,7 +333,9 @@ function recordComponent(state: SchedulerState, component: ExactTimeComponent): 
 			)
 		].sort(),
 		activeContactIds: component.contacts.map(({ id }) => id).sort(),
-		retainedSupportReactions: []
+		retainedSupportReactions: [],
+		revision: 0,
+		futureScheduledEventTimes: []
 	});
 	state.componentEvents.push(
 		{

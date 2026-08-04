@@ -346,7 +346,7 @@ test('groups verification scenarios, replaces worlds on Run and reports authorit
 	await expect(selector.locator('optgroup[label="Canonical launches"] option')).toHaveCount(5);
 	await expect(selector.locator('optgroup[label="Board layouts"] option')).toHaveCount(8);
 	await expect(selector.locator('optgroup[label="Physical settings"] option')).toHaveCount(13);
-	await expect(selector.locator('optgroup[label="Multi-body scheduler"] option')).toHaveCount(22);
+	await expect(selector.locator('optgroup[label="Multi-body scheduler"] option')).toHaveCount(34);
 	await expect(selector.locator('optgroup[label="Adversarial contacts"] option')).toHaveCount(18);
 
 	await selector.selectOption('staggered-independent-drops');
@@ -371,6 +371,36 @@ test('groups verification scenarios, replaces worlds on Run and reports authorit
 	await expect(page.getByText(/active component \(3 bodies \/ 2 contacts\)/)).toBeVisible();
 
 	const scenarios = [
+		{
+			id: 'free-ball-hits-peg-slider',
+			sceneId: 'free-ball-hits-peg-slider-board',
+			outcome: 'escaped'
+		},
+		{
+			id: 'slider-interrupted-before-detachment',
+			sceneId: 'slider-interrupted-before-detachment-board',
+			outcome: 'escaped'
+		},
+		{
+			id: 'linear-slider-hit-sideways',
+			sceneId: 'linear-slider-hit-sideways-board',
+			outcome: 'time-limit'
+		},
+		{
+			id: 'resting-component-hit-by-slider',
+			sceneId: 'resting-component-hit-by-slider-board',
+			outcome: 'time-limit'
+		},
+		{
+			id: 'two-circular-paths-approach',
+			sceneId: 'two-circular-paths-approach-board',
+			outcome: 'time-limit'
+		},
+		{
+			id: 'unsupported-dynamic-support-after-impact',
+			sceneId: 'unsupported-dynamic-support-after-impact-board',
+			outcome: 'unresolved'
+		},
 		{ id: 'no-pegs', sceneId: 'no-pegs-board', outcome: 'exited' },
 		{ id: 'dense', sceneId: 'dense-board', outcome: 'exited' },
 		{ id: 'mirrored-sparse', sceneId: 'mirrored-sparse-board', outcome: 'escaped' },
@@ -390,6 +420,36 @@ test('groups verification scenarios, replaces worlds on Run and reports authorit
 		{
 			id: 'circle-line-multi-support-rest',
 			sceneId: 'manifold-mixed-circle-mixed-line',
+			outcome: 'settled'
+		},
+		{
+			id: 'wedged-ball-remains-anchored',
+			sceneId: 'wedged-ball-remains-anchored-board',
+			outcome: 'settled'
+		},
+		{
+			id: 'wedged-ball-dislodged',
+			sceneId: 'wedged-ball-dislodged-board',
+			outcome: 'escaped'
+		},
+		{
+			id: 'resting-stack-reactivated',
+			sceneId: 'resting-stack-reactivated-board',
+			outcome: 'time-limit'
+		},
+		{
+			id: 'component-splits-after-impact',
+			sceneId: 'component-splits-after-impact-board',
+			outcome: 'settled'
+		},
+		{
+			id: 'unsupported-floating-cluster',
+			sceneId: 'unsupported-floating-cluster-board',
+			outcome: 'escaped'
+		},
+		{
+			id: 'resting-body-while-world-continues',
+			sceneId: 'resting-body-while-world-continues-board',
 			outcome: 'settled'
 		}
 	] as const;

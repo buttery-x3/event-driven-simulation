@@ -136,7 +136,7 @@ function componentEventItem(
 		kind: 'component-transition',
 		title: `Component ${event.change}`,
 		participants: bodyIds.length > 0 ? bodyIds.join(', ') : 'No dynamic members',
-		detail: `${event.componentIds.join(', ') || '∅'} → ${event.resultingComponentIds.join(', ') || '∅'}`,
+		detail: `${event.componentIds.join(', ') || '∅'} → ${event.resultingComponentIds.join(', ') || '∅'}${event.reactivatedBodyIds?.length ? ` · reactivated ${event.reactivatedBodyIds.join(', ')}` : ''}`,
 		bodyIds,
 		sourceOrder: 3_000 + index
 	};

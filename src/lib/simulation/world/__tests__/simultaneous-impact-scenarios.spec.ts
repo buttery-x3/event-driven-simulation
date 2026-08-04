@@ -78,11 +78,16 @@ describe('production simultaneous-impact scenarios', () => {
 		expect(multiBody.linealityDimension).toBeGreaterThan(0);
 	});
 
-	it('preserves a resolved instantaneous prefix at the persistent-contact boundary', () => {
+	it('promotes a resolved supported contact graph into persistent dormancy', () => {
 		const result = run('unsupported-retained-dynamic-contact');
-		expect(result.terminalReason.type).toBe('unsupported-body-body-response');
+		expect(result.terminalReason).toMatchObject({ type: 'world-complete', outcome: 'settled' });
 		expect(firstSolve(result).completion).toBe('complete');
 		expect(result.dynamicContacts.some(({ state }) => state === 'retained')).toBe(true);
+		expect(
+			result.contactComponents.some(
+				({ type, dissolvedAtTime }) => type === 'resting-anchored' && dissolvedAtTime === null
+			)
+		).toBe(true);
 	});
 
 	it('fails closed at the deliberate contact resource boundary', () => {

@@ -90,6 +90,8 @@ export interface ContactComponentRecord {
 		readonly contactId: string;
 		readonly impulsePerTime: number;
 	}[];
+	readonly revision?: number;
+	readonly futureScheduledEventTimes?: readonly number[];
 }
 
 export interface ComponentLifecycleEvent {
@@ -98,4 +100,5 @@ export interface ComponentLifecycleEvent {
 	readonly change: 'created' | 'split' | 'merged' | 'dissolved';
 	readonly componentIds: readonly string[];
 	readonly resultingComponentIds: readonly string[];
+	readonly reactivatedBodyIds?: readonly EntityId[];
 }

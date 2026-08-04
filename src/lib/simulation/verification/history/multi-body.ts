@@ -78,7 +78,12 @@ function validateBodyStates(context: RunValidationContext, bodyIds: ReadonlySet<
 	if (
 		isCompleteWorldOutcome(context.run.outcome) &&
 		context.run.bodyStates.some((state) =>
-			['scheduled', 'active', 'invalid', 'unresolved'].includes(state.lifecycle)
+			[
+				'scheduled',
+				...(context.run.outcome === 'no-future-event' ? [] : ['active']),
+				'invalid',
+				'unresolved'
+			].includes(state.lifecycle)
 		)
 	)
 		fail(
@@ -268,9 +273,17 @@ function validateComponents(context: RunValidationContext, bodyIds: ReadonlySet<
 			new Set(component.bodyIds).size !== component.bodyIds.length ||
 			new Set(component.fixedColliderIds).size !== component.fixedColliderIds.length ||
 			new Set(component.activeContactIds).size !== component.activeContactIds.length;
+		const invalidRuntimeEvidence =
+			(component.revision !== undefined &&
+				(!Number.isInteger(component.revision) || component.revision < 0)) ||
+			(component.futureScheduledEventTimes ?? []).some(
+				(time, eventIndex, times) =>
+					time < component.createdAtTime || (eventIndex > 0 && time < times[eventIndex - 1]!)
+			);
 		if (
 			componentIds.has(component.id) ||
 			duplicateMembership ||
+			invalidRuntimeEvidence ||
 			component.bodyIds.some((id) => !bodyIds.has(id)) ||
 			component.fixedColliderIds.some((id) => !colliderIds.has(id)) ||
 			component.activeContactIds.some((id) => !contactIds.has(id))
@@ -290,6 +303,13 @@ function validateComponents(context: RunValidationContext, bodyIds: ReadonlySet<
 				'MALFORMED_COMPONENT_MEMBERSHIP',
 				'Component lifecycle event references an unknown component.',
 				`$.componentEvents[${index}]`
+			);
+		if ((event.reactivatedBodyIds ?? []).some((id) => !bodyIds.has(id)))
+			fail(
+				context,
+				'UNRESOLVED_BODY_REFERENCE',
+				'Reactivated component members must identify dynamic input bodies.',
+				`$.componentEvents[${index}].reactivatedBodyIds`
 			);
 	}
 }
