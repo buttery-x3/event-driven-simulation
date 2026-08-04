@@ -24,16 +24,18 @@ export function gramMatrix(
 ): number[][] {
 	return columns.map((left) =>
 		columns.map((right) =>
-			left.reduce(
-				(sum, value, index) => sum + value * right[index]! * (weights?.[index] ?? 1),
-				0
-			)
+			left.reduce((sum, value, index) => sum + value * right[index]! * (weights?.[index] ?? 1), 0)
 		)
 	);
 }
 
 export function weightedNorm(vector: readonly number[], weights: readonly number[]): number {
-	return Math.sqrt(Math.max(0, vector.reduce((sum, value, i) => sum + weights[i]! * value * value, 0)));
+	return Math.sqrt(
+		Math.max(
+			0,
+			vector.reduce((sum, value, i) => sum + weights[i]! * value * value, 0)
+		)
+	);
 }
 
 export function pseudoInverseSolveSymmetric(
@@ -52,8 +54,7 @@ export function pseudoInverseSolveSymmetric(
 		if (Math.abs(eigenvalue) <= cutoff) continue;
 		const eigenvector = decomposition.vectors.map((row) => row[column]!);
 		const coefficient = dot(eigenvector, rightHandSide) / eigenvalue;
-		for (let row = 0; row < result.length; row += 1)
-			result[row] += coefficient * eigenvector[row]!;
+		for (let row = 0; row < result.length; row += 1) result[row] += coefficient * eigenvector[row]!;
 	}
 	return result.every(Number.isFinite) ? result : null;
 }

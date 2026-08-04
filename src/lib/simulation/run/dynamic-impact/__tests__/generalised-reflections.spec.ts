@@ -58,10 +58,9 @@ describe('coupled Generalised Reflections impact response', () => {
 		expect(velocities(response)).toEqual({ left: [0.5, 0], centre: [0.5, 0], right: [2, 0] });
 		expect(response.inelasticVelocity).toEqual([1, 0, 1, 0, 1, 0]);
 		expect(response.elasticVelocity).toEqual([0, 0, 0, 0, 3, 0]);
-		expect(response.diagnostic.reflections.map(({ violatingContactIds }) => violatingContactIds)).toEqual([
-			['left-contact'],
-			['right-contact']
-		]);
+		expect(
+			response.diagnostic.reflections.map(({ violatingContactIds }) => violatingContactIds)
+		).toEqual([['left-contact'], ['right-contact']]);
 	});
 
 	it('couples a falling body to a supported body and fixed floor', () => {
@@ -71,10 +70,7 @@ describe('coupled Generalised Reflections impact response', () => {
 					['upper', 1, [0, -2]],
 					['lower', 1, [0, 0]]
 				],
-				[
-					bodyContact('body', 'upper', 'lower', [0, -1]),
-					fixedContact('floor', 'lower', [0, 1])
-				],
+				[bodyContact('body', 'upper', 'lower', [0, -1]), fixedContact('floor', 'lower', [0, 1])],
 				0.5
 			)
 		);
@@ -87,10 +83,7 @@ describe('coupled Generalised Reflections impact response', () => {
 		const response = solve(
 			input(
 				[['body', 2, [1e-6, -4]]],
-				[
-					fixedContact('left', 'body', [1, 0]),
-					fixedContact('right', 'body', [-1, 0])
-				],
+				[fixedContact('left', 'body', [1, 0]), fixedContact('right', 'body', [-1, 0])],
 				1
 			)
 		);
@@ -107,10 +100,7 @@ describe('coupled Generalised Reflections impact response', () => {
 			['b', 1, [0, 0]],
 			['c', 1, [0, 0]]
 		] as const;
-		const contacts = [
-			bodyContact('ab', 'a', 'b', [1, 0]),
-			bodyContact('bc', 'b', 'c', [1, 0])
-		];
+		const contacts = [bodyContact('ab', 'a', 'b', [1, 0]), bodyContact('bc', 'b', 'c', [1, 0])];
 		const forward = velocities(solve(input(bodies, contacts, 1)));
 		const reversed = velocities(solve(input([...bodies].reverse(), [...contacts].reverse(), 1)));
 		expect(reversed).toEqual(forward);
@@ -201,5 +191,7 @@ function solve(input: CoupledImpactInput) {
 }
 
 function velocities(response: ReturnType<typeof solve>) {
-	return Object.fromEntries(response.bodyVelocities.map(({ bodyId, velocity }) => [bodyId, velocity]));
+	return Object.fromEntries(
+		response.bodyVelocities.map(({ bodyId, velocity }) => [bodyId, velocity])
+	);
 }

@@ -1,4 +1,10 @@
-import { addScaled, dot, gramMatrix, independentBasis, pseudoInverseSolveSymmetric } from './linear-algebra';
+import {
+	addScaled,
+	dot,
+	gramMatrix,
+	independentBasis,
+	pseudoInverseSolveSymmetric
+} from './linear-algebra';
 import { solveNonnegativeLeastSquares } from './nonnegative-qp';
 
 export interface LinealityResult {
@@ -54,9 +60,7 @@ export function projectEqualityCompatible(
 	if (!multipliers) return null;
 	let projected = [...vector];
 	for (let index = 0; index < basis.length; index += 1) {
-		const correction = basis[index]!.map(
-			(value, coordinate) => inverseMasses[coordinate]! * value
-		);
+		const correction = basis[index]!.map((value, coordinate) => inverseMasses[coordinate]! * value);
 		projected = addScaled(projected, correction, -multipliers[index]!);
 	}
 	return projected;
