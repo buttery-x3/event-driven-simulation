@@ -1,8 +1,9 @@
 <script lang="ts">
-	import type {
-		DynamicBodyDraft,
-		SimulationInputDraft,
-		SimulationInputValidationError
+	import {
+		appendScheduledBallDraft,
+		type DynamicBodyDraft,
+		type SimulationInputDraft,
+		type SimulationInputValidationError
 	} from './simulation-input-draft';
 	import { changeVelocityEntryMode } from './velocity-entry';
 
@@ -34,6 +35,12 @@
 		});
 	}
 
+	function addBall(): void {
+		const nextDraft = appendScheduledBallDraft(draft);
+		selectedIndex = nextDraft.bodies.length - 1;
+		onChangeDraft(nextDraft);
+	}
+
 	function fieldError(field: keyof DynamicBodyDraft): SimulationInputValidationError | undefined {
 		return errors.find((error) => error.field === `body.${bodyIndex}.${field}`);
 	}
@@ -42,21 +49,20 @@
 <fieldset class="control-group">
 	<legend>Dynamic bodies</legend>
 
-	<label class="body-selector">
-		<span>Body to edit</span>
-		<select
-			aria-label="Body to edit"
-			value={String(bodyIndex)}
-			onchange={(event) => (selectedIndex = Number(event.currentTarget.value))}
-		>
-			{#each draft.bodies as candidate, index (`${candidate.id}-${index}`)}
-				<option value={index}
-					>{candidate.id || `Body ${index + 1}`} · release {candidate.releaseTime} s</option
-				>
-			{/each}
-		</select>
-		<small>{draft.bodies.length} bodies · edit one at a time</small>
-	</label>
+	<div class="body-selector-row">
+		<label class="body-selector">
+			<span>Body to edit</span>
+			<select aria-label="Body to edit" bind:value={selectedIndex}>
+				{#each draft.bodies as candidate, index (`${candidate.id}-${index}`)}
+					<option value={index}
+						>{candidate.id || `Body ${index + 1}`} · release {candidate.releaseTime} s</option
+					>
+				{/each}
+			</select>
+			<small>{draft.bodies.length} bodies · edit one at a time</small>
+		</label>
+		<button type="button" class="add-ball" onclick={addBall}>Add ball</button>
+	</div>
 
 	{#if body}
 		<div class="paired-fields">
@@ -249,6 +255,21 @@
 		color: var(--color-text-muted);
 		font-size: var(--font-size-xs);
 	}
+	.body-selector-row {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		gap: var(--space-2);
+		align-items: center;
+	}
+	.add-ball {
+		min-height: 2.5rem;
+		padding: 0 var(--space-3);
+		border: 1px solid var(--color-border-strong);
+		border-radius: var(--radius-sm);
+		color: var(--color-text);
+		background: var(--color-surface);
+		font-weight: 800;
+	}
 	.paired-fields,
 	.mode-fields {
 		display: grid;
@@ -294,7 +315,8 @@
 		}
 		.mode-fields label,
 		input,
-		select {
+		select,
+		.add-ball {
 			min-height: 2.75rem;
 		}
 	}

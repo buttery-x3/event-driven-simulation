@@ -50,13 +50,35 @@ export function createSimulationInputDraft(input: SimulationInput): SimulationIn
 	};
 }
 
+export function appendScheduledBallDraft(draft: SimulationInputDraft): SimulationInputDraft {
+	const template = draft.bodies.at(-1);
+	if (!template) return draft;
+
+	return {
+		...draft,
+		bodies: [
+			...draft.bodies,
+			{
+				...template,
+				id: nextBallId(draft.bodies),
+				releaseTime: nextReleaseTime(draft.bodies)
+			}
+		]
+	};
+}
+
 export function prepareSimulationInputSubmission(
 	baseInput: SimulationInput,
 	draft: SimulationInputDraft
 ): SimulationInputSubmissionResult {
 	const errors: SimulationInputValidationError[] = [];
 	const bodies = draft.bodies.map((bodyDraft, index) =>
-		parseBodyDraft(baseInput.initialDynamicBodies[index], bodyDraft, index, errors)
+		parseBodyDraft(
+			baseInput.initialDynamicBodies[index] ?? baseInput.initialDynamicBodies[0],
+			bodyDraft,
+			index,
+			errors
+		)
 	);
 	const gravityX = parseFiniteField('gravityX', 'Gravity X', draft.gravityX, errors);
 	const gravityY = parseFiniteField('gravityY', 'Gravity Y', draft.gravityY, errors);
@@ -314,4 +336,18 @@ function deepFreeze<T>(value: T): T {
 
 function radiansToDegrees(value: number): number {
 	return (value * 180) / Math.PI;
+}
+
+function nextBallId(bodies: readonly DynamicBodyDraft[]): string {
+	const ids = new Set(bodies.map(({ id }) => id.trim()));
+	let suffix = bodies.length + 1;
+	while (ids.has(`ball-${suffix}`)) suffix += 1;
+	return `ball-${suffix}`;
+}
+
+function nextReleaseTime(bodies: readonly DynamicBodyDraft[]): string {
+	const releaseTimes = bodies
+		.map(({ releaseTime }) => Number(releaseTime))
+		.filter((releaseTime) => Number.isFinite(releaseTime));
+	return String(Math.max(0, ...releaseTimes) + 1);
 }
