@@ -14,6 +14,7 @@ import {
 	dynamicPairSurfaceSeparation,
 	evaluateDynamicPairCandidate
 } from './contact-polynomial';
+import { findEarliestBoundedDynamicPairContact } from './bounded-query';
 import { validateDynamicPairContactQuery } from './query-validation';
 import type {
 	DynamicPairCandidateClassification,
@@ -53,6 +54,12 @@ export function findEarliestDynamicPairContact(
 			diagnostics
 		);
 	}
+	if (
+		query.first.path.type === 'circular-contact' ||
+		query.second.path.type === 'circular-contact'
+	) {
+		return findEarliestBoundedDynamicPairContact(query, tolerances, diagnostics);
+	}
 
 	const initialSeparation = dynamicPairSurfaceSeparation(query.first, query.second, searchStart);
 	if (!Number.isFinite(initialSeparation)) {
@@ -67,8 +74,8 @@ export function findEarliestDynamicPairContact(
 
 	const duration = searchEnd - searchStart;
 	const polynomial = buildDynamicPairContactPolynomial(
-		query.first,
-		query.second,
+		{ ...query.first, path: query.first.path },
+		{ ...query.second, path: query.second.path },
 		searchStart,
 		duration
 	);

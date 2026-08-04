@@ -209,6 +209,14 @@ terminal boundary or failure as a prediction. Prepared sustained-contact legs ar
 until their local boundary is selected, which is the interruption boundary later body-pair search
 will use. The runner never advances collision state through renderer frames or physics timesteps.
 
+Body-pair search synchronizes the two authoritative paths over their shared time interval. Pairs of
+polynomial paths use relative contact-polynomial roots. When either path is a changing-normal
+circular continuation, a bounded continuous search excludes intervals using a conservative
+relative-speed limit and refines entering brackets to the configured tolerances. If that proof
+cannot distinguish separation from contact within its deterministic interval budget, the run is
+unresolved. An accepted pair event truncates both incoming paths at the exact contact time and seeds
+the same exact-time component response used by free-flight impacts.
+
 Each selected contact set is evaluated directly on the incoming path. For one contact, restitution
 reduces to the familiar outward-normal response:
 

@@ -10,7 +10,7 @@ export interface DynamicCirclePathParticipant {
 	readonly bodyId: string;
 	readonly revision: number;
 	readonly radius: number;
-	readonly path: PolynomialDynamicCirclePath;
+	readonly path: MotionSegment;
 }
 
 export interface DynamicPairContactTolerances {
@@ -42,7 +42,7 @@ export interface DynamicPairContactCandidateDiagnostic {
 	readonly polynomialResidual: number;
 	readonly geometryResidual: number;
 	readonly relativeNormalMotion: number | null;
-	readonly source: 'boundary' | 'critical-point' | 'bracketed-root';
+	readonly source: 'boundary' | 'critical-point' | 'bracketed-root' | 'bounded-interval';
 	readonly isolatingInterval: readonly [minimum: number, maximum: number];
 	readonly refinementIterations: number;
 	readonly topology: CircleCircleRootTopology;
@@ -54,10 +54,7 @@ export interface DynamicPairContactCandidateDiagnostic {
 export interface DynamicPairContactDiagnostics {
 	readonly bodyIds: readonly [string, string];
 	readonly revisions: readonly [number, number];
-	readonly pathTypes: readonly [
-		PolynomialDynamicCirclePath['type'],
-		PolynomialDynamicCirclePath['type']
-	];
+	readonly pathTypes: readonly [MotionSegment['type'], MotionSegment['type']];
 	readonly searchInterval: readonly [startTime: number, endTime: number];
 	readonly localEventHorizons: readonly [number, number];
 	readonly normalizedIntervalScale: number;

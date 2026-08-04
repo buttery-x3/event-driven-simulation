@@ -77,6 +77,7 @@ src/lib/simulation/
             index.ts
             types.ts
             query.ts
+            bounded-query.ts
             query-validation.ts
             contact-polynomial.ts
         __tests__/
@@ -103,6 +104,9 @@ src/lib/simulation/
                 index.ts
                 definitions.ts
             dormant-components/
+                index.ts
+                definitions.ts
+            path-interruptions/
                 index.ts
                 definitions.ts
             manifold/
@@ -260,16 +264,18 @@ explicit workbench provenance; it does not load scenarios, validate saved runs, 
 or depend on browser download APIs.
 
 The `collision/dynamic-pair` subdomain owns synchronized continuous contact queries for two dynamic
-circle paths. The `run/dynamic-impact` subdomain owns isolated and simultaneous frictionless impact
-response. Inside the scheduler, `pairs` owns continuous pair selection, exact-time component
-construction and commitment, while `dormancy` owns support-equilibrium admission, post-impact
-component rebuilding, lifecycle records and retained-contact persistence. These are private run
-capabilities; cross-subsystem consumers continue to enter through `collision/index.ts` and
-`run/index.ts`.
+circle paths. `query.ts` owns polynomial-path root selection, while `bounded-query.ts` owns
+deterministically bounded circular-path isolation using conservative relative-speed exclusion. The
+`run/dynamic-impact` subdomain owns isolated and simultaneous frictionless impact response. Inside
+the scheduler, `pairs` owns continuous pair selection, exact-time component construction and
+commitment, while `dormancy` owns support-equilibrium admission, post-impact component rebuilding,
+lifecycle records and retained-contact persistence. These are private run capabilities;
+cross-subsystem consumers continue to enter through `collision/index.ts` and `run/index.ts`.
 
 Scenario families with their own descriptor vocabulary live in named folders below
-`world/scenarios`. `dynamic-pairs`, `simultaneous-impact` and `dormant-components` own declarative
-definitions only; they do not select solver policy or invoke private scheduler modules.
+`world/scenarios`. `dynamic-pairs`, `simultaneous-impact`, `dormant-components` and
+`path-interruptions` own declarative definitions only; they do not select solver policy or invoke
+private scheduler modules.
 
 These responsibilities refine the module descriptions already present in `architecture.md`; they do
 not replace the physical and renderer boundaries documented there.
@@ -431,11 +437,12 @@ contract, the definition modules own complete `SimulationInput` values, and
 `board-state-metadata.ts` keeps verification policy from further enlarging the substantial board
 geometry module. Consumers continue to use `world/index.ts`.
 
-FLAME-51 through FLAME-54 added the documented `collision/dynamic-pair`, `run/dynamic-impact`,
+FLAME-51 through FLAME-55 added the documented `collision/dynamic-pair`, `run/dynamic-impact`,
 `run/scheduler/pairs`, `run/scheduler/dormancy`, `world/scenarios/dynamic-pairs`,
-`world/scenarios/simultaneous-impact` and `world/scenarios/dormant-components` subdomains. Their
-local entry points are private capability boundaries; the stable cross-subsystem facades remain
-`collision/index.ts`, `run/index.ts` and `world/index.ts`.
+`world/scenarios/simultaneous-impact`, `world/scenarios/dormant-components` and
+`world/scenarios/path-interruptions` subdomains. Their local entry points are private capability
+boundaries; the stable cross-subsystem facades remain `collision/index.ts`, `run/index.ts` and
+`world/index.ts`.
 
 The migration issue must also update the path references in `architecture.md`, `simulation.md`,
 `workflow.md`, ESLint rules and all imports. Do not leave documentation describing paths that no

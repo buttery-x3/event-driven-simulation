@@ -5,7 +5,11 @@ import type {
 	Vec2
 } from '../../../contracts';
 import type { FixedWorldContactCandidate } from '../../../collision';
-import { evaluateMotionSegmentPosition, evaluateMotionSegmentVelocity } from '../../../motion';
+import {
+	evaluateCircularContactState,
+	evaluateMotionSegmentPosition,
+	evaluateMotionSegmentVelocity
+} from '../../../motion';
 import { predictionSegments, type LocalBodyRuntime } from '../../single-ball/local-events';
 import type { SchedulerState } from '../types';
 import type { PairContactSelection, PairSchedulerSelection } from './selection';
@@ -204,8 +208,16 @@ function bodyStateAt(
 		radius: runtime.body.physicalShape.radius,
 		position: segment ? evaluateMotionSegmentPosition(segment, time) : runtime.state.position,
 		velocity: segment ? evaluateMotionSegmentVelocity(segment, time) : runtime.state.velocity,
-		prefixSegment:
-			segment && time > segment.startTime ? ({ ...segment, endTime: time } as MotionSegment) : null
+		prefixSegment: segment && time > segment.startTime ? truncateSegment(segment, time) : null
+	};
+}
+
+function truncateSegment(segment: MotionSegment, endTime: number): MotionSegment {
+	if (segment.type !== 'circular-contact') return { ...segment, endTime };
+	return {
+		...segment,
+		endTime,
+		endAngle: evaluateCircularContactState(segment, endTime).angle
 	};
 }
 

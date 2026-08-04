@@ -4,7 +4,7 @@ import type {
 	StaticCollider,
 	Vec2
 } from '../../contracts';
-import { evaluateMotionSegmentPosition } from '../../motion';
+import { evaluateBodyTrajectoryPosition, evaluateMotionSegmentPosition } from '../../motion';
 import { bodyFor, nearVector, stateTolerance } from '../history';
 import { reportRunValidationFailure, type RunValidationContext } from '../results';
 
@@ -41,6 +41,62 @@ export function validateContactGeometry(context: RunValidationContext): void {
 				`$.events[${eventIndex}].contacts[${contactIndex}]`,
 				event.time,
 				contact.contactPoint
+			);
+		}
+	}
+
+	for (const [contactIndex, contact] of context.run.dynamicContacts.entries()) {
+		const bodyParticipant = contact.participants.find(
+			(participant): participant is Extract<typeof participant, { type: 'body' }> =>
+				participant.type === 'body'
+		);
+		const fixedParticipant = contact.participants.find(
+			(participant): participant is Extract<typeof participant, { type: 'fixed-collider' }> =>
+				participant.type === 'fixed-collider'
+		);
+		if (!bodyParticipant || !fixedParticipant) continue;
+		const body = bodyFor(context.submittedInput, bodyParticipant.bodyId);
+		const collider = colliderFor(context, fixedParticipant.colliderId);
+		const trajectory = context.run.trajectories.find(
+			({ bodyId }) => bodyId === bodyParticipant.bodyId
+		);
+		const position = trajectory ? evaluateBodyTrajectoryPosition(trajectory, contact.time) : null;
+		if (!body || !collider || !position) continue;
+		validateBoundaryEvidence(
+			context,
+			body,
+			collider,
+			position,
+			contact.normalFromFirstToSecond,
+			`$.dynamicContacts[${contactIndex}]`,
+			contact.time,
+			contact.contactPoint
+		);
+		const normalVelocity = contact.postImpactNormalVelocity;
+		const exactImpact = context.run.contactComponents.some(
+			(component) =>
+				component.type === 'exact-time-impact' && component.activeContactIds.includes(contact.id)
+		);
+		const tolerance = Math.max(
+			context.submittedInput.settings.tolerances.contactDistance,
+			Number.EPSILON * 256
+		);
+		if (
+			exactImpact &&
+			normalVelocity !== null &&
+			((contact.state === 'retained' && normalVelocity > tolerance) ||
+				(contact.state === 'released' && normalVelocity <= tolerance))
+		) {
+			fail(
+				context,
+				'CONTACT_SET_MISMATCH',
+				'Retained or released fixed support disagrees with post-impact normal motion.',
+				{
+					path: `$.dynamicContacts[${contactIndex}]`,
+					time: contact.time,
+					bodyId: body.id,
+					colliderId: collider.id
+				}
 			);
 		}
 	}

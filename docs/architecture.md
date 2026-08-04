@@ -53,12 +53,12 @@ The canonical board coordinate system, construction and named launch catalogue a
 diagnostics for unsupported geometry, duplicate IDs, malformed coordinates and invalid dimensions.
 
 The named `simulation/world/scenarios` subdomain owns human-readable canonical, board-state,
-adversarial, dynamic-pair, simultaneous-impact and dormant-component experiment definitions. Each
-scenario family that has its own descriptor vocabulary lives in a named local folder. The shared
-descriptor declares category, purpose, complete `SimulationInput`, permitted outcomes, relevant
-event/contact expectations, replay expectation, coverage and regression provenance. It may describe
-invalid or unresolved experiments, but it does not invoke simulation or select solver behaviour;
-consumers receive it through `world/index.ts`.
+adversarial, dynamic-pair, simultaneous-impact, dormant-component and sustained-path-interruption
+experiment definitions. Each scenario family that has its own descriptor vocabulary lives in a
+named local folder. The shared descriptor declares category, purpose, complete `SimulationInput`,
+permitted outcomes, relevant event/contact expectations, replay expectation, coverage and
+regression provenance. It may describe invalid or unresolved experiments, but it does not invoke
+simulation or select solver behaviour; consumers receive it through `world/index.ts`.
 
 ## Contract responsibilities
 
@@ -246,11 +246,13 @@ validates its query contract, and `boundary-candidate.ts` classifies face and en
 The named `fixed-world` subdomain evaluates every collider, compares their common typed candidates,
 and certifies exact-time touching contacts at the common earliest state. Tolerance-near candidates
 whose ordering cannot be distinguished from simultaneity fail closed.
-The named `dynamic-pair` subdomain synchronizes two polynomial motion paths over their shared local
-horizon, builds one swap-invariant relative contact polynomial, reuses the same normalized root
-isolation and circle topology policy, and returns typed contact/no-contact/invalid/unresolved
-results. It supports free-flight, linear-contact and stationary paths; changing-normal circular
-paths remain outside this boundary.
+The named `dynamic-pair` subdomain synchronizes two motion paths over their shared local horizon and
+returns typed contact/no-contact/invalid/unresolved results. Free-flight, linear-contact and
+stationary pairs use one swap-invariant relative contact polynomial and the shared normalized root
+isolation and circle topology policy. A pair containing a changing-normal circular path uses a
+deterministically bounded interval isolator: conservative relative-speed bounds exclude separated
+intervals, entering brackets are refined to the configured time/geometry tolerances, and an
+uncertifiable interval fails closed rather than advancing through samples.
 `simulation/math/polynomial-roots.ts` contains the shared interval root isolation and exposes
 geometry-neutral isolating intervals and neighbouring polynomial samples to both geometry solvers.
 None of these modules advances state through fixed timesteps or imports rendering code. Renderer
