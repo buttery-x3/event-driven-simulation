@@ -10,6 +10,7 @@ export { independentBodySchedulerScenarios } from './independent-bodies';
 export { dynamicPairScenarios } from './dynamic-pairs';
 export { simultaneousImpactScenarios } from './simultaneous-impact';
 export { dormantComponentScenarios } from './dormant-components';
+export { pathInterruptionScenarios } from './path-interruptions';
 export type {
 	ScenarioCategoryId,
 	ScenarioContactModeTransitionExpectation,

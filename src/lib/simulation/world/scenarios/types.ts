@@ -88,7 +88,13 @@ export type ScenarioCoverageId =
 	| 'dormant.stack-reactivated'
 	| 'dormant.component-split'
 	| 'dormant.world-continues'
-	| 'dormant.unsupported-floating';
+	| 'dormant.unsupported-floating'
+	| 'path-interruption.free-circular'
+	| 'path-interruption.before-detachment'
+	| 'path-interruption.linear-side-impact'
+	| 'path-interruption.slider-reactivates-resting'
+	| 'path-interruption.circular-circular'
+	| 'path-interruption.unsupported-dynamic-support';
 
 export type ScenarioMotionMode = 'free-flight' | 'linear-contact' | 'circular-contact';
 

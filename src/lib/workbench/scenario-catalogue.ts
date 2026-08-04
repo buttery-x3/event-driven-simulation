@@ -5,6 +5,7 @@ import {
 	canonicalPlinkoScenarios,
 	dynamicPairScenarios,
 	dormantComponentScenarios,
+	pathInterruptionScenarios,
 	independentBodySchedulerScenarios,
 	manifoldContactScenarios,
 	simultaneousImpactScenarios,
@@ -42,6 +43,7 @@ export const workbenchScenarios = [
 	...dynamicPairScenarios,
 	...simultaneousImpactScenarios,
 	...dormantComponentScenarios,
+	...pathInterruptionScenarios,
 	...adversarialScenarios
 ] as const satisfies readonly WorkbenchScenarioDescriptor[];
 
