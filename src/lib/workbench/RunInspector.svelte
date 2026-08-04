@@ -25,6 +25,11 @@
 
 	let counts = $derived(getRunCounts(run));
 	let submittedBody = $derived(run.input.initialDynamicBodies[0] ?? null);
+	let impactSolves = $derived(run.diagnostics.impactSolves ?? []);
+
+	function formatGeneralisedVelocity(values: readonly number[]): string {
+		return `[${values.map((value) => Number(value.toPrecision(6))).join(', ')}]`;
+	}
 </script>
 
 <aside class="inspector" aria-labelledby="inspector-heading">
@@ -161,6 +166,50 @@
 			</div>
 		</dl>
 	</details>
+
+	{#if impactSolves.length > 0}
+		<details open>
+			<summary>Coupled impact flow</summary>
+			<div class="impact-solves">
+				{#each impactSolves as solve, index (`${solve.componentId}-${index}`)}
+					<section>
+						<strong>{solve.componentId ?? `impact ${index + 1}`}</strong>
+						<p>
+							active component ({solve.bodyIds.length} bodies / {solve.contactIds.length} contacts) &rarr;
+							implicit equality detection ({solve.linealityDimension}) &rarr; anti-locking
+							projection &rarr; elastic reflection sequence ({solve.reflections.length}) &rarr;
+							inelastic endpoint &rarr; energetic restitution ({solve.restitution}) &rarr; {solve.completion ===
+							'complete'
+								? 'final state'
+								: 'certification failure'}
+						</p>
+						<dl class="impact-evidence">
+							<div>
+								<dt>Violation threshold</dt>
+								<dd>{solve.violationThreshold}</dd>
+							</div>
+							<div>
+								<dt>Projected / removed gradients</dt>
+								<dd>{solve.projectedContactGradients.length} / {solve.removedContactIds.length}</dd>
+							</div>
+							<div class="wide">
+								<dt>Inelastic endpoint</dt>
+								<dd>{formatGeneralisedVelocity(solve.inelasticVelocity)}</dd>
+							</div>
+							<div class="wide">
+								<dt>Elastic endpoint</dt>
+								<dd>{formatGeneralisedVelocity(solve.elasticVelocity)}</dd>
+							</div>
+							<div class="wide">
+								<dt>Final velocity</dt>
+								<dd>{formatGeneralisedVelocity(solve.finalVelocity)}</dd>
+							</div>
+						</dl>
+					</section>
+				{/each}
+			</div>
+		</details>
+	{/if}
 </aside>
 
 <style>
@@ -235,6 +284,36 @@
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 		gap: var(--space-4);
+	}
+
+	.impact-solves {
+		display: grid;
+		gap: var(--space-4);
+		margin-top: var(--space-4);
+	}
+
+	.impact-solves section {
+		display: grid;
+		gap: var(--space-2);
+	}
+
+	.impact-solves strong {
+		overflow-wrap: anywhere;
+		font-family: var(--font-mono);
+		font-size: var(--font-size-sm);
+	}
+
+	.impact-solves p {
+		margin: 0;
+		color: var(--color-text-subtle);
+		font-size: var(--font-size-sm);
+		line-height: 1.5;
+	}
+
+	.impact-evidence {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: var(--space-3);
 	}
 
 	.wide {

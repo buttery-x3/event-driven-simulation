@@ -12,8 +12,7 @@ describe('production dynamic-pair scenarios', () => {
 			'glancing-impulse-transfer',
 			'peg-event-interrupted-by-ball',
 			'unrelated-prediction-survives',
-			'repeated-isolated-collisions',
-			'unsupported-simultaneous-third-body'
+			'repeated-isolated-collisions'
 		]);
 		for (const scenario of dynamicPairScenarios) {
 			const result = constructSimulationRun(scenario.input);
@@ -85,15 +84,6 @@ describe('production dynamic-pair scenarios', () => {
 		for (let index = 1; index < contacts.length; index += 1)
 			expect(contacts[index]!.time).toBeGreaterThan(contacts[index - 1]!.time);
 		expect(contacts.every(({ state }) => state === 'released')).toBe(true);
-	});
-
-	it('stops explicitly at an exact-time connected third body', () => {
-		const result = run('unsupported-simultaneous-third-body');
-		expect(result.terminalReason).toMatchObject({ type: 'unsupported-body-body-response' });
-		expect(result.dynamicContacts).toHaveLength(2);
-		expect(new Set(result.dynamicContacts.map(({ time }) => time)).size).toBe(1);
-		expect(result.dynamicContacts.every(({ state }) => state === 'incoming')).toBe(true);
-		expect(result.bodyStates.every(({ recordedUntilTime }) => recordedUntilTime === 2)).toBe(true);
 	});
 
 	it('preserves the physical result under participant order and ID renaming', () => {

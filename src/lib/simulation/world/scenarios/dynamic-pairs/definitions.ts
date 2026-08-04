@@ -103,18 +103,6 @@ export const dynamicPairScenarios = [
 			1,
 			6
 		)
-	),
-	scenario(
-		'unsupported-simultaneous-third-body',
-		'Unsupported simultaneous third body',
-		'An exact-time connected three-body component preserves its prefix and stops explicitly.',
-		'pair.unsupported-simultaneous-third-body',
-		input('unsupported-simultaneous-third-body-board', [
-			body('left', [-3, 5], [1, 0]),
-			body('middle', [0, 5], [0, 0]),
-			body('right', [3, 5], [-1, 0])
-		]),
-		['unresolved']
 	)
 ] as const satisfies readonly VerificationScenario[];
 

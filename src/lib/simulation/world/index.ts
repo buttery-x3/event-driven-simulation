@@ -10,6 +10,7 @@ export {
 	manifoldContactScenarios,
 	independentBodySchedulerScenarios,
 	dynamicPairScenarios,
+	simultaneousImpactScenarios,
 	canonicalPlinkoScenarios,
 	defaultCanonicalPlinkoScenario,
 	type BoardStateScenario,

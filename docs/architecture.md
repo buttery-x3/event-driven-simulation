@@ -168,12 +168,31 @@ the private `pairs` subdomain separates continuous pair selection from exact eve
 `construct.ts` owns global selection. The sibling `dynamic-impact` subdomain owns the mass-aware
 closed-form response for one certified isolated frictionless contact.
 
-An isolated incoming pair event commits both paths to one exact time, applies equal-and-opposite
-normal impulses using both masses and configured restitution, increments both revisions, eagerly
-invalidates affected local and pair futures, and rebuilds them from the common post-impact state.
-Unrelated pair predictions retain their revision identity and record the world events they survived.
-Exact-time connectivity to a third body, a participant fixed-world event or an active fixed support
-remains an explicit `unsupported-body-body-response` boundary for the coupled solver.
+An incoming pair event now seeds an exact-time contact component. The scheduler evaluates every
+released body at that common time, admits geometrically touching body-body and body-fixed contacts,
+expands connectivity only through dynamic bodies, and records rejected separated candidates. The
+private `scheduler/pairs/component.ts` module owns this geometry-to-component boundary;
+`coupled-commit.ts` owns prefix commitment, future invalidation, contact/component records and
+post-impact runtime state. Disconnected simultaneous components are committed independently, while
+nearby positive-time events remain ordered.
+
+The sibling `dynamic-impact` subdomain owns the generalized-coordinate simultaneous-impact law.
+`generalised-reflections.ts` composes a maximum-dissipation inelastic endpoint, implicit-equality
+anti-locking projection, scale-aware terminating elastic reflections with energy renormalisation,
+and energetic-restitution interpolation. `lineality.ts` owns positive-cone lineality certification
+and equality projection; `nonnegative-qp.ts` owns deterministic bounded non-negative quadratic and
+least-squares selection; `linear-algebra.ts` owns the small dense eigensolve and metric operations.
+The existing isolated response remains the closed-form reduction oracle. Solver diagnostics retain
+the complete contact gradients, projected/removed constraints, lineality basis, reflection subsets
+and invariant checks, endpoint energies, impulses and completion reason. Persistent dynamic contact
+that also retains fixed support remains an explicit `unsupported-body-body-response` boundary after
+the instantaneous response succeeds.
+
+This subdomain currently has six implementation files, triggering a headroom assessment but not a
+further split: its cohesive reason to change is the one simultaneous-impact operator, and the
+algorithm/policy boundaries are already separate. A future addition of rotational coordinates,
+sparse numerical backends or independently versioned solver policies would justify a nested
+generalized-impact numerical subdomain rather than a seventh unrelated responsibility here.
 
 `src/lib/simulation/run/single-ball/local-events` exposes the fixed-world local prediction and
 commit boundary used by the scheduler. It sequences free flight, impact and sustained contact,

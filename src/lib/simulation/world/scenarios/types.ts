@@ -71,7 +71,18 @@ export type ScenarioCoverageId =
 	| 'pair.peg-event-interrupted'
 	| 'pair.unrelated-prediction-survives'
 	| 'pair.repeated-isolated-collisions'
-	| 'pair.unsupported-simultaneous-third-body';
+	| 'pair.unsupported-simultaneous-third-body'
+	| 'impact.newtons-cradle'
+	| 'impact.dynamic-fixed-component'
+	| 'impact.symmetric-component'
+	| 'impact.inactive-contact-rejection'
+	| 'impact.exact-event-ordering'
+	| 'impact.participant-order-invariance'
+	| 'impact.unsupported-retained-contact'
+	| 'impact.implicit-equality'
+	| 'impact.scale-invariance'
+	| 'impact.multi-body-lineality'
+	| 'impact.termination-certification-failure';
 
 export type ScenarioMotionMode = 'free-flight' | 'linear-contact' | 'circular-contact';
 
