@@ -1,17 +1,19 @@
 import { describe, expect, it } from 'vitest';
+import type { Vec2 } from '../../contracts';
 import { constructSimulationRun } from '../../run';
 import { validateSimulationRun } from '../../verification';
 import { dynamicPairScenarios } from '../scenarios';
 
 describe('production dynamic-pair scenarios', () => {
-	it('provides every required selectable scenario through the authoritative scheduler', () => {
+	it('provides and independently validates every FLAME-52 workbench scenario', () => {
 		expect(dynamicPairScenarios.map(({ id }) => id)).toEqual([
-			'predicted-head-on-contact',
-			'predicted-glancing-contact',
-			'dynamic-near-miss',
-			'pair-search-clipped-by-peg-event',
-			'linear-contact-pair-prediction',
-			'swapped-pair-equivalence'
+			'equal-mass-head-on',
+			'unequal-mass-head-on',
+			'glancing-impulse-transfer',
+			'peg-event-interrupted-by-ball',
+			'unrelated-prediction-survives',
+			'repeated-isolated-collisions',
+			'unsupported-simultaneous-third-body'
 		]);
 		for (const scenario of dynamicPairScenarios) {
 			const result = constructSimulationRun(scenario.input);
@@ -20,53 +22,151 @@ describe('production dynamic-pair scenarios', () => {
 		}
 	});
 
-	it('records touching incoming head-on and non-axis-aligned glancing contacts', () => {
-		const headOn = run('predicted-head-on-contact');
-		const glancing = run('predicted-glancing-contact');
-		expect(headOn.terminalReason.type).toBe('unsupported-body-body-response');
-		expect(headOn.dynamicContacts[0]?.preImpactNormalVelocity).toBeLessThan(0);
-		expect(glancing.dynamicContacts[0]?.normalFromFirstToSecond[0]).not.toBe(0);
-		expect(glancing.dynamicContacts[0]?.normalFromFirstToSecond[1]).not.toBe(0);
+	it('matches equal- and unequal-mass closed-form head-on outcomes', () => {
+		const equal = run('equal-mass-head-on').dynamicContacts[0]!;
+		const unequal = run('unequal-mass-head-on').dynamicContacts[0]!;
+		expect(equal.postImpactVelocities).toEqual([
+			[-1, 0],
+			[1, 0]
+		]);
+		expect(unequal.postImpactVelocities).toEqual([
+			[1, 0],
+			[-1, 0]
+		]);
+		expect(unequal.impulse).toBe(3);
 	});
 
-	it('keeps the near miss empty and clips a pair search at the peg horizon', () => {
-		const nearMiss = run('dynamic-near-miss');
-		const clipped = run('pair-search-clipped-by-peg-event');
-		expect(nearMiss.dynamicContacts).toEqual([]);
+	it('preserves tangential motion through the glancing impulse', () => {
+		const contact = run('glancing-impulse-transfer').dynamicContacts[0]!;
+		const tangent: Vec2 = [-contact.normalFromFirstToSecond[1], contact.normalFromFirstToSecond[0]];
+		for (const index of [0, 1] as const) {
+			expect(dot(contact.postImpactVelocities![index], tangent)).toBeCloseTo(
+				dot(contact.preImpactVelocities![index], tangent),
+				12
+			);
+		}
+	});
+
+	it('invalidates an interrupted peg future and commits only its rebuilt replacement', () => {
+		const result = run('peg-event-interrupted-by-ball');
+		const pairTime = result.dynamicContacts[0]!.time;
+		const interrupted = result.diagnostics.bodyEventHorizons.find(
+			({ bodyId, revision, decision, eventType }) =>
+				bodyId === 'peg-runner' &&
+				revision.revision === 0 &&
+				decision === 'invalidated' &&
+				eventType === 'fixed-contact'
+		)!;
+		const rebuiltPeg = result.events.find(
+			(event) => event.type === 'contact' && event.colliderId === 'target-peg'
+		)!;
+		expect(interrupted.interval[1]).toBeGreaterThan(pairTime);
+		expect(rebuiltPeg.time).toBeLessThan(interrupted.interval[1]);
 		expect(
-			nearMiss.diagnostics.pairPredictions.every(({ predictedTime }) => predictedTime === null)
-		).toBe(true);
-		const firstPair = clipped.diagnostics.pairPredictions[0]!;
-		const firstPeg = clipped.events.find(
-			(event) => event.type === 'contact' && event.colliderId === 'clipping-peg'
-		)!;
-		expect(firstPair.validInterval[1]).toBeCloseTo(firstPeg.time, 12);
-		expect(firstPair.predictedTime).toBeNull();
+			result.trajectories
+				.find(({ bodyId }) => bodyId === 'peg-runner')!
+				.segments.some((segment) => segment.startTime < pairTime && segment.endTime > pairTime)
+		).toBe(false);
 	});
 
-	it('discovers a free-versus-linear-contact path pair', () => {
-		const result = run('linear-contact-pair-prediction');
-		const selected = result.diagnostics.pairPredictions.find(
-			({ decision }) => decision === 'selected'
+	it('retains an unrelated pair prediction through an A/B impact', () => {
+		const result = run('unrelated-prediction-survives');
+		const firstImpactTime = result.dynamicContacts[0]!.time;
+		const unrelated = result.diagnostics.pairPredictions.find(
+			({ bodyIds }) => bodyIds[0] === 'c' && bodyIds[1] === 'd'
 		)!;
-		expect(selected.pathTypes).toContain('linear-contact');
-		expect(result.terminalReason.type).toBe('unsupported-body-body-response');
+		expect(unrelated.retainedThroughWorldTimes).toContain(firstImpactTime);
+		expect(unrelated.revisions.map(({ revision }) => revision)).toEqual([0, 0]);
 	});
 
-	it('preserves the physical result when serialized body order is reversed', () => {
-		const baseline = run('predicted-head-on-contact');
-		const swapped = run('swapped-pair-equivalence');
-		expect(swapped.dynamicContacts[0]?.time).toBeCloseTo(baseline.dynamicContacts[0]!.time, 12);
-		expect(swapped.dynamicContacts[0]?.preImpactNormalVelocity).toBe(
-			baseline.dynamicContacts[0]!.preImpactNormalVelocity
+	it('continues through repeated isolated contacts separated by positive intervals', () => {
+		const contacts = run('repeated-isolated-collisions').dynamicContacts;
+		expect(contacts.length).toBeGreaterThanOrEqual(3);
+		for (let index = 1; index < contacts.length; index += 1)
+			expect(contacts[index]!.time).toBeGreaterThan(contacts[index - 1]!.time);
+		expect(contacts.every(({ state }) => state === 'released')).toBe(true);
+	});
+
+	it('stops explicitly at an exact-time connected third body', () => {
+		const result = run('unsupported-simultaneous-third-body');
+		expect(result.terminalReason).toMatchObject({ type: 'unsupported-body-body-response' });
+		expect(result.dynamicContacts).toHaveLength(2);
+		expect(new Set(result.dynamicContacts.map(({ time }) => time)).size).toBe(1);
+		expect(result.dynamicContacts.every(({ state }) => state === 'incoming')).toBe(true);
+		expect(result.bodyStates.every(({ recordedUntilTime }) => recordedUntilTime === 2)).toBe(true);
+	});
+
+	it('preserves the physical result under participant order and ID renaming', () => {
+		const scenario = dynamicPairScenarios.find(({ id }) => id === 'equal-mass-head-on')!;
+		const baseline = constructSimulationRun(scenario.input);
+		const transformedInput = {
+			...scenario.input,
+			initialDynamicBodies: [...scenario.input.initialDynamicBodies]
+				.reverse()
+				.map((body, index) => ({ ...body, id: index === 0 ? 'renamed-z' : 'renamed-a' }))
+		};
+		const transformed = constructSimulationRun(transformedInput);
+		expect(physicalContactSummary(transformed)).toEqual(physicalContactSummary(baseline));
+	});
+
+	it('independently rejects corrupted response and stale-authority evidence', () => {
+		const result = run('equal-mass-head-on');
+		const corruptedResponse = {
+			...result,
+			dynamicContacts: [
+				{ ...result.dynamicContacts[0]!, postImpactNormalVelocity: -1 },
+				...result.dynamicContacts.slice(1)
+			]
+		};
+		expect(
+			validateSimulationRun(result.input, corruptedResponse).failures.map(({ code }) => code)
+		).toContain('IMPACT_EVIDENCE_MISMATCH');
+
+		const staleIndex = result.diagnostics.pairPredictions.findIndex(
+			({ decision }) => decision === 'invalidated'
 		);
-		expect(swapped.diagnostics.pairPredictions[0]?.polynomialCoefficients).toEqual(
-			baseline.diagnostics.pairPredictions[0]!.polynomialCoefficients
-		);
+		const stale = result.diagnostics.pairPredictions[staleIndex]!;
+		const corruptedAuthority = {
+			...result,
+			diagnostics: {
+				...result.diagnostics,
+				pairPredictions: result.diagnostics.pairPredictions.map((prediction, index) =>
+					index === staleIndex
+						? {
+								...stale,
+								decision: 'selected' as const,
+								decisionWorldTime: result.diagnostics.simulatedUntilTime
+							}
+						: prediction
+				)
+			}
+		};
+		expect(
+			validateSimulationRun(result.input, corruptedAuthority).failures.map(({ code }) => code)
+		).toContain('INVALID_INTERVAL');
 	});
 });
 
 function run(id: (typeof dynamicPairScenarios)[number]['id']) {
 	const scenario = dynamicPairScenarios.find((candidate) => candidate.id === id)!;
 	return constructSimulationRun(scenario.input);
+}
+
+function dot(left: Vec2, right: Vec2): number {
+	return left[0] * right[0] + left[1] * right[1];
+}
+
+function physicalContactSummary(runResult: ReturnType<typeof constructSimulationRun>) {
+	const contact = runResult.dynamicContacts[0]!;
+	return {
+		time: contact.time,
+		position: contact.contactPoint,
+		pre: [...contact.preImpactVelocities!].sort(vectorOrder),
+		post: [...contact.postImpactVelocities!].sort(vectorOrder),
+		impulse: contact.impulse
+	};
+}
+
+function vectorOrder(left: Vec2, right: Vec2): number {
+	return left[0] - right[0] || left[1] - right[1];
 }

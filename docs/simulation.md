@@ -269,8 +269,9 @@ certified `recordedUntilTime` and trajectory prefix.
 Released bodies have explicit release events. `stationary` motion segments provide authoritative
 position coverage when a dormant resting body remains present while other bodies continue. Dynamic
 contacts use two semantic participants—body/body or fixed-collider/body—and a normal directed from
-the first participant to the second, plus contact point, incoming/outgoing normal motion, impulse
-evidence and incoming/retained/released/rejected state. Component records identify exact-time impact
+the first participant to the second, plus contact point, incoming/outgoing normal motion, per-body
+pre/post velocities, equal-and-opposite impulse vectors and incoming/retained/released/rejected
+state. Component records identify exact-time impact
 or resting-anchored connectivity, active contacts and optional retained support reactions; lifecycle
 events record creation, split, merge and dissolution without exposing solver matrices.
 
@@ -284,9 +285,26 @@ normal motion. It is evidence only. Rendering evaluates
 the authoritative trajectories and never reconstructs motion from predictions or component IDs.
 
 The pair search ends at the earlier local-event horizon. Circular-contact combinations are excluded
-because their rotating normals require a separate search. A selected pair contact commits both
-paths exactly through contact, records an incoming dynamic contact, and terminates the valid prefix
-with `unsupported-body-body-response`; bodies cannot interpenetrate while response remains absent.
+because their rotating normals require a separate search. For a certified isolated incoming pair,
+the scheduler applies the issue-owned frictionless response
+
+```text
+g- = (vB- - vA-) dot n
+j = -(1 + e)g- / (1/mA + 1/mB)
+vA+ = vA- - (j/mA)n
+vB+ = vB- + (j/mB)n
+```
+
+and fails closed unless the result is finite, non-attractive, non-incoming, momentum preserving,
+tangentially unchanged and energy plausible. Both participant paths are committed only through the
+contact, their old local and pair predictions are marked invalidated, revisions are incremented and
+new futures are built. Unrelated predictions retain their original revisions. Stale evidence remains
+diagnostic but cannot be selected because every authoritative pair event must match both current
+revision stamps.
+
+If the exact-time component includes a third dynamic body, a fixed-world event for either
+participant or an active fixed support, the scheduler commits the connected valid prefix and stops
+with `unsupported-body-body-response`; ID order is used only to organize diagnostics.
 
 `schedulerSteps` records the local event that advanced world time, its body revision and the body
 IDs whose predictions were retained unchanged. A future release remains an external event even

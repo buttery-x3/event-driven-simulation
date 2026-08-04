@@ -30,10 +30,120 @@ export function validateDynamicBodyContacts(context: RunValidationContext): void
 		);
 		if (!first || !second) continue;
 		validateContactState(context, contact, first, second, contactIndex);
+		validateResolvedResponse(context, contact, first, second, contactIndex);
 		validateSharedHorizon(context, contact, first, second, contactIndex);
 		challengeEarlierOverlap(context, contact, first, second, contactIndex);
 	}
 	validateTerminalPairBoundary(context);
+}
+
+function validateResolvedResponse(
+	context: RunValidationContext,
+	contact: DynamicContactRecord,
+	first: InitialDynamicCircleBodyState,
+	second: InitialDynamicCircleBodyState,
+	contactIndex: number
+): void {
+	if (contact.state !== 'released') return;
+	const path = `$.dynamicContacts[${contactIndex}]`;
+	const before = contact.preImpactVelocities;
+	const after = contact.postImpactVelocities;
+	const impulse = contact.impulse;
+	const onFirst = contact.impulseOnFirst;
+	const onSecond = contact.impulseOnSecond;
+	const tolerance = stateTolerance(context) * 16;
+	if (
+		!before ||
+		!after ||
+		impulse === null ||
+		!onFirst ||
+		!onSecond ||
+		contact.preImpactNormalVelocity === null ||
+		contact.postImpactNormalVelocity === null
+	) {
+		fail(
+			context,
+			'IMPACT_EVIDENCE_MISMATCH',
+			'A resolved body impact must retain complete pre/post velocity and impulse evidence.',
+			path,
+			contact.time,
+			first.id
+		);
+		return;
+	}
+	if (impulse < 0) {
+		fail(
+			context,
+			'NEGATIVE_IMPULSE',
+			'A body impact impulse cannot be attractive.',
+			path,
+			contact.time
+		);
+		return;
+	}
+	const normal = contact.normalFromFirstToSecond;
+	const expectedFirstImpulse: Vec2 = [-impulse * normal[0], -impulse * normal[1]];
+	const expectedSecondImpulse: Vec2 = [impulse * normal[0], impulse * normal[1]];
+	const firstMomentumChange: Vec2 = [
+		first.mass * (after[0][0] - before[0][0]),
+		first.mass * (after[0][1] - before[0][1])
+	];
+	const secondMomentumChange: Vec2 = [
+		second.mass * (after[1][0] - before[1][0]),
+		second.mass * (after[1][1] - before[1][1])
+	];
+	const tangent: Vec2 = [-normal[1], normal[0]];
+	const outgoingNormal = dot([after[1][0] - after[0][0], after[1][1] - after[0][1]], normal);
+	const expectedOutgoing =
+		-context.submittedInput.settings.restitution * contact.preImpactNormalVelocity;
+	const momentumBefore: Vec2 = [
+		first.mass * before[0][0] + second.mass * before[1][0],
+		first.mass * before[0][1] + second.mass * before[1][1]
+	];
+	const momentumAfter: Vec2 = [
+		first.mass * after[0][0] + second.mass * after[1][0],
+		first.mass * after[0][1] + second.mass * after[1][1]
+	];
+	const energyBefore = kineticEnergy(first.mass, before[0]) + kineticEnergy(second.mass, before[1]);
+	const energyAfter = kineticEnergy(first.mass, after[0]) + kineticEnergy(second.mass, after[1]);
+	const responseMatches =
+		nearVector(onFirst, expectedFirstImpulse, tolerance) &&
+		nearVector(onSecond, expectedSecondImpulse, tolerance) &&
+		nearVector(firstMomentumChange, expectedFirstImpulse, tolerance) &&
+		nearVector(secondMomentumChange, expectedSecondImpulse, tolerance) &&
+		nearVector(momentumAfter, momentumBefore, tolerance) &&
+		Math.abs(dot(before[0], tangent) - dot(after[0], tangent)) <= tolerance &&
+		Math.abs(dot(before[1], tangent) - dot(after[1], tangent)) <= tolerance &&
+		Math.abs(outgoingNormal - contact.postImpactNormalVelocity) <= tolerance &&
+		Math.abs(outgoingNormal - expectedOutgoing) <= tolerance &&
+		energyAfter <= energyBefore + tolerance * Math.max(1, energyBefore);
+	if (!responseMatches) {
+		fail(
+			context,
+			'IMPACT_EVIDENCE_MISMATCH',
+			'The resolved impact must satisfy equal-and-opposite impulse, tangential preservation, momentum, restitution and energy invariants.',
+			path,
+			contact.time,
+			first.id
+		);
+	}
+	if (outgoingNormal < -tolerance)
+		fail(
+			context,
+			'PENETRATING_POST_IMPACT_VELOCITY',
+			'The resolved relative normal velocity remains incoming.',
+			path,
+			contact.time,
+			first.id
+		);
+}
+
+function dot(left: Vec2, right: Vec2): number {
+	return left[0] * right[0] + left[1] * right[1];
+}
+
+function kineticEnergy(mass: number, velocity: Vec2): number {
+	return 0.5 * mass * dot(velocity, velocity);
 }
 
 function validateContactState(
@@ -207,6 +317,8 @@ function fail(
 		| 'CONTACT_OFF_BOUNDARY'
 		| 'EARLY_GEOMETRY_CROSSING'
 		| 'IMPACT_EVIDENCE_MISMATCH'
+		| 'NEGATIVE_IMPULSE'
+		| 'PENETRATING_POST_IMPACT_VELOCITY'
 		| 'INVALID_INTERVAL'
 		| 'INVALID_VALID_PREFIX',
 	message: string,

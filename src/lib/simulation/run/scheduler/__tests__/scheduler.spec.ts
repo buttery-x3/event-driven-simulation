@@ -19,31 +19,33 @@ const coordinateSystem = {
 	lengthUnit: 'metre'
 } as const;
 
-describe('monotonic independent-body scheduler', () => {
-	it('stops both certified paths at the earliest unsupported body-body response boundary', () => {
+describe('monotonic world scheduler', () => {
+	it('resolves an isolated body impact and rebuilds both physical futures', () => {
 		const run = constructSimulationRun(
 			input([body('left', [-2, 5], [1, 0], 0), body('right', [2, 5], [-1, 0], 0)])
 		);
 
 		expect(run).toMatchObject({
 			validity: 'valid',
-			outcome: 'unresolved',
-			terminalReason: {
-				type: 'unsupported-body-body-response',
-				bodyIds: ['left', 'right']
-			}
+			outcome: 'time-limit',
+			terminalReason: { type: 'time-limit', time: 20 }
 		});
-		expect(run.terminalReason.time).toBeCloseTo(1.75, 12);
 		expect(run.dynamicContacts).toHaveLength(1);
 		expect(run.dynamicContacts[0]).toMatchObject({
 			preImpactNormalVelocity: -2,
-			state: 'incoming'
+			postImpactNormalVelocity: 1,
+			impulse: 1.5,
+			postImpactVelocities: [
+				[-0.5, 0],
+				[0.5, 0]
+			],
+			state: 'released'
 		});
 		expect(run.dynamicContacts[0]!.time).toBeCloseTo(1.75, 12);
-		expect(run.trajectories.flatMap(({ segments }) => segments)).toHaveLength(2);
+		expect(run.trajectories.flatMap(({ segments }) => segments)).toHaveLength(4);
 		expect(
 			run.trajectories.every(
-				({ segments }) => Math.abs((segments.at(-1)?.endTime ?? 0) - 1.75) < 1e-12
+				({ segments }) => Math.abs((segments.at(-1)?.endTime ?? 0) - 20) < 1e-12
 			)
 		).toBe(true);
 		expect(run.diagnostics.pairPredictions).toContainEqual(
@@ -53,6 +55,11 @@ describe('monotonic independent-body scheduler', () => {
 				polynomialDegree: 2
 			})
 		);
+		expect(
+			run.diagnostics.bodyEventHorizons.filter(
+				({ revision, decision }) => revision.revision === 0 && decision === 'invalidated'
+			)
+		).toHaveLength(2);
 		expect(validateSimulationRun(run.input, run).failures).toEqual([]);
 		expect(parseSimulationRunFixture(JSON.stringify(run))).toEqual(run);
 	});

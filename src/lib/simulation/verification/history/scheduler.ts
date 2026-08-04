@@ -5,6 +5,7 @@ export function validateSchedulerHistory(context: RunValidationContext): void {
 	validateReleaseChronology(context);
 	validateLocalHorizons(context);
 	validateSchedulerSteps(context);
+	validatePredictionDecisions(context);
 }
 
 function validateReleaseChronology(context: RunValidationContext): void {
@@ -57,12 +58,12 @@ function validateLocalHorizons(context: RunValidationContext): void {
 		if (
 			horizon.interval[0] > horizon.interval[1] ||
 			horizon.interval[0] < (releaseTimes.get(horizon.bodyId) ?? Number.POSITIVE_INFINITY) ||
-			(prior !== undefined && horizon.revision.revision !== prior + 1)
+			(prior !== undefined && horizon.revision.revision <= prior)
 		) {
 			fail(
 				context,
 				'NON_MONOTONIC_TIME',
-				'Local horizons must advance monotonically through consecutive body revisions.',
+				'Local horizons must advance monotonically through increasing body revisions.',
 				path,
 				horizon.interval[0],
 				horizon.bodyId
@@ -143,6 +144,87 @@ function validateSchedulerSteps(context: RunValidationContext): void {
 	}
 }
 
+function validatePredictionDecisions(context: RunValidationContext): void {
+	const tolerance = timeTolerance(context);
+	for (const [index, horizon] of context.run.diagnostics.bodyEventHorizons.entries()) {
+		if (horizon.decisionWorldTime === undefined) continue;
+		if (
+			horizon.decision === 'selected' &&
+			Math.abs(horizon.interval[1] - horizon.decisionWorldTime) > tolerance
+		)
+			fail(
+				context,
+				'INVALID_INTERVAL',
+				'A selected local future must end at its recorded decision time.',
+				`$.diagnostics.bodyEventHorizons[${index}]`,
+				horizon.decisionWorldTime,
+				horizon.bodyId
+			);
+		if (horizon.decision !== 'invalidated') continue;
+		const trajectory = context.run.trajectories.find(({ bodyId }) => bodyId === horizon.bodyId);
+		if (
+			trajectory?.segments.some(
+				(segment) =>
+					segment.startTime < horizon.decisionWorldTime! - tolerance &&
+					segment.endTime > horizon.decisionWorldTime! + tolerance
+			)
+		)
+			fail(
+				context,
+				'PREFIX_AFTER_TERMINAL',
+				'A trajectory computed under an invalidated local future survives beyond the invalidating event.',
+				`$.diagnostics.bodyEventHorizons[${index}]`,
+				horizon.decisionWorldTime,
+				horizon.bodyId
+			);
+	}
+
+	const steps = context.run.diagnostics.schedulerSteps ?? [];
+	for (const [index, prediction] of context.run.diagnostics.pairPredictions.entries()) {
+		if (prediction.decision === 'selected' && prediction.decisionWorldTime !== undefined) {
+			const authoritative =
+				prediction.predictedTime !== null &&
+				prediction.decisionWorldTime !== undefined &&
+				Math.abs(prediction.predictedTime - prediction.decisionWorldTime) <= tolerance &&
+				prediction.revisions.every((revision) =>
+					steps.some(
+						(step) =>
+							step.eventType === 'body-contact' &&
+							step.bodyId === revision.bodyId &&
+							step.revision === revision.revision &&
+							Math.abs(step.worldTime - prediction.decisionWorldTime!) <= tolerance
+					)
+				);
+			if (!authoritative)
+				fail(
+					context,
+					'INVALID_INTERVAL',
+					'A selected pair prediction must match both current participant revisions at the authoritative event.',
+					`$.diagnostics.pairPredictions[${index}]`,
+					prediction.decisionWorldTime,
+					prediction.bodyIds[0]
+				);
+		}
+		for (const retainedTime of prediction.retainedThroughWorldTimes ?? []) {
+			const retained = steps.some(
+				(step) =>
+					step.eventType === 'body-contact' &&
+					Math.abs(step.worldTime - retainedTime) <= tolerance &&
+					!prediction.bodyIds.includes(step.bodyId) &&
+					prediction.bodyIds.every((bodyId) => step.retainedBodyIds.includes(bodyId))
+			);
+			if (!retained)
+				fail(
+					context,
+					'INVALID_INTERVAL',
+					'Retained pair evidence must identify an unrelated event that preserved both participant revisions.',
+					`$.diagnostics.pairPredictions[${index}].retainedThroughWorldTimes`,
+					retainedTime
+				);
+		}
+	}
+}
+
 function hasUnrelatedBoundary(
 	context: RunValidationContext,
 	bodyId: string,
@@ -155,9 +237,17 @@ function hasUnrelatedBoundary(
 		(segment, index) =>
 			index < trajectory.segments.length - 1 && Math.abs(segment.endTime - time) <= tolerance
 	);
-	const ownEvent = context.run.events.some(
-		(event) => event.bodyId === bodyId && Math.abs(event.time - time) <= tolerance
-	);
+	const ownEvent =
+		context.run.events.some(
+			(event) => event.bodyId === bodyId && Math.abs(event.time - time) <= tolerance
+		) ||
+		context.run.dynamicContacts.some(
+			(contact) =>
+				Math.abs(contact.time - time) <= tolerance &&
+				contact.participants.some(
+					(participant) => participant.type === 'body' && participant.bodyId === bodyId
+				)
+		);
 	return boundary && !ownEvent;
 }
 
@@ -167,6 +257,7 @@ function fail(
 		| 'INVALID_INTERVAL'
 		| 'INVALID_RELEASE_TIME'
 		| 'NON_MONOTONIC_TIME'
+		| 'PREFIX_AFTER_TERMINAL'
 		| 'UNRESOLVED_BODY_REFERENCE',
 	message: string,
 	path: string,

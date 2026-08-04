@@ -56,6 +56,19 @@ export function validateMultiBodyHistoryShape(run: Record<string, unknown>): voi
 			`${path}.postImpactNormalVelocity`
 		);
 		assertions.requireNullableFiniteNumber(contact.impulse, `${path}.impulse`);
+		for (const field of ['preImpactVelocities', 'postImpactVelocities'] as const) {
+			if (contact[field] === undefined) continue;
+			const velocities = assertions.requireArray(contact[field], `${path}.${field}`);
+			if (velocities.length !== 2)
+				invalidRunRecordField(`${path}.${field}`, 'must contain two body velocities');
+			velocities.forEach((velocity, velocityIndex) =>
+				assertions.validateVec2(velocity, `${path}.${field}[${velocityIndex}]`)
+			);
+		}
+		for (const field of ['impulseOnFirst', 'impulseOnSecond'] as const) {
+			if (contact[field] !== undefined && contact[field] !== null)
+				assertions.validateVec2(contact[field], `${path}.${field}`);
+		}
 		assertions.requireOneOf(
 			contact.state,
 			['incoming', 'retained', 'released', 'rejected'],

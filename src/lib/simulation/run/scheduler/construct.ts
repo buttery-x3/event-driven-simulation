@@ -10,12 +10,12 @@ import { validateSimulationInput } from '../single-ball/input-validation';
 import {
 	commitLocalBodyPrediction,
 	createLocalBodyRuntime,
-	predictLocalBodyEvent,
 	type LocalBodyPrediction,
 	type LocalBodyRuntime
 } from '../single-ball/local-events';
 import { aggregateWorldReason, finishScheduledRun } from './assembly';
-import { commitBodyPairBoundary, predictEarliestBodyPair } from './pairs';
+import { commitBodyPairEvent, invalidatePairDiagnostics, predictEarliestBodyPair } from './pairs';
+import { refreshBodyPrediction, selectLocalPrediction } from './predictions';
 import { releaseOverlapReasons } from './release';
 import type { SchedulerState } from './types';
 
@@ -70,7 +70,16 @@ export function constructSimulationRun(input: SimulationInput): SimulationRunRec
 		}
 
 		if (nextPair?.type === 'contact' && nextPair.time === nextTime) {
-			return finishScheduledRun(state, 'valid', commitBodyPairBoundary(state, nextPair));
+			const result = commitBodyPairEvent(state, nextPair);
+			if (result.type === 'terminal') return finishScheduledRun(state, 'valid', result.reason);
+			if (contactEventCount(state) >= input.settings.maximumEvents) {
+				return finishScheduledRun(state, 'valid', {
+					type: 'event-limit',
+					time: state.worldTime,
+					limit: input.settings.maximumEvents
+				});
+			}
+			continue;
 		}
 
 		const selected = [...state.predictions.values()]
@@ -160,7 +169,7 @@ function commitReleaseBatch(state: SchedulerState, time: number): RunTerminalRea
 function activateBody(state: SchedulerState, body: InitialDynamicCircleBodyState): void {
 	const runtime = createLocalBodyRuntime(state.input, body);
 	state.runtimes.set(body.id, runtime);
-	refreshPrediction(state, runtime);
+	refreshBodyPrediction(state, runtime);
 }
 
 function commitLocalBatch(
@@ -168,12 +177,18 @@ function commitLocalBatch(
 	selected: readonly LocalBodyPrediction[]
 ): RunTerminalReason | null {
 	const selectedIds = new Set(selected.map(({ bodyId }) => bodyId));
+	invalidatePairDiagnostics(
+		state,
+		selectedIds,
+		`Invalidated because a participant local event was selected at time ${state.worldTime}.`
+	);
 	const retainedBodyIds = [...state.predictions.keys()]
 		.filter((bodyId) => !selectedIds.has(bodyId))
 		.sort();
 	const failures: { readonly bodyId: string; readonly reason: RunTerminalReason }[] = [];
 	for (const prediction of selected) {
 		const runtime = state.runtimes.get(prediction.bodyId)!;
+		selectLocalPrediction(state, prediction);
 		state.steps.push({
 			worldTime: state.worldTime,
 			bodyId: prediction.bodyId,
@@ -188,21 +203,9 @@ function commitLocalBatch(
 			if (worldMustFail(runtime.terminalReason)) {
 				failures.push({ bodyId: prediction.bodyId, reason: runtime.terminalReason });
 			}
-		} else refreshPrediction(state, runtime);
+		} else refreshBodyPrediction(state, runtime);
 	}
 	return failures.sort((left, right) => left.bodyId.localeCompare(right.bodyId))[0]?.reason ?? null;
-}
-
-function refreshPrediction(state: SchedulerState, runtime: LocalBodyRuntime): void {
-	const prediction = predictLocalBodyEvent(runtime);
-	if (!prediction) return;
-	state.predictions.set(runtime.body.id, prediction);
-	state.horizons.push({
-		bodyId: runtime.body.id,
-		interval: [runtime.committedTime, prediction.time],
-		revision: { bodyId: runtime.body.id, revision: prediction.revision },
-		eventType: prediction.eventType
-	});
 }
 
 function recordBodyTerminal(runtime: LocalBodyRuntime): void {
@@ -251,9 +254,12 @@ function invalidInputRun(
 }
 
 function contactEventCount(state: SchedulerState): number {
-	return [...state.runtimes.values()].reduce(
-		(total, runtime) => total + runtime.events.filter(({ type }) => type === 'contact').length,
-		0
+	return (
+		state.dynamicContacts.length +
+		[...state.runtimes.values()].reduce(
+			(total, runtime) => total + runtime.events.filter(({ type }) => type === 'contact').length,
+			0
+		)
 	);
 }
 

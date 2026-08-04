@@ -126,6 +126,7 @@ function bodyState(state: SchedulerState, body: InitialDynamicCircleBodyState): 
 	if (
 		state.dynamicContacts.some(
 			(contact) =>
+				(contact.state === 'incoming' || contact.state === 'rejected') &&
 				contact.time === state.worldTime &&
 				contact.participants.some(
 					(participant) => participant.type === 'body' && participant.bodyId === body.id

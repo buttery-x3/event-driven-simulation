@@ -245,6 +245,15 @@ function validateDiagnostics(value: unknown, path: string): void {
 				],
 				`${itemPath}.eventType`
 			);
+			if (item.decision !== undefined)
+				assertions.requireOneOf(
+					item.decision,
+					['selected', 'retained', 'invalidated', 'discarded-stale'],
+					`${itemPath}.decision`
+				);
+			if (item.reason !== undefined) assertions.requireString(item.reason, `${itemPath}.reason`);
+			if (item.decisionWorldTime !== undefined)
+				assertions.requireFiniteNumber(item.decisionWorldTime, `${itemPath}.decisionWorldTime`);
 		});
 	assertions
 		.requireArray(diagnostics.pairPredictions, `${path}.pairPredictions`)
@@ -272,6 +281,17 @@ function validateDiagnostics(value: unknown, path: string): void {
 				`${itemPath}.decision`
 			);
 			assertions.requireString(item.reason, `${itemPath}.reason`);
+			if (item.decisionWorldTime !== undefined)
+				assertions.requireFiniteNumber(item.decisionWorldTime, `${itemPath}.decisionWorldTime`);
+			if (item.retainedThroughWorldTimes !== undefined)
+				assertions
+					.requireArray(item.retainedThroughWorldTimes, `${itemPath}.retainedThroughWorldTimes`)
+					.forEach((time, timeIndex) =>
+						assertions.requireFiniteNumber(
+							time,
+							`${itemPath}.retainedThroughWorldTimes[${timeIndex}]`
+						)
+					);
 		});
 	if (diagnostics.schedulerSteps !== undefined) {
 		assertions

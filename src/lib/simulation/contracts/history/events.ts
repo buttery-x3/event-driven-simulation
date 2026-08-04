@@ -71,6 +71,10 @@ export interface DynamicContactRecord {
 	readonly preImpactNormalVelocity: number | null;
 	readonly postImpactNormalVelocity: number | null;
 	readonly impulse: number | null;
+	readonly preImpactVelocities?: readonly [Vec2, Vec2];
+	readonly postImpactVelocities?: readonly [Vec2, Vec2];
+	readonly impulseOnFirst?: Vec2 | null;
+	readonly impulseOnSecond?: Vec2 | null;
 	readonly state: 'incoming' | 'retained' | 'released' | 'rejected';
 }
 

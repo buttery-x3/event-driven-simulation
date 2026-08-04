@@ -65,12 +65,13 @@ export type ScenarioCoverageId =
 	| 'scheduler.resting-continuation'
 	| 'scheduler.simultaneous-events'
 	| 'scheduler.single-body-equivalence'
-	| 'pair.head-on-contact'
-	| 'pair.glancing-contact'
-	| 'pair.near-miss'
-	| 'pair.clipped-by-local-event'
-	| 'pair.linear-contact-path'
-	| 'pair.swapped-equivalence';
+	| 'pair.equal-mass-head-on'
+	| 'pair.unequal-mass-head-on'
+	| 'pair.glancing-impulse-transfer'
+	| 'pair.peg-event-interrupted'
+	| 'pair.unrelated-prediction-survives'
+	| 'pair.repeated-isolated-collisions'
+	| 'pair.unsupported-simultaneous-third-body';
 
 export type ScenarioMotionMode = 'free-flight' | 'linear-contact' | 'circular-contact';
 

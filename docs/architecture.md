@@ -163,10 +163,17 @@ deterministic scan, commits only the selected body's certified prefix, retains u
 predictions without segmentation, and processes exact-time independent events in body-ID order.
 It rejects overlapping release batches and fails the world conservatively when a released body
 becomes invalid or unresolved. Its `release.ts` owns fixed/body overlap admission, `assembly.ts`
-owns world outcome and per-body lifecycle construction, `pairs.ts` owns supported pair prediction
-and exact prefix commitment, and `construct.ts` owns global selection. A certified pair contact is
-an exact world boundary; until isolated body response exists, the scheduler records incoming contact
-evidence and terminates with `unsupported-body-body-response`.
+owns world outcome and per-body lifecycle construction, `predictions.ts` owns local-future evidence,
+the private `pairs` subdomain separates continuous pair selection from exact event commitment, and
+`construct.ts` owns global selection. The sibling `dynamic-impact` subdomain owns the mass-aware
+closed-form response for one certified isolated frictionless contact.
+
+An isolated incoming pair event commits both paths to one exact time, applies equal-and-opposite
+normal impulses using both masses and configured restitution, increments both revisions, eagerly
+invalidates affected local and pair futures, and rebuilds them from the common post-impact state.
+Unrelated pair predictions retain their revision identity and record the world events they survived.
+Exact-time connectivity to a third body, a participant fixed-world event or an active fixed support
+remains an explicit `unsupported-body-body-response` boundary for the coupled solver.
 
 `src/lib/simulation/run/single-ball/local-events` exposes the fixed-world local prediction and
 commit boundary used by the scheduler. It sequences free flight, impact and sustained contact,

@@ -13,75 +13,108 @@ const coordinateSystem = {
 	lengthUnit: 'metre'
 } as const;
 
-const headOnBodies = [
-	body('head-left', [-3, 5], [1, 0]),
-	body('head-right', [3, 5], [-1, 0])
-] as const;
-
 export const dynamicPairScenarios = [
 	scenario(
-		'predicted-head-on-contact',
-		'Predicted head-on contact',
-		'Two free bodies reach an exact continuous-path contact boundary before either local event.',
-		'pair.head-on-contact',
-		input('predicted-head-on-contact-board', headOnBodies)
-	),
-	scenario(
-		'predicted-glancing-contact',
-		'Predicted glancing contact',
-		'Offset free paths produce an incoming contact with a non-axis-aligned first-to-second normal.',
-		'pair.glancing-contact',
-		input('predicted-glancing-contact-board', [
-			body('glance-left', [-3, 4.6], [1, 0]),
-			body('glance-right', [3, 5.4], [-1, 0])
-		])
-	),
-	scenario(
-		'dynamic-near-miss',
-		'Dynamic near miss',
-		'Close relative paths remain separated throughout their shared certified interval.',
-		'pair.near-miss',
-		input('dynamic-near-miss-board', [
-			body('miss-left', [-3, 4.45], [1, 0]),
-			body('miss-right', [3, 5.55], [-1, 0])
-		]),
-		['time-limit'],
-		'valid-prefix'
-	),
-	scenario(
-		'pair-search-clipped-by-peg-event',
-		'Pair search clipped by peg event',
-		'An earlier fixed-peg impact clips the first pair search before the unmodified free paths would meet.',
-		'pair.clipped-by-local-event',
+		'equal-mass-head-on',
+		'Equal-mass head-on',
+		'Equal masses exchange their normal velocities under unit restitution.',
+		'pair.equal-mass-head-on',
 		input(
-			'pair-search-clipped-by-peg-event-board',
-			[body('peg-runner', [-4, 5], [2, 0]), body('slow-counterpart', [4, 5], [-0.2, 0])],
-			[peg('clipping-peg', [-1, 5])],
+			'equal-mass-head-on-board',
+			[body('left', [-3, 5], [1, 0]), body('right', [3, 5], [-1, 0])],
+			[],
 			[0, 0],
 			1
-		),
-		['time-limit'],
-		'valid-prefix'
-	),
-	scenario(
-		'linear-contact-pair-prediction',
-		'Linear-contact pair prediction',
-		'A free body reaches one moving along a retained straight support before its own floor event.',
-		'pair.linear-contact-path',
-		input(
-			'linear-contact-pair-prediction-board',
-			[body('supported-slider', [-2, 0.5], [0.5, 0]), body('free-approach', [2, 1.4], [-10, 0])],
-			[floor('linear-support', -7, 7)],
-			[0, -9.81],
-			0
 		)
 	),
 	scenario(
-		'swapped-pair-equivalence',
-		'Swapped pair equivalence',
-		'Reversing serialized body order preserves the head-on event time and physical classification.',
-		'pair.swapped-equivalence',
-		input('swapped-pair-equivalence-board', [...headOnBodies].reverse())
+		'unequal-mass-head-on',
+		'Unequal-mass head-on',
+		'Closed-form impulse exchange uses both positive body masses.',
+		'pair.unequal-mass-head-on',
+		input(
+			'unequal-mass-head-on-board',
+			[body('light', [-3, 5], [2, 0], 1), body('heavy', [3, 5], [0, 0], 3)],
+			[],
+			[0, 0],
+			1
+		)
+	),
+	scenario(
+		'glancing-impulse-transfer',
+		'Glancing impulse transfer',
+		'Only velocity along the contact normal changes during a frictionless glancing impact.',
+		'pair.glancing-impulse-transfer',
+		input(
+			'glancing-impulse-transfer-board',
+			[body('glance-left', [-3, 4.6], [1, 0]), body('glance-right', [3, 5.4], [-1, 0])],
+			[],
+			[0, 0],
+			0.75
+		)
+	),
+	scenario(
+		'peg-event-interrupted-by-ball',
+		'Peg event interrupted by ball',
+		"An earlier rear impact invalidates and rebuilds a heavy runner's predicted peg event.",
+		'pair.peg-event-interrupted',
+		input(
+			'peg-event-interrupted-by-ball-board',
+			[body('peg-runner', [-4, 5], [2, 0], 10), body('rear-ball', [-7, 5], [4, 0], 1)],
+			[peg('target-peg', [2, 5])],
+			[0, 0],
+			1,
+			3
+		)
+	),
+	scenario(
+		'unrelated-prediction-survives',
+		'Unrelated prediction survives',
+		'An A/B impact retains the revision-stamped future prediction between unchanged C and D.',
+		'pair.unrelated-prediction-survives',
+		input(
+			'unrelated-prediction-survives-board',
+			[
+				body('a', [-3, 3], [2, 0]),
+				body('b', [2, 3], [-2, 0]),
+				body('c', [-4, 7], [1, 0]),
+				body('d', [4, 7], [-1, 0])
+			],
+			[],
+			[0, 0],
+			1,
+			5
+		)
+	),
+	scenario(
+		'repeated-isolated-collisions',
+		'Repeated isolated collisions',
+		'Several pair impacts resolve over strictly positive world intervals.',
+		'pair.repeated-isolated-collisions',
+		input(
+			'repeated-isolated-collisions-board',
+			[
+				body('left', [-5, 5], [3, 0]),
+				body('middle', [0, 5], [0, 0]),
+				body('right', [5, 5], [-1, 0])
+			],
+			[],
+			[0, 0],
+			1,
+			6
+		)
+	),
+	scenario(
+		'unsupported-simultaneous-third-body',
+		'Unsupported simultaneous third body',
+		'An exact-time connected three-body component preserves its prefix and stops explicitly.',
+		'pair.unsupported-simultaneous-third-body',
+		input('unsupported-simultaneous-third-body-board', [
+			body('left', [-3, 5], [1, 0]),
+			body('middle', [0, 5], [0, 0]),
+			body('right', [3, 5], [-1, 0])
+		]),
+		['unresolved']
 	)
 ] as const satisfies readonly VerificationScenario[];
 
@@ -91,8 +124,7 @@ function scenario(
 	verificationPurpose: string,
 	coverage: VerificationScenario['coverage'][number],
 	scenarioInput: SimulationInput,
-	expectedOutcomes: VerificationScenario['expectedOutcomes'] = ['unresolved'],
-	replayExpectation: VerificationScenario['replayExpectation'] = 'valid-prefix'
+	expectedOutcomes: VerificationScenario['expectedOutcomes'] = ['time-limit']
 ): VerificationScenario {
 	return {
 		id,
@@ -101,7 +133,7 @@ function scenario(
 		verificationPurpose,
 		expectedOutcomes,
 		expectedEventCharacteristics: null,
-		replayExpectation,
+		replayExpectation: expectedOutcomes.includes('unresolved') ? 'valid-prefix' : 'complete',
 		coverage: [coverage],
 		regressionFixture: false,
 		input: scenarioInput
@@ -113,14 +145,14 @@ function input(
 	bodies: readonly InitialDynamicCircleBodyState[],
 	staticColliders: readonly StaticCollider[] = [],
 	gravity: Vec2 = [0, 0],
-	restitution = 0,
+	restitution = 1,
 	maximumSimulationTime = 6
 ): SimulationInput {
 	return {
 		scene: {
 			id,
 			coordinateSystem,
-			bounds: { width: 16, height: 10 },
+			bounds: { width: 20, height: 10 },
 			staticColliders,
 			terminationRegions: []
 		},
@@ -135,12 +167,12 @@ function input(
 	};
 }
 
-function body(id: string, position: Vec2, velocity: Vec2): InitialDynamicCircleBodyState {
+function body(id: string, position: Vec2, velocity: Vec2, mass = 1): InitialDynamicCircleBodyState {
 	return {
 		id,
 		motionAuthority: 'dynamic',
 		physicalShape: { type: 'circle', radius: 0.5 },
-		mass: 1,
+		mass,
 		position,
 		velocity,
 		releaseTime: 0
@@ -153,13 +185,5 @@ function peg(id: string, centre: Vec2): StaticCollider {
 		motionAuthority: 'static',
 		physicalShape: { type: 'circle', radius: 0.5 },
 		centre
-	};
-}
-
-function floor(id: string, startX: number, endX: number): StaticCollider {
-	return {
-		id,
-		motionAuthority: 'static',
-		physicalShape: { type: 'line-segment', start: [startX, 0], end: [endX, 0] }
 	};
 }

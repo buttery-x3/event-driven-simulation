@@ -39,7 +39,7 @@ export function buildWorkbenchHistory(run: SimulationRunRecord): readonly Workbe
 			kind: 'prediction' as const,
 			title: `Prediction ${prediction.decision}`,
 			participants: prediction.bodyIds.join(' ↔ '),
-			detail: `${prediction.reason} Revisions ${prediction.revisions.map(({ revision }) => revision).join(' / ')}.`,
+			detail: `${prediction.reason} Revisions ${prediction.revisions.map(({ revision }) => revision).join(' / ')}.${prediction.retainedThroughWorldTimes?.length ? ` Retained unchanged through world time ${prediction.retainedThroughWorldTimes.join(', ')}.` : ''}`,
 			bodyIds: prediction.bodyIds,
 			sourceOrder: 4_000 + index
 		})),

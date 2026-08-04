@@ -62,6 +62,9 @@ export interface BodyEventHorizonDiagnostic {
 		| 'termination'
 		| 'none'
 		| 'unresolved';
+	readonly decision?: PredictionDecision;
+	readonly decisionWorldTime?: number;
+	readonly reason?: string;
 }
 
 export interface WorldSchedulerStepDiagnostic {
@@ -79,7 +82,9 @@ export interface PairPredictionDiagnostic {
 	readonly validInterval: readonly [startTime: number, endTime: number];
 	readonly revisions: readonly [PredictionRevision, PredictionRevision];
 	readonly decision: PredictionDecision;
+	readonly decisionWorldTime?: number;
 	readonly reason: string;
+	readonly retainedThroughWorldTimes?: readonly number[];
 	readonly queryOutcome?: 'contact' | 'no-contact' | 'invalid-input' | 'unresolved' | 'unsupported';
 	readonly pathTypes?: readonly [string, string];
 	readonly localEventHorizons?: readonly [number, number];

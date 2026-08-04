@@ -1,10 +1,8 @@
 import type {
-	DynamicContactRecord,
-	MotionSegment,
 	PairPredictionDiagnostic,
 	RunTerminalReason,
 	StationaryMotionSegment
-} from '../../contracts';
+} from '../../../contracts';
 import {
 	findEarliestDynamicPairContact,
 	type DynamicCirclePathParticipant,
@@ -12,50 +10,38 @@ import {
 	type DynamicPairContactQueryResult,
 	type DynamicPairContactState,
 	type PolynomialDynamicCirclePath
-} from '../../collision';
-import { evaluateMotionSegmentPosition, evaluateMotionSegmentVelocity } from '../../motion';
+} from '../../../collision';
 import {
 	predictionSegments,
 	type LocalBodyPrediction,
 	type LocalBodyRuntime
-} from '../single-ball/local-events';
-import type { SchedulerState } from './types';
+} from '../../single-ball/local-events';
+import type { SchedulerState } from '../types';
+
+export interface PairContactSelection {
+	readonly type: 'contact';
+	readonly time: number;
+	readonly first: DynamicCirclePathParticipant;
+	readonly second: DynamicCirclePathParticipant;
+	readonly state: DynamicPairContactState;
+	readonly diagnosticId: string;
+}
 
 export type PairSchedulerSelection =
-	| {
-			readonly type: 'contact';
-			readonly time: number;
-			readonly first: DynamicCirclePathParticipant;
-			readonly second: DynamicCirclePathParticipant;
-			readonly state: DynamicPairContactState;
-			readonly diagnosticId: string;
-	  }
-	| {
-			readonly type: 'failure';
-			readonly reason: RunTerminalReason;
-	  };
+	| (PairContactSelection & { readonly simultaneousContacts: readonly PairContactSelection[] })
+	| { readonly type: 'failure'; readonly reason: RunTerminalReason };
 
 export function predictEarliestBodyPair(state: SchedulerState): PairSchedulerSelection | null {
 	const participants = [...state.runtimes.values()]
 		.map((runtime) => participantFor(state, runtime))
 		.filter((participant): participant is DynamicCirclePathParticipant => participant !== null)
 		.sort((left, right) => left.bodyId.localeCompare(right.bodyId));
-	const contacts: Extract<PairSchedulerSelection, { type: 'contact' }>[] = [];
+	const contacts: PairContactSelection[] = [];
 	for (let firstIndex = 0; firstIndex < participants.length; firstIndex += 1) {
 		for (let secondIndex = firstIndex + 1; secondIndex < participants.length; secondIndex += 1) {
 			const first = participants[firstIndex]!;
 			const second = participants[secondIndex]!;
-			const result = findEarliestDynamicPairContact({
-				first,
-				second,
-				currentTime: state.worldTime,
-				tolerances: {
-					contactDistance: state.input.settings.tolerances.contactDistance,
-					eventTime: state.input.settings.tolerances.eventTime,
-					normalVelocity: state.input.settings.tolerances.contactDistance,
-					polynomialResidual: 1e-12
-				}
-			});
+			const result = queryPair(state, first, second);
 			const diagnostic = toPairDiagnostic(result);
 			recordDiagnostic(state, diagnostic);
 			if (result.type === 'invalid-input' || result.type === 'unresolved') {
@@ -80,41 +66,85 @@ export function predictEarliestBodyPair(state: SchedulerState): PairSchedulerSel
 			}
 		}
 	}
-	const selected = contacts.sort(
-		(left, right) => left.time - right.time || left.diagnosticId.localeCompare(right.diagnosticId)
-	)[0];
-	if (selected) selectDiagnostic(state, selected.diagnosticId);
-	return selected ?? null;
+	const selected = contacts.sort(contactOrder)[0];
+	if (!selected) return null;
+	return {
+		...selected,
+		simultaneousContacts: contacts.filter(({ time }) => time === selected.time)
+	};
 }
 
-export function commitBodyPairBoundary(
+export function selectPairDiagnostics(
 	state: SchedulerState,
-	selection: Extract<PairSchedulerSelection, { readonly type: 'contact' }>
-): RunTerminalReason {
-	commitParticipantPrefix(state, selection.first, selection.time);
-	commitParticipantPrefix(state, selection.second, selection.time);
-	const contact = dynamicContact(selection);
-	state.dynamicContacts.push(contact);
-	const retainedBodyIds = [...state.predictions.keys()]
-		.filter((bodyId) => bodyId !== selection.first.bodyId && bodyId !== selection.second.bodyId)
-		.sort();
-	for (const participant of [selection.first, selection.second]) {
-		state.steps.push({
-			worldTime: selection.time,
-			bodyId: participant.bodyId,
-			revision: participant.revision,
-			eventType: 'body-contact',
-			retainedBodyIds
-		});
+	diagnosticIds: ReadonlySet<string>,
+	reason: string
+): void {
+	for (let index = 0; index < state.pairPredictions.length; index += 1) {
+		const diagnostic = state.pairPredictions[index]!;
+		if (!diagnosticIds.has(diagnostic.id)) continue;
+		state.pairPredictions[index] = {
+			...diagnostic,
+			decision: 'selected',
+			decisionWorldTime: state.worldTime,
+			reason
+		};
 	}
-	return {
-		type: 'unsupported-body-body-response',
-		time: selection.time,
-		bodyIds: [selection.first.bodyId, selection.second.bodyId],
-		contactId: contact.id,
-		detail:
-			'Continuous body-body contact was certified; isolated body-body response is not implemented.'
-	};
+}
+
+export function invalidatePairDiagnostics(
+	state: SchedulerState,
+	bodyIds: ReadonlySet<string>,
+	reason: string
+): void {
+	for (let index = 0; index < state.pairPredictions.length; index += 1) {
+		const diagnostic = state.pairPredictions[index]!;
+		if (
+			diagnostic.decision !== 'retained' ||
+			!diagnostic.bodyIds.some((bodyId) => bodyIds.has(bodyId))
+		)
+			continue;
+		state.pairPredictions[index] = {
+			...diagnostic,
+			decision: 'invalidated',
+			decisionWorldTime: state.worldTime,
+			reason
+		};
+	}
+}
+
+export function retainUnrelatedPairDiagnostics(
+	state: SchedulerState,
+	changedBodyIds: ReadonlySet<string>,
+	worldTime: number
+): void {
+	for (let index = 0; index < state.pairPredictions.length; index += 1) {
+		const diagnostic = state.pairPredictions[index]!;
+		if (
+			diagnostic.decision !== 'retained' ||
+			diagnostic.bodyIds.some((bodyId) => changedBodyIds.has(bodyId))
+		)
+			continue;
+		const retainedThroughWorldTimes = [...(diagnostic.retainedThroughWorldTimes ?? []), worldTime];
+		state.pairPredictions[index] = { ...diagnostic, retainedThroughWorldTimes };
+	}
+}
+
+function queryPair(
+	state: SchedulerState,
+	first: DynamicCirclePathParticipant,
+	second: DynamicCirclePathParticipant
+): DynamicPairContactQueryResult {
+	return findEarliestDynamicPairContact({
+		first,
+		second,
+		currentTime: state.worldTime,
+		tolerances: {
+			contactDistance: state.input.settings.tolerances.contactDistance,
+			eventTime: state.input.settings.tolerances.eventTime,
+			normalVelocity: state.input.settings.tolerances.contactDistance,
+			polynomialResidual: 1e-12
+		}
+	});
 }
 
 function participantFor(
@@ -172,17 +202,16 @@ function bodyIsAbsent(runtime: LocalBodyRuntime): boolean {
 
 function toPairDiagnostic(result: DynamicPairContactQueryResult): PairPredictionDiagnostic {
 	const diagnostics = result.diagnostics;
-	const predictedTime = result.type === 'contact' ? result.state.time : null;
 	return {
 		id: diagnosticId(diagnostics),
 		bodyIds: diagnostics.bodyIds,
-		predictedTime,
+		predictedTime: result.type === 'contact' ? result.state.time : null,
 		validInterval: diagnostics.searchInterval,
 		revisions: [
 			{ bodyId: diagnostics.bodyIds[0], revision: diagnostics.revisions[0] },
 			{ bodyId: diagnostics.bodyIds[1], revision: diagnostics.revisions[1] }
 		],
-		decision: result.type === 'contact' ? 'retained' : 'retained',
+		decision: 'retained',
 		reason:
 			result.type === 'contact'
 				? 'Certified contact is eligible for global event selection.'
@@ -217,55 +246,17 @@ function diagnosticId(diagnostics: DynamicPairContactDiagnostics): string {
 
 function recordDiagnostic(state: SchedulerState, diagnostic: PairPredictionDiagnostic): void {
 	const existing = state.pairPredictions.findIndex(({ id }) => id === diagnostic.id);
-	if (existing >= 0) state.pairPredictions[existing] = diagnostic;
-	else state.pairPredictions.push(diagnostic);
+	if (existing >= 0) {
+		const previous = state.pairPredictions[existing]!;
+		state.pairPredictions[existing] = {
+			...diagnostic,
+			...(previous.retainedThroughWorldTimes
+				? { retainedThroughWorldTimes: previous.retainedThroughWorldTimes }
+				: {})
+		};
+	} else state.pairPredictions.push(diagnostic);
 }
 
-function selectDiagnostic(state: SchedulerState, id: string): void {
-	const index = state.pairPredictions.findIndex((diagnostic) => diagnostic.id === id);
-	if (index < 0) return;
-	state.pairPredictions[index] = {
-		...state.pairPredictions[index]!,
-		decision: 'selected',
-		reason: 'This is the earliest certified dynamic pair boundary.'
-	};
-}
-
-function commitParticipantPrefix(
-	state: SchedulerState,
-	participant: DynamicCirclePathParticipant,
-	time: number
-): void {
-	const runtime = state.runtimes.get(participant.bodyId)!;
-	if (runtime.terminalReason) return;
-	if (time > participant.path.startTime) {
-		const segment: MotionSegment = { ...participant.path, endTime: time };
-		runtime.segments.push(segment);
-	}
-	runtime.committedTime = time;
-	runtime.state = {
-		...runtime.state,
-		time,
-		position: evaluateMotionSegmentPosition(participant.path, time),
-		velocity: evaluateMotionSegmentVelocity(participant.path, time)
-	};
-}
-
-function dynamicContact(
-	selection: Extract<PairSchedulerSelection, { readonly type: 'contact' }>
-): DynamicContactRecord {
-	return {
-		id: `body-contact:${selection.first.bodyId}:${selection.second.bodyId}:${selection.time}`,
-		time: selection.time,
-		participants: [
-			{ type: 'body', bodyId: selection.first.bodyId },
-			{ type: 'body', bodyId: selection.second.bodyId }
-		],
-		contactPoint: selection.state.contactPoint,
-		normalFromFirstToSecond: selection.state.normalFromFirstToSecond,
-		preImpactNormalVelocity: selection.state.relativeNormalMotion,
-		postImpactNormalVelocity: null,
-		impulse: null,
-		state: 'incoming'
-	};
+function contactOrder(left: PairContactSelection, right: PairContactSelection): number {
+	return left.time - right.time || left.diagnosticId.localeCompare(right.diagnosticId);
 }
