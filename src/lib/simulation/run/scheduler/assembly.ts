@@ -61,7 +61,7 @@ export function finishScheduledRun(
 		releases: [...state.releases].sort(
 			(left, right) => left.time - right.time || left.bodyId.localeCompare(right.bodyId)
 		),
-		dynamicContacts: [],
+		dynamicContacts: state.dynamicContacts,
 		contactComponents: [],
 		componentEvents: [],
 		diagnostics: {
@@ -76,7 +76,7 @@ export function finishScheduledRun(
 			simulationWallTimeMilliseconds: Math.max(0, Date.now() - state.wallTimeStart),
 			contactSearches,
 			bodyEventHorizons: state.horizons,
-			pairPredictions: [],
+			pairPredictions: state.pairPredictions,
 			schedulerSteps: state.steps,
 			entries
 		}
@@ -122,6 +122,17 @@ function bodyState(state: SchedulerState, body: InitialDynamicCircleBodyState): 
 			recordedUntilTime: null,
 			terminalOutcome: null
 		};
+	}
+	if (
+		state.dynamicContacts.some(
+			(contact) =>
+				contact.time === state.worldTime &&
+				contact.participants.some(
+					(participant) => participant.type === 'body' && participant.bodyId === body.id
+				)
+		)
+	) {
+		return releasedState(body, 'unresolved', runtime.committedTime, 'unresolved');
 	}
 	const reason = runtime.terminalReason;
 	if (!reason) {

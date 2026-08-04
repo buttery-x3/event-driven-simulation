@@ -10,6 +10,7 @@ import {
 	validateCollisionFreeIntervals,
 	validateContactDynamics,
 	validateContactGeometry,
+	validateDynamicBodyContacts,
 	validateTerminalOutcome
 } from './physics';
 import {
@@ -29,6 +30,7 @@ export function validateSimulationRun(
 	validateTemporalContinuity(context);
 	validateSchedulerHistory(context);
 	validateContactGeometry(context);
+	validateDynamicBodyContacts(context);
 	validateCollisionFreeIntervals(context);
 	validateContactDynamics(context);
 	validateTerminalOutcome(context);

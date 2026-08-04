@@ -85,6 +85,14 @@ function validateSchedulerSteps(context: RunValidationContext): void {
 				candidate.eventType === step.eventType &&
 				candidate.interval[1] === step.worldTime
 		);
+		const pair = context.run.diagnostics.pairPredictions.find(
+			(candidate) =>
+				candidate.decision === 'selected' &&
+				candidate.predictedTime === step.worldTime &&
+				candidate.revisions.some(
+					(revision) => revision.bodyId === step.bodyId && revision.revision === step.revision
+				)
+		);
 		if (
 			!bodyIds.has(step.bodyId) ||
 			step.retainedBodyIds.some((bodyId) => !bodyIds.has(bodyId) || bodyId === step.bodyId) ||
@@ -99,7 +107,7 @@ function validateSchedulerSteps(context: RunValidationContext): void {
 				step.bodyId
 			);
 		}
-		if (step.eventType !== 'release' && !horizon) {
+		if (step.eventType !== 'release' && (step.eventType === 'body-contact' ? !pair : !horizon)) {
 			fail(
 				context,
 				'NON_MONOTONIC_TIME',

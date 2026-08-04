@@ -59,6 +59,13 @@ export type RunTerminalReason =
 	  }
 	| { readonly type: 'unresolved-collision-search'; readonly time: number; readonly detail: string }
 	| {
+			readonly type: 'unsupported-body-body-response';
+			readonly time: number;
+			readonly bodyIds: readonly [EntityId, EntityId];
+			readonly contactId: string;
+			readonly detail: string;
+	  }
+	| {
 			readonly type: 'zero-time-loop';
 			readonly time: number;
 			readonly colliderId: EntityId;

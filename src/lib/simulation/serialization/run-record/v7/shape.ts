@@ -63,6 +63,16 @@ function validateTerminalReason(value: unknown, path: string): void {
 			assertions.requireFiniteNumber(reason.time, `${path}.time`);
 			assertions.requireString(reason.detail, `${path}.detail`);
 			return;
+		case 'unsupported-body-body-response':
+			assertions.requireFiniteNumber(reason.time, `${path}.time`);
+			assertions.requireString(reason.contactId, `${path}.contactId`);
+			assertions.requireString(reason.detail, `${path}.detail`);
+			if (assertions.requireArray(reason.bodyIds, `${path}.bodyIds`).length !== 2)
+				invalidRunRecordField(`${path}.bodyIds`, 'must contain two body IDs');
+			assertions
+				.requireArray(reason.bodyIds, `${path}.bodyIds`)
+				.forEach((bodyId, index) => assertions.requireString(bodyId, `${path}.bodyIds[${index}]`));
+			return;
 		case 'time-limit':
 		case 'event-limit':
 			assertions.requireFiniteNumber(reason.time, `${path}.time`);

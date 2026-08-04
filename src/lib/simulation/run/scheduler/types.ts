@@ -1,6 +1,8 @@
 import type {
 	BodyEventHorizonDiagnostic,
+	DynamicContactRecord,
 	InitialDynamicCircleBodyState,
+	PairPredictionDiagnostic,
 	ReleaseEvent,
 	SimulationInput,
 	WorldSchedulerStepDiagnostic
@@ -17,5 +19,7 @@ export interface SchedulerState {
 	readonly releases: ReleaseEvent[];
 	readonly horizons: BodyEventHorizonDiagnostic[];
 	readonly steps: WorldSchedulerStepDiagnostic[];
+	readonly pairPredictions: PairPredictionDiagnostic[];
+	readonly dynamicContacts: DynamicContactRecord[];
 	readonly rejectedBodyIds: Set<string>;
 }

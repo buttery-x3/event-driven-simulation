@@ -15,6 +15,7 @@ import {
 	type LocalBodyRuntime
 } from '../single-ball/local-events';
 import { aggregateWorldReason, finishScheduledRun } from './assembly';
+import { commitBodyPairBoundary, predictEarliestBodyPair } from './pairs';
 import { releaseOverlapReasons } from './release';
 import type { SchedulerState } from './types';
 
@@ -24,12 +25,26 @@ export function constructSimulationRun(input: SimulationInput): SimulationRunRec
 	if (invalid) return invalidInputRun(state, invalid.path, invalid.message);
 
 	while (true) {
+		const nextPair = predictEarliestBodyPair(state);
+		if (nextPair?.type === 'failure') {
+			return finishScheduledRun(
+				state,
+				nextPair.reason.type === 'invalid-state' ? 'invalid' : 'valid',
+				nextPair.reason
+			);
+		}
 		const nextReleaseTime = state.scheduled[0]?.releaseTime ?? Number.POSITIVE_INFINITY;
 		const nextLocalTime = Math.min(
 			...[...state.predictions.values()].map(({ time }) => time),
 			Number.POSITIVE_INFINITY
 		);
-		const nextTime = Math.min(nextReleaseTime, nextLocalTime, input.settings.maximumSimulationTime);
+		const nextPairTime = nextPair?.time ?? Number.POSITIVE_INFINITY;
+		const nextTime = Math.min(
+			nextReleaseTime,
+			nextLocalTime,
+			nextPairTime,
+			input.settings.maximumSimulationTime
+		);
 		if (nextTime < state.worldTime) {
 			return finishScheduledRun(state, 'valid', {
 				type: 'numerical-failure',
@@ -42,7 +57,8 @@ export function constructSimulationRun(input: SimulationInput): SimulationRunRec
 		if (
 			nextTime === input.settings.maximumSimulationTime &&
 			nextReleaseTime > nextTime &&
-			nextLocalTime > nextTime
+			nextLocalTime > nextTime &&
+			nextPairTime > nextTime
 		) {
 			return finishScheduledRun(state, 'valid', timeLimit(input));
 		}
@@ -50,6 +66,11 @@ export function constructSimulationRun(input: SimulationInput): SimulationRunRec
 		if (nextReleaseTime === nextTime) {
 			const releaseFailure = commitReleaseBatch(state, nextTime);
 			if (releaseFailure) return finishScheduledRun(state, 'invalid', releaseFailure);
+			if (nextPairTime === nextTime) continue;
+		}
+
+		if (nextPair?.type === 'contact' && nextPair.time === nextTime) {
+			return finishScheduledRun(state, 'valid', commitBodyPairBoundary(state, nextPair));
 		}
 
 		const selected = [...state.predictions.values()]
@@ -92,6 +113,8 @@ function createSchedulerState(input: SimulationInput): SchedulerState {
 		releases: [],
 		horizons: [],
 		steps: [],
+		pairPredictions: [],
+		dynamicContacts: [],
 		rejectedBodyIds: new Set()
 	};
 }
@@ -193,6 +216,7 @@ function worldMustFail(reason: RunTerminalReason): boolean {
 	return [
 		'invalid-state',
 		'unresolved-collision-search',
+		'unsupported-body-body-response',
 		'zero-time-loop',
 		'numerical-failure',
 		'time-limit',

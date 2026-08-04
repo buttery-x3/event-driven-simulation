@@ -20,6 +20,43 @@ const coordinateSystem = {
 } as const;
 
 describe('monotonic independent-body scheduler', () => {
+	it('stops both certified paths at the earliest unsupported body-body response boundary', () => {
+		const run = constructSimulationRun(
+			input([body('left', [-2, 5], [1, 0], 0), body('right', [2, 5], [-1, 0], 0)])
+		);
+
+		expect(run).toMatchObject({
+			validity: 'valid',
+			outcome: 'unresolved',
+			terminalReason: {
+				type: 'unsupported-body-body-response',
+				bodyIds: ['left', 'right']
+			}
+		});
+		expect(run.terminalReason.time).toBeCloseTo(1.75, 12);
+		expect(run.dynamicContacts).toHaveLength(1);
+		expect(run.dynamicContacts[0]).toMatchObject({
+			preImpactNormalVelocity: -2,
+			state: 'incoming'
+		});
+		expect(run.dynamicContacts[0]!.time).toBeCloseTo(1.75, 12);
+		expect(run.trajectories.flatMap(({ segments }) => segments)).toHaveLength(2);
+		expect(
+			run.trajectories.every(
+				({ segments }) => Math.abs((segments.at(-1)?.endTime ?? 0) - 1.75) < 1e-12
+			)
+		).toBe(true);
+		expect(run.diagnostics.pairPredictions).toContainEqual(
+			expect.objectContaining({
+				bodyIds: ['left', 'right'],
+				decision: 'selected',
+				polynomialDegree: 2
+			})
+		);
+		expect(validateSimulationRun(run.input, run).failures).toEqual([]);
+		expect(parseSimulationRunFixture(JSON.stringify(run))).toEqual(run);
+	});
+
 	it('retains an unrelated free-flight prediction across a staggered release', () => {
 		const run = constructSimulationRun(
 			input([body('long-flight', [-4, 3], [1, 0], 0), body('later-fast-flight', [3, 6], [2, 0], 1)])

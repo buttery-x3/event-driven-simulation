@@ -238,6 +238,7 @@ function outcomeFor(reason: RunTerminalReason): RunOutcome {
 		case 'event-limit':
 			return 'event-limit';
 		case 'unresolved-collision-search':
+		case 'unsupported-body-body-response':
 		case 'zero-time-loop':
 		case 'numerical-failure':
 			return 'unresolved';

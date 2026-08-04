@@ -80,6 +80,25 @@ export interface PairPredictionDiagnostic {
 	readonly revisions: readonly [PredictionRevision, PredictionRevision];
 	readonly decision: PredictionDecision;
 	readonly reason: string;
+	readonly queryOutcome?: 'contact' | 'no-contact' | 'invalid-input' | 'unresolved' | 'unsupported';
+	readonly pathTypes?: readonly [string, string];
+	readonly localEventHorizons?: readonly [number, number];
+	readonly normalizedIntervalScale?: number;
+	readonly relativeCoefficients?: readonly [Vec2, Vec2, Vec2] | null;
+	readonly polynomialCoefficients?: readonly number[];
+	readonly normalizedPolynomialCoefficients?: readonly number[];
+	readonly polynomialScale?: number | null;
+	readonly polynomialDegree?: number | null;
+	readonly isolatedRoots?: readonly number[];
+	readonly candidateWorldTimes?: readonly number[];
+	readonly candidates?: readonly {
+		readonly normalizedTime: number;
+		readonly time: number;
+		readonly topology: string;
+		readonly classification: string;
+		readonly geometryResidual: number;
+		readonly relativeNormalMotion: number | null;
+	}[];
 }
 
 export interface RunDiagnostics {

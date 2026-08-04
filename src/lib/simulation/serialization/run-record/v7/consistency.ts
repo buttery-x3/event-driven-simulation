@@ -279,6 +279,22 @@ function validatePredictions(record: SimulationRunRecord): void {
 
 function validateTerminalReferences(record: SimulationRunRecord): void {
 	const reason = record.terminalReason;
+	if (reason.type === 'unsupported-body-body-response') {
+		const contact = record.dynamicContacts.find(({ id }) => id === reason.contactId);
+		if (
+			!contact ||
+			reason.bodyIds.some(
+				(bodyId) =>
+					!contact.participants.some(
+						(participant) => participant.type === 'body' && participant.bodyId === bodyId
+					)
+			)
+		)
+			invalidRunRecordField(
+				'$.terminalReason.contactId',
+				'must identify the terminal body-body contact'
+			);
+	}
 	if (reason.type === 'completion-region' || reason.type === 'escape-region') {
 		const purpose = reason.type === 'completion-region' ? 'complete' : 'escape';
 		if (

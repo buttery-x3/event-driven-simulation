@@ -111,6 +111,8 @@ export function getRunStatusLabel(reason: RunTerminalReason): string {
 			return 'Event limit reached';
 		case 'unresolved-collision-search':
 			return 'Unresolved collision search';
+		case 'unsupported-body-body-response':
+			return 'Body contact reached (response unsupported)';
 		case 'zero-time-loop':
 			return 'Zero-time loop';
 		case 'invalid-state':
