@@ -170,28 +170,47 @@
 
 	{#if accumulations.length > 0}
 		<details open>
-			<summary>Accumulation certification and resolution</summary>
+			<summary>Accumulation candidates and resolution</summary>
 			<div class="impact-solves">
 				{#each accumulations as accumulation, index (`${accumulation.limit?.id}-${index}`)}
 					<section>
 						<strong>{accumulation.limit?.id ?? `rejected candidate ${index + 1}`}</strong>
-						<p>
-							Certification: {accumulation.status} — {accumulation.reason}
-						</p>
+						<p>Candidate decision: {accumulation.status} — {accumulation.reason}</p>
 						<p>
 							Physical resolution: {accumulation.finalClassification}; impact components
 							{accumulation.downstreamImpactComponentIds.length}, support components
 							{accumulation.downstreamSupportComponentIds.length}.
 						</p>
+						<dl class="impact-evidence">
+							<div class="wide">
+								<dt>Participant bodies</dt>
+								<dd>{accumulation.participantBodyIds.join(', ') || 'none'}</dd>
+							</div>
+							<div class="wide">
+								<dt>Candidate fixed contacts</dt>
+								<dd>{accumulation.candidateFixedColliderIds.join(', ') || 'none'}</dd>
+							</div>
+						</dl>
+						<details>
+							<summary>Source physical events ({accumulation.sourceEventIds.length})</summary>
+							<ol>
+								{#each accumulation.sourceEventIds as eventId (eventId)}
+									<li><code>{eventId}</code></li>
+								{/each}
+							</ol>
+						</details>
 						{#if accumulation.limit}
 							<dl class="impact-evidence">
 								<div>
-									<dt>Source events</dt>
-									<dd>{accumulation.sourceEventIds.length}</dd>
+									<dt>Limit contacts / components</dt>
+									<dd>
+										{accumulation.limit.activeLimitContacts.length} / {accumulation.limit
+											.connectedComponents.length}
+									</dd>
 								</div>
 								<div>
-									<dt>Participant bodies</dt>
-									<dd>{accumulation.participantBodyIds.length}</dd>
+									<dt>Certification method</dt>
+									<dd>{accumulation.limit.certificationMethod}</dd>
 								</div>
 								<div>
 									<dt>Certified event time</dt>
@@ -204,6 +223,23 @@
 								<div class="wide">
 									<dt>Remaining-time upper bound</dt>
 									<dd>{accumulation.limit.remainingTimeUpperBound}</dd>
+								</div>
+								<div class="wide">
+									<dt>Positive event intervals</dt>
+									<dd>{accumulation.limit.temporalResiduals.positiveIntervals.join(', ')}</dd>
+								</div>
+								<div class="wide">
+									<dt>Reconstructed limiting contacts</dt>
+									<dd>{accumulation.limit.activeLimitContacts.map(({ id }) => id).join(', ')}</dd>
+								</div>
+								<div class="wide">
+									<dt>Downstream component IDs</dt>
+									<dd>
+										{[
+											...accumulation.downstreamImpactComponentIds,
+											...accumulation.downstreamSupportComponentIds
+										].join(', ') || 'none'}
+									</dd>
 								</div>
 							</dl>
 						{/if}

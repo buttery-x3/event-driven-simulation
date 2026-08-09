@@ -1,17 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { certifyTemporalTail } from '..';
+import { certifyTemporalTail, unsupportedObservedRatioReason } from '..';
 import type { AccumulationObservation } from '../types';
 
 describe('accumulation temporal-tail certification', () => {
-	it('records an inspectable finite geometric tail bound', () => {
+	it('does not promote an observed geometric prefix into an unproved future bound', () => {
 		const result = certifyTemporalTail(observations([0, 1, 1.5, 1.75, 1.875]), 0.2);
 
-		expect(result).not.toBeTypeOf('string');
-		if (typeof result === 'string') return;
-		expect(result.intervals).toEqual([1, 0.5, 0.25, 0.125]);
-		expect(result.ratioUpperBound).toBeGreaterThan(0.5);
-		expect(result.ratioUpperBound).toBeLessThan(1);
-		expect(result.remainingTimeUpperBound).toBeLessThanOrEqual(0.2);
+		expect(result).toBe(unsupportedObservedRatioReason);
 	});
 
 	it('rejects shrinking intervals without a stable ratio bounded away from one', () => {

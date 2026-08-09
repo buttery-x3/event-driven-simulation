@@ -4,26 +4,17 @@ import { certifyAccumulationLimit } from '../acquisition';
 import type { AccumulationObservation, AccumulationObservedContact } from '../types';
 
 describe('generic accumulation acquisition', () => {
-	it('certifies a connected multi-body cluster with non-alternating contact-edge changes', () => {
+	it('rejects a connected synthetic prefix without an analytic future-tail bound', () => {
 		const result = certifyAccumulationLimit(input(), observations());
 
-		expect(result.type).toBe('certified');
-		if (result.type !== 'certified') return;
-		expect(result.limit.participantBodyIds).toEqual(['a', 'b', 'c']);
-		expect(result.limit.sourceEventIds).toHaveLength(6);
-		expect(result.limit.activeLimitContacts.map(contactKey).sort()).toEqual([
-			'body:a:b',
-			'body:b:c',
-			'fixed:a:floor',
-			'fixed:b:floor',
-			'fixed:c:floor'
-		]);
-		expect(result.limit.connectedComponents).toHaveLength(1);
-		expect(result.limit.remainingTimeUpperBound).toBeGreaterThan(0);
-		expect(result.limit.candidateLimitTime).toBeGreaterThan(result.limit.currentCertifiedTime);
+		expect(result.type).toBe('rejected');
+		if (result.type !== 'rejected') return;
+		expect(result.diagnostic.participantBodyIds).toEqual(['a', 'b', 'c']);
+		expect(result.diagnostic.sourceEventIds).toHaveLength(5);
+		expect(result.diagnostic.reason).toContain('no supported analytic accumulation family');
 	});
 
-	it('rejects a temporal candidate whose reconstructed limiting geometry penetrates', () => {
+	it('does not claim geometry certification before temporal certification exists', () => {
 		const penetrating = observations().map((observation) => ({
 			...observation,
 			bodyStates: observation.bodyStates.map((body) =>
@@ -34,25 +25,19 @@ describe('generic accumulation acquisition', () => {
 
 		expect(result.type).toBe('rejected');
 		if (result.type !== 'rejected') return;
-		expect(result.diagnostic.reason).toMatch(/penetrat|position-tail enclosure/);
+		expect(result.diagnostic.reason).toContain('no supported analytic accumulation family');
 	});
 
-	it('re-queries away historical edges and decomposes disconnected limiting components', () => {
+	it('does not expose a reconstructed limit for a merely observed contraction', () => {
 		const separated = observations().map((observation) => ({
 			...observation,
 			bodyStates: [state('a', [-2, 0.5]), state('b', [0, 0.5]), state('c', [2, 0.5])]
 		}));
 		const result = certifyAccumulationLimit(input(), separated);
 
-		expect(result.type).toBe('certified');
-		if (result.type !== 'certified') return;
-		expect(result.limit.activeLimitContacts.every(({ type }) => type === 'body-fixed')).toBe(true);
-		expect(result.limit.connectedComponents).toHaveLength(3);
-		expect(
-			result.limit.geometricResiduals.some(
-				({ contactId, activeAtLimit }) => contactId.includes('body-contact') && !activeAtLimit
-			)
-		).toBe(true);
+		expect(result.type).toBe('rejected');
+		if (result.type !== 'rejected') return;
+		expect(result.diagnostic.limit).toBeNull();
 	});
 });
 
@@ -141,16 +126,4 @@ function pair(firstBodyId: string, secondBodyId: string): AccumulationObservedCo
 		secondBodyId,
 		normalFromFirstToSecond: [1, 0]
 	};
-}
-
-function contactKey(contact: {
-	readonly type: string;
-	readonly bodyId?: string;
-	readonly colliderId?: string;
-	readonly firstBodyId?: string;
-	readonly secondBodyId?: string;
-}): string {
-	return contact.type === 'body-fixed'
-		? `fixed:${contact.bodyId}:${contact.colliderId}`
-		: `body:${contact.firstBodyId}:${contact.secondBodyId}`;
 }

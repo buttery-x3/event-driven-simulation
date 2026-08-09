@@ -78,10 +78,13 @@ sustained contact or fail closed before committing that interval.
 
 `flame-46-exact-fit-tangent-release.json` and `flame-46-oversized-two-peg-rest.json` are compact
 input fixtures for the paired dense-board accumulation boundary. The first has a ball whose diameter
-exactly equals the peg gap and must release downward from an unsupported tangent manifold. The
-second is wider than the gap and must settle on the same two pegs with non-negative support
-reactions. The focused regression also checks nearby radii, mirroring, collider ordering, renaming,
-full contact-set diagnostics and independent run validation.
+exactly equals the peg gap and is intended to release downward from an unsupported tangent
+manifold. The second is wider than the gap and is intended to settle on the same two pegs with
+non-negative support reactions. FLAME-57's behavioural audit showed that both currently produce a
+genuine contracting contact prefix but cannot promote it: the observed-ratio tail is not a proved
+future bound. The focused regression therefore preserves the exact blocked outcomes, source-contact
+evidence, collider ordering and renaming invariance, with pending tests retaining the intended
+release and settlement acceptance boundaries.
 
 `flame-47-unit-restitution-reverse-throat.json` is the compact exact-fit return traversal. The ball
 passes downward between two tangent pegs, rebounds elastically from a centred lower peg and returns

@@ -17,95 +17,91 @@ const coordinateSystem = {
 export const accumulationScenarios = [
 	scenario(
 		'flame-46-exact-fit-generalised',
-		'FLAME-46 exact-fit generalised',
-		'Certifies the tangent-throat accumulation before ordinary anti-locking preserves downward release.',
+		'FLAME-46 exact-fit candidate (blocked)',
+		'Production replay of the tangent-throat contraction; promotion is blocked until a future-tail bound is proved.',
 		'accumulation.flame-46-exact-fit',
 		denseBoard(0.135),
-		['settled']
+		['unresolved']
 	),
 	scenario(
 		'flame-46-oversized-generalised',
-		'FLAME-46 oversized generalised',
-		'Certifies the oversized two-contact limit before ordinary support reactions establish rest.',
+		'FLAME-46 oversized candidate (blocked)',
+		'Production replay of the oversized two-contact contraction; promotion is blocked until a future-tail bound is proved.',
 		'accumulation.flame-46-oversized',
 		denseBoard(0.14),
-		['settled']
+		['invalid']
 	),
 	scenario(
 		'three-ball-settlement',
-		'Three-ball settlement',
-		'A connected three-body cluster is supported by the floor without event-count freezing.',
+		'Three-ball settlement candidate (blocked)',
+		'Three moving supported bodies generate a real contracting impact sequence; the finite prefix reaches its time limit without an unsupported promotion.',
 		'accumulation.three-ball-settlement',
-		containerInput('three-ball-settlement', pileBodies(3), 0.4, 4),
-		['settled']
+		supportedInelasticCollapse('three-ball-settlement', [
+			[2, 0],
+			[-0.5, 0],
+			[-1.5, 0]
+		]),
+		['time-limit']
 	),
 	scenario(
 		'dynamic-alternating-supports',
-		'Dynamic alternating supports',
-		'Fixed and dynamic contact edges compete inside one connected supported participant cluster.',
+		'Dynamic alternating supports candidate (blocked)',
+		'Alternating body-body impacts repeatedly include the fixed floor in a genuine supported participant cluster.',
 		'accumulation.dynamic-alternating-supports',
-		containerInput('dynamic-alternating-supports', fallingCluster(3), 0.55, 5),
-		['settled', 'time-limit', 'escaped']
+		supportedInelasticCollapse('dynamic-alternating-supports', [
+			[2, 0],
+			[0, 0],
+			[-1, 0]
+		]),
+		['time-limit']
 	),
 	scenario(
 		'multi-body-non-alternating-accumulation',
-		'Multi-body non-alternating accumulation',
-		'A changing three-body contact graph exercises connected-cluster evidence without A-B alternation.',
+		'Multi-body non-alternating candidate (blocked)',
+		'Four moving bodies produce several changing contact edges and overlapping three/four-body limit candidates.',
 		'accumulation.multi-body-non-alternating',
-		containerInput('multi-body-non-alternating-accumulation', fallingCluster(4), 0.5, 5),
-		['settled', 'time-limit', 'escaped']
+		fourBodyInelasticCollapse(),
+		['time-limit']
 	),
 	scenario(
 		'lineality-created-at-accumulation',
-		'Lineality created at accumulation',
-		'Opposing normals become an implicit equality only at reconstructed limiting geometry.',
+		'Lineality-at-limit candidate (blocked)',
+		'A minimal two-peg throat produces alternating one-edge events approaching opposing limiting normals without reusing the dense board.',
 		'accumulation.limit-lineality',
-		withSceneId(denseBoard(0.135), 'lineality-created-at-accumulation'),
-		['settled']
+		minimalThroatInput('lineality-created-at-accumulation', 0.135),
+		['unresolved']
 	),
 	scenario(
 		'accumulation-separates-components',
-		'Accumulation separates components',
-		'Promotion demonstrates a common-tangent separating continuation rather than forced rest.',
+		'Separation-after-promotion candidate (blocked)',
+		'A genuine unsupported three-body inelastic-collapse run remains unresolved because no certified promotion exists yet.',
 		'accumulation.separating-components',
-		withSettings(withSceneId(denseBoard(0.135), 'accumulation-separates-components'), {
-			maximumSimulationTime: 1.7
-		}),
+		unsupportedInelasticCollapse('accumulation-separates-components'),
 		['time-limit']
 	),
 	scenario(
 		'incremental-pile-formation',
-		'Incremental pile formation',
-		'Scheduled releases join and revise an existing supported dynamic component incrementally.',
+		'Incremental pile formation (known unresolved)',
+		'Scheduled bodies fall toward an existing supported body; the first join reaches the unresolved accumulation boundary before the full pile can form.',
 		'accumulation.incremental-pile',
-		containerInput(
-			'incremental-pile-formation',
-			[
-				body('joining-01', [-1.5, 0.25], [0, 0], 0.25, 1, 0),
-				body('joining-02', [-0.5, 0.25], [0, 0], 0.25, 1, 0.8),
-				body('joining-03', [0.5, 0.25], [0, 0], 0.25, 1, 1.6),
-				body('joining-04', [1.5, 0.25], [0, 0], 0.25, 1, 2.4)
-			],
-			0.35,
-			7
-		),
-		['settled', 'time-limit', 'escaped']
+		incrementalStackInput(),
+		['unresolved']
 	),
 	scenario(
 		'twenty-ball-container-drop',
-		'Twenty-ball container drop',
-		'A deterministic twenty-body supported pile remains inspectable without an event-limit freeze.',
+		'Twenty-ball dynamic drop (known unresolved)',
+		'Twenty falling bodies form five dynamic collision stacks; the replay preserves the real pair-topology failure instead of faking settlement.',
 		'accumulation.twenty-ball-pile',
-		containerInput('twenty-ball-container-drop', twentySupportedBodies(), 0.3, 5, 600),
-		['settled']
+		twentyBallDynamicDrop(),
+		['unresolved']
 	),
 	scenario(
 		'pile-reactivated-after-settlement',
-		'Pile reactivated after settlement',
-		'A later scheduled striker reactivates a previously certified dynamic resting component.',
+		'Pile reactivation (blocked upstream)',
+		'A later striker is scheduled, but the genuine pile-forming prefix becomes unresolved before the stack can be certified or reactivated.',
 		'accumulation.pile-reactivation',
 		reactivationInput(),
-		['settled', 'time-limit', 'escaped']
+		['unresolved']
 	),
 	scenario(
 		'dense-nonconverging-cascade',
@@ -116,30 +112,23 @@ export const accumulationScenarios = [
 			restitution: 1,
 			maximumSimulationTime: 3
 		}),
-		['time-limit', 'exited']
+		['time-limit']
 	),
 	scenario(
 		'uncertifiable-temporal-tail',
 		'Uncertifiable temporal tail',
-		'Shrinking but unsupported temporal evidence preserves a valid explicit unresolved prefix.',
+		'A genuine three-body inelastic collapse has shrinking intervals but no analytic bound on the unobserved future tail.',
 		'accumulation.uncertifiable-tail',
-		withSettings(withSceneId(denseBoard(0.139), 'uncertifiable-temporal-tail'), {
-			restitution: 0.97,
-			maximumEvents: 10,
-			maximumSimulationTime: 3
-		}),
+		unsupportedInelasticCollapse('uncertifiable-temporal-tail'),
 		['time-limit']
 	),
 	scenario(
 		'uncertifiable-limit-geometry',
-		'Uncertifiable limit geometry',
-		'Temporal pressure without a certifiable complete limiting manifold remains explicit and replayable.',
+		'Uncertifiable limit geometry (blocked prerequisite)',
+		'A genuine changing-edge candidate is retained, but geometry certification cannot be reached before a temporal family is proved.',
 		'accumulation.uncertifiable-geometry',
-		withSettings(withSceneId(denseBoard(0.137), 'uncertifiable-limit-geometry'), {
-			maximumEvents: 8,
-			maximumSimulationTime: 3
-		}),
-		['event-limit']
+		withSceneId(fourBodyInelasticCollapse(), 'uncertifiable-limit-geometry'),
+		['time-limit']
 	)
 ] as const satisfies readonly VerificationScenario[];
 
@@ -159,7 +148,7 @@ function scenario(
 		expectedOutcomes,
 		expectedEventCharacteristics: null,
 		replayExpectation: expectedOutcomes.some((outcome) =>
-			['unresolved', 'event-limit', 'time-limit'].includes(outcome)
+			['unresolved', 'invalid', 'event-limit', 'time-limit'].includes(outcome)
 		)
 			? 'valid-prefix'
 			: 'complete',
@@ -224,62 +213,129 @@ function containerInput(
 	};
 }
 
-function pileBodies(count: number): readonly InitialDynamicCircleBodyState[] {
-	const positions: Vec2[] = [];
-	const radius = 0.25;
-	const vertical = Math.sqrt(3) * radius;
-	let row = 0;
-	while (positions.length < count) {
-		const rowCount = Math.max(1, 7 - row);
-		const start = -radius * (rowCount - 1);
-		for (let column = 0; column < rowCount && positions.length < count; column += 1)
-			positions.push([start + column * radius * 2, radius + row * vertical]);
-		row += 1;
-	}
-	return positions.map((position, index) =>
-		body(`pile-${pad(index + 1)}`, position, [0, 0], radius)
+function supportedInelasticCollapse(id: string, velocities: readonly Vec2[]): SimulationInput {
+	return containerInput(
+		id,
+		[-2, 0, 2].map((x, index) => body(`collapse-${index + 1}`, [x, 0.5], velocities[index]!, 0.5)),
+		0.03,
+		5,
+		300
 	);
 }
 
-function twentySupportedBodies(): readonly InitialDynamicCircleBodyState[] {
-	const radius = 0.15;
-	return Array.from({ length: 5 }, (_, column) =>
-		Array.from({ length: 4 }, (_, row) =>
+function unsupportedInelasticCollapse(id: string): SimulationInput {
+	return {
+		scene: {
+			id,
+			coordinateSystem,
+			bounds: { width: 10, height: 3 },
+			staticColliders: [],
+			terminationRegions: []
+		},
+		initialDynamicBodies: [-2, 0, 2].map((x, index) =>
 			body(
-				`pile-${pad(column * 4 + row + 1)}`,
-				[(column - 2) * 0.7, radius + row * radius * 2],
-				[0, 0],
-				radius
+				`collapse-${index + 1}`,
+				[x, 1],
+				(
+					[
+						[2, 0],
+						[0, 0],
+						[-1, 0]
+					] as Vec2[]
+				)[index]!,
+				0.5
 			)
-		)
-	).flat();
+		),
+		settings: { ...settings(0.05, 5, 300), gravity: [0, 0] }
+	};
+}
+
+function fourBodyInelasticCollapse(): SimulationInput {
+	return {
+		...unsupportedInelasticCollapse('multi-body-non-alternating-accumulation'),
+		initialDynamicBodies: [-3, -1, 1, 3].map((x, index) =>
+			body(
+				`collapse-${index + 1}`,
+				[x, 1],
+				(
+					[
+						[2.5, 0],
+						[0.25, 0],
+						[-0.2, 0],
+						[-1.5, 0]
+					] as Vec2[]
+				)[index]!,
+				0.5
+			)
+		),
+		settings: { ...settings(0.03, 5, 500), gravity: [0, 0] }
+	};
+}
+
+function minimalThroatInput(id: string, radius: number): SimulationInput {
+	return {
+		scene: {
+			id,
+			coordinateSystem,
+			bounds: { width: 4.4, height: 4.2 },
+			staticColliders: [
+				peg('throat-left', [0.42, 3.25]),
+				peg('throat-right', [0.84, 3.25]),
+				line('floor', [-2.2, 0], [2.2, 0])
+			],
+			terminationRegions: []
+		},
+		initialDynamicBodies: [body('throat-ball', [0.55, 3.95], [0, 0], radius)],
+		settings: settings(0.6, 5, 300)
+	};
+}
+
+function incrementalStackInput(): SimulationInput {
+	return containerInput(
+		'incremental-pile-formation',
+		[
+			body('base', [0, 0.5], [0, 0], 0.5),
+			body('joining-01', [0, 2], [0, 0], 0.5, 1, 0.75),
+			body('joining-02', [0, 3], [0, 0], 0.5, 1, 2.5),
+			body('joining-03', [0, 4], [0, 0], 0.5, 1, 4.5)
+		],
+		0.2,
+		8,
+		600
+	);
+}
+
+function twentyBallDynamicDrop(): SimulationInput {
+	const radius = 0.15;
+	return containerInput(
+		'twenty-ball-container-drop',
+		Array.from({ length: 5 }, (_, column) =>
+			Array.from({ length: 4 }, (_, row) =>
+				body(
+					`drop-${column + 1}-${row + 1}`,
+					[(column - 2) * 0.7, 1 + row * 0.32],
+					[column % 2 === 0 ? 0.03 : -0.03, 0],
+					radius
+				)
+			)
+		).flat(),
+		0.1,
+		8,
+		1000
+	);
 }
 
 function reactivationInput(): SimulationInput {
-	const input = containerInput(
-		'pile-reactivated-after-settlement',
-		[
-			body('anchored-pile', [1, 0.5], [0, 0], 0.5),
-			body('late-striker', [-2, 0.5], [2, 0], 0.5, 1, 1)
+	const input = incrementalStackInput();
+	return {
+		...input,
+		scene: { ...input.scene, id: 'pile-reactivated-after-settlement' },
+		initialDynamicBodies: [
+			...input.initialDynamicBodies,
+			body('late-striker', [-3, 0.5], [3, 0], 0.5, 1, 6)
 		],
-		0.8,
-		4,
-		300
-	);
-	return { ...input, settings: { ...input.settings, gravity: [0, -2] } };
-}
-
-function fallingCluster(count: number, releaseStep = 0): readonly InitialDynamicCircleBodyState[] {
-	return Array.from({ length: count }, (_, index) =>
-		body(
-			`falling-${pad(index + 1)}`,
-			[((index % 4) - 1.5) * 0.6, 1.2 + Math.floor(index / 4)],
-			[index % 2 === 0 ? 0.15 : -0.1, -0.5],
-			0.25,
-			1,
-			index * releaseStep
-		)
-	);
+		settings: { ...input.settings, maximumSimulationTime: 9, maximumEvents: 900 }
+	};
 }
 
 function body(

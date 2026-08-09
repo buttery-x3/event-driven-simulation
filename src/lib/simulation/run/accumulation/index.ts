@@ -1,5 +1,5 @@
 export { certifyAccumulationLimit } from './acquisition';
-export { certifyTemporalTail } from './temporal-certification';
+export { certifyTemporalTail, unsupportedObservedRatioReason } from './temporal-certification';
 export type {
 	AccumulationCertificationResult,
 	AccumulationObservation,

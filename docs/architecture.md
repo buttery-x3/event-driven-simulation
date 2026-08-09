@@ -178,14 +178,16 @@ private `scheduler/pairs/component.ts` module owns this geometry-to-component bo
 post-impact runtime state. Disconnected simultaneous components are committed independently, while
 nearby positive-time events remain ordered.
 
-The sibling `run/accumulation` subdomain certifies bounded families of connected positive-time
-physical-event sequences. It owns temporal-tail envelopes, limiting-state estimates and complete
-fixed/dynamic geometry re-query, but no impact or support outcome. A successful `AccumulationLimit`
-is adapted by the private `scheduler/accumulation` subdomain: each participant receives an explicit
-`accumulation-tail` trajectory summary to the mathematical limit time, the reconstructed graph is
-split into connected components, and every component is submitted to the existing coupled-impact
-and dormant/dynamic-support machinery. Pending releases, local futures and dynamic-pair futures are
-ordering barriers. Generalised-reflection iterations are never physical accumulation events.
+The sibling `run/accumulation` subdomain observes connected positive-time physical-event sequences
+and owns the boundary for future analytic accumulation families: temporal-tail proof,
+limiting-state enclosure and complete fixed/dynamic geometry re-query. A finite observed sequence
+of shrinking intervals is currently diagnostic evidence only. It cannot constrain unobserved
+future intervals, so the former observed-ratio extrapolation is rejected and no generic
+accumulation promotion is active. When a supported analytic family is added, a successful
+`AccumulationLimit` will be adapted by the private `scheduler/accumulation` subdomain and submitted
+to the existing coupled-impact and dormant/dynamic-support machinery. Pending releases and other
+predicted events remain ordering barriers. Generalised-reflection iterations are never physical
+accumulation events. See `flame-57-behavioural-audit.md` for the current evidence and blockers.
 
 Certified stationary components with fixed support become persistent dormant components. The
 private `scheduler/dormancy` subdomain owns their admission, support-equilibrium certification,

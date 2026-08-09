@@ -523,7 +523,7 @@ test('groups verification scenarios, replaces worlds on Run and reports authorit
 	await expect(page.getByRole('heading', { name: 'Failure boundary' })).toHaveCount(0);
 });
 
-test('exposes FLAME-57 scenarios and separates accumulation certification from resolution', async ({
+test('exposes genuine FLAME-57 candidates and the missing certification boundary', async ({
 	page
 }) => {
 	await page.goto('/');
@@ -552,20 +552,35 @@ test('exposes FLAME-57 scenarios and separates accumulation certification from r
 	await page.getByRole('button', { name: 'Run simulation' }).click();
 	const inspector = page.getByRole('complementary', { name: 'Run inspector' });
 	await expect(
-		inspector.getByText('Accumulation certification and resolution', { exact: true })
-	).toBeVisible();
-	await expect(inspector.getByText(/Certification: certified/).last()).toBeVisible();
-	await expect(
-		inspector.locator('p').filter({ hasText: 'Physical resolution: release' })
+		inspector.getByText('Accumulation candidates and resolution', { exact: true })
 	).toBeVisible();
 	await expect(
-		inspector.getByText('Remaining-time upper bound', { exact: true }).last()
+		inspector.getByText(/Candidate decision: rejected.*finite-prefix evidence only/).last()
+	).toBeVisible();
+	await expect(inspector.getByText('Participant bodies', { exact: true }).last()).toBeVisible();
+	await expect(inspector.getByText('ball-primary', { exact: true }).last()).toBeVisible();
+	await expect(inspector.getByText(/Source physical events \(5\)/).last()).toBeVisible();
+	await expect(inspector.getByText('Remaining-time upper bound', { exact: true })).toHaveCount(0);
+
+	await selector.selectOption('dynamic-alternating-supports');
+	await page.getByRole('button', { name: 'Run simulation' }).click();
+	await expect(
+		inspector.getByText('collapse-1, collapse-2, collapse-3', { exact: true }).last()
+	).toBeVisible();
+	await inspector
+		.getByText(/Source physical events \(5\)/)
+		.last()
+		.click();
+	await expect(
+		inspector.getByText(/physical-component-contact:impact-component/).last()
 	).toBeVisible();
 
 	await selector.selectOption('twenty-ball-container-drop');
 	await page.getByRole('button', { name: 'Run simulation' }).click();
 	await expect(page.getByLabel('Selected body').locator('option')).toHaveCount(21);
-	await expect(catalogue.getByText(/^settled.*permitted$/)).toBeVisible();
+	await expect(catalogue.getByText(/^unresolved.*permitted$/)).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Failure boundary' })).toBeVisible();
+	await expect(page.getByText(/indeterminate local topology/).first()).toBeVisible();
 });
 
 test('runs sustained, turning-point and invalid curated scenarios with declared replay evidence', async ({

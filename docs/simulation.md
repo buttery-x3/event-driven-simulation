@@ -330,26 +330,25 @@ otherwise the body continues in a `linear-contact` or `circular-contact` segment
 
 ## Sustained contact and impact collapse
 
-The run-level accumulator observes only distinct positive-time physical contact events. It accepts
-a bounded family when at least five connected observations have strictly contracting intervals, a
-stable geometric ratio bounded away from one, a finite geometric-series tail, converging relative
-normal speeds, finite state estimates and a complete non-penetrating limiting geometry. Low speed,
-event count, restitution or an alternating label are never sufficient by themselves.
+The run-level accumulator observes only distinct positive-time physical contact events. It can
+identify finite prefixes with strictly contracting intervals and stable observed ratios, but those
+observations do not prove that future intervals obey the same ratio. The observed-ratio path is
+therefore diagnostic-only and rejects promotion with an explicit missing-analytic-family reason.
+Low speed, event count, restitution, an alternating label and a geometric fit over recent samples
+are never sufficient by themselves.
 
-State reconstruction uses recent sequence estimates and projects the limiting velocity into the
-kernel of every active limiting contact normal. Repeated historical edges may constrain the
-geometric estimate, but all fixed colliders and participant pairs are re-queried at the limit;
-one-off historical edges may disappear and contacts present only at the limit may appear. The
-complete graph is split through shared dynamic bodies. Each component is then resolved by the
-ordinary Generalised Reflections impact law and support machinery, so release, separation,
-sustained motion, rest and unresolved results remain downstream physical classifications.
+The inactive reconstruction path contains recent-sequence estimates, contact-kernel velocity
+projection and complete limiting-geometry re-query. It cannot run until temporal certification is
+established. In particular, multiplying recent position or velocity steps by the observed temporal
+ratio does not certify state tails: no current invariant relates those state increments to that
+ratio. A future supported family must supply independent position and velocity enclosures before
+reconstruction or downstream Generalised Reflections/support classification is permitted.
 
-Promotion uses the mathematical limit time when the bounded tail is appreciable. An
-`accumulation-tail` segment is an explicit continuous summary from the last certified physical event
-to that limiting state; it is not a timestep integration or an invented extra collision. Pending
-scheduled releases, local events or dynamic-pair events inside the complete bound prevent
-promotion. Diagnostics preserve the source events, temporal/state/geometric residuals, penetration
-audit, complete contact graph and downstream component identifiers.
+No production run currently emits a new `accumulation-tail` segment. That contract remains reserved
+for a future proved family and describes a continuous summary rather than an invented collision.
+Diagnostics currently preserve candidate participants, source physical-event IDs and the precise
+rejection reason. The workbench exposes those source IDs beside the ordinary contact timeline so
+observed interval contraction and changing contact edges remain inspectable.
 
 A single pressing impact also retains its support immediately when the outgoing normal excursion
 bound `vₙ² / (2aₙ)` is no greater than the configured `contactDistance`. Such a release cannot
@@ -359,9 +358,10 @@ the outgoing normal speed, pressing acceleration, calculated separation bound an
 tolerance. Multi-contact cases that cannot establish certified separation remain subject to the
 fail-closed release-root policy rather than selecting an arbitrary support.
 
-Every ordinary accepted manifold remains one `contact` event. Accumulation promotion preserves the
-last certified source contact and records the reconstructed limiting manifold through the
-`AccumulationLimit`, exact-time dynamic contacts and the resulting contact-mode transition.
+Every ordinary accepted manifold remains one `contact` event. If a future proved accumulation
+family is introduced, promotion must preserve the last certified source contact and record the
+reconstructed limiting manifold through the `AccumulationLimit`, exact-time dynamic contacts and
+the resulting contact-mode transition. The current observed-ratio path never reaches that branch.
 Entering or leaving sustained contact adds a `contact-mode-transition` event with the supporting
 collider, position, normal, source and target mode, and reason. A `linear-contact` or
 `circular-contact` motion segment is the authoritative continuation between those transitions. Rest requires a separate non-negative reaction solve

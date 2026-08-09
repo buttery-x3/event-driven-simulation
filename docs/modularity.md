@@ -283,6 +283,13 @@ keeps the scheduler's direct implementation-file count below its headroom trigge
 implementation files plus its entry point; a new certification family should be assessed for a
 nested temporal or reconstruction boundary before growing the directory beyond capacity.
 
+The August behavioural audit found that the current observed-ratio method did not establish a
+future temporal bound or state enclosure. `temporal-certification.ts` therefore rejects that family
+before reconstruction, keeping the existing ownership boundary without adding solver policy. A
+future analytic family is the concrete trigger for reassessing a nested family-specific module;
+until then the dormant reconstruction files are retained as bounded implementation work, not
+advertised production capability.
+
 `run/accumulation/geometry.ts` is above the 350-line review trigger because its single primary
 responsibility is the complete limiting-geometry reconstruction transaction: seed ambiguous
 constraints, project the candidate state, independently re-query every relevant fixed/body pair,
@@ -293,9 +300,10 @@ spatial candidate index, or independent reconstruction policy would justify spli
 constraint projection into a named nested boundary before further growth.
 
 Independent accumulation auditing lives in `verification/physics/accumulation`, avoiding another
-unrelated responsibility in the already broad direct physics directory. The audit recomputes the
-declared temporal envelope and limiting contact set but deliberately contains no impact or support
-solver.
+unrelated responsibility in the already broad direct physics directory. For a serialized limit it
+checks internal temporal-envelope consistency and independently re-queries the limiting contact
+set, but it does not prove the premise that future intervals obey the declared ratio and deliberately
+contains no impact or support solver. No current production run emits such a limit.
 
 FLAME-36 moved restitution response out of `construct.ts` when sustained contact introduced a
 second response mode. The orchestrator retains only state sequencing and run assembly.

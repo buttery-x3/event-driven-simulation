@@ -4,10 +4,14 @@ const minimumObservationCount = 5;
 const maximumEnvelopeRatio = 0.95;
 const maximumRatioSpread = 0.3;
 
+export const unsupportedObservedRatioReason =
+	'Observed contraction ratios are finite-prefix evidence only; no supported analytic accumulation family certifies that future event intervals remain below the observed ratio.';
+
 export function certifyTemporalTail(
 	observations: readonly AccumulationObservation[],
 	eventTimeResolution: number
 ): TemporalCertification | string {
+	void eventTimeResolution;
 	if (observations.length < minimumObservationCount)
 		return `At least ${minimumObservationCount} connected physical events are required.`;
 	const eventTimes = observations.map(({ time }) => time);
@@ -25,25 +29,5 @@ export function certifyTemporalTail(
 		return 'The observed contraction has no supported ratio bounded away from one.';
 	if (observedMaximum - observedMinimum > maximumRatioSpread)
 		return 'The observed contraction ratios do not fit the supported stable envelope.';
-	const numericalMargin = Math.max(Number.EPSILON * 1024, eventTimeResolution * 1e-6);
-	const ratioUpperBound = Math.min(
-		maximumEnvelopeRatio,
-		observedMaximum + Math.max(numericalMargin, (1 - observedMaximum) * 0.05)
-	);
-	if (!(ratioUpperBound < 1)) return 'The temporal envelope does not produce a finite tail.';
-	const latestInterval = intervals.at(-1)!;
-	const remainingTimeUpperBound = (latestInterval * ratioUpperBound) / (1 - ratioUpperBound);
-	if (!Number.isFinite(remainingTimeUpperBound) || remainingTimeUpperBound < 0)
-		return 'The temporal envelope produced an invalid remaining-time bound.';
-	const estimatedRatio = ratios.at(-1)!;
-	const estimatedRemainingTime = (latestInterval * estimatedRatio) / (1 - estimatedRatio);
-	return {
-		eventTimes,
-		intervals,
-		ratios,
-		ratioUpperBound,
-		remainingTimeUpperBound,
-		estimatedRemainingTime,
-		candidateLimitTime: eventTimes.at(-1)! + estimatedRemainingTime
-	};
+	return unsupportedObservedRatioReason;
 }

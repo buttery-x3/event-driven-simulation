@@ -315,9 +315,11 @@ Scenario families with their own descriptor vocabulary live in named folders bel
 `path-interruptions` and `dynamic-supports` own declarative definitions only; they do not select
 solver policy or invoke private scheduler modules.
 
-`world/scenarios/accumulation` owns the thirteen FLAME-57 production-generated catalogue inputs,
-including permanent FLAME-46 regressions and bounded multi-body, stress and uncertifiable cases.
-It contains inputs and expectations only; certification remains under `run/accumulation`.
+`world/scenarios/accumulation` owns the thirteen FLAME-57 production-generated catalogue inputs.
+They now contain genuine moving-body candidate runs and narrow current outcomes; known unsupported
+cases are labelled as blocked rather than presented as successful certification. Scenario tests
+assert physical witnesses and retain explicit pending acceptance tests. Certification policy
+remains under `run/accumulation`; the evidence audit lives in `docs/flame-57-behavioural-audit.md`.
 
 These responsibilities refine the module descriptions already present in `architecture.md`; they do
 not replace the physical and renderer boundaries documented there.
@@ -491,7 +493,9 @@ and `world/index.ts`.
 FLAME-57 added `run/accumulation`, the narrow scheduler adapter subdomain
 `run/scheduler/accumulation`, `verification/physics/accumulation` and
 `world/scenarios/accumulation`. The legacy single-ball alternating two-circle acquisition and
-outcome modules were removed after both FLAME-46 fixtures passed through the general boundary.
+outcome modules were removed in favour of that general boundary. The subsequent behavioural audit
+found that the finite-prefix temporal method did not certify either FLAME-46 fixture, so both remain
+blocked production regressions rather than evidence that the general boundary is complete.
 
 The migration issue must also update the path references in `architecture.md`, `simulation.md`,
 `workflow.md`, ESLint rules and all imports. Do not leave documentation describing paths that no
