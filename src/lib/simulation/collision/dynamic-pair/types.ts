@@ -3,7 +3,7 @@ import type { CircleCircleRootTopology, CircleCircleRootTopologyEvidence } from 
 
 export type PolynomialDynamicCirclePath = Exclude<
 	MotionSegment,
-	{ readonly type: 'circular-contact' }
+	{ readonly type: 'circular-contact' | 'accumulation-tail' }
 >;
 
 export interface DynamicCirclePathParticipant {

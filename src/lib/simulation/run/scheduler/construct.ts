@@ -14,6 +14,7 @@ import {
 	type LocalBodyRuntime
 } from '../single-ball/local-events';
 import { aggregateWorldReason, finishScheduledRun } from './assembly';
+import { tryPromoteLocalAccumulation } from './accumulation';
 import { commitDynamicSupportPrediction, predictEarliestDynamicSupport } from './dynamic-support';
 import { promoteStationaryContactComponents, registerSingleBodyDormancy } from './dormancy';
 import { commitBodyPairEvent, invalidatePairDiagnostics, predictEarliestBodyPair } from './pairs';
@@ -154,6 +155,8 @@ function createSchedulerState(input: SimulationInput): SchedulerState {
 		dynamicSupports: new Map(),
 		dynamicSupportPredictions: new Map(),
 		dynamicSupportDiagnostics: [],
+		accumulationHistory: [],
+		accumulationDiagnostics: [],
 		releasedDynamicPairs: new Set(),
 		rejectedBodyIds: new Set()
 	};
@@ -208,6 +211,10 @@ function commitLocalBatch(
 	state: SchedulerState,
 	selected: readonly LocalBodyPrediction[]
 ): RunTerminalReason | null {
+	if (selected.length === 1 && selected[0]!.kind === 'contact') {
+		const promoted = tryPromoteLocalAccumulation(state, selected[0]);
+		if (promoted) return promoted.type === 'terminal' ? promoted.reason : null;
+	}
 	const selectedIds = new Set(selected.map(({ bodyId }) => bodyId));
 	invalidatePairDiagnostics(
 		state,

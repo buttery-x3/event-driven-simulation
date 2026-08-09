@@ -1,6 +1,7 @@
 import type { RunOutcome } from '$lib/simulation/contracts';
 import {
 	adversarialScenarios,
+	accumulationScenarios,
 	boardStateScenarios,
 	canonicalPlinkoScenarios,
 	dynamicPairScenarios,
@@ -46,6 +47,7 @@ export const workbenchScenarios = [
 	...dormantComponentScenarios,
 	...dynamicSupportScenarios,
 	...pathInterruptionScenarios,
+	...accumulationScenarios,
 	...adversarialScenarios
 ] as const satisfies readonly WorkbenchScenarioDescriptor[];
 

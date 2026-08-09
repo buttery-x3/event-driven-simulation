@@ -2,6 +2,7 @@ import type { SimulationRunRecord } from '../../../contracts';
 import { validateSimulationInputV7 } from '../../simulation-input/v7';
 import { createUnknownDataAssertions, invalidRunRecordField } from '../../structural-validation';
 import { validateMultiBodyHistoryShape } from './multi-body-shape';
+import { validateAccumulationDiagnostic } from './accumulation-shape';
 
 const assertions = createUnknownDataAssertions(invalidRunRecordField);
 
@@ -124,7 +125,7 @@ function validateTrajectories(value: unknown, path: string): void {
 				const item = assertions.requireRecord(segment, segmentPath);
 				assertions.requireOneOf(
 					item.type,
-					['free-flight', 'linear-contact', 'circular-contact', 'stationary'],
+					['free-flight', 'linear-contact', 'circular-contact', 'stationary', 'accumulation-tail'],
 					`${segmentPath}.type`
 				);
 				assertions.requireString(item.bodyId, `${segmentPath}.bodyId`);
@@ -180,6 +181,19 @@ function validateTrajectories(value: unknown, path: string): void {
 						`${segmentPath}.reason`
 					);
 					assertions.requireNullableString(item.componentId, `${segmentPath}.componentId`);
+				}
+				if (item.type === 'accumulation-tail') {
+					assertions.validateVec2(item.endPosition, `${segmentPath}.endPosition`);
+					assertions.validateVec2(item.endVelocity, `${segmentPath}.endVelocity`);
+					assertions.requireString(item.accumulationLimitId, `${segmentPath}.accumulationLimitId`);
+					assertions.requireFiniteNumber(
+						item.positionTailUpperBound,
+						`${segmentPath}.positionTailUpperBound`
+					);
+					assertions.requireFiniteNumber(
+						item.velocityTailUpperBound,
+						`${segmentPath}.velocityTailUpperBound`
+					);
 				}
 			});
 	});
@@ -394,6 +408,13 @@ function validateDiagnostics(value: unknown, path: string): void {
 					`${itemPath}.outcome`
 				);
 			});
+	}
+	if (diagnostics.accumulations !== undefined) {
+		assertions
+			.requireArray(diagnostics.accumulations, `${path}.accumulations`)
+			.forEach((entry, index) =>
+				validateAccumulationDiagnostic(entry, `${path}.accumulations[${index}]`)
+			);
 	}
 }
 

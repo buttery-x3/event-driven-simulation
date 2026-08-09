@@ -346,7 +346,7 @@ test('groups verification scenarios, replaces worlds on Run and reports authorit
 	await expect(selector.locator('optgroup[label="Canonical launches"] option')).toHaveCount(5);
 	await expect(selector.locator('optgroup[label="Board layouts"] option')).toHaveCount(8);
 	await expect(selector.locator('optgroup[label="Physical settings"] option')).toHaveCount(13);
-	await expect(selector.locator('optgroup[label="Multi-body scheduler"] option')).toHaveCount(40);
+	await expect(selector.locator('optgroup[label="Multi-body scheduler"] option')).toHaveCount(53);
 	await expect(selector.locator('optgroup[label="Adversarial contacts"] option')).toHaveCount(18);
 
 	await selector.selectOption('staggered-independent-drops');
@@ -521,6 +521,51 @@ test('groups verification scenarios, replaces worlds on Run and reports authorit
 
 	await expect(page.getByRole('region', { name: 'Recorded-prefix inspection' })).toHaveCount(0);
 	await expect(page.getByRole('heading', { name: 'Failure boundary' })).toHaveCount(0);
+});
+
+test('exposes FLAME-57 scenarios and separates accumulation certification from resolution', async ({
+	page
+}) => {
+	await page.goto('/');
+	const catalogue = page.getByRole('region', { name: 'Scenario catalogue' });
+	const selector = catalogue.getByLabel('Scenario preset');
+	const accumulationScenarioIds = [
+		'flame-46-exact-fit-generalised',
+		'flame-46-oversized-generalised',
+		'three-ball-settlement',
+		'dynamic-alternating-supports',
+		'multi-body-non-alternating-accumulation',
+		'lineality-created-at-accumulation',
+		'accumulation-separates-components',
+		'incremental-pile-formation',
+		'twenty-ball-container-drop',
+		'pile-reactivated-after-settlement',
+		'dense-nonconverging-cascade',
+		'uncertifiable-temporal-tail',
+		'uncertifiable-limit-geometry'
+	] as const;
+	for (const id of accumulationScenarioIds) {
+		await expect(selector.locator(`option[value="${id}"]`)).toHaveCount(1);
+	}
+
+	await selector.selectOption('flame-46-exact-fit-generalised');
+	await page.getByRole('button', { name: 'Run simulation' }).click();
+	const inspector = page.getByRole('complementary', { name: 'Run inspector' });
+	await expect(
+		inspector.getByText('Accumulation certification and resolution', { exact: true })
+	).toBeVisible();
+	await expect(inspector.getByText(/Certification: certified/).last()).toBeVisible();
+	await expect(
+		inspector.locator('p').filter({ hasText: 'Physical resolution: release' })
+	).toBeVisible();
+	await expect(
+		inspector.getByText('Remaining-time upper bound', { exact: true }).last()
+	).toBeVisible();
+
+	await selector.selectOption('twenty-ball-container-drop');
+	await page.getByRole('button', { name: 'Run simulation' }).click();
+	await expect(page.getByLabel('Selected body').locator('option')).toHaveCount(21);
+	await expect(catalogue.getByText(/^settled.*permitted$/)).toBeVisible();
 });
 
 test('runs sustained, turning-point and invalid curated scenarios with declared replay evidence', async ({

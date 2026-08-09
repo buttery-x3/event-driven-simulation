@@ -1,4 +1,15 @@
 export type {
+	AccumulationBodyState,
+	AccumulationConnectedComponent,
+	AccumulationDiagnostic,
+	AccumulationGeometricResidual,
+	AccumulationLimit,
+	AccumulationLimitContact,
+	AccumulationPenetrationEvidence,
+	AccumulationStateResidual,
+	AccumulationTemporalResiduals
+} from './accumulation';
+export type {
 	ComponentLifecycleEvent,
 	ContactComponentRecord,
 	ContactEvent,

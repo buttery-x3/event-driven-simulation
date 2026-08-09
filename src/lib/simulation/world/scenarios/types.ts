@@ -100,7 +100,20 @@ export type ScenarioCoverageId =
 	| 'dynamic-support.transmitted-load-release'
 	| 'dynamic-support.external-impact'
 	| 'dynamic-support.detachment'
-	| 'dynamic-support.unsupported-moving-pair';
+	| 'dynamic-support.unsupported-moving-pair'
+	| 'accumulation.flame-46-exact-fit'
+	| 'accumulation.flame-46-oversized'
+	| 'accumulation.three-ball-settlement'
+	| 'accumulation.dynamic-alternating-supports'
+	| 'accumulation.multi-body-non-alternating'
+	| 'accumulation.limit-lineality'
+	| 'accumulation.separating-components'
+	| 'accumulation.incremental-pile'
+	| 'accumulation.twenty-ball-pile'
+	| 'accumulation.pile-reactivation'
+	| 'accumulation.nonconverging'
+	| 'accumulation.uncertifiable-tail'
+	| 'accumulation.uncertifiable-geometry';
 
 export type ScenarioMotionMode = 'free-flight' | 'linear-contact' | 'circular-contact';
 

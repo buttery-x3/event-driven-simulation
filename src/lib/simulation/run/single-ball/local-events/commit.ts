@@ -1,11 +1,7 @@
 import type { MotionSegment, RunTerminalReason, Vec2 } from '../../../contracts';
 import { evaluateMotionSegmentPosition, evaluateMotionSegmentVelocity } from '../../../motion';
 import { createRunAssembly } from '../run-assembly';
-import {
-	isContractingAlternatingImpactSequence,
-	mergeContactCandidates,
-	resolveContact
-} from '../impact';
+import { mergeContactCandidates, resolveContact } from '../impact';
 import { hasFiniteEndState, predictionSegments } from './prediction';
 import type { LocalBodyPrediction, LocalBodyRuntime } from './types';
 
@@ -217,14 +213,6 @@ function isUnresolvedZeroTimeContact(
 		!(
 			runtime.state.time === runtime.body.releaseTime &&
 			prediction.time === runtime.body.releaseTime
-		) &&
-		!(
-			elapsed > 0 &&
-			isContractingAlternatingImpactSequence(
-				prediction.time,
-				prediction.result.activeCandidates,
-				runtime.impactHistory
-			)
 		)
 	);
 }

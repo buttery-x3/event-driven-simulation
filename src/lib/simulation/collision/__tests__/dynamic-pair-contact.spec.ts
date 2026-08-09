@@ -292,7 +292,7 @@ function path(
 	type: 'free-flight' | 'linear-contact' = 'free-flight',
 	startTime = 0,
 	endTime = 10
-): Exclude<MotionSegment, { type: 'circular-contact' | 'stationary' }> {
+): Exclude<MotionSegment, { type: 'circular-contact' | 'stationary' | 'accumulation-tail' }> {
 	const base = {
 		bodyId,
 		startTime,

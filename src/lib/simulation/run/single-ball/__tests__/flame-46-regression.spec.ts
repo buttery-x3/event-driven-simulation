@@ -14,26 +14,27 @@ const oversizedInput = parseSimulationInputFixture(oversizedJson);
 const leftPegId = 'dense-peg-01-06';
 const rightPegId = 'dense-peg-01-07';
 
-describe('FLAME-46 alternating-contact manifold acquisition', () => {
+describe('FLAME-46 general accumulation promotion', () => {
 	it('releases the exact-fit ball downward through the tangent throat', () => {
 		const run = constructSingleBallRun(exactFitInput);
 
-		expect(run.outcome).toBe('time-limit');
+		expect(run.outcome).toBe('settled');
 		expect(run.terminalReason.type).not.toBe('zero-time-loop');
 		expect(validateSimulationRun(run.input, run).failures).toEqual([]);
-		expect(run.diagnostics.entries).toContainEqual(
-			expect.objectContaining({
-				code: 'ALTERNATING_CONTACT_LIMIT',
-				message: expect.stringContaining('unsupported release')
-			})
-		);
-		const collapse = alternatingLimitEvent(run);
-		expect(collapse?.contacts?.map(({ colliderId }) => colliderId).sort()).toEqual([
+		const promotion = promotedAccumulation(run, 'release');
+		expect(promotion?.mechanism).toBe('general-accumulation');
+		expect(promotion?.limit?.activeLimitContacts.map(fixedColliderId).sort()).toEqual([
 			leftPegId,
 			rightPegId
 		]);
+		const impact = run.diagnostics.impactSolves?.find((solve) =>
+			promotion?.downstreamImpactComponentIds.includes(solve.componentId ?? '')
+		);
+		expect(impact?.linealityDimension).toBeGreaterThan(0);
+		expect(impact?.finalVelocity[1]).toBeLessThan(0);
 		const release = run.trajectories[0]!.segments.find(
-			(segment) => segment.type === 'free-flight' && segment.startTime === collapse?.time
+			(segment) =>
+				segment.type === 'free-flight' && segment.startTime === promotion?.limit?.candidateLimitTime
 		);
 		expect(release?.startVelocity[1]).toBeLessThan(0);
 		expect(targetPegClearances(run)).toEqual([]);
@@ -45,16 +46,19 @@ describe('FLAME-46 alternating-contact manifold acquisition', () => {
 		const run = constructSingleBallRun(oversizedInput);
 
 		expect(run.outcome).toBe('settled');
-		expect(run.terminalReason).toMatchObject({
-			type: 'resting-contact',
-			contacts: [expect.any(Object), expect.any(Object)]
-		});
-		if (run.terminalReason.type !== 'resting-contact') return;
-		expect(run.terminalReason.contacts?.map(({ colliderId }) => colliderId).sort()).toEqual([
+		const promotion = promotedAccumulation(run, 'rest');
+		expect(promotion?.limit?.activeLimitContacts.map(fixedColliderId).sort()).toEqual([
 			leftPegId,
 			rightPegId
 		]);
-		expect(run.terminalReason.supportReactions?.every((reaction) => reaction >= 0)).toBe(true);
+		expect(promotion?.downstreamSupportComponentIds).not.toEqual([]);
+		const resting = run.contactComponents.find(({ id }) =>
+			promotion?.downstreamSupportComponentIds.includes(id)
+		);
+		expect(resting?.type).toBe('resting-anchored');
+		expect(
+			resting?.retainedSupportReactions.every(({ impulsePerTime }) => impulsePerTime >= 0)
+		).toBe(true);
 		expect(
 			run.trajectories[0]!.segments.some(
 				(segment) =>
@@ -66,12 +70,7 @@ describe('FLAME-46 alternating-contact manifold acquisition', () => {
 		expect(validateSimulationRun(run.input, run).failures).toEqual([]);
 		expect(parseSimulationRunFixture(JSON.stringify(run))).toEqual(run);
 		expect(toRendererPlaybackInput(run).terminalReason).toEqual(run.terminalReason);
-		expect(run.diagnostics.entries).toContainEqual(
-			expect.objectContaining({
-				code: 'ALTERNATING_CONTACT_LIMIT',
-				message: expect.stringContaining('supported rest')
-			})
-		);
+		expect(promotion?.mechanism).toBe('general-accumulation');
 	});
 
 	it('keeps the exact-width boundary geometric and tolerance-aware', () => {
@@ -81,9 +80,9 @@ describe('FLAME-46 alternating-contact manifold acquisition', () => {
 
 		expect(below.outcome).not.toBe('settled');
 		expect(below.terminalReason.type).not.toBe('zero-time-loop');
-		expect(exact.outcome).not.toBe('settled');
+		expect(promotedAccumulation(exact, 'release')).toBeDefined();
 		expect(exact.terminalReason.type).not.toBe('zero-time-loop');
-		expect(above.outcome).toBe('settled');
+		expect(promotedAccumulation(above, 'rest')).toBeDefined();
 		expect(validateSimulationRun(below.input, below).failures).toEqual([]);
 		expect(validateSimulationRun(exact.input, exact).failures).toEqual([]);
 		expect(validateSimulationRun(above.input, above).failures).toEqual([]);
@@ -113,13 +112,53 @@ describe('FLAME-46 alternating-contact manifold acquisition', () => {
 		expect(mirrored.outcome).toBe(baseline.outcome);
 		expect(mirrored.terminalReason.time).toBeCloseTo(baseline.terminalReason.time ?? 0, 10);
 	});
+
+	it('fails independent validation when the reported finite tail bound is tampered', () => {
+		const run = constructSingleBallRun(oversizedInput);
+		const accumulationIndex = run.diagnostics.accumulations?.findIndex(
+			({ finalClassification }) => finalClassification === 'rest'
+		);
+		expect(accumulationIndex).toBeGreaterThanOrEqual(0);
+		const tampered = {
+			...run,
+			diagnostics: {
+				...run.diagnostics,
+				accumulations: run.diagnostics.accumulations!.map((candidate, index) =>
+					index === accumulationIndex && candidate.limit
+						? {
+								...candidate,
+								limit: {
+									...candidate.limit,
+									remainingTimeUpperBound: candidate.limit.remainingTimeUpperBound + 1
+								}
+							}
+						: candidate
+				)
+			}
+		};
+
+		expect(
+			validateSimulationRun(tampered.input, tampered).failures.some(
+				({ code }) => code === 'LIMIT_MISMATCH'
+			)
+		).toBe(true);
+	});
 });
 
-function alternatingLimitEvent(run: ReturnType<typeof constructSingleBallRun>) {
-	const entry = run.diagnostics.entries.find(({ code }) => code === 'ALTERNATING_CONTACT_LIMIT');
-	return run.events.find(
-		(event) => event.time === entry?.time && (event.contacts?.length ?? 0) > 1
+function promotedAccumulation(
+	run: ReturnType<typeof constructSingleBallRun>,
+	classification: 'release' | 'rest'
+) {
+	return run.diagnostics.accumulations?.find(
+		(accumulation) =>
+			accumulation.status === 'certified' &&
+			accumulation.finalClassification === classification &&
+			accumulation.limit !== null
 	);
+}
+
+function fixedColliderId(contact: { readonly type: string; readonly colliderId?: string }): string {
+	return contact.colliderId ?? '';
 }
 
 function targetPegClearances(run: ReturnType<typeof constructSingleBallRun>) {

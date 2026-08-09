@@ -56,7 +56,9 @@ export function findEarliestDynamicPairContact(
 	}
 	if (
 		query.first.path.type === 'circular-contact' ||
-		query.second.path.type === 'circular-contact'
+		query.second.path.type === 'circular-contact' ||
+		query.first.path.type === 'accumulation-tail' ||
+		query.second.path.type === 'accumulation-tail'
 	) {
 		return findEarliestBoundedDynamicPairContact(query, tolerances, diagnostics);
 	}

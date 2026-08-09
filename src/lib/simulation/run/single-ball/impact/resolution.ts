@@ -8,12 +8,11 @@ import type {
 } from '../../../contracts';
 import type { FixedWorldContactCandidate } from '../../../collision';
 import { evaluateMotionSegmentPosition, evaluateMotionSegmentVelocity } from '../../../motion';
-import { acquireAlternatingContactLimit, solveSupportReactions } from '../manifold';
+import { solveSupportReactions } from '../manifold';
 import { appendSustainedContact, type RunAssembly } from '../run-assembly';
 import { continueSustainedContact } from '../sustained-contact';
-import { commitAlternatingLimitRelease } from './alternating-limit';
-import { recordAlternatingLimitEvidence, recordImpactEvidence } from './evidence';
-import { isContractingAlternatingImpactSequence, resolveImpactResponse } from './response';
+import { recordImpactEvidence } from './evidence';
+import { resolveImpactResponse } from './response';
 
 export interface ImpactNextState {
 	readonly time: number;
@@ -67,71 +66,18 @@ export function resolveContact(
 			'The selected contact state could not be evaluated as finite numbers.'
 		);
 	}
-	const alternating = isContractingAlternatingImpactSequence(
-		event.time,
-		candidates,
-		assembly.impactHistory
-	);
-	const acquisition = alternating
-		? acquireAlternatingContactLimit(
-				input,
-				body,
-				event.time,
-				state.position,
-				state.velocity,
-				candidates,
-				assembly.impactHistory
-			)
-		: null;
-	const manifoldCandidates = acquisition?.candidates ?? candidates;
+	const manifoldCandidates = candidates;
 	const response = resolveImpactResponse(
 		input,
 		event.time,
 		manifoldCandidates,
 		state.velocity,
-		assembly.impactHistory,
-		acquisition ? 'alternating-contact-limit' : null
+		assembly.impactHistory
 	);
 	if (!response) {
 		return numericalFailure(
 			event,
 			'The restitution response did not produce a finite outgoing velocity.'
-		);
-	}
-	const acquisitionSupport = acquisition
-		? solveSupportReactions(
-				manifoldCandidates,
-				input.settings.gravity,
-				input.settings.tolerances.eventTime
-			)
-		: null;
-	if (
-		acquisition &&
-		!acquisitionSupport &&
-		Math.hypot(...response.outgoingVelocity) > input.settings.tolerances.eventTime
-	) {
-		const committed = commitAlternatingLimitRelease(
-			input,
-			body,
-			event,
-			state.velocity,
-			candidates,
-			manifoldCandidates,
-			response,
-			acquisition,
-			assembly
-		);
-		if (!committed) {
-			return numericalFailure(
-				event,
-				'The observed contact could not be reconciled with the acquired accumulation manifold.'
-			);
-		}
-		return freeFlightAfterManifold(
-			event,
-			response.outgoingVelocity,
-			manifoldCandidates,
-			manifoldCandidates.map(({ colliderId }) => colliderId)
 		);
 	}
 	const committedEvent: ContactEvent = {
@@ -168,39 +114,15 @@ export function resolveContact(
 
 	const mayRest =
 		Math.hypot(...response.outgoingVelocity) <= input.settings.tolerances.eventTime ||
-		response.collapseReason === 'contracting-impacts' ||
-		response.collapseReason === 'alternating-contact-limit';
+		response.collapseReason === 'contracting-impacts';
 	const support = mayRest
-		? (acquisitionSupport ??
-			solveSupportReactions(
+		? solveSupportReactions(
 				manifoldCandidates,
 				input.settings.gravity,
 				input.settings.tolerances.eventTime
-			))
+			)
 		: null;
-	if (acquisition) {
-		recordAlternatingLimitEvidence(
-			assembly,
-			body,
-			event.time,
-			acquisition,
-			support !== null,
-			retainedAfterImpact.length === 0
-		);
-	}
 	if (support) return restingManifold(body, event, response, support.reactions, assembly);
-	if (acquisition && retainedAfterImpact.length > 0) {
-		return {
-			type: 'terminal',
-			time: event.time,
-			reason: {
-				type: 'unresolved-collision-search',
-				time: event.time,
-				detail:
-					'The acquired alternating-contact manifold was pressing but had no certified resting support or common release.'
-			}
-		};
-	}
 
 	const supportCandidate = retainedAfterImpact[0];
 	if (!supportCandidate)

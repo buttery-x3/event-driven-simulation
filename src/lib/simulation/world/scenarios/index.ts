@@ -12,6 +12,7 @@ export { simultaneousImpactScenarios } from './simultaneous-impact';
 export { dormantComponentScenarios } from './dormant-components';
 export { pathInterruptionScenarios } from './path-interruptions';
 export { dynamicSupportScenarios } from './dynamic-supports';
+export { accumulationScenarios } from './accumulation';
 export type {
 	ScenarioCategoryId,
 	ScenarioContactModeTransitionExpectation,

@@ -1,4 +1,5 @@
 import type { EntityId, Vec2 } from '../geometry';
+import type { AccumulationDiagnostic } from './accumulation';
 
 export interface DiagnosticEntry {
 	readonly severity: 'info' | 'warning' | 'error';
@@ -210,6 +211,7 @@ export interface RunDiagnostics {
 	readonly pairPredictions: readonly PairPredictionDiagnostic[];
 	readonly impactSolves?: readonly ImpactSolveDiagnostic[];
 	readonly dynamicSupports?: readonly DynamicSupportDiagnostic[];
+	readonly accumulations?: readonly AccumulationDiagnostic[];
 	readonly schedulerSteps?: readonly WorldSchedulerStepDiagnostic[];
 	readonly entries: readonly DiagnosticEntry[];
 }

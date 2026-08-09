@@ -125,14 +125,6 @@ an elapsed-time ignore window. If an entering root or overlapping local evidence
 positive separation is certified, the query fails closed as unresolved instead of silently
 returning no contact. The search horizon is inclusive and must not extend beyond the segment.
 
-The one exception is an explicitly identified accumulation-manifold release. Its limiting tangent
-direction can start from the last tolerance-resolved alternating impact and cross a microscopic
-release-owned root cluster before separating. The circle query isolates the entry, exit and every
-polynomial critical point between them, then rejects the cluster only when the certified maximum
-penetration is no greater than `contactDistance`. The permission is scoped to the retained
-colliders from that acquired manifold; ordinary releases and deeper crossings keep the fail-closed
-policy above.
-
 The query has four typed outcomes: `contact`, `no-contact`, `unresolved`, and `invalid-input`.
 Coefficient overflow, a degenerate polynomial, non-finite candidate state, or exhausted root
 refinement returns `unresolved`; numerical uncertainty is never reported as a clear path.
@@ -338,28 +330,26 @@ otherwise the body continues in a `linear-contact` or `circular-contact` segment
 
 ## Sustained contact and impact collapse
 
-The impact state machine distinguishes an ordinary separating restitution response from the
-inelastic-collapse limit. Zero restitution enters the limit immediately when support is available.
-For positive restitution, collapse requires repeated impacts with the same geometric contact set, contracting
-impact intervals and approach speeds, a sufficiently small normal speed derived from contact
-distance and pressing acceleration, and a finite nearby predicted accumulation time. This policy
-never adds a position nudge, random direction, damping step or synthetic time advance.
+The run-level accumulator observes only distinct positive-time physical contact events. It accepts
+a bounded family when at least five connected observations have strictly contracting intervals, a
+stable geometric ratio bounded away from one, a finite geometric-series tail, converging relative
+normal speeds, finite state estimates and a complete non-penetrating limiting geometry. Low speed,
+event count, restitution or an alternating label are never sufficient by themselves.
 
-An alternating two-collider sequence is also eligible when five consecutive single-contact
-observations prove an A-B-A-B-A pattern with shrinking intervals and normal approach speeds. The
-manifold acquisition policy intersects the two expanded fixed-circle constraints, selects the
-geometric limit nearest the resolved state, rejects any limit that penetrates another collider, and
-retains every collider touching there. The configured contact distance determines how close the
-resolved state must be to that limit; exact tangent constraints use the corresponding
-curvature-derived position bound rather than a ball-radius threshold.
+State reconstruction uses recent sequence estimates and projects the limiting velocity into the
+kernel of every active limiting contact normal. Repeated historical edges may constrain the
+geometric estimate, but all fixed colliders and participant pairs are re-queried at the limit;
+one-off historical edges may disappear and contacts present only at the limit may appear. The
+complete graph is split through shared dynamic bodies. Each component is then resolved by the
+ordinary Generalised Reflections impact law and support machinery, so release, separation,
+sustained motion, rest and unresolved results remain downstream physical classifications.
 
-The acquired normals are solved at zero restitution to remove the collapsing normal chatter while
-preserving common tangent motion. A non-negative reaction solve against gravity decides supported
-rest. If no support exists and the projected motion is a common escape direction, the transition
-records the complete candidate manifold and releases it into free flight. A pressing manifold with
-neither certified support nor a common release remains unresolved instead of selecting one
-collider. Diagnostics record the alternating collider set, contracting intervals, candidate limit,
-retained contacts, state distance, support-feasibility result and final classification.
+Promotion uses the mathematical limit time when the bounded tail is appreciable. An
+`accumulation-tail` segment is an explicit continuous summary from the last certified physical event
+to that limiting state; it is not a timestep integration or an invented extra collision. Pending
+scheduled releases, local events or dynamic-pair events inside the complete bound prevent
+promotion. Diagnostics preserve the source events, temporal/state/geometric residuals, penetration
+audit, complete contact graph and downstream component identifiers.
 
 A single pressing impact also retains its support immediately when the outgoing normal excursion
 bound `vₙ² / (2aₙ)` is no greater than the configured `contactDistance`. Such a release cannot
@@ -369,10 +359,9 @@ the outgoing normal speed, pressing acceleration, calculated separation bound an
 tolerance. Multi-contact cases that cannot establish certified separation remain subject to the
 fail-closed release-root policy rather than selecting an arbitrary support.
 
-Every ordinary accepted manifold remains one `contact` event. An alternating-limit release keeps
-the last tolerance-resolved single impact as that contact event and records the complete candidate
-accumulation manifold on the same-time `impact` to `free-flight` transition; this distinguishes
-observed geometry from the finite limiting contact set without moving the trajectory state.
+Every ordinary accepted manifold remains one `contact` event. Accumulation promotion preserves the
+last certified source contact and records the reconstructed limiting manifold through the
+`AccumulationLimit`, exact-time dynamic contacts and the resulting contact-mode transition.
 Entering or leaving sustained contact adds a `contact-mode-transition` event with the supporting
 collider, position, normal, source and target mode, and reason. A `linear-contact` or
 `circular-contact` motion segment is the authoritative continuation between those transitions. Rest requires a separate non-negative reaction solve

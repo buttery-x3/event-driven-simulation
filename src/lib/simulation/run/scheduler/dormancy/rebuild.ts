@@ -71,11 +71,43 @@ export function rebuildDormantComponents(
 			const runtime = state.runtimes.get(bodyId)!;
 			runtime.dormantComponentId = id;
 			runtime.state = { ...runtime.state, velocity: [0, 0] };
-			runtime.terminalReason = {
-				type: 'no-future-event',
-				time: component.time,
-				detail: `Body belongs to certified dormant contact component ${id}.`
-			};
+			const fixedContacts = support.contacts.filter(
+				(contact): contact is Extract<ActiveComponentContact, { readonly type: 'body-fixed' }> =>
+					contact.type === 'body-fixed' && contact.bodyId === bodyId
+			);
+			const representative = fixedContacts[0];
+			runtime.terminalReason =
+				bodyIds.size === 1 && representative
+					? {
+							type: 'resting-contact',
+							time: component.time,
+							colliderId: representative.colliderId,
+							position: bodies[0]!.position,
+							normal: representative.normal,
+							contacts: fixedContacts.map((contact) => {
+								const supportIndex = support.contacts.indexOf(contact);
+								const impact = resultByContact.get(contact.id)!;
+								return {
+									colliderId: contact.colliderId,
+									feature: contact.candidate.feature,
+									contactPoint: contact.contactPoint,
+									normal: contact.normal,
+									preImpactNormalVelocity: impact.preImpactNormalVelocity,
+									postImpactNormalVelocity: impact.postImpactNormalVelocity,
+									impulse: impact.impulse,
+									supportReaction: support.reactions[supportIndex]!
+								};
+							}),
+							supportReactions: fixedContacts.map(
+								(contact) => support.reactions[support.contacts.indexOf(contact)]!
+							),
+							reason: 'impact-collapse'
+						}
+					: {
+							type: 'no-future-event',
+							time: component.time,
+							detail: `Body belongs to certified dormant contact component ${id}.`
+						};
 			state.predictions.delete(bodyId);
 		}
 	}

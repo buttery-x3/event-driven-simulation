@@ -18,7 +18,6 @@ export interface ImpactResponse {
 	readonly collapseReason:
 		| 'zero-restitution'
 		| 'contracting-impacts'
-		| 'alternating-contact-limit'
 		| 'initial-supported-state'
 		| 'sub-tolerance-release'
 		| null;
@@ -38,19 +37,16 @@ export function resolveImpactResponse(
 	time: number,
 	candidates: readonly FixedWorldContactCandidate[],
 	incomingVelocity: Vec2,
-	history: readonly ImpactObservation[],
-	forcedCollapse: 'alternating-contact-limit' | null = null
+	history: readonly ImpactObservation[]
 ): ImpactResponse | null {
 	const tolerance = input.settings.tolerances.eventTime;
 	const solution = solveImpactManifold(
 		candidates,
 		incomingVelocity,
-		forcedCollapse ? 0 : input.settings.restitution,
+		input.settings.restitution,
 		tolerance
 	);
 	if (!solution) return null;
-	if (forcedCollapse) return response(solution, true, forcedCollapse);
-	const manifoldKey = contactManifoldKey(candidates);
 	const pressingAcceleration = Math.max(
 		0,
 		...candidates.map(({ normal }) => -dotVec2(input.settings.gravity, normal))
@@ -66,7 +62,7 @@ export function resolveImpactResponse(
 			dotVec2(input.settings.gravity, candidate.normal) < 0
 	);
 	if (pressingAcceleration <= 0) return response(solution, false, null);
-	if (time === 0 && incomingNormalSpeed <= tolerance && history.length === 0) {
+	if (time === 0 && incomingNormalSpeed <= tolerance) {
 		return response(solution, true, 'initial-supported-state');
 	}
 	if (input.settings.restitution === 0) return response(solution, true, 'zero-restitution');
@@ -76,17 +72,38 @@ export function resolveImpactResponse(
 		return response(solution, true, 'sub-tolerance-release', releaseRetention);
 	}
 
-	if (isContractingAlternatingImpactSequence(time, candidates, history)) {
-		return response(solution, retainedConstraint, null);
-	}
+	const collapse = certifiesSameManifoldCollapse(
+		input,
+		time,
+		candidates,
+		incomingVelocity,
+		incomingNormalSpeed,
+		pressingAcceleration,
+		history
+	);
+	if (collapse) return response(solution, true, 'contracting-impacts');
+
+	return response(solution, retainedConstraint, null);
+}
+
+function certifiesSameManifoldCollapse(
+	input: SimulationInput,
+	time: number,
+	candidates: readonly FixedWorldContactCandidate[],
+	incomingVelocity: Vec2,
+	incomingNormalSpeed: number,
+	pressingAcceleration: number,
+	history: readonly ImpactObservation[]
+): boolean {
 	const sameManifold = history
-		.filter((observation) => observation.manifoldKey === manifoldKey)
+		.filter((observation) => observation.manifoldKey === contactManifoldKey(candidates))
 		.slice(-2);
-	if (sameManifold.length < 2) return response(solution, retainedConstraint, null);
+	if (sameManifold.length < 2) return false;
 	const previous = sameManifold[1]!;
 	const beforePrevious = sameManifold[0]!;
 	const previousInterval = previous.time - beforePrevious.time;
 	const currentInterval = time - previous.time;
+	const tolerance = input.settings.tolerances.eventTime;
 	const speedThreshold = Math.sqrt(
 		2 * pressingAcceleration * input.settings.tolerances.contactDistance
 	);
@@ -108,14 +125,10 @@ export function resolveImpactResponse(
 		(oneDimensional ? 16 : 8) *
 			Math.sqrt(input.settings.tolerances.contactDistance / pressingAcceleration)
 	);
-	const collapse =
+	return (
 		contracting &&
 		incomingNormalSpeed * input.settings.restitution <= 2 * speedThreshold &&
-		predictedRemainingTime <= nearbyWindow;
-	return response(
-		solution,
-		collapse || retainedConstraint,
-		collapse ? 'contracting-impacts' : null
+		predictedRemainingTime <= nearbyWindow
 	);
 }
 
@@ -133,40 +146,6 @@ export function impactObservation(
 			...contacts.map(({ preImpactNormalVelocity }) => -preImpactNormalVelocity)
 		)
 	};
-}
-
-export function isContractingAlternatingImpactSequence(
-	time: number,
-	candidates: readonly FixedWorldContactCandidate[],
-	history: readonly ImpactObservation[]
-): boolean {
-	if (candidates.length !== 1) return false;
-	const current = candidates[0]!;
-	const observations = [
-		...history,
-		{
-			time,
-			manifoldKey: contactManifoldKey(candidates),
-			colliderIds: [current.colliderId],
-			incomingNormalSpeed: Math.max(0, -current.normalVelocity)
-		}
-	].slice(-5);
-	if (observations.length < 5 || observations.some(({ colliderIds }) => colliderIds.length !== 1)) {
-		return false;
-	}
-	const keys = observations.map(({ manifoldKey }) => manifoldKey);
-	if (keys[0] !== keys[2] || keys[2] !== keys[4] || keys[1] !== keys[3] || keys[0] === keys[1])
-		return false;
-	const intervals = observations.slice(1).map((observation, index) => {
-		return observation.time - observations[index]!.time;
-	});
-	return (
-		intervals.every((interval) => interval > 0) &&
-		intervals[3]! < intervals[0]! &&
-		intervals.slice(1).filter((interval, index) => interval < intervals[index]!).length >= 2 &&
-		observations[4]!.incomingNormalSpeed < observations[2]!.incomingNormalSpeed &&
-		observations[3]!.incomingNormalSpeed < observations[1]!.incomingNormalSpeed
-	);
 }
 
 function response(

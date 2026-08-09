@@ -1,5 +1,6 @@
 export { resolveIsolatedBodyImpact } from './response';
 export { resolveCoupledImpact } from './generalised-reflections';
+export { projectEqualityCompatible } from './lineality';
 export type {
 	IsolatedBodyImpactInput,
 	IsolatedBodyImpactResponse,

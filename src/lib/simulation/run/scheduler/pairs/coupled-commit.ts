@@ -15,7 +15,7 @@ import {
 
 export function commitCoupledImpact(
 	state: SchedulerState,
-	selection: Extract<PairSchedulerSelection, { readonly type: 'contact' }>,
+	selection: Extract<PairSchedulerSelection, { readonly type: 'contact' }> | null,
 	component: ExactTimeComponent
 ): PairCommitResult {
 	const tolerance = Math.max(state.input.settings.tolerances.contactDistance, Number.EPSILON * 256);
@@ -317,17 +317,20 @@ function selectComponentDiagnostics(
 
 function recordSchedulerSteps(
 	state: SchedulerState,
-	selection: Extract<PairSchedulerSelection, { readonly type: 'contact' }>,
+	selection: Extract<PairSchedulerSelection, { readonly type: 'contact' }> | null,
 	component: ExactTimeComponent
 ): void {
 	const bodyIds = new Set(component.bodies.map(({ id }) => id));
 	const retainedBodyIds = [...state.predictions.keys()].filter((id) => !bodyIds.has(id)).sort();
 	for (const bodyId of [...bodyIds].sort()) {
 		state.steps.push({
-			worldTime: selection.time,
+			worldTime: component.time,
 			bodyId,
 			revision: state.runtimes.get(bodyId)!.revision,
-			eventType: 'body-contact',
+			eventType:
+				selection || component.contacts.some(({ type }) => type === 'body-body')
+					? 'body-contact'
+					: 'fixed-contact',
 			retainedBodyIds
 		});
 	}

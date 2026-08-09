@@ -269,6 +269,34 @@ adding another category to the physics orchestrator. `dynamic.ts` owns the body/
 tangency, reaction, component-lifecycle and interruption checks; its local entry point leaves the
 public `verification/index.ts` API unchanged.
 
+FLAME-57 introduced the sibling `run/accumulation` subdomain because temporal-tail certification,
+limiting-state estimation and complete limiting-geometry reconstruction are independently testable
+policies and would make either `scheduler/construct.ts` or the fixed-world impact subdomain
+multi-responsibility. Its internal entry point is `certifyAccumulationLimit`; the scheduler adapter
+owns physical-history observation, external-event ordering, mathematical-limit trajectory
+commitment and hand-off to existing exact-time components. No public run-construction API changed.
+
+The accumulation adapter is itself a private scheduler subdomain: `observations.ts` owns physical
+source capture, `orchestration.ts` owns certification and external-event barriers, `promotion.ts`
+owns exact-time component adaptation, and `diagnostics.ts` owns public evidence publication. This
+keeps the scheduler's direct implementation-file count below its headroom trigger. `run/accumulation` has five
+implementation files plus its entry point; a new certification family should be assessed for a
+nested temporal or reconstruction boundary before growing the directory beyond capacity.
+
+`run/accumulation/geometry.ts` is above the 350-line review trigger because its single primary
+responsibility is the complete limiting-geometry reconstruction transaction: seed ambiguous
+constraints, project the candidate state, independently re-query every relevant fixed/body pair,
+and assemble the resulting graph. Those stages share the same local geometry primitives and one
+closed result contract, so extracting them now would create forwarding fragments rather than a
+stable ownership boundary. It remains below the hard limit. A second geometry family, a reusable
+spatial candidate index, or independent reconstruction policy would justify splitting query and
+constraint projection into a named nested boundary before further growth.
+
+Independent accumulation auditing lives in `verification/physics/accumulation`, avoiding another
+unrelated responsibility in the already broad direct physics directory. The audit recomputes the
+declared temporal envelope and limiting contact set but deliberately contains no impact or support
+solver.
+
 FLAME-36 moved restitution response out of `construct.ts` when sustained contact introduced a
 second response mode. The orchestrator retains only state sequencing and run assembly.
 
@@ -319,7 +347,8 @@ model must introduce a nested bounded-isolation subdomain rather than a seventh 
 owns current input shape, body identity, mass, release-time and declared common-release overlap
 validation. Legacy run shape and consistency remain in the version 6 files. The named
 `serialization/run-record/v7` subdomain owns current run shape, multi-body consistency and v6-to-v7
-migration assembly without enlarging the parent directory beyond its headroom threshold. Reusable
+migration assembly; `accumulation-shape.ts` owns the nested accumulation evidence shape so the main
+shape reader remains bounded. Reusable
 unknown-data assertions and typed fixture failures live in the narrowly named
 `serialization/structural-validation` subdomain and are exposed through its local entry point.
 

@@ -58,10 +58,11 @@ export function buildExactTimeComponent(
 ): ExactTimeComponent | null {
 	const time = selection.time;
 	const tolerance = Math.max(state.input.settings.tolerances.contactDistance, Number.EPSILON * 256);
-	const bodyStates = [...state.runtimes.values()]
-		.map((runtime) => bodyStateAt(state, runtime, time))
-		.filter((body): body is ComponentBodyState => body !== null)
-		.sort(bodyGeometryOrder);
+	const bodyStates = snapshotComponentBodyStates(state, time).sort(bodyGeometryOrder);
+	/*
+	 * The snapshot is intentionally broader than the selected component. Accumulation certification
+	 * may need the states of bodies that joined the connected cluster at an earlier physical event.
+	 */
 	const dynamicCandidates = bodyPairCandidates(bodyStates, selection, time, tolerance);
 	const connectedBodyIds = connectedBodies(selection, dynamicCandidates);
 	const bodies = bodyStates.filter(({ id }) => connectedBodyIds.has(id));
@@ -97,6 +98,15 @@ export function buildExactTimeComponent(
 		contacts,
 		candidateEvidence
 	};
+}
+
+export function snapshotComponentBodyStates(
+	state: SchedulerState,
+	time: number
+): ComponentBodyState[] {
+	return [...state.runtimes.values()]
+		.map((runtime) => bodyStateAt(state, runtime, time))
+		.filter((body): body is ComponentBodyState => body !== null);
 }
 
 export function buildStationaryContactComponents(

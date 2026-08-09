@@ -104,6 +104,7 @@ export function finishRun(
 			contactSearches: assembly.contactSearches,
 			bodyEventHorizons: [],
 			pairPredictions: [],
+			accumulations: [],
 			entries: assembly.entries
 		}
 	};

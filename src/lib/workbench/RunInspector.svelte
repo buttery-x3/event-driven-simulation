@@ -26,6 +26,7 @@
 	let counts = $derived(getRunCounts(run));
 	let submittedBody = $derived(run.input.initialDynamicBodies[0] ?? null);
 	let impactSolves = $derived(run.diagnostics.impactSolves ?? []);
+	let accumulations = $derived(run.diagnostics.accumulations ?? []);
 
 	function formatGeneralisedVelocity(values: readonly number[]): string {
 		return `[${values.map((value) => Number(value.toPrecision(6))).join(', ')}]`;
@@ -166,6 +167,51 @@
 			</div>
 		</dl>
 	</details>
+
+	{#if accumulations.length > 0}
+		<details open>
+			<summary>Accumulation certification and resolution</summary>
+			<div class="impact-solves">
+				{#each accumulations as accumulation, index (`${accumulation.limit?.id}-${index}`)}
+					<section>
+						<strong>{accumulation.limit?.id ?? `rejected candidate ${index + 1}`}</strong>
+						<p>
+							Certification: {accumulation.status} — {accumulation.reason}
+						</p>
+						<p>
+							Physical resolution: {accumulation.finalClassification}; impact components
+							{accumulation.downstreamImpactComponentIds.length}, support components
+							{accumulation.downstreamSupportComponentIds.length}.
+						</p>
+						{#if accumulation.limit}
+							<dl class="impact-evidence">
+								<div>
+									<dt>Source events</dt>
+									<dd>{accumulation.sourceEventIds.length}</dd>
+								</div>
+								<div>
+									<dt>Participant bodies</dt>
+									<dd>{accumulation.participantBodyIds.length}</dd>
+								</div>
+								<div>
+									<dt>Certified event time</dt>
+									<dd>{formatRecordedSeconds(accumulation.limit.currentCertifiedTime)}</dd>
+								</div>
+								<div>
+									<dt>Mathematical limit time</dt>
+									<dd>{formatRecordedSeconds(accumulation.limit.candidateLimitTime)}</dd>
+								</div>
+								<div class="wide">
+									<dt>Remaining-time upper bound</dt>
+									<dd>{accumulation.limit.remainingTimeUpperBound}</dd>
+								</div>
+							</dl>
+						{/if}
+					</section>
+				{/each}
+			</div>
+		</details>
+	{/if}
 
 	{#if impactSolves.length > 0}
 		<details open>

@@ -40,9 +40,10 @@ export function certifySupportEquilibrium(
 		const load = externalLoads.get(id) ?? [0, 0];
 		return [-mass * gravity[0] - load[0], -mass * gravity[1] - load[1]];
 	});
-	const solution = solveNonnegativeLeastSquares(columns, target, tolerance);
-	if (!solution) return null;
 	const forceScale = Math.max(1, ...target.map(Math.abs));
+	const solverTolerance = tolerance * forceScale * Math.max(64, dimensions * 16);
+	const solution = solveNonnegativeLeastSquares(columns, target, solverTolerance);
+	if (!solution) return null;
 	if (solution.residualNorm > tolerance * forceScale * Math.max(64, dimensions * 16)) return null;
 	return {
 		contacts: orderedContacts,

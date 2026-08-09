@@ -14,7 +14,7 @@ describe('FLAME-55 sustained-path interruption scenarios', () => {
 			'unsupported-dynamic-support-after-impact'
 		]);
 		for (const scenario of pathInterruptionScenarios) {
-			const run = constructSimulationRun(scenario.input);
+			const run = namedRun(scenario.id);
 			expect(scenario.expectedOutcomes, scenario.id).toContain(run.outcome);
 			expect(validateSimulationRun(scenario.input, run).failures, scenario.id).toEqual([]);
 		}
@@ -127,9 +127,18 @@ describe('FLAME-55 sustained-path interruption scenarios', () => {
 });
 
 function namedRun(id: (typeof pathInterruptionScenarios)[number]['id']) {
+	const cached = runCache.get(id);
+	if (cached) return cached;
 	const scenario = pathInterruptionScenarios.find((candidate) => candidate.id === id)!;
-	return constructSimulationRun(scenario.input);
+	const run = constructSimulationRun(scenario.input);
+	runCache.set(id, run);
+	return run;
 }
+
+const runCache = new Map<
+	(typeof pathInterruptionScenarios)[number]['id'],
+	ReturnType<typeof constructSimulationRun>
+>();
 
 function bodyContact(run: ReturnType<typeof constructSimulationRun>) {
 	return run.dynamicContacts.find(({ participants }) =>

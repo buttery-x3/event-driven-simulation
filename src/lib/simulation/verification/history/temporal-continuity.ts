@@ -215,8 +215,8 @@ function validateEventStates(context: RunValidationContext): void {
 		);
 		const body = bodyFor(context.submittedInput, event.bodyId);
 		const matchesInitialState =
-			event.time === 0 &&
 			body !== undefined &&
+			Math.abs(event.time - body.releaseTime) <= timeTolerance(context) &&
 			nearVector(body.position, event.position, stateTolerance(context));
 		if (
 			!matchesInitialState &&

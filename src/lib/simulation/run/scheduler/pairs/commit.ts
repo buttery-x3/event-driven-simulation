@@ -1,5 +1,6 @@
 import type { RunTerminalReason } from '../../../contracts';
 import type { SchedulerState } from '../types';
+import { tryPromotePairAccumulation } from '../accumulation';
 import { commitCoupledImpact } from './coupled-commit';
 import { buildExactTimeComponent } from './component';
 import type { PairSchedulerSelection } from './selection';
@@ -23,5 +24,7 @@ export function commitBodyPairEvent(
 			}
 		};
 	}
+	const promoted = tryPromotePairAccumulation(state, component);
+	if (promoted) return promoted;
 	return commitCoupledImpact(state, selection, component);
 }

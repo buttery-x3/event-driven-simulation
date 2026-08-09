@@ -79,6 +79,7 @@ export function finishScheduledRun(
 			pairPredictions: state.pairPredictions,
 			impactSolves: state.impactSolves,
 			dynamicSupports: state.dynamicSupportDiagnostics,
+			accumulations: state.accumulationDiagnostics,
 			schedulerSteps: state.steps,
 			entries
 		}

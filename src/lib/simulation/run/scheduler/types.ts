@@ -1,4 +1,5 @@
 import type {
+	AccumulationDiagnostic,
 	BodyEventHorizonDiagnostic,
 	DynamicContactRecord,
 	DynamicSupportDiagnostic,
@@ -11,6 +12,7 @@ import type {
 	SimulationInput,
 	WorldSchedulerStepDiagnostic
 } from '../../contracts';
+import type { AccumulationObservation } from '../accumulation';
 import type { LocalBodyPrediction, LocalBodyRuntime } from '../single-ball/local-events';
 import type { DynamicSupportPrediction, DynamicSupportRuntime } from './dynamic-support/types';
 
@@ -32,6 +34,8 @@ export interface SchedulerState {
 	readonly dynamicSupports: Map<string, DynamicSupportRuntime>;
 	readonly dynamicSupportPredictions: Map<string, DynamicSupportPrediction>;
 	readonly dynamicSupportDiagnostics: DynamicSupportDiagnostic[];
+	readonly accumulationHistory: AccumulationObservation[];
+	readonly accumulationDiagnostics: AccumulationDiagnostic[];
 	readonly releasedDynamicPairs: Set<string>;
 	readonly rejectedBodyIds: Set<string>;
 }

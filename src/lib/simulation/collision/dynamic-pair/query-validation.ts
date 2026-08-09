@@ -43,6 +43,16 @@ export function validateDynamicPairContactQuery(
 
 function pathNumbers(path: DynamicPairContactQuery['first']['path']): readonly number[] {
 	if (path.type === 'stationary') return [...path.startPosition, ...path.startVelocity];
+	if (path.type === 'accumulation-tail') {
+		return [
+			...path.startPosition,
+			...path.startVelocity,
+			...path.endPosition,
+			...path.endVelocity,
+			path.positionTailUpperBound,
+			path.velocityTailUpperBound
+		];
+	}
 	if (path.type !== 'circular-contact') {
 		return [...path.startPosition, ...path.startVelocity, ...path.acceleration];
 	}

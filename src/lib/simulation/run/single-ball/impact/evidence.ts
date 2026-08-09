@@ -1,7 +1,6 @@
 import type { ContactEvent, InitialDynamicCircleBodyState, Vec2 } from '../../../contracts';
 import type { FixedWorldContactCandidate } from '../../../collision';
 import { withManifoldEvidence } from '../diagnostics';
-import type { AlternatingContactLimit } from '../manifold';
 import type { RunAssembly } from '../run-assembly';
 import { impactObservation, type ImpactResponse } from './response';
 
@@ -47,26 +46,4 @@ export function recordImpactEvidence(
 		});
 	}
 	assembly.impactHistory.push(impactObservation(candidates, event.time, response.contacts));
-}
-
-export function recordAlternatingLimitEvidence(
-	assembly: RunAssembly,
-	body: InitialDynamicCircleBodyState,
-	time: number,
-	acquisition: AlternatingContactLimit,
-	supported: boolean,
-	released: boolean
-): void {
-	const classification = supported
-		? 'supported rest'
-		: released
-			? 'unsupported release'
-			: 'unresolved pressing manifold';
-	assembly.entries.push({
-		severity: classification.startsWith('unresolved') ? 'warning' : 'info',
-		code: 'ALTERNATING_CONTACT_LIMIT',
-		message: `Detected contracting alternating contacts (${acquisition.sequenceColliderIds.join(', ')}) with intervals [${acquisition.intervals.join(', ')}] s. Acquired candidate accumulation manifold at [${acquisition.position.join(', ')}] m with contacts (${acquisition.candidates.map(({ colliderId }) => colliderId).join(', ')}), state distance ${acquisition.stateDistance} m, and support-feasibility classification: ${classification}.`,
-		time,
-		bodyId: body.id
-	});
 }

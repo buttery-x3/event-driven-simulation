@@ -178,6 +178,15 @@ private `scheduler/pairs/component.ts` module owns this geometry-to-component bo
 post-impact runtime state. Disconnected simultaneous components are committed independently, while
 nearby positive-time events remain ordered.
 
+The sibling `run/accumulation` subdomain certifies bounded families of connected positive-time
+physical-event sequences. It owns temporal-tail envelopes, limiting-state estimates and complete
+fixed/dynamic geometry re-query, but no impact or support outcome. A successful `AccumulationLimit`
+is adapted by the private `scheduler/accumulation` subdomain: each participant receives an explicit
+`accumulation-tail` trajectory summary to the mathematical limit time, the reconstructed graph is
+split into connected components, and every component is submitted to the existing coupled-impact
+and dormant/dynamic-support machinery. Pending releases, local futures and dynamic-pair futures are
+ordering barriers. Generalised-reflection iterations are never physical accumulation events.
+
 Certified stationary components with fixed support become persistent dormant components. The
 private `scheduler/dormancy` subdomain owns their admission, support-equilibrium certification,
 post-impact retirement/rebuilding, split/merge lifecycle evidence and retained contact records.
@@ -206,6 +215,11 @@ and invariant checks, endpoint energies, impulses and completion reason. A persi
 without a fixed-anchored support certificate remains an explicit `unsupported-body-body-response`
 boundary after the instantaneous response succeeds.
 
+The equality projector is exposed through the private run-level dynamic-impact entry point so the
+accumulator can reconstruct a limiting velocity compatible with all active contact normals before
+FLAME-53 applies the physical impact law. This is kinematic state reconstruction, not another
+impulse or support solver.
+
 This subdomain currently has six implementation files, triggering a headroom assessment but not a
 further split: its cohesive reason to change is the one simultaneous-impact operator, and the
 algorithm/policy boundaries are already separate. A future addition of rotational coordinates,
@@ -215,14 +229,13 @@ generalized-impact numerical subdomain rather than a seventh unrelated responsib
 `src/lib/simulation/run/single-ball/local-events` exposes the fixed-world local prediction and
 commit boundary used by the scheduler. It sequences free flight, impact and sustained contact,
 including prepared constrained-motion horizons that remain interruptible until selected. The
-private `impact` subdomain owns contact-event
-commitment and classification: `response.ts` owns restitution and conservative manifold-level
-contracting-impact collapse, `evidence.ts` owns impact and accumulation diagnostics,
-`alternating-limit.ts` owns the acquired-manifold release transition, and `resolution.ts` owns
-support selection, rest classification and construction of the next authoritative state. The private `manifold` subdomain
-owns deterministic active-set normal-impulse solving, geometry/history-based acquisition of a
-fixed-circle accumulation manifold, and non-negative support-reaction certification for one dynamic
-circle against fixed contacts. The named `sustained-contact` subdomain owns
+private `impact` subdomain owns ordinary fixed-world contact-event commitment and classification:
+`response.ts` owns restitution and conservative support retention, `evidence.ts` owns impact
+diagnostics, and `resolution.ts` owns support selection, rest classification and construction of
+the next authoritative state. The private `manifold` subdomain owns deterministic active-set
+normal-impulse solving and non-negative support-reaction certification for one dynamic circle
+against fixed contacts. Accumulation acquisition is exclusively run-level; no two-circle physical
+outcome branch remains. The named `sustained-contact` subdomain owns
 support-shape dispatch, line continuation, shared contact-mode result construction and
 constrained-path geometry. Its private `circular` subdomain owns changing-normal continuation,
 turning-point reversal and independently testable angular motion/scene-event ordering.
@@ -246,9 +259,6 @@ The named `circle-circle` subdomain solves dynamic-circle versus static-circle r
 `contact-polynomial.ts` owns ballistic geometry and polynomial construction, `query.ts` owns root
 selection and result construction, `query-validation.ts` validates query invariants, and
 `root-topology.ts` owns entering, exiting, grazing, initial/release-owned and indeterminate policy.
-An accumulation-manifold release may explicitly ask `query.ts` to certify a release-owned passage
-whose maximum penetration is no greater than `contactDistance`; polynomial critical points prove
-the bound, and a deeper or uncertifiable passage still fails closed.
 `types.ts` declares the local public query and result contracts.
 `boundary-contact.ts` orchestrates finite-segment root selection, `boundary-query-validation.ts`
 validates its query contract, and `boundary-candidate.ts` classifies face and endpoint evidence.

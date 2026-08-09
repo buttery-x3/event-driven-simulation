@@ -54,11 +54,31 @@ export interface StationaryMotionSegment {
 	readonly componentId: string | null;
 }
 
+/**
+ * A certified continuous summary of an unresolved contracting event tail. It is not a timestep or
+ * impact law: the source physical events and finite state/time enclosure live in the referenced
+ * accumulation diagnostic.
+ */
+export interface AccumulationTailMotionSegment {
+	readonly type: 'accumulation-tail';
+	readonly bodyId: EntityId;
+	readonly startTime: number;
+	readonly endTime: number;
+	readonly startPosition: Vec2;
+	readonly startVelocity: Vec2;
+	readonly endPosition: Vec2;
+	readonly endVelocity: Vec2;
+	readonly accumulationLimitId: string;
+	readonly positionTailUpperBound: number;
+	readonly velocityTailUpperBound: number;
+}
+
 export type MotionSegment =
 	| FreeFlightMotionSegment
 	| LinearContactMotionSegment
 	| CircularContactMotionSegment
-	| StationaryMotionSegment;
+	| StationaryMotionSegment
+	| AccumulationTailMotionSegment;
 
 export type ConstantAccelerationMotionSegment =
 	FreeFlightMotionSegment | LinearContactMotionSegment;

@@ -316,6 +316,19 @@ function pathSpeedBound(path: MotionSegment, start: number, end: number): number
 			)
 		);
 	}
+	if (path.type === 'accumulation-tail') {
+		const duration = path.endTime - path.startTime;
+		const chordSpeed =
+			duration > 0
+				? (3 *
+						Math.hypot(
+							path.endPosition[0] - path.startPosition[0],
+							path.endPosition[1] - path.startPosition[1]
+						)) /
+					duration
+				: 0;
+		return chordSpeed + 2 * Math.hypot(...path.startVelocity) + 2 * Math.hypot(...path.endVelocity);
+	}
 	return (
 		Math.hypot(...evaluateMotionSegmentVelocity(path, start)) +
 		Math.hypot(...path.acceleration) * (end - start)

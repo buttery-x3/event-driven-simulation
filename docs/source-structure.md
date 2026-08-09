@@ -112,6 +112,9 @@ src/lib/simulation/
             dynamic-supports/
                 index.ts
                 definitions.ts
+            accumulation/
+                index.ts
+                definitions.ts
             manifold/
                 index.ts
                 definitions.ts
@@ -120,6 +123,13 @@ src/lib/simulation/
     run/
         index.ts
         outcome.ts
+        accumulation/
+            index.ts
+            types.ts
+            temporal-certification.ts
+            state-estimation.ts
+            geometry.ts
+            acquisition.ts
         scheduler/
             index.ts
             types.ts
@@ -127,6 +137,12 @@ src/lib/simulation/
             release.ts
             assembly.ts
             predictions.ts
+            accumulation/
+                index.ts
+                orchestration.ts
+                observations.ts
+                promotion.ts
+                diagnostics.ts
             pairs/
                 index.ts
                 selection.ts
@@ -171,14 +187,12 @@ src/lib/simulation/
 				commit.ts
 			impact/
 				index.ts
-				alternating-limit.ts
 				evidence.ts
 				response.ts
 				resolution.ts
             manifold/
                 index.ts
                 types.ts
-                acquisition.ts
                 impulse-solver.ts
                 support-reactions.ts
                 __tests__/
@@ -218,9 +232,10 @@ src/lib/simulation/
             v6-consistency.ts
             v7/
                 index.ts
-                validate.ts
-                shape.ts
-                multi-body-shape.ts
+				validate.ts
+				shape.ts
+				accumulation-shape.ts
+				multi-body-shape.ts
                 consistency.ts
                 migration-v6.ts
             __tests__/
@@ -243,6 +258,9 @@ src/lib/simulation/
 			scheduler.ts
         physics/
             index.ts
+            accumulation/
+                index.ts
+                limit.ts
             contact-geometry.ts
             body-contact.ts
             collision-free.ts
@@ -296,6 +314,10 @@ Scenario families with their own descriptor vocabulary live in named folders bel
 `world/scenarios`. `dynamic-pairs`, `simultaneous-impact`, `dormant-components`,
 `path-interruptions` and `dynamic-supports` own declarative definitions only; they do not select
 solver policy or invoke private scheduler modules.
+
+`world/scenarios/accumulation` owns the thirteen FLAME-57 production-generated catalogue inputs,
+including permanent FLAME-46 regressions and bounded multi-body, stress and uncertifiable cases.
+It contains inputs and expectations only; certification remains under `run/accumulation`.
 
 These responsibilities refine the module descriptions already present in `architecture.md`; they do
 not replace the physical and renderer boundaries documented there.
@@ -465,6 +487,11 @@ FLAME-51 through FLAME-56 added the documented `collision/dynamic-pair`, `run/dy
 `world/scenarios/dynamic-supports`. Their local entry points are private capability boundaries; the
 stable cross-subsystem facades remain `collision/index.ts`, `run/index.ts`, `verification/index.ts`
 and `world/index.ts`.
+
+FLAME-57 added `run/accumulation`, the narrow scheduler adapter subdomain
+`run/scheduler/accumulation`, `verification/physics/accumulation` and
+`world/scenarios/accumulation`. The legacy single-ball alternating two-circle acquisition and
+outcome modules were removed after both FLAME-46 fixtures passed through the general boundary.
 
 The migration issue must also update the path references in `architecture.md`, `simulation.md`,
 `workflow.md`, ESLint rules and all imports. Do not leave documentation describing paths that no

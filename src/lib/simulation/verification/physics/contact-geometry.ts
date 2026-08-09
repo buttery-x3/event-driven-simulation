@@ -106,7 +106,12 @@ export function validateContactGeometry(context: RunValidationContext): void {
 		const body = bodyFor(context.submittedInput, trajectory.bodyId);
 		if (!body) continue;
 		for (const [segmentIndex, segment] of trajectory.segments.entries()) {
-			if (segment.type === 'free-flight' || segment.type === 'stationary') continue;
+			if (
+				segment.type === 'free-flight' ||
+				segment.type === 'stationary' ||
+				segment.type === 'accumulation-tail'
+			)
+				continue;
 			validateConstrainedGeometry(context, body, segment, trajectoryIndex, segmentIndex);
 		}
 	}

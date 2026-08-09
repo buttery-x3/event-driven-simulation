@@ -115,7 +115,7 @@ function validateSchedulerSteps(context: RunValidationContext): void {
 		}
 		if (
 			step.eventType !== 'release' &&
-			(step.eventType === 'body-contact' ? !pair && !component : !horizon)
+			(step.eventType === 'body-contact' ? !pair && !component : !horizon && !component)
 		) {
 			fail(
 				context,

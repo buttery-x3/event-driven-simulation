@@ -28,6 +28,13 @@ export function registerSingleBodyDormancy(
 	const contactIds = contacts.map(
 		(contact, index) => `support-contact:${bodyId}:${contact.colliderId}:${reason.time}:${index}`
 	);
+	const supportReactions = certifiedSingleBodyReactions(
+		state,
+		bodyId,
+		reason,
+		contacts,
+		contactIds
+	);
 	for (let index = 0; index < contacts.length; index += 1) {
 		const contact = contacts[index]!;
 		state.dynamicContacts.push({
@@ -55,7 +62,7 @@ export function registerSingleBodyDormancy(
 		activeContactIds: contactIds,
 		retainedSupportReactions: contactIds.map((contactId, index) => ({
 			contactId,
-			impulsePerTime: reason.supportReactions?.[index] ?? 0
+			impulsePerTime: supportReactions[index] ?? 0
 		})),
 		revision: 0,
 		futureScheduledEventTimes: futureEventTimes(state, reason.time)
@@ -69,6 +76,61 @@ export function registerSingleBodyDormancy(
 		resultingComponentIds: [componentId]
 	});
 	runtime.dormantComponentId = componentId;
+}
+
+function certifiedSingleBodyReactions(
+	state: SchedulerState,
+	bodyId: string,
+	reason: Extract<RunTerminalReason, { readonly type: 'resting-contact' }>,
+	contacts: NonNullable<
+		Extract<RunTerminalReason, { readonly type: 'resting-contact' }>['contacts']
+	>,
+	contactIds: readonly string[]
+): readonly number[] {
+	if (reason.supportReactions?.length === contacts.length) return reason.supportReactions;
+	const body = state.input.initialDynamicBodies.find(({ id }) => id === bodyId)!;
+	const componentContacts: ActiveComponentContact[] = contacts.map((contact, index) => ({
+		type: 'body-fixed',
+		id: contactIds[index]!,
+		bodyId,
+		colliderId: contact.colliderId,
+		normal: contact.normal,
+		contactPoint: contact.contactPoint,
+		candidate: {
+			type: 'contact-candidate',
+			bodyId,
+			colliderId: contact.colliderId,
+			colliderKind:
+				state.input.scene.staticColliders.find(({ id }) => id === contact.colliderId)?.physicalShape
+					.type === 'circle'
+					? 'circle'
+					: 'boundary',
+			feature: contact.feature as never,
+			time: reason.time,
+			position: reason.position,
+			contactPoint: contact.contactPoint,
+			normal: contact.normal,
+			normalVelocity: 0,
+			response: 'non-impulsive-contact'
+		}
+	}));
+	return (
+		certifySupportEquilibrium(
+			[
+				{
+					id: body.id,
+					mass: body.mass,
+					radius: body.physicalShape.radius,
+					position: reason.position,
+					velocity: [0, 0],
+					prefixSegment: null
+				}
+			],
+			componentContacts,
+			state.input.settings.gravity,
+			Math.max(state.input.settings.tolerances.contactDistance, Number.EPSILON * 256)
+		)?.reactions ?? contacts.map(() => 0)
+	);
 }
 
 export function promoteStationaryContactComponents(state: SchedulerState, time: number): void {

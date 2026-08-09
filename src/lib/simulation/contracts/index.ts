@@ -18,6 +18,7 @@ export type {
 	SimulationTolerances
 } from './input';
 export type {
+	AccumulationTailMotionSegment,
 	BodyTrajectory,
 	CircularContactMotionSegment,
 	ConstantAccelerationMotionSegment,
@@ -27,6 +28,15 @@ export type {
 	StationaryMotionSegment
 } from './motion';
 export type {
+	AccumulationBodyState,
+	AccumulationConnectedComponent,
+	AccumulationDiagnostic,
+	AccumulationGeometricResidual,
+	AccumulationLimit,
+	AccumulationLimitContact,
+	AccumulationPenetrationEvidence,
+	AccumulationStateResidual,
+	AccumulationTemporalResiduals,
 	BodyLifecycleState,
 	BodyRunState,
 	BodyTerminalOutcome,
