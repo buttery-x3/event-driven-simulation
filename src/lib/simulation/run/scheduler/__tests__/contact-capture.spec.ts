@@ -57,15 +57,15 @@ describe('FLAME-88 coupled contact capture', () => {
 			}));
 		const elastic = measured.find(({ solve }) => solve.restitution === 1);
 		const nearestConfiguredAbove = measured
-			.filter(({ impactSpeed }) => impactSpeed > 0.01)
+			.filter(({ impactSpeed }) => impactSpeed > 0.05)
 			.sort((left, right) => left.impactSpeed - right.impactSpeed)[0];
 
 		expect(elastic?.impactSpeed).toBeGreaterThan(0);
-		expect(elastic?.impactSpeed).toBeLessThanOrEqual(0.01);
+		expect(elastic?.impactSpeed).toBeLessThanOrEqual(0.05);
 		expect(
 			elastic?.solve.contactIds.filter((contactId) => contactId.startsWith('body-contact:'))
-		).toHaveLength(2);
-		expect(nearestConfiguredAbove?.impactSpeed).toBeGreaterThan(0.01);
+		).toHaveLength(1);
+		expect(nearestConfiguredAbove?.impactSpeed).toBeGreaterThan(0.05);
 		expect(nearestConfiguredAbove?.solve.restitution).toBe(scenario.input.settings.restitution);
 	});
 });

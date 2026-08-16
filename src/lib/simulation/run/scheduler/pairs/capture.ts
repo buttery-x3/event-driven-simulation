@@ -15,7 +15,7 @@ export interface SelectedCoupledImpact {
 	readonly contactCapture: ContactCaptureDiagnostic;
 }
 
-const experimentalLowSpeedElasticCutoff = 0.01;
+const experimentalLowSpeedElasticCutoff = 0.05;
 
 export function coupledImpactInput(
 	state: SchedulerState,
