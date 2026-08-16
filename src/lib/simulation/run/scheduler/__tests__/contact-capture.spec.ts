@@ -1,16 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import type { InitialDynamicCircleBodyState, SimulationInput, Vec2 } from '../../../contracts';
 import { validateSimulationRun } from '../../../verification';
+import { settlingScenarios } from '../../../world';
 import { constructSimulationRun } from '../construct';
 
 describe('FLAME-88 coupled contact capture', () => {
 	it('captures a low-energy three-body stack supported by the fixed floor', () => {
 		const simulationInput = input();
 		const run = constructSimulationRun(simulationInput);
-		const capture = run.diagnostics.impactSolves?.find(
+		const captureSolve = run.diagnostics.impactSolves?.find(
 			({ contactCapture }) => contactCapture?.selectedEndpoint === 'captured'
-		)?.contactCapture;
+		);
+		const capture = captureSolve?.contactCapture;
 
+		expect(captureSolve?.restitution).toBe(simulationInput.settings.restitution);
 		expect(capture).toMatchObject({
 			selectedEndpoint: 'captured',
 			meaningfulReboundVeto: false,
@@ -32,6 +35,38 @@ describe('FLAME-88 coupled contact capture', () => {
 			run.dynamicContacts.filter(({ state }) => state === 'retained').length
 		).toBeGreaterThanOrEqual(2);
 		expect(validateSimulationRun(simulationInput, run).failures).toEqual([]);
+	});
+
+	it('FLAME-90 applies one complete-component elastic response below the experimental cutoff', () => {
+		const scenario = settlingScenarios.find(({ id }) => id === 'three-ball-settlement')!;
+		const run = constructSimulationRun(scenario.input);
+		const measured = (run.diagnostics.impactSolves ?? [])
+			.filter(({ contactCapture }) => contactCapture?.selectedEndpoint === 'ordinary')
+			.map((solve) => ({
+				solve,
+				impactSpeed: Math.max(
+					0,
+					...solve.contactGradients.map(
+						(gradient) =>
+							-gradient.reduce(
+								(sum, value, index) => sum + value * solve.preImpactVelocity[index]!,
+								0
+							)
+					)
+				)
+			}));
+		const elastic = measured.find(({ solve }) => solve.restitution === 1);
+		const nearestConfiguredAbove = measured
+			.filter(({ impactSpeed }) => impactSpeed > 0.01)
+			.sort((left, right) => left.impactSpeed - right.impactSpeed)[0];
+
+		expect(elastic?.impactSpeed).toBeGreaterThan(0);
+		expect(elastic?.impactSpeed).toBeLessThanOrEqual(0.01);
+		expect(
+			elastic?.solve.contactIds.filter((contactId) => contactId.startsWith('body-contact:'))
+		).toHaveLength(2);
+		expect(nearestConfiguredAbove?.impactSpeed).toBeGreaterThan(0.01);
+		expect(nearestConfiguredAbove?.solve.restitution).toBe(scenario.input.settings.restitution);
 	});
 });
 

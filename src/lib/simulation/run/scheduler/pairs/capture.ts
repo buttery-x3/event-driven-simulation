@@ -4,7 +4,8 @@ import {
 	selectContactCapture,
 	type ContactCaptureEndpoint,
 	type CoupledImpactInput,
-	type CoupledImpactResponse
+	type CoupledImpactResponse,
+	type CoupledImpactResult
 } from '../../dynamic-impact';
 import type { SchedulerState } from '../types';
 import type { ActiveComponentContact, ExactTimeComponent } from './component';
@@ -13,6 +14,8 @@ export interface SelectedCoupledImpact {
 	readonly response: CoupledImpactResponse;
 	readonly contactCapture: ContactCaptureDiagnostic;
 }
+
+const experimentalLowSpeedElasticCutoff = 0.01;
 
 export function coupledImpactInput(
 	state: SchedulerState,
@@ -104,6 +107,25 @@ export function selectCoupledContactCapture(
 		response,
 		contactCapture: selected.diagnostic
 	};
+}
+
+export function resolveUncapturedLowSpeedImpact(
+	state: SchedulerState,
+	component: ExactTimeComponent,
+	selected: SelectedCoupledImpact,
+	tolerance: number
+): CoupledImpactResult {
+	if (selected.contactCapture.selectedEndpoint === 'captured') {
+		return { type: 'response' as const, response: selected.response };
+	}
+	const impactSpeed = Math.max(
+		0,
+		...selected.response.contacts.map(({ preImpactNormalVelocity }) => -preImpactNormalVelocity)
+	);
+	if (impactSpeed > experimentalLowSpeedElasticCutoff) {
+		return { type: 'response' as const, response: selected.response };
+	}
+	return resolveCoupledImpact(coupledImpactInput(state, component, tolerance, 1));
 }
 
 function solveInelastic(

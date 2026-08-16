@@ -1,11 +1,24 @@
-import type { DynamicContactRecord, RunTerminalReason, Vec2 } from '../../../contracts';
-import { resolveCoupledImpact, type CoupledImpactResponse } from '../../dynamic-impact';
+import type {
+	ContactCaptureDiagnostic,
+	DynamicContactRecord,
+	RunTerminalReason,
+	Vec2
+} from '../../../contracts';
+import {
+	resolveCoupledImpact,
+	type CoupledImpactResponse,
+	type CoupledImpactResult
+} from '../../dynamic-impact';
 import { invalidateLocalPrediction, refreshBodyPrediction } from '../predictions';
 import type { SchedulerState } from '../types';
 import { rebuildDormantComponents, upsertDynamicContacts } from '../dormancy';
 import { admitCertifiedDynamicSupports, interruptDynamicSupports } from '../dynamic-support';
 import type { PairCommitResult } from './commit';
-import { coupledImpactInput, selectCoupledContactCapture } from './capture';
+import {
+	coupledImpactInput,
+	resolveUncapturedLowSpeedImpact,
+	selectCoupledContactCapture
+} from './capture';
 import type { ActiveComponentContact, ComponentBodyState, ExactTimeComponent } from './component';
 import {
 	invalidatePairDiagnostics,
@@ -21,34 +34,21 @@ export function commitCoupledImpact(
 ): PairCommitResult {
 	const tolerance = Math.max(state.input.settings.tolerances.contactDistance, Number.EPSILON * 256);
 	const result = resolveCoupledImpact(coupledImpactInput(state, component, tolerance));
-	selectComponentDiagnostics(state, component, result.type === 'response');
 	commitPrefixes(state, component.bodies);
 	invalidateAffectedFutures(state, component);
 	interruptDynamicSupports(state, component);
 	recordSchedulerSteps(state, selection, component);
 	if (result.type === 'rejected') {
-		if (result.diagnostic)
-			state.impactSolves.push({
-				...result.diagnostic,
-				componentId: component.id,
-				candidateEvidence: component.candidateEvidence
-			});
-		upsertDynamicContacts(
-			state,
-			component.contacts.map((contact) => unresolvedContact(component, contact))
-		);
-		recordComponent(state, component);
-		return {
-			type: 'terminal',
-			reason: {
-				type: 'numerical-failure',
-				time: component.time,
-				detail: `Coupled impact failed closed: ${result.reason}`
-			}
-		};
+		selectComponentDiagnostics(state, component, false);
+		return rejectCoupledImpact(state, component, result);
 	}
 	const selected = selectCoupledContactCapture(state, component, result.response, tolerance);
-	const response = selected.response;
+	const finalResult = resolveUncapturedLowSpeedImpact(state, component, selected, tolerance);
+	selectComponentDiagnostics(state, component, finalResult.type === 'response');
+	if (finalResult.type === 'rejected') {
+		return rejectCoupledImpact(state, component, finalResult, selected.contactCapture);
+	}
+	const response = finalResult.response;
 	state.impactSolves.push({
 		...response.diagnostic,
 		componentId: component.id,
@@ -81,6 +81,34 @@ export function commitCoupledImpact(
 			refreshBodyPrediction(state, runtime);
 	}
 	return { type: 'continued' };
+}
+
+function rejectCoupledImpact(
+	state: SchedulerState,
+	component: ExactTimeComponent,
+	rejection: Extract<CoupledImpactResult, { readonly type: 'rejected' }>,
+	contactCapture?: ContactCaptureDiagnostic
+): PairCommitResult {
+	if (rejection.diagnostic)
+		state.impactSolves.push({
+			...rejection.diagnostic,
+			componentId: component.id,
+			candidateEvidence: component.candidateEvidence,
+			...(contactCapture ? { contactCapture } : {})
+		});
+	upsertDynamicContacts(
+		state,
+		component.contacts.map((contact) => unresolvedContact(component, contact))
+	);
+	recordComponent(state, component);
+	return {
+		type: 'terminal',
+		reason: {
+			type: 'numerical-failure',
+			time: component.time,
+			detail: `Coupled impact failed closed: ${rejection.reason}`
+		}
+	};
 }
 
 function commitPrefixes(state: SchedulerState, bodies: readonly ComponentBodyState[]): void {
