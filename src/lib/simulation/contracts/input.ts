@@ -18,6 +18,7 @@ export interface SimulationTolerances {
 export interface SimulationSettings {
 	readonly gravity: Vec2;
 	readonly restitution: number;
+	readonly contactCaptureDistance: number;
 	readonly maximumEvents: number;
 	readonly maximumSimulationTime: number;
 	readonly tolerances: SimulationTolerances;

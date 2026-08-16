@@ -56,6 +56,7 @@ function makeRequest(): SustainedContactRequest {
 		settings: {
 			gravity: [0, 0],
 			restitution: 0,
+			contactCaptureDistance: 1e-9,
 			maximumEvents: 10,
 			maximumSimulationTime: 10,
 			tolerances: { contactDistance: 1e-9, eventTime: 1e-9 }

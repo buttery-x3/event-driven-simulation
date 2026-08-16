@@ -26,9 +26,7 @@ export function commitAlternatingLimitRelease(
 		input,
 		event.time,
 		observedCandidates,
-		incomingVelocity,
-		assembly.impactHistory,
-		'alternating-contact-limit'
+		incomingVelocity
 	);
 	if (!observedResponse) return false;
 

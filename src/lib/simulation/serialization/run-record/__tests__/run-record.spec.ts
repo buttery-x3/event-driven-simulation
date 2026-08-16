@@ -103,4 +103,22 @@ describe('saved run fixtures', () => {
 			'Ordinary playback requires a valid exited or settled run; received valid unresolved.'
 		);
 	});
+
+	it('normalises embedded version 7 inputs that predate explicit capture distance', () => {
+		const source = JSON.parse(canonicalFixtureJson) as {
+			input: {
+				settings: {
+					contactCaptureDistance?: number;
+					tolerances: { contactDistance: number };
+				};
+			};
+		};
+		const historicalContactDistance = source.input.settings.tolerances.contactDistance;
+		delete source.input.settings.contactCaptureDistance;
+
+		const restored = parseSimulationRunFixture(JSON.stringify(source));
+
+		expect(restored.input.settings.contactCaptureDistance).toBe(historicalContactDistance);
+		expect(restored.input.settings).toHaveProperty('contactCaptureDistance');
+	});
 });

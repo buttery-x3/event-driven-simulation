@@ -192,7 +192,8 @@ The implemented ownership is:
 - `construct.ts` — the event-to-event state machine and certified interval sequencing;
 - `input-validation.ts` — semantic validation of a single-ball input;
 - `termination-search.ts` — continuous region entry and supported-bounds exit solving;
-- `impact/response.ts` — restitution response and conservative inelastic-collapse policy;
+- `impact/response.ts` — fixed-world manifold endpoint solving and adaptation to the shared
+  finite-contact capture policy;
 - `impact/resolution.ts` — contact-event commitment, diagnostic evidence, physical support/rest
   classification and next-state construction;
 - `manifold/` — coupled normal-impulse and support-reaction algorithms;
@@ -227,8 +228,9 @@ world/body outcomes; it is not a speculative layer.
 
 FLAME-52 introduced enough pair-event policy to require the private `scheduler/pairs` subdomain.
 `selection.ts` owns continuous prediction ordering, `component.ts` owns exact-time contact graph
-construction, `commit.ts` owns isolated pair commitment and `coupled-commit.ts` owns simultaneous
-component commitment. Its local `index.ts` is an explicit internal facade. Scheduler construction
+construction, `commit.ts` owns isolated pair commitment, `coupled-commit.ts` owns simultaneous
+component commitment, and `capture.ts` adapts coupled geometry and solver endpoints to the shared
+capture policy. Its local `index.ts` is an explicit internal facade. Scheduler construction
 continues to own global sequencing and imports this capability without re-exporting its internal
 types from `run/index.ts`.
 
@@ -239,7 +241,11 @@ selection, and `linear-algebra.ts` owns small dense metric operations. The direc
 headroom-assessment threshold, but those modules still have one cohesive reason to change: the
 frictionless dynamic-impact law. Rotational coordinates, sparse backends or independently
 versioned solver policies would require a nested numerical subdomain rather than another sibling
-implementation file.
+implementation file. FLAME-88 adds the nested `contact-capture` subdomain because endpoint
+selection is a separately testable represented-physics policy shared by fixed-world and coupled
+adapters. Its `policy.ts` owns meaningful-rebound veto and unilateral active-set reduction;
+`types.ts` owns its solver-neutral inputs/results. This preserves the six-file numerical root and
+does not add a public entry point.
 
 FLAME-54 introduced a persistent dormant-component state machine and therefore the private
 `scheduler/dormancy` subdomain rather than adding that lifecycle to the scheduler orchestrator.

@@ -21,6 +21,8 @@ export type {
 } from './outcomes';
 export type {
 	BodyEventHorizonDiagnostic,
+	ContactCaptureContactDiagnostic,
+	ContactCaptureDiagnostic,
 	DiagnosticEntry,
 	DynamicSupportDiagnostic,
 	DynamicSupportReactionEvidence,

@@ -5,6 +5,7 @@ import type { SchedulerState } from '../types';
 import { rebuildDormantComponents, upsertDynamicContacts } from '../dormancy';
 import { admitCertifiedDynamicSupports, interruptDynamicSupports } from '../dynamic-support';
 import type { PairCommitResult } from './commit';
+import { coupledImpactInput, selectCoupledContactCapture } from './capture';
 import type { ActiveComponentContact, ComponentBodyState, ExactTimeComponent } from './component';
 import {
 	invalidatePairDiagnostics,
@@ -19,33 +20,7 @@ export function commitCoupledImpact(
 	component: ExactTimeComponent
 ): PairCommitResult {
 	const tolerance = Math.max(state.input.settings.tolerances.contactDistance, Number.EPSILON * 256);
-	const result = resolveCoupledImpact({
-		bodies: component.bodies.map(({ id, mass, velocity }) => ({ id, mass, velocity })),
-		contacts: component.contacts.map((contact) =>
-			contact.type === 'body-body'
-				? {
-						type: 'body-body' as const,
-						id: contact.id,
-						firstBodyId: contact.firstBodyId,
-						secondBodyId: contact.secondBodyId,
-						normalFromFirstToSecond: contact.normalFromFirstToSecond
-					}
-				: {
-						type: 'body-fixed' as const,
-						id: contact.id,
-						bodyId: contact.bodyId,
-						colliderId: contact.colliderId,
-						normal: contact.normal
-					}
-		),
-		restitution: state.input.settings.restitution,
-		tolerances: {
-			numerical: tolerance,
-			absoluteNormalVelocityFloor: Math.max(tolerance, Number.EPSILON * 512),
-			relativeViolationEpsilon: Math.max(Number.EPSILON * 512, tolerance * 1e-3),
-			maximumReflections: Math.max(128, component.contacts.length * component.contacts.length * 32)
-		}
-	});
+	const result = resolveCoupledImpact(coupledImpactInput(state, component, tolerance));
 	selectComponentDiagnostics(state, component, result.type === 'response');
 	commitPrefixes(state, component.bodies);
 	invalidateAffectedFutures(state, component);
@@ -72,11 +47,13 @@ export function commitCoupledImpact(
 			}
 		};
 	}
-	const response = result.response;
+	const selected = selectCoupledContactCapture(state, component, result.response, tolerance);
+	const response = selected.response;
 	state.impactSolves.push({
 		...response.diagnostic,
 		componentId: component.id,
-		candidateEvidence: component.candidateEvidence
+		candidateEvidence: component.candidateEvidence,
+		contactCapture: selected.contactCapture
 	});
 	upsertDynamicContacts(
 		state,

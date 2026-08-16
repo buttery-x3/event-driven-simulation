@@ -133,6 +133,7 @@ src/lib/simulation/
                 component.ts
                 commit.ts
                 coupled-commit.ts
+                capture.ts
             dormancy/
                 index.ts
                 admission.ts
@@ -156,6 +157,10 @@ src/lib/simulation/
             lineality.ts
             nonnegative-qp.ts
             linear-algebra.ts
+            contact-capture/
+                index.ts
+                types.ts
+                policy.ts
             __tests__/
         single-ball/
             index.ts
@@ -280,9 +285,12 @@ or depend on browser download APIs.
 The `collision/dynamic-pair` subdomain owns synchronized continuous contact queries for two dynamic
 circle paths. `query.ts` owns polynomial-path root selection, while `bounded-query.ts` owns
 deterministically bounded circular-path isolation using conservative relative-speed exclusion. The
-`run/dynamic-impact` subdomain owns isolated and simultaneous frictionless impact response. Inside
-the scheduler, `pairs` owns continuous pair selection, exact-time component construction and
-commitment, `dormancy` owns support-equilibrium admission, post-impact component rebuilding,
+`run/dynamic-impact` subdomain owns isolated and simultaneous frictionless impact response. Its
+nested `contact-capture` subdomain owns the shared represented-physics endpoint-selection policy
+after either impact solver completes. Inside the scheduler, `pairs` owns continuous pair selection,
+exact-time component construction and commitment; `pairs/capture.ts` is the coupled
+geometry/endpoint adapter to that shared policy. `dormancy` owns support-equilibrium admission,
+post-impact component rebuilding,
 lifecycle records and retained-contact persistence, and `dynamic-support` owns certified moving
 body-on-anchored-body continuation and interruption. These are private run capabilities;
 cross-subsystem consumers continue to enter through `collision/index.ts` and `run/index.ts`.

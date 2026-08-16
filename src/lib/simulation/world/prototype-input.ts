@@ -57,6 +57,7 @@ export const prototypeSimulationInput = {
 	settings: {
 		gravity: [0, -9.81],
 		restitution: 0.8,
+		contactCaptureDistance: 1e-9,
 		maximumEvents: 1_000,
 		maximumSimulationTime: 1,
 		tolerances: {

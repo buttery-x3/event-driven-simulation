@@ -84,20 +84,6 @@ export function resolveContact(
 			)
 		: null;
 	const manifoldCandidates = acquisition?.candidates ?? candidates;
-	const response = resolveImpactResponse(
-		input,
-		event.time,
-		manifoldCandidates,
-		state.velocity,
-		assembly.impactHistory,
-		acquisition ? 'alternating-contact-limit' : null
-	);
-	if (!response) {
-		return numericalFailure(
-			event,
-			'The restitution response did not produce a finite outgoing velocity.'
-		);
-	}
 	const acquisitionSupport = acquisition
 		? solveSupportReactions(
 				manifoldCandidates,
@@ -105,6 +91,21 @@ export function resolveContact(
 				input.settings.tolerances.eventTime
 			)
 		: null;
+	const responseInput = acquisition
+		? { ...input, settings: { ...input.settings, restitution: 0 } }
+		: input;
+	const response = resolveImpactResponse(
+		responseInput,
+		event.time,
+		manifoldCandidates,
+		state.velocity
+	);
+	if (!response) {
+		return numericalFailure(
+			event,
+			'The restitution response did not produce a finite outgoing velocity.'
+		);
+	}
 	if (
 		acquisition &&
 		!acquisitionSupport &&
@@ -166,10 +167,7 @@ export function resolveContact(
 		return freeFlightAfterManifold(event, response.outgoingVelocity, manifoldCandidates);
 	}
 
-	const mayRest =
-		Math.hypot(...response.outgoingVelocity) <= input.settings.tolerances.eventTime ||
-		response.collapseReason === 'contracting-impacts' ||
-		response.collapseReason === 'alternating-contact-limit';
+	const mayRest = Math.hypot(...response.outgoingVelocity) <= input.settings.tolerances.eventTime;
 	const support = mayRest
 		? (acquisitionSupport ??
 			solveSupportReactions(

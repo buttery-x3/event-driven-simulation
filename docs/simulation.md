@@ -136,7 +136,11 @@ policy above.
 The query has four typed outcomes: `contact`, `no-contact`, `unresolved`, and `invalid-input`.
 Coefficient overflow, a degenerate polynomial, non-finite candidate state, or exhausted root
 refinement returns `unresolved`; numerical uncertainty is never reported as a clear path.
-Tolerances are named by purpose:
+`contactCaptureDistance` is a represented-physics resolution: rebounds whose certified normal
+excursion does not exceed it may be represented as contact. It is deliberately independent of
+the numerical tolerances below. Version 7 inputs that predate the explicit field are normalised
+once from their historical `contactDistance` value when loaded; newly serialised inputs always
+record it explicitly. Tolerances are named by purpose:
 
 - `contactDistance` verifies candidate geometry and stable normals;
 - `eventTime` controls root isolation/refinement precision;
@@ -338,12 +342,25 @@ otherwise the body continues in a `linear-contact` or `circular-contact` segment
 
 ## Sustained contact and impact collapse
 
-The impact state machine distinguishes an ordinary separating restitution response from the
-inelastic-collapse limit. Zero restitution enters the limit immediately when support is available.
-For positive restitution, collapse requires repeated impacts with the same geometric contact set, contracting
-impact intervals and approach speeds, a sufficiently small normal speed derived from contact
-distance and pressing acceleration, and a finite nearby predicted accumulation time. This policy
-never adds a position nudge, random direction, damping step or synthetic time advance.
+The impact state machine distinguishes the ordinary restitution endpoint from a finite-contact
+captured endpoint. After the existing fixed-world or generalized coupled solver completes the
+ordinary impact, one solver-neutral policy evaluates the complete exact-time component. For each
+impulsively active contact it combines the ordinary outgoing normal velocity with the local
+pressing acceleration and the changing-normal `vₜ²/R` term. An unbounded rebound, or any certified
+normal excursion greater than `contactCaptureDistance`, vetoes capture for the complete component.
+Otherwise the policy solves the zero-normal-velocity endpoint and removes zero-load or separating
+contacts until the retained unilateral active set is stable. The resulting endpoint preserves
+admissible tangent motion. Zero restitution uses the same support-feasibility path; speed alone is
+never a support certificate. The policy never adds a position nudge, random direction, damping
+step or synthetic time advance.
+
+Capture is evaluated independently at each exact-time impact. A complete corner impact therefore
+remains ordinary when one energetic contact vetoes capture, even if another contact has only a
+microscopic rebound; that second contact may be captured at a distinct later recollision. Fixed
+and coupled adapters record the same JSON-safe evidence: the declared capture distance, ordinary
+and selected endpoints, meaningful-rebound veto, active-set removals, retained/released contact
+IDs, geometric and pressing accelerations, excursion bounds and support reactions. Unbounded
+quantities are recorded as `null`, never as non-JSON numeric values.
 
 An alternating two-collider sequence is also eligible when five consecutive single-contact
 observations prove an A-B-A-B-A pattern with shrinking intervals and normal approach speeds. The
@@ -360,14 +377,6 @@ records the complete candidate manifold and releases it into free flight. A pres
 neither certified support nor a common release remains unresolved instead of selecting one
 collider. Diagnostics record the alternating collider set, contracting intervals, candidate limit,
 retained contacts, state distance, support-feasibility result and final classification.
-
-A single pressing impact also retains its support immediately when the outgoing normal excursion
-bound `vₙ² / (2aₙ)` is no greater than the configured `contactDistance`. Such a release cannot
-establish the positive separation needed to clear release ownership, so it enters the existing
-sustained-contact continuation instead of committing ordinary free flight. Diagnostics preserve
-the outgoing normal speed, pressing acceleration, calculated separation bound and configured
-tolerance. Multi-contact cases that cannot establish certified separation remain subject to the
-fail-closed release-root policy rather than selecting an arbitrary support.
 
 Every ordinary accepted manifold remains one `contact` event. An alternating-limit release keeps
 the last tolerance-resolved single impact as that contact event and records the complete candidate

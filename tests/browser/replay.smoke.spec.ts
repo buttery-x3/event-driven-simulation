@@ -906,6 +906,7 @@ function sustainedPegInput(): SimulationInput {
 		settings: {
 			gravity: [0, -10],
 			restitution: 0,
+			contactCaptureDistance: 1e-9,
 			maximumEvents: 20,
 			maximumSimulationTime: 3,
 			tolerances: { contactDistance: 1e-9, eventTime: 1e-9 }

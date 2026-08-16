@@ -27,6 +27,10 @@ export function recordImpactEvidence(
 			retainedAfterImpact,
 			tolerance
 		);
+		assembly.contactSearches[diagnosticIndex] = {
+			...assembly.contactSearches[diagnosticIndex]!,
+			contactCapture: response.contactCapture
+		};
 	}
 	assembly.events.push(event);
 	assembly.entries.push({
@@ -36,12 +40,11 @@ export function recordImpactEvidence(
 		time: event.time,
 		bodyId: body.id
 	});
-	if (response.releaseRetention) {
-		const evidence = response.releaseRetention;
+	if (response.contactCapture.selectedEndpoint === 'captured') {
 		assembly.entries.push({
 			severity: 'info',
-			code: 'SUB_TOLERANCE_RELEASE_RETAINED',
-			message: `Retained ${evidence.colliderId} for sustained contact: maximum normal separation ${evidence.maximumNormalSeparation} m from outgoing speed ${evidence.outgoingNormalSpeed} m/s and pressing acceleration ${evidence.pressingNormalAcceleration} m/s² does not exceed contact-distance tolerance ${evidence.contactDistanceTolerance} m.`,
+			code: 'FINITE_CONTACT_CAPTURE',
+			message: `Selected the captured endpoint with retained contacts (${response.contactCapture.retainedContactIds.join(', ')}) at represented capture distance ${response.contactCapture.captureDistance} m.`,
 			time: event.time,
 			bodyId: body.id
 		});

@@ -359,6 +359,7 @@ function testInput(
 		settings: {
 			gravity: [0, -10],
 			restitution,
+			contactCaptureDistance: 1e-9,
 			maximumEvents: 50,
 			maximumSimulationTime: 2,
 			tolerances: { contactDistance: 1e-9, eventTime: 1e-9 }

@@ -25,6 +25,7 @@ const coordinateSystem = {
 const defaultSettings = {
 	gravity: [0, -9.81],
 	restitution: 0.6,
+	contactCaptureDistance: 1e-9,
 	maximumEvents: 200,
 	maximumSimulationTime: 8,
 	tolerances: {

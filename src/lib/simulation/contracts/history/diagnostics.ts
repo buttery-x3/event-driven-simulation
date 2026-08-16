@@ -40,6 +40,7 @@ export interface RunContactSearchDiagnostic {
 	readonly activeColliderIds?: readonly EntityId[];
 	readonly preContactVelocity?: Vec2;
 	readonly postContactVelocity?: Vec2;
+	readonly contactCapture?: ContactCaptureDiagnostic;
 	readonly candidates: readonly RunContactCandidateDiagnostic[];
 }
 
@@ -130,6 +131,7 @@ export interface ImpactReflectionDiagnostic {
 
 export interface ImpactSolveDiagnostic {
 	readonly componentId?: string;
+	readonly contactCapture?: ContactCaptureDiagnostic;
 	readonly candidateEvidence?: readonly {
 		readonly id: string;
 		readonly type: 'body-body' | 'body-fixed';
@@ -160,6 +162,29 @@ export interface ImpactSolveDiagnostic {
 	readonly restitution: number;
 	readonly completion: 'complete' | 'impact-termination-certification-failed';
 	readonly failureReason: string | null;
+}
+
+export interface ContactCaptureContactDiagnostic {
+	readonly contactId: string;
+	readonly ordinaryPostImpactNormalVelocity: number;
+	readonly geometricNormalAcceleration: number;
+	readonly pressingNormalAcceleration: number | null;
+	readonly reboundExcursion: number | null;
+	readonly withinCaptureDistance: boolean | null;
+	readonly impulsivelyActive: boolean;
+	readonly supportReaction: number;
+	readonly retained: boolean;
+}
+
+export interface ContactCaptureDiagnostic {
+	readonly captureDistance: number;
+	readonly selectedEndpoint: 'ordinary' | 'captured';
+	readonly meaningfulReboundVeto: boolean;
+	readonly meaningfulReboundContactIds: readonly string[];
+	readonly activeSetRemovalSequence: readonly (readonly string[])[];
+	readonly retainedContactIds: readonly string[];
+	readonly releasedContactIds: readonly string[];
+	readonly contacts: readonly ContactCaptureContactDiagnostic[];
 }
 
 export interface DynamicSupportReactionEvidence {

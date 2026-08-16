@@ -1,5 +1,14 @@
 export { resolveIsolatedBodyImpact } from './response';
 export { resolveCoupledImpact } from './generalised-reflections';
+export { selectContactCapture } from './contact-capture';
+export type {
+	ContactCaptureBody,
+	ContactCaptureContact,
+	ContactCaptureEndpoint,
+	ContactCaptureEndpointContact,
+	ContactCaptureInput,
+	ContactCaptureResult
+} from './contact-capture';
 export type {
 	IsolatedBodyImpactInput,
 	IsolatedBodyImpactResponse,

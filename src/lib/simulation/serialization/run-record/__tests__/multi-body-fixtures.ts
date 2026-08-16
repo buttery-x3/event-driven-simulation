@@ -9,6 +9,7 @@ import type {
 const settings = {
 	gravity: [0, 0],
 	restitution: 1,
+	contactCaptureDistance: 1e-9,
 	maximumEvents: 20,
 	maximumSimulationTime: 10,
 	tolerances: { contactDistance: 1e-9, eventTime: 1e-9 }

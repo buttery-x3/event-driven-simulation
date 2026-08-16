@@ -210,6 +210,7 @@ function input(
 		settings: {
 			gravity: overrides.gravity ?? [0, 0],
 			restitution: overrides.restitution ?? 0.5,
+			contactCaptureDistance: 1e-9,
 			maximumEvents: 100,
 			maximumSimulationTime: 20,
 			tolerances: { contactDistance: 1e-9, eventTime: 1e-9 }

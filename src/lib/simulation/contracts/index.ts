@@ -32,6 +32,8 @@ export type {
 	BodyTerminalOutcome,
 	ComponentLifecycleEvent,
 	ContactComponentRecord,
+	ContactCaptureContactDiagnostic,
+	ContactCaptureDiagnostic,
 	ContactEvent,
 	ContactManifoldMember,
 	ContactMode,

@@ -9,6 +9,7 @@ import type {
 export const syntheticSettings = {
 	gravity: [0, 0],
 	restitution: 1,
+	contactCaptureDistance: 1e-9,
 	maximumEvents: 100,
 	maximumSimulationTime: 8,
 	tolerances: { contactDistance: 1e-9, eventTime: 1e-9 }

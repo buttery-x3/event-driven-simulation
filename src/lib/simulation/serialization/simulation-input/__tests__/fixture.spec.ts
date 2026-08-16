@@ -6,8 +6,30 @@ import { parseSimulationInputFixture, serializeSimulationInputFixture } from '..
 describe('simulation input fixture boundary', () => {
 	it('round-trips a canonical scenario as versioned serialisable input', () => {
 		const input = canonicalPlinkoScenarios[1].input;
+		const fixture = serializeSimulationInputFixture(input);
 
-		expect(parseSimulationInputFixture(serializeSimulationInputFixture(input))).toEqual(input);
+		expect(JSON.parse(fixture).input.settings.contactCaptureDistance).toBe(1e-9);
+		expect(parseSimulationInputFixture(fixture)).toEqual(input);
+	});
+
+	it('normalises missing version 7 capture distance from the historical contact tolerance', () => {
+		const fixture = JSON.parse(
+			serializeSimulationInputFixture(canonicalPlinkoScenarios[0].input)
+		) as {
+			input: {
+				settings: {
+					contactCaptureDistance?: number;
+					tolerances: { contactDistance: number };
+				};
+			};
+		};
+		fixture.input.settings.tolerances.contactDistance = 2e-8;
+		delete fixture.input.settings.contactCaptureDistance;
+
+		const restored = parseSimulationInputFixture(JSON.stringify(fixture));
+
+		expect(restored.settings.contactCaptureDistance).toBe(2e-8);
+		expect(restored).toHaveProperty('settings.contactCaptureDistance');
 	});
 
 	it('migrates version 6 single-body scenarios with explicit physical defaults', () => {

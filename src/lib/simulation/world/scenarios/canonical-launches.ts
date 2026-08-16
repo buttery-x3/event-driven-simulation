@@ -9,6 +9,7 @@ export interface SimulationScenario extends VerificationScenario {
 const defaultSettings = {
 	gravity: [0, -9.81],
 	restitution: 0.78,
+	contactCaptureDistance: 1e-9,
 	maximumEvents: 1_000,
 	maximumSimulationTime: 60,
 	tolerances: {

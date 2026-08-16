@@ -62,6 +62,16 @@ export function validateSimulationInputV7(
 	if ((settings.restitution as number) < 0 || (settings.restitution as number) > 1) {
 		fail(`${path}.settings.restitution`, 'must be between zero and one');
 	}
+	const contactCaptureDistance =
+		settings.contactCaptureDistance === undefined
+			? undefined
+			: assertions.requireFiniteNumber(
+					settings.contactCaptureDistance,
+					`${path}.settings.contactCaptureDistance`
+				);
+	if (contactCaptureDistance !== undefined && contactCaptureDistance < 0) {
+		fail(`${path}.settings.contactCaptureDistance`, 'must be non-negative');
+	}
 	assertions.requireInteger(settings.maximumEvents, `${path}.settings.maximumEvents`);
 	if ((settings.maximumEvents as number) < 0)
 		fail(`${path}.settings.maximumEvents`, 'must be non-negative');
@@ -82,7 +92,13 @@ export function validateSimulationInputV7(
 		fail(`${path}.settings.tolerances`, 'must contain positive tolerances');
 	}
 
-	const typed = value as SimulationInput;
+	const typed = {
+		...(value as Omit<SimulationInput, 'settings'>),
+		settings: {
+			...(settings as unknown as SimulationInput['settings']),
+			contactCaptureDistance: contactCaptureDistance ?? (tolerances.contactDistance as number)
+		}
+	} satisfies SimulationInput;
 	validateDeclaredReleaseStates(typed, path, fail);
 	return typed;
 }

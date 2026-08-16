@@ -11,11 +11,12 @@ export interface SimulationInputFixture {
 }
 
 export function serializeSimulationInputFixture(input: SimulationInput): string {
+	const canonical = validateSimulationInputV7(input);
 	return JSON.stringify(
 		{
 			contractVersion: 7,
 			documentType: 'simulation-input',
-			input
+			input: canonical
 		} satisfies SimulationInputFixture,
 		null,
 		2
@@ -52,6 +53,10 @@ export function parseSimulationInputFixture(json: string): SimulationInput {
 export function migrateSimulationInputV6(input: LegacySimulationInputV6): SimulationInput {
 	return {
 		...input,
+		settings: {
+			...input.settings,
+			contactCaptureDistance: input.settings.tolerances.contactDistance
+		},
 		initialDynamicBodies: input.initialDynamicBodies.map((body) => ({
 			...body,
 			mass: 1,

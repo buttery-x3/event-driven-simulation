@@ -8,7 +8,7 @@ const assertions = createUnknownDataAssertions(invalidRunRecordField);
 export function validateRunRecordShapeV7(value: unknown): SimulationRunRecord {
 	const run = assertions.requireRecord(value, '$');
 	assertions.requireLiteral(run.contractVersion, 7, '$.contractVersion');
-	validateSimulationInputV7(run.input, '$.input', invalidRunRecordField);
+	const input = validateSimulationInputV7(run.input, '$.input', invalidRunRecordField);
 	assertions.requireOneOf(run.validity, ['valid', 'invalid'], '$.validity');
 	assertions.requireOneOf(
 		run.outcome,
@@ -29,7 +29,7 @@ export function validateRunRecordShapeV7(value: unknown): SimulationRunRecord {
 	validatePhysicalEvents(run.events, '$.events');
 	validateMultiBodyHistoryShape(run);
 	validateDiagnostics(run.diagnostics, '$.diagnostics');
-	return value as SimulationRunRecord;
+	return { ...(value as SimulationRunRecord), input };
 }
 
 function validateTerminalReason(value: unknown, path: string): void {

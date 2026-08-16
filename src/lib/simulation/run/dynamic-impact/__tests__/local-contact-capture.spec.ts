@@ -1,9 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { CircularContactMotionSegment, Vec2 } from '../../../contracts';
 import { circularContactTravelTime, evaluateCircularContactState } from '../../../motion';
-import { resolveCoupledImpact, type CoupledImpactInput, type CoupledImpactResponse } from '..';
-import { dot, gramMatrix } from '../linear-algebra';
-import { solveNonnegativeQuadratic } from '../nonnegative-qp';
+import {
+	resolveCoupledImpact,
+	selectContactCapture,
+	type ContactCaptureEndpoint,
+	type CoupledImpactInput,
+	type CoupledImpactResponse
+} from '..';
+import { dot } from '../linear-algebra';
 
 const gravity: Vec2 = [0, -9.81];
 // This is represented-physics policy, deliberately independent of numerical contact detection.
@@ -236,145 +241,66 @@ interface CaptureOptions {
 
 function evaluateCapture(input: CoupledImpactInput, options: CaptureOptions): CaptureProof {
 	const ordinary = solveImpact(input);
-	const gradients = contactGradients(input);
-	const inverseMasses = input.bodies.flatMap(({ mass }) => [1 / mass, 1 / mass]);
-	const delassus = gramMatrix(gradients, inverseMasses);
-	const freeAcceleration = input.bodies.flatMap(() => gravity);
-	const geometricNormalAccelerations = input.contacts.map((contact) => {
-		const radius = options.curvedContactRadii?.get(contact.id);
-		if (radius === undefined) return 0;
-		if (contact.type !== 'body-fixed' || !(radius > 0)) {
-			throw new Error('The disposable proof only supplies positive fixed-contact curvature.');
+	const inelastic = solveImpact({ ...input, restitution: 0 });
+	const result = selectContactCapture({
+		bodies: input.bodies.map((body) => ({
+			id: body.id,
+			mass: body.mass,
+			incomingVelocity: body.velocity,
+			freeAcceleration: gravity
+		})),
+		contacts: input.contacts.map((contact) =>
+			contact.type === 'body-body'
+				? {
+						...contact,
+						curvatureRadius: options.curvedContactRadii?.get(contact.id) ?? 1
+					}
+				: {
+						...contact,
+						curvatureRadius: options.curvedContactRadii?.get(contact.id) ?? null
+					}
+		),
+		ordinary: endpoint(ordinary),
+		inelastic: endpoint(inelastic),
+		contactCaptureDistance: options.captureResolution,
+		numericalTolerance,
+		solveInelastic: (contactIds) => {
+			const retained = input.contacts.filter((contact) => contactIds.includes(contact.id));
+			return retained.length > 0
+				? endpoint(solveImpact({ ...input, contacts: retained, restitution: 0 }))
+				: null;
 		}
-		const velocity = bodyVelocity(input, ordinary.inelasticVelocity, contact.bodyId);
-		const normalSpeed = dot(velocity, contact.normal);
-		const tangentialSpeedSquared = Math.max(0, dot(velocity, velocity) - normalSpeed ** 2);
-		return tangentialSpeedSquared / radius;
 	});
-	const freeNormalAcceleration = gradients.map(
-		(gradient, index) => dot(gradient, freeAcceleration) + geometricNormalAccelerations[index]!
+	const diagnostic = result.diagnostic;
+	const normalExcursions = diagnostic.contacts.map(
+		({ reboundExcursion }) => reboundExcursion ?? Infinity
 	);
-	let supported = constrainedAcceleration(
-		delassus,
-		freeNormalAcceleration,
-		input.contacts.map((_, index) => index)
-	);
-	let retainedIndices = materialReactionIndices(supported.reactions);
-	while (retainedIndices.length > 0) {
-		const reduced = constrainedAcceleration(delassus, freeNormalAcceleration, retainedIndices);
-		const nextIndices = materialReactionIndices(reduced.reactions);
-		supported = reduced;
-		if (sameIndices(retainedIndices, nextIndices)) break;
-		retainedIndices = nextIndices;
-	}
-	const normalExcursions = input.contacts.map((_, index) => {
-		if (!retainedIndices.includes(index)) return Infinity;
-		const outgoingSpeed = Math.max(0, normalVelocity(input, ordinary.finalVelocity, index));
-		if (outgoingSpeed <= numericalTolerance) return 0;
-		const released = constrainedAcceleration(
-			delassus,
-			freeNormalAcceleration,
-			retainedIndices.filter((candidate) => candidate !== index)
-		);
-		const pressingAcceleration = -released.normalAccelerations[index]!;
-		return pressingAcceleration > numericalTolerance
-			? (outgoingSpeed * outgoingSpeed) / (2 * pressingAcceleration)
-			: Infinity;
-	});
-	const impulsiveReboundIndices = ordinary.contacts
-		.map((contact, index) => ({ contact, index }))
-		.filter(
-			({ contact }) =>
-				contact.preImpactNormalVelocity < -numericalTolerance * 64 &&
-				contact.postImpactNormalVelocity > numericalTolerance * 64
-		)
-		.map(({ index }) => index);
-	const maximumNormalExcursion =
-		impulsiveReboundIndices.length > 0
-			? Math.max(...impulsiveReboundIndices.map((index) => normalExcursions[index]!))
-			: 0;
-	const meaningfulImpulsiveIndices = impulsiveReboundIndices.filter(
-		(index) => normalExcursions[index]! > options.captureResolution
-	);
-	const capturedImpact =
-		meaningfulImpulsiveIndices.length === 0 && retainedIndices.length > 0
-			? solveImpact({
-					...input,
-					contacts: retainedIndices.map((index) => input.contacts[index]!)
-				})
-			: null;
-	const inelasticIsCompatible =
-		capturedImpact !== null &&
-		retainedIndices.every(
-			(index) =>
-				Math.abs(normalVelocity(input, capturedImpact.inelasticVelocity, index)) <=
-				numericalTolerance * 64
-		);
-	const capture =
-		meaningfulImpulsiveIndices.length === 0 &&
-		retainedIndices.length > 0 &&
-		inelasticIsCompatible &&
-		maximumNormalExcursion <= options.captureResolution;
-	const retainedContactIds = capture
-		? retainedIndices.map((index) => input.contacts[index]!.id)
-		: [];
-	const retainedContactIdSet = new Set(retainedContactIds);
+	const impulsiveExcursions = diagnostic.contacts
+		.filter(({ impulsivelyActive }) => impulsivelyActive)
+		.map(({ reboundExcursion }) => reboundExcursion ?? Infinity);
 
 	return {
 		input,
 		ordinary,
-		selectedEndpoint: capture ? 'inelastic' : 'ordinary',
-		selectedVelocity: capture ? capturedImpact!.inelasticVelocity : ordinary.finalVelocity,
-		retainedContactIds,
-		releasedContactIds: input.contacts
-			.map(({ id }) => id)
-			.filter((id) => !retainedContactIdSet.has(id)),
-		meaningfulImpulsiveContactIds: meaningfulImpulsiveIndices.map(
-			(index) => input.contacts[index]!.id
+		selectedEndpoint: diagnostic.selectedEndpoint === 'captured' ? 'inelastic' : 'ordinary',
+		selectedVelocity: input.bodies.flatMap(({ id }) => {
+			const velocity = result.endpoint.bodyVelocities.find(({ bodyId }) => bodyId === id)!.velocity;
+			return velocity;
+		}),
+		retainedContactIds: diagnostic.retainedContactIds,
+		releasedContactIds: diagnostic.releasedContactIds,
+		meaningfulImpulsiveContactIds: diagnostic.meaningfulReboundContactIds,
+		supportReactions: diagnostic.contacts.map(({ supportReaction }) => supportReaction),
+		geometricNormalAccelerations: diagnostic.contacts.map(
+			({ geometricNormalAcceleration }) => geometricNormalAcceleration
 		),
-		supportReactions: supported.reactions,
-		geometricNormalAccelerations,
 		normalExcursions,
-		maximumNormalExcursion
+		maximumNormalExcursion: impulsiveExcursions.length > 0 ? Math.max(...impulsiveExcursions) : 0
 	};
 }
 
-function constrainedAcceleration(
-	delassus: readonly (readonly number[])[],
-	freeNormalAcceleration: readonly number[],
-	activeIndices: readonly number[]
-): { readonly reactions: readonly number[]; readonly normalAccelerations: readonly number[] } {
-	const solution = solveNonnegativeQuadratic(
-		activeIndices.map((row) => activeIndices.map((column) => delassus[row]![column]!)),
-		activeIndices.map((index) => freeNormalAcceleration[index]!),
-		numericalTolerance
-	);
-	if (!solution) throw new Error('The local unilateral acceleration problem was not certified.');
-	const reactions = freeNormalAcceleration.map(() => 0);
-	for (let index = 0; index < activeIndices.length; index += 1) {
-		reactions[activeIndices[index]!] = solution.values[index]!;
-	}
-	return {
-		reactions,
-		normalAccelerations: freeNormalAcceleration.map(
-			(value, row) =>
-				value +
-				reactions.reduce((sum, reaction, column) => sum + delassus[row]![column]! * reaction, 0)
-		)
-	};
-}
-
-function materialReactionIndices(reactions: readonly number[]): number[] {
-	const forceScale = Math.max(1, ...reactions.map(Math.abs));
-	const materialReaction = numericalTolerance * forceScale * 64;
-	return reactions
-		.map((reaction, index) => ({ index, reaction }))
-		.filter(({ reaction }) => reaction > materialReaction)
-		.map(({ index }) => index);
-}
-
-function sameIndices(left: readonly number[], right: readonly number[]): boolean {
-	return left.length === right.length && left.every((value, index) => value === right[index]);
+function endpoint(response: CoupledImpactResponse): ContactCaptureEndpoint {
+	return { bodyVelocities: response.bodyVelocities, contacts: response.contacts };
 }
 
 function solveImpact(input: CoupledImpactInput): CoupledImpactResponse {

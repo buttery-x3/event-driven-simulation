@@ -51,6 +51,7 @@ const input = {
 	settings: {
 		gravity: [0, -2],
 		restitution: 0.5,
+		contactCaptureDistance: 1e-9,
 		maximumEvents: 10,
 		maximumSimulationTime: 2,
 		tolerances: {

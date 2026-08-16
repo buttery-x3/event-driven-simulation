@@ -154,6 +154,7 @@ function schedulerInput(
 		settings: {
 			gravity: [0, -9.81],
 			restitution,
+			contactCaptureDistance: 1e-9,
 			maximumEvents: 100,
 			maximumSimulationTime: 20,
 			tolerances: { contactDistance: 1e-9, eventTime: 1e-9 }

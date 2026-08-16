@@ -1,6 +1,12 @@
-import type { ContactManifoldMember, SimulationInput, Vec2 } from '../../../contracts';
+import type {
+	ContactCaptureDiagnostic,
+	ContactManifoldMember,
+	SimulationInput,
+	Vec2
+} from '../../../contracts';
 import type { FixedWorldContactCandidate } from '../../../collision';
 import { dotVec2 } from '../../../math';
+import { selectContactCapture, type ContactCaptureEndpoint } from '../../dynamic-impact';
 import { solveImpactManifold } from '../manifold';
 
 export interface ImpactObservation {
@@ -16,107 +22,179 @@ export interface ImpactResponse {
 	readonly activeCandidates: readonly FixedWorldContactCandidate[];
 	readonly enterSustainedContact: boolean;
 	readonly collapseReason:
-		| 'zero-restitution'
-		| 'contracting-impacts'
-		| 'alternating-contact-limit'
-		| 'initial-supported-state'
-		| 'sub-tolerance-release'
-		| null;
-	readonly releaseRetention: ReleaseRetentionEvidence | null;
-}
-
-export interface ReleaseRetentionEvidence {
-	readonly colliderId: string;
-	readonly outgoingNormalSpeed: number;
-	readonly pressingNormalAcceleration: number;
-	readonly maximumNormalSeparation: number;
-	readonly contactDistanceTolerance: number;
+		'zero-restitution' | 'initial-supported-state' | 'finite-contact-capture' | null;
+	readonly contactCapture: ContactCaptureDiagnostic;
 }
 
 export function resolveImpactResponse(
 	input: SimulationInput,
 	time: number,
 	candidates: readonly FixedWorldContactCandidate[],
-	incomingVelocity: Vec2,
-	history: readonly ImpactObservation[],
-	forcedCollapse: 'alternating-contact-limit' | null = null
+	incomingVelocity: Vec2
 ): ImpactResponse | null {
 	const tolerance = input.settings.tolerances.eventTime;
-	const solution = solveImpactManifold(
+	const ordinary = solveImpactManifold(
 		candidates,
 		incomingVelocity,
-		forcedCollapse ? 0 : input.settings.restitution,
+		input.settings.restitution,
 		tolerance
 	);
-	if (!solution) return null;
-	if (forcedCollapse) return response(solution, true, forcedCollapse);
-	const manifoldKey = contactManifoldKey(candidates);
-	const pressingAcceleration = Math.max(
-		0,
-		...candidates.map(({ normal }) => -dotVec2(input.settings.gravity, normal))
+	const inelastic = solveImpactManifold(candidates, incomingVelocity, 0, tolerance);
+	if (!ordinary) return null;
+	if (!inelastic) return ordinaryOnlyResponse(input, candidates, ordinary);
+	const ids = candidates.map(contactId);
+	const selected = selectContactCapture({
+		bodies: [
+			{
+				id: candidates[0]!.bodyId,
+				mass: input.initialDynamicBodies.find(({ id }) => id === candidates[0]!.bodyId)!.mass,
+				incomingVelocity,
+				freeAcceleration: input.settings.gravity
+			}
+		],
+		contacts: candidates.map((candidate) => ({
+			id: contactId(candidate),
+			type: 'body-fixed' as const,
+			bodyId: candidate.bodyId,
+			normal: candidate.normal,
+			curvatureRadius: curvatureRadius(input, candidate)
+		})),
+		ordinary: endpoint(candidates, ordinary.outgoingVelocity, ordinary.contacts),
+		inelastic: endpoint(candidates, inelastic.outgoingVelocity, inelastic.contacts),
+		contactCaptureDistance: input.settings.contactCaptureDistance,
+		numericalTolerance: tolerance,
+		solveInelastic: (contactIds) => {
+			const retained = candidates.filter((candidate) => contactIds.includes(contactId(candidate)));
+			const result = solveImpactManifold(retained, incomingVelocity, 0, tolerance);
+			return result ? endpoint(retained, result.outgoingVelocity, result.contacts) : null;
+		}
+	});
+	const selectedVelocity = selected.endpoint.bodyVelocities[0]!.velocity;
+	const selectedById = new Map(
+		selected.endpoint.contacts.map((contact) => [contact.contactId, contact])
 	);
+	const ordinaryById = new Map(ordinary.contacts.map((contact, index) => [ids[index]!, contact]));
+	const retained = new Set(selected.diagnostic.retainedContactIds);
+	const activeCandidates = candidates.filter((candidate) => retained.has(contactId(candidate)));
+	const contacts = candidates.map((candidate) => {
+		const id = contactId(candidate);
+		const result = selectedById.get(id);
+		return {
+			...ordinaryById.get(id)!,
+			postImpactNormalVelocity: dotVec2(selectedVelocity, candidate.normal),
+			impulse: result?.impulse ?? 0
+		};
+	});
+	const captured = selected.diagnostic.selectedEndpoint === 'captured';
 	const incomingNormalSpeed = Math.max(
 		0,
-		...solution.contacts.map(({ preImpactNormalVelocity }) => -preImpactNormalVelocity)
+		...ordinary.contacts.map(({ preImpactNormalVelocity }) => -preImpactNormalVelocity)
 	);
-	const retainedConstraint = candidates.some(
-		(candidate, index) =>
-			candidate.response === 'non-impulsive-contact' &&
-			Math.abs(solution.contacts[index]?.postImpactNormalVelocity ?? Infinity) <= tolerance &&
-			dotVec2(input.settings.gravity, candidate.normal) < 0
-	);
-	if (pressingAcceleration <= 0) return response(solution, false, null);
-	if (time === 0 && incomingNormalSpeed <= tolerance && history.length === 0) {
-		return response(solution, true, 'initial-supported-state');
-	}
-	if (input.settings.restitution === 0) return response(solution, true, 'zero-restitution');
+	const collapseReason: ImpactResponse['collapseReason'] = !captured
+		? null
+		: time === 0 && incomingNormalSpeed <= tolerance
+			? 'initial-supported-state'
+			: input.settings.restitution === 0
+				? 'zero-restitution'
+				: 'finite-contact-capture';
+	return {
+		outgoingVelocity: selectedVelocity,
+		contacts,
+		activeCandidates,
+		enterSustainedContact: activeCandidates.length > 0,
+		collapseReason,
+		contactCapture: selected.diagnostic
+	};
+}
 
-	const releaseRetention = subToleranceReleaseEvidence(input, candidates, solution.contacts);
-	if (releaseRetention) {
-		return response(solution, true, 'sub-tolerance-release', releaseRetention);
-	}
+function ordinaryOnlyResponse(
+	input: SimulationInput,
+	candidates: readonly FixedWorldContactCandidate[],
+	ordinary: NonNullable<ReturnType<typeof solveImpactManifold>>
+): ImpactResponse {
+	const tolerance = input.settings.tolerances.eventTime;
+	const retained = candidates.filter(
+		(_, index) => ordinary.contacts[index]!.postImpactNormalVelocity <= tolerance
+	);
+	const retainedIds = retained.map(contactId);
+	const retainedSet = new Set(retainedIds);
+	return {
+		outgoingVelocity: ordinary.outgoingVelocity,
+		contacts: ordinary.contacts,
+		activeCandidates: retained,
+		enterSustainedContact: retained.length > 0,
+		collapseReason: null,
+		contactCapture: {
+			captureDistance: input.settings.contactCaptureDistance,
+			selectedEndpoint: 'ordinary',
+			meaningfulReboundVeto: false,
+			meaningfulReboundContactIds: [],
+			activeSetRemovalSequence: [],
+			retainedContactIds: retainedIds,
+			releasedContactIds: candidates.map(contactId).filter((id) => !retainedSet.has(id)),
+			contacts: candidates.map((candidate, index) => ({
+				contactId: contactId(candidate),
+				ordinaryPostImpactNormalVelocity: ordinary.contacts[index]!.postImpactNormalVelocity,
+				geometricNormalAcceleration: geometricNormalAcceleration(
+					input,
+					candidate,
+					ordinary.outgoingVelocity
+				),
+				pressingNormalAcceleration: null,
+				reboundExcursion: null,
+				withinCaptureDistance: null,
+				impulsivelyActive: ordinary.contacts[index]!.impulse > tolerance,
+				supportReaction: 0,
+				retained: retainedSet.has(contactId(candidate))
+			}))
+		}
+	};
+}
 
-	if (isContractingAlternatingImpactSequence(time, candidates, history)) {
-		return response(solution, retainedConstraint, null);
+function endpoint(
+	candidates: readonly FixedWorldContactCandidate[],
+	velocity: Vec2,
+	contacts: readonly ContactManifoldMember[]
+): ContactCaptureEndpoint {
+	return {
+		bodyVelocities: [{ bodyId: candidates[0]!.bodyId, velocity }],
+		contacts: contacts.map((contact, index) => ({
+			contactId: contactId(candidates[index]!),
+			impulse: contact.impulse,
+			preImpactNormalVelocity: contact.preImpactNormalVelocity,
+			postImpactNormalVelocity: contact.postImpactNormalVelocity
+		}))
+	};
+}
+
+function curvatureRadius(
+	input: SimulationInput,
+	candidate: FixedWorldContactCandidate
+): number | null {
+	const body = input.initialDynamicBodies.find(({ id }) => id === candidate.bodyId)!;
+	if (candidate.feature === 'start-endpoint' || candidate.feature === 'end-endpoint') {
+		return body.physicalShape.radius;
 	}
-	const sameManifold = history
-		.filter((observation) => observation.manifoldKey === manifoldKey)
-		.slice(-2);
-	if (sameManifold.length < 2) return response(solution, retainedConstraint, null);
-	const previous = sameManifold[1]!;
-	const beforePrevious = sameManifold[0]!;
-	const previousInterval = previous.time - beforePrevious.time;
-	const currentInterval = time - previous.time;
-	const speedThreshold = Math.sqrt(
-		2 * pressingAcceleration * input.settings.tolerances.contactDistance
-	);
-	const contracting =
-		previousInterval > tolerance &&
-		currentInterval > tolerance &&
-		currentInterval < previousInterval &&
-		incomingNormalSpeed < previous.incomingNormalSpeed;
-	const ratio = contracting ? currentInterval / previousInterval : 1;
-	const predictedRemainingTime = ratio < 1 ? (currentInterval * ratio) / (1 - ratio) : Infinity;
-	const oneDimensional =
-		candidates.length === 1 &&
-		Math.abs(
-			incomingVelocity[0] * -candidates[0]!.normal[1] +
-				incomingVelocity[1] * candidates[0]!.normal[0]
-		) <= speedThreshold;
-	const nearbyWindow = Math.max(
-		64 * tolerance,
-		(oneDimensional ? 16 : 8) *
-			Math.sqrt(input.settings.tolerances.contactDistance / pressingAcceleration)
-	);
-	const collapse =
-		contracting &&
-		incomingNormalSpeed * input.settings.restitution <= 2 * speedThreshold &&
-		predictedRemainingTime <= nearbyWindow;
-	return response(
-		solution,
-		collapse || retainedConstraint,
-		collapse ? 'contracting-impacts' : null
-	);
+	if (candidate.feature !== 'circle') return null;
+	const collider = input.scene.staticColliders.find(({ id }) => id === candidate.colliderId);
+	return collider?.physicalShape.type === 'circle'
+		? body.physicalShape.radius + collider.physicalShape.radius
+		: null;
+}
+
+function geometricNormalAcceleration(
+	input: SimulationInput,
+	candidate: FixedWorldContactCandidate,
+	velocity: Vec2
+): number {
+	const radius = curvatureRadius(input, candidate);
+	if (radius === null) return 0;
+	const normalSpeed = dotVec2(velocity, candidate.normal);
+	return Math.max(0, dotVec2(velocity, velocity) - normalSpeed * normalSpeed) / radius;
+}
+
+function contactId(candidate: FixedWorldContactCandidate): string {
+	return `${candidate.colliderId}:${candidate.feature}`;
 }
 
 export function impactObservation(
@@ -155,8 +233,9 @@ export function isContractingAlternatingImpactSequence(
 		return false;
 	}
 	const keys = observations.map(({ manifoldKey }) => manifoldKey);
-	if (keys[0] !== keys[2] || keys[2] !== keys[4] || keys[1] !== keys[3] || keys[0] === keys[1])
+	if (keys[0] !== keys[2] || keys[2] !== keys[4] || keys[1] !== keys[3] || keys[0] === keys[1]) {
 		return false;
+	}
 	const intervals = observations.slice(1).map((observation, index) => {
 		return observation.time - observations[index]!.time;
 	});
@@ -167,38 +246,6 @@ export function isContractingAlternatingImpactSequence(
 		observations[4]!.incomingNormalSpeed < observations[2]!.incomingNormalSpeed &&
 		observations[3]!.incomingNormalSpeed < observations[1]!.incomingNormalSpeed
 	);
-}
-
-function response(
-	solution: NonNullable<ReturnType<typeof solveImpactManifold>>,
-	enterSustainedContact: boolean,
-	collapseReason: ImpactResponse['collapseReason'],
-	releaseRetention: ReleaseRetentionEvidence | null = null
-): ImpactResponse {
-	return { ...solution, enterSustainedContact, collapseReason, releaseRetention };
-}
-
-function subToleranceReleaseEvidence(
-	input: SimulationInput,
-	candidates: readonly FixedWorldContactCandidate[],
-	contacts: readonly ContactManifoldMember[]
-): ReleaseRetentionEvidence | null {
-	if (candidates.length !== 1 || contacts.length !== 1) return null;
-	const candidate = candidates[0]!;
-	const outgoingNormalSpeed = contacts[0]!.postImpactNormalVelocity;
-	const pressingNormalAcceleration = -dotVec2(input.settings.gravity, candidate.normal);
-	if (outgoingNormalSpeed <= 0 || pressingNormalAcceleration <= 0) return null;
-	const maximumNormalSeparation =
-		(outgoingNormalSpeed * outgoingNormalSpeed) / (2 * pressingNormalAcceleration);
-	return maximumNormalSeparation <= input.settings.tolerances.contactDistance
-		? {
-				colliderId: candidate.colliderId,
-				outgoingNormalSpeed,
-				pressingNormalAcceleration,
-				maximumNormalSeparation,
-				contactDistanceTolerance: input.settings.tolerances.contactDistance
-			}
-		: null;
 }
 
 function contactManifoldKey(candidates: readonly FixedWorldContactCandidate[]): string {

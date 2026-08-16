@@ -27,8 +27,11 @@ describe('FLAME-45 sub-tolerance circle release regression', () => {
 		const corrected = constructSingleBallRun(forensic.input);
 		const validation = validateSimulationRun(forensic.input, corrected);
 		const retainedEntry = corrected.diagnostics.entries.find(
-			({ code }) => code === 'SUB_TOLERANCE_RELEASE_RETAINED'
+			({ code }) => code === 'FINITE_CONTACT_CAPTURE'
 		);
+		const capture = corrected.diagnostics.contactSearches.find(
+			({ contactCapture }) => contactCapture?.selectedEndpoint === 'captured'
+		)?.contactCapture;
 		const retainedTransition = corrected.events.find(
 			(event) =>
 				event.type === 'contact-mode-transition' &&
@@ -38,8 +41,20 @@ describe('FLAME-45 sub-tolerance circle release regression', () => {
 		);
 
 		expect(corrected.terminalReason.type).not.toBe('zero-time-loop');
-		expect(retainedEntry?.message).toContain('maximum normal separation');
-		expect(retainedEntry?.message).toContain('contact-distance tolerance');
+		expect(retainedEntry?.message).toContain('captured endpoint');
+		expect(capture).toMatchObject({
+			captureDistance: forensic.input.settings.contactCaptureDistance,
+			selectedEndpoint: 'captured',
+			meaningfulReboundVeto: false
+		});
+		expect(capture?.retainedContactIds).toContain(`${releasedCircleId}:circle`);
+		expect(
+			capture?.contacts.find(({ contactId }) => contactId === `${releasedCircleId}:circle`)
+		).toMatchObject({ retained: true, withinCaptureDistance: true });
+		expect(
+			capture?.contacts.find(({ contactId }) => contactId === `${releasedCircleId}:circle`)
+				?.geometricNormalAcceleration
+		).toBeGreaterThan(0);
 		expect(retainedTransition).toMatchObject({ reason: 'impact-collapse' });
 		expect(
 			corrected.trajectories[0]!.segments.some(
