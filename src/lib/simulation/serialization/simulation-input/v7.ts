@@ -62,13 +62,13 @@ export function validateSimulationInputV7(
 	if ((settings.restitution as number) < 0 || (settings.restitution as number) > 1) {
 		fail(`${path}.settings.restitution`, 'must be between zero and one');
 	}
-	const contactCaptureDistance =
-		settings.contactCaptureDistance === undefined
-			? undefined
-			: assertions.requireFiniteNumber(
-					settings.contactCaptureDistance,
-					`${path}.settings.contactCaptureDistance`
-				);
+	if (settings.contactCaptureDistance !== undefined) {
+		assertions.requireFiniteNumber(
+			settings.contactCaptureDistance,
+			`${path}.settings.contactCaptureDistance`
+		);
+	}
+	const contactCaptureDistance = settings.contactCaptureDistance as number | undefined;
 	if (contactCaptureDistance !== undefined && contactCaptureDistance < 0) {
 		fail(`${path}.settings.contactCaptureDistance`, 'must be non-negative');
 	}

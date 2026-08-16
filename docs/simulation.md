@@ -138,7 +138,8 @@ Coefficient overflow, a degenerate polynomial, non-finite candidate state, or ex
 refinement returns `unresolved`; numerical uncertainty is never reported as a clear path.
 `contactCaptureDistance` is a represented-physics resolution: rebounds whose certified normal
 excursion does not exceed it may be represented as contact. It is deliberately independent of
-the numerical tolerances below. Version 7 inputs that predate the explicit field are normalised
+the numerical tolerances below; a zero capture distance therefore never collapses a positive
+represented rebound. Version 7 inputs that predate the explicit field are normalised
 once from their historical `contactDistance` value when loaded; newly serialised inputs always
 record it explicitly. Tolerances are named by purpose:
 

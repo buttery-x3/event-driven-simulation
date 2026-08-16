@@ -57,7 +57,7 @@ export function selectCoupledContactCapture(
 	tolerance: number
 ): SelectedCoupledImpact {
 	const fullInelastic = solveInelastic(state, component, component.contacts, tolerance);
-	if (!fullInelastic) return ordinaryFallback(state, component, ordinary);
+	if (!fullInelastic) return ordinaryFallback(state, component, ordinary, tolerance);
 	const selected = selectContactCapture({
 		bodies: component.bodies.map(({ id, mass, velocity }) => ({
 			id,
@@ -99,7 +99,7 @@ export function selectCoupledContactCapture(
 		return { response: ordinary, contactCapture: selected.diagnostic };
 	}
 	const response = selectedResponse(component, ordinary, selected.endpoint);
-	if (!response) return ordinaryFallback(state, component, ordinary);
+	if (!response) return ordinaryFallback(state, component, ordinary, tolerance);
 	return {
 		response,
 		contactCapture: selected.diagnostic
@@ -202,8 +202,13 @@ function relativeNormal(
 function ordinaryFallback(
 	state: SchedulerState,
 	component: ExactTimeComponent,
-	ordinary: CoupledImpactResponse
+	ordinary: CoupledImpactResponse,
+	tolerance: number
 ): SelectedCoupledImpact {
+	const retainedContactIds = ordinary.contacts
+		.filter(({ postImpactNormalVelocity }) => postImpactNormalVelocity <= tolerance)
+		.map(({ contactId }) => contactId);
+	const retainedContactIdSet = new Set(retainedContactIds);
 	return {
 		response: ordinary,
 		contactCapture: {
@@ -212,11 +217,9 @@ function ordinaryFallback(
 			meaningfulReboundVeto: false,
 			meaningfulReboundContactIds: [],
 			activeSetRemovalSequence: [],
-			retainedContactIds: ordinary.contacts
-				.filter(({ postImpactNormalVelocity }) => postImpactNormalVelocity <= 0)
-				.map(({ contactId }) => contactId),
+			retainedContactIds,
 			releasedContactIds: ordinary.contacts
-				.filter(({ postImpactNormalVelocity }) => postImpactNormalVelocity > 0)
+				.filter(({ contactId }) => !retainedContactIdSet.has(contactId))
 				.map(({ contactId }) => contactId),
 			contacts: component.contacts.map((contact) => ({
 				contactId: contact.id,
@@ -229,7 +232,7 @@ function ordinaryFallback(
 				withinCaptureDistance: null,
 				impulsivelyActive: false,
 				supportReaction: 0,
-				retained: false
+				retained: retainedContactIdSet.has(contact.id)
 			}))
 		}
 	};

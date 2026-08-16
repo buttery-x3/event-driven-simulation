@@ -12,6 +12,18 @@ describe('simulation input fixture boundary', () => {
 		expect(parseSimulationInputFixture(fixture)).toEqual(input);
 	});
 
+	it('preserves represented capture distance independently of contact tolerance', () => {
+		const source = canonicalPlinkoScenarios[0].input;
+		const input = {
+			...source,
+			settings: { ...source.settings, contactCaptureDistance: 2e-9 }
+		};
+		const fixture = serializeSimulationInputFixture(input);
+
+		expect(JSON.parse(fixture).input.settings.contactCaptureDistance).toBe(2e-9);
+		expect(parseSimulationInputFixture(fixture)).toEqual(input);
+	});
+
 	it('normalises missing version 7 capture distance from the historical contact tolerance', () => {
 		const fixture = JSON.parse(
 			serializeSimulationInputFixture(canonicalPlinkoScenarios[0].input)

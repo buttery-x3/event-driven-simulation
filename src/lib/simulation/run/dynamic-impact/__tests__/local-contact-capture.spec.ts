@@ -202,6 +202,10 @@ describe('FLAME-87 finite local contact-capture proof', () => {
 		const coarseResolution = 1e-7;
 		const fineResolution = 1e-8;
 		const coarseLow = evaluateCapture(lowEnergy, { captureResolution: coarseResolution });
+		const coarseLowWithLooserNumerics = evaluateCapture(lowEnergy, {
+			captureResolution: coarseResolution,
+			policyNumericalTolerance: 1e-8
+		});
 		const fineLow = evaluateCapture(lowEnergy, { captureResolution: fineResolution });
 		const coarseEnergetic = evaluateCapture(energetic, {
 			captureResolution: coarseResolution
@@ -212,9 +216,31 @@ describe('FLAME-87 finite local contact-capture proof', () => {
 		expect(coarseLow.maximumNormalExcursion).toBeLessThan(coarseResolution);
 		expect(fineLow.maximumNormalExcursion).toBe(coarseLow.maximumNormalExcursion);
 		expect(coarseLow.selectedEndpoint).toBe('inelastic');
+		expect(coarseLowWithLooserNumerics.selectedEndpoint).toBe('inelastic');
 		expect(fineLow.selectedEndpoint).toBe('ordinary');
 		expect(coarseEnergetic.selectedEndpoint).toBe('ordinary');
 		expect(fineEnergetic.selectedEndpoint).toBe('ordinary');
+	});
+
+	it('does not collapse a positive rebound when represented capture distance is zero', () => {
+		const lowEnergy = impact(
+			[['ball', 1, [0, -1e-3]]],
+			[fixedContact('floor', 'ball', [0, 1])],
+			0.8
+		);
+		const fineTolerance = evaluateCapture(lowEnergy, {
+			captureResolution: 0,
+			policyNumericalTolerance: 1e-12
+		});
+		const coarseTolerance = evaluateCapture(lowEnergy, {
+			captureResolution: 0,
+			policyNumericalTolerance: 1e-3
+		});
+
+		expect(fineTolerance.normalExcursions[0]).toBeGreaterThan(0);
+		expect(coarseTolerance.normalExcursions[0]).toBe(fineTolerance.normalExcursions[0]);
+		expect(fineTolerance.selectedEndpoint).toBe('ordinary');
+		expect(coarseTolerance.selectedEndpoint).toBe('ordinary');
 	});
 
 	it('falls back to the ordinary response when a captured endpoint omits a body', () => {
@@ -268,6 +294,7 @@ interface CaptureProof {
 interface CaptureOptions {
 	readonly captureResolution: number;
 	readonly curvedContactRadii?: ReadonlyMap<string, number>;
+	readonly policyNumericalTolerance?: number;
 }
 
 function evaluateCapture(input: CoupledImpactInput, options: CaptureOptions): CaptureProof {
@@ -294,7 +321,7 @@ function evaluateCapture(input: CoupledImpactInput, options: CaptureOptions): Ca
 		ordinary: endpoint(ordinary),
 		inelastic: endpoint(inelastic),
 		contactCaptureDistance: options.captureResolution,
-		numericalTolerance,
+		numericalTolerance: options.policyNumericalTolerance ?? numericalTolerance,
 		solveInelastic: (contactIds) => {
 			const retained = input.contacts.filter((contact) => contactIds.includes(contact.id));
 			return retained.length > 0

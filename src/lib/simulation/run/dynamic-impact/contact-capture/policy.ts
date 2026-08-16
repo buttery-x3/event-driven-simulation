@@ -49,7 +49,7 @@ export function selectContactCapture(input: ContactCaptureInput): ContactCapture
 			ordinary.preImpactNormalVelocity < -tolerance * 64 &&
 			ordinary.postImpactNormalVelocity > tolerance * 64
 		);
-		const rebounding = Boolean(ordinary && ordinary.postImpactNormalVelocity > tolerance * 64);
+		const rebounding = Boolean(ordinary && hasRepresentedRebound(ordinary));
 		if (!rebounding || !active.includes(index)) {
 			return { impulsive, rebounding, pressing: null, distance: null };
 		}
@@ -70,8 +70,7 @@ export function selectContactCapture(input: ContactCaptureInput): ContactCapture
 		.map((item, index) => ({ item, index }))
 		.filter(
 			({ item }) =>
-				item.rebounding &&
-				(item.distance === null || item.distance > input.contactCaptureDistance + tolerance)
+				item.rebounding && (item.distance === null || item.distance > input.contactCaptureDistance)
 		)
 		.map(({ index }) => index);
 
@@ -120,13 +119,25 @@ export function selectContactCapture(input: ContactCaptureInput): ContactCapture
 				withinCaptureDistance:
 					excursion[index]!.distance === null
 						? null
-						: excursion[index]!.distance! <= input.contactCaptureDistance + tolerance,
+						: excursion[index]!.distance! <= input.contactCaptureDistance,
 				impulsivelyActive: excursion[index]!.impulsive,
 				supportReaction: finalAcceleration?.reactions[index] ?? 0,
 				retained: finalActive.includes(index) && retainedSet.has(contact.id)
 			}))
 		}
 	};
+}
+
+function hasRepresentedRebound(contact: ContactCaptureEndpoint['contacts'][number]): boolean {
+	const roundoffGuard =
+		Number.EPSILON *
+		256 *
+		Math.max(
+			1,
+			Math.abs(contact.preImpactNormalVelocity),
+			Math.abs(contact.postImpactNormalVelocity)
+		);
+	return contact.postImpactNormalVelocity > roundoffGuard;
 }
 
 function stabilizeCapturedEndpoint(

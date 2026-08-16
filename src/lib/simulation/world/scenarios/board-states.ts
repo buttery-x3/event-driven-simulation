@@ -177,7 +177,8 @@ export const boardStateScenarios = [
 				[wideBottomExit('close-contact-exit', 4)]
 			),
 			[0, 3.5],
-			[0, 0]
+			[0, 0],
+			{ ...defaultSettings, contactCaptureDistance: 2e-9 }
 		)
 	),
 	boardScenario(
