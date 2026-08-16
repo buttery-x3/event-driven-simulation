@@ -17,6 +17,15 @@ export function selectContactCapture(input: ContactCaptureInput): ContactCapture
 	const delassus = gramMatrix(gradients, inverseMasses);
 	const freeAcceleration = input.bodies.flatMap(({ freeAcceleration: [x, y] }) => [x, y]);
 	const inelasticVelocity = endpointVelocity(input, input.inelastic);
+	if (
+		!inelasticVelocity ||
+		!endpointContainsContacts(
+			input.inelastic,
+			input.contacts.map(({ id }) => id)
+		)
+	) {
+		return ordinaryFallback(input, bodyIndex);
+	}
 	const geometric = geometricAccelerations(input, inelasticVelocity, bodyIndex);
 	const freeNormal = gradients.map(
 		(gradient, index) => dot(gradient, freeAcceleration) + geometric[index]!
@@ -40,8 +49,9 @@ export function selectContactCapture(input: ContactCaptureInput): ContactCapture
 			ordinary.preImpactNormalVelocity < -tolerance * 64 &&
 			ordinary.postImpactNormalVelocity > tolerance * 64
 		);
-		if (!impulsive || !active.includes(index)) {
-			return { impulsive, pressing: null, distance: null };
+		const rebounding = Boolean(ordinary && ordinary.postImpactNormalVelocity > tolerance * 64);
+		if (!rebounding || !active.includes(index)) {
+			return { impulsive, rebounding, pressing: null, distance: null };
 		}
 		const released = solveAcceleration(
 			delassus,
@@ -50,15 +60,17 @@ export function selectContactCapture(input: ContactCaptureInput): ContactCapture
 			tolerance
 		);
 		const pressing = released ? -released.normalAccelerations[index]! : 0;
-		if (!(pressing > tolerance)) return { impulsive, pressing: null, distance: null };
+		if (!(pressing > tolerance)) {
+			return { impulsive, rebounding, pressing: null, distance: null };
+		}
 		const speed = Math.max(0, ordinary!.postImpactNormalVelocity);
-		return { impulsive, pressing, distance: (speed * speed) / (2 * pressing) };
+		return { impulsive, rebounding, pressing, distance: (speed * speed) / (2 * pressing) };
 	});
 	const meaningful = excursion
 		.map((item, index) => ({ item, index }))
 		.filter(
 			({ item }) =>
-				item.impulsive &&
+				item.rebounding &&
 				(item.distance === null || item.distance > input.contactCaptureDistance + tolerance)
 		)
 		.map(({ index }) => index);
@@ -134,6 +146,15 @@ function stabilizeCapturedEndpoint(
 		const endpoint = input.solveInelastic(active.map((index) => input.contacts[index]!.id));
 		if (!endpoint) return null;
 		const velocity = endpointVelocity(input, endpoint);
+		if (
+			!velocity ||
+			!endpointContainsContacts(
+				endpoint,
+				active.map((index) => input.contacts[index]!.id)
+			)
+		) {
+			return null;
+		}
 		const geometric = geometricAccelerations(
 			input,
 			velocity,
@@ -274,9 +295,34 @@ function contactGradient(
 	return gradient;
 }
 
-function endpointVelocity(input: ContactCaptureInput, endpoint: ContactCaptureEndpoint): number[] {
-	const byId = new Map(endpoint.bodyVelocities.map((body) => [body.bodyId, body.velocity]));
-	return input.bodies.flatMap(({ id }) => byId.get(id) ?? [0, 0]);
+function endpointVelocity(
+	input: ContactCaptureInput,
+	endpoint: ContactCaptureEndpoint
+): number[] | null {
+	const velocity: number[] = [];
+	for (const body of input.bodies) {
+		const matches = endpoint.bodyVelocities.filter(({ bodyId }) => bodyId === body.id);
+		if (matches.length !== 1 || !matches[0]!.velocity.every(Number.isFinite)) return null;
+		velocity.push(...matches[0]!.velocity);
+	}
+	return velocity;
+}
+
+function endpointContainsContacts(
+	endpoint: ContactCaptureEndpoint,
+	contactIds: readonly string[]
+): boolean {
+	return contactIds.every((contactId) => {
+		const matches = endpoint.contacts.filter((contact) => contact.contactId === contactId);
+		return (
+			matches.length === 1 &&
+			[
+				matches[0]!.impulse,
+				matches[0]!.preImpactNormalVelocity,
+				matches[0]!.postImpactNormalVelocity
+			].every(Number.isFinite)
+		);
+	});
 }
 
 function selectedContactIndices(
@@ -289,6 +335,47 @@ function selectedContactIndices(
 		.map((contact, index) => ({ index, result: byId.get(contact.id) }))
 		.filter(({ result }) => result !== undefined && result.postImpactNormalVelocity <= tolerance)
 		.map(({ index }) => index);
+}
+
+function ordinaryFallback(
+	input: ContactCaptureInput,
+	bodyIndex: ReadonlyMap<string, number>
+): ContactCaptureResult {
+	const tolerance = Math.max(input.numericalTolerance, Number.EPSILON * 256);
+	const ordinaryById = new Map(
+		input.ordinary.contacts.map((contact) => [contact.contactId, contact])
+	);
+	const retained = selectedContactIndices(input, input.ordinary, tolerance);
+	const retainedIds = retained.map((index) => input.contacts[index]!.id);
+	const retainedSet = new Set(retainedIds);
+	const ordinaryVelocity = endpointVelocity(input, input.ordinary);
+	const geometric = ordinaryVelocity
+		? geometricAccelerations(input, ordinaryVelocity, bodyIndex)
+		: input.contacts.map(() => 0);
+	return {
+		endpoint: input.ordinary,
+		diagnostic: {
+			captureDistance: input.contactCaptureDistance,
+			selectedEndpoint: 'ordinary',
+			meaningfulReboundVeto: false,
+			meaningfulReboundContactIds: [],
+			activeSetRemovalSequence: [],
+			retainedContactIds: retainedIds,
+			releasedContactIds: input.contacts.map(({ id }) => id).filter((id) => !retainedSet.has(id)),
+			contacts: input.contacts.map((contact, index) => ({
+				contactId: contact.id,
+				ordinaryPostImpactNormalVelocity:
+					ordinaryById.get(contact.id)?.postImpactNormalVelocity ?? 0,
+				geometricNormalAcceleration: geometric[index]!,
+				pressingNormalAcceleration: null,
+				reboundExcursion: null,
+				withinCaptureDistance: null,
+				impulsivelyActive: false,
+				supportReaction: 0,
+				retained: retainedSet.has(contact.id)
+			}))
+		}
+	};
 }
 
 function bodyVelocity(velocity: readonly number[], index: number): readonly [number, number] {

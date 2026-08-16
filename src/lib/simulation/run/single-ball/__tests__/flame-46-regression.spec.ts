@@ -17,7 +17,6 @@ const rightPegId = 'dense-peg-01-07';
 describe('FLAME-46 alternating-contact manifold acquisition', () => {
 	it('releases the exact-fit ball downward through the tangent throat', () => {
 		const run = constructSingleBallRun(exactFitInput);
-		console.dir(nonJsonPaths(run));
 
 		expect(run.outcome).toBe('time-limit');
 		expect(run.terminalReason.type).not.toBe('zero-time-loop');
@@ -29,6 +28,7 @@ describe('FLAME-46 alternating-contact manifold acquisition', () => {
 			})
 		);
 		const collapse = alternatingLimitEvent(run);
+		const restored = parseSimulationRunFixture(JSON.stringify(run));
 		expect(collapse?.contacts?.map(({ colliderId }) => colliderId).sort()).toEqual([
 			leftPegId,
 			rightPegId
@@ -38,7 +38,7 @@ describe('FLAME-46 alternating-contact manifold acquisition', () => {
 		);
 		expect(release?.startVelocity[1]).toBeLessThan(0);
 		expect(targetPegClearances(run)).toEqual([]);
-		expect(parseSimulationRunFixture(JSON.stringify(run))).toEqual(run);
+		expect(restored).toEqual(run);
 		expect(toRendererPlaybackInput(run).events).toEqual(run.events);
 	});
 
@@ -115,13 +115,6 @@ describe('FLAME-46 alternating-contact manifold acquisition', () => {
 		expect(mirrored.terminalReason.time).toBeCloseTo(baseline.terminalReason.time ?? 0, 10);
 	});
 });
-
-function nonJsonPaths(value: unknown, path = '$'): string[] {
-	if (value === undefined) return [path];
-	if (typeof value === 'number') return Number.isFinite(value) ? [] : [path];
-	if (!value || typeof value !== 'object') return [];
-	return Object.entries(value).flatMap(([key, entry]) => nonJsonPaths(entry, `${path}.${key}`));
-}
 
 function alternatingLimitEvent(run: ReturnType<typeof constructSingleBallRun>) {
 	const entry = run.diagnostics.entries.find(({ code }) => code === 'ALTERNATING_CONTACT_LIMIT');

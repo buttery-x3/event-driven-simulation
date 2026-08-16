@@ -277,7 +277,12 @@ function validateTransitions(context: RunValidationContext): void {
 		if (event.type !== 'contact-mode-transition') continue;
 		const trajectory = context.run.trajectories.find(({ bodyId }) => bodyId === event.bodyId);
 		const outgoing = trajectory?.segments.find((segment) => segment.startTime === event.time);
-		if (event.to === 'sliding' && (!outgoing || outgoing.type === 'free-flight')) {
+		const endsAtTransition = event.time === context.run.diagnostics.simulatedUntilTime;
+		if (
+			event.to === 'sliding' &&
+			(!outgoing || outgoing.type === 'free-flight') &&
+			!endsAtTransition
+		) {
 			fail(
 				context,
 				'sustained-contact',

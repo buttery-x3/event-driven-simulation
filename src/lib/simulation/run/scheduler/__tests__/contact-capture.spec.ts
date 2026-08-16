@@ -20,7 +20,14 @@ describe('FLAME-88 coupled contact capture', () => {
 				'fixed-contact:lower:floor:segment-face-positive:0'
 			]
 		});
-		expect(capture?.contacts.every(({ supportReaction }) => supportReaction > 0)).toBe(true);
+		expect(
+			capture?.contacts
+				.filter(({ retained }) => retained)
+				.every(({ supportReaction }) => supportReaction > 0)
+		).toBe(true);
+		expect(capture?.releasedContactIds).toEqual([
+			'fixed-contact:lower:left-wall:segment-face-negative:0'
+		]);
 		expect(
 			run.dynamicContacts.filter(({ state }) => state === 'retained').length
 		).toBeGreaterThanOrEqual(2);
@@ -44,6 +51,11 @@ function input(): SimulationInput {
 					id: 'floor',
 					motionAuthority: 'static',
 					physicalShape: { type: 'line-segment', start: [-5, 0], end: [5, 0] }
+				},
+				{
+					id: 'left-wall',
+					motionAuthority: 'static',
+					physicalShape: { type: 'line-segment', start: [-0.25, 0], end: [-0.25, 0.5] }
 				}
 			],
 			terminationRegions: []

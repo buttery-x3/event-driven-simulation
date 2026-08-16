@@ -216,6 +216,37 @@ describe('FLAME-87 finite local contact-capture proof', () => {
 		expect(coarseEnergetic.selectedEndpoint).toBe('ordinary');
 		expect(fineEnergetic.selectedEndpoint).toBe('ordinary');
 	});
+
+	it('falls back to the ordinary response when a captured endpoint omits a body', () => {
+		const input = impact([['ball', 1, [0, -1e-3]]], [fixedContact('floor', 'ball', [0, 1])], 0.8);
+		const ordinary = solveImpact(input);
+		const inelastic = solveImpact({ ...input, restitution: 0 });
+		const result = selectContactCapture({
+			bodies: input.bodies.map((body) => ({
+				id: body.id,
+				mass: body.mass,
+				incomingVelocity: body.velocity,
+				freeAcceleration: gravity
+			})),
+			contacts: [
+				{
+					id: 'floor',
+					type: 'body-fixed',
+					bodyId: 'ball',
+					normal: [0, 1],
+					curvatureRadius: null
+				}
+			],
+			ordinary: endpoint(ordinary),
+			inelastic: { ...endpoint(inelastic), bodyVelocities: [] },
+			contactCaptureDistance: representedCaptureResolution,
+			numericalTolerance,
+			solveInelastic: () => null
+		});
+
+		expect(result.endpoint).toEqual(endpoint(ordinary));
+		expect(result.diagnostic.selectedEndpoint).toBe('ordinary');
+	});
 });
 
 type BodyFixture = readonly [id: string, mass: number, velocity: Vec2];

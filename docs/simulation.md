@@ -345,7 +345,7 @@ otherwise the body continues in a `linear-contact` or `circular-contact` segment
 The impact state machine distinguishes the ordinary restitution endpoint from a finite-contact
 captured endpoint. After the existing fixed-world or generalized coupled solver completes the
 ordinary impact, one solver-neutral policy evaluates the complete exact-time component. For each
-impulsively active contact it combines the ordinary outgoing normal velocity with the local
+ordinary separating contact it combines the outgoing normal velocity with the local
 pressing acceleration and the changing-normal `vₜ²/R` term. An unbounded rebound, or any certified
 normal excursion greater than `contactCaptureDistance`, vetoes capture for the complete component.
 Otherwise the policy solves the zero-normal-velocity endpoint and removes zero-load or separating

@@ -81,7 +81,7 @@ export function resolveImpactResponse(
 		const result = selectedById.get(id);
 		return {
 			...ordinaryById.get(id)!,
-			postImpactNormalVelocity: dotVec2(selectedVelocity, candidate.normal),
+			postImpactNormalVelocity: normalizeZero(dotVec2(selectedVelocity, candidate.normal)),
 			impulse: result?.impulse ?? 0
 		};
 	});
@@ -191,6 +191,10 @@ function geometricNormalAcceleration(
 	if (radius === null) return 0;
 	const normalSpeed = dotVec2(velocity, candidate.normal);
 	return Math.max(0, dotVec2(velocity, velocity) - normalSpeed * normalSpeed) / radius;
+}
+
+function normalizeZero(value: number): number {
+	return Object.is(value, -0) ? 0 : value;
 }
 
 function contactId(candidate: FixedWorldContactCandidate): string {

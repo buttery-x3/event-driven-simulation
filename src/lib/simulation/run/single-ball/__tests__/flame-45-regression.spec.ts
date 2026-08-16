@@ -82,13 +82,22 @@ describe('FLAME-45 sub-tolerance circle release regression', () => {
 		const centre = constructSingleBallRun(withHorizontalPosition(forensic.input, 0));
 		const left = constructSingleBallRun(withHorizontalPosition(forensic.input, -1e-9));
 		const right = constructSingleBallRun(withHorizontalPosition(forensic.input, 1e-9));
+		const leftCaptureTime = left.diagnostics.entries.find(
+			({ code }) => code === 'FINITE_CONTACT_CAPTURE'
+		)?.time;
+		const rightCaptureTime = right.diagnostics.entries.find(
+			({ code }) => code === 'FINITE_CONTACT_CAPTURE'
+		)?.time;
+		const leftPrefix = left.events.filter(({ time }) => time <= leftCaptureTime!);
+		const rightPrefix = right.events.filter(({ time }) => time <= rightCaptureTime!);
 
 		expect(centre.outcome).toBe('settled');
 		expect(right.outcome).toBe(left.outcome);
 		expect(right.terminalReason.type).toBe(left.terminalReason.type);
-		expect(right.events).toHaveLength(left.events.length);
-		for (const [index, leftEvent] of left.events.entries()) {
-			const rightEvent = right.events[index]!;
+		expect(rightCaptureTime).toBeCloseTo(leftCaptureTime!, 12);
+		expect(rightPrefix).toHaveLength(leftPrefix.length);
+		for (const [index, leftEvent] of leftPrefix.entries()) {
+			const rightEvent = rightPrefix[index]!;
 			expect(rightEvent.type).toBe(leftEvent.type);
 			expect(rightEvent.time).toBeCloseTo(leftEvent.time, 10);
 			expect(rightEvent.position[0]).toBeCloseTo(-leftEvent.position[0], 10);

@@ -98,8 +98,10 @@ export function selectCoupledContactCapture(
 	if (selected.diagnostic.selectedEndpoint === 'ordinary') {
 		return { response: ordinary, contactCapture: selected.diagnostic };
 	}
+	const response = selectedResponse(component, ordinary, selected.endpoint);
+	if (!response) return ordinaryFallback(state, component, ordinary);
 	return {
-		response: selectedResponse(component, ordinary, selected.endpoint),
+		response,
 		contactCapture: selected.diagnostic
 	};
 }
@@ -119,22 +121,28 @@ function selectedResponse(
 	component: ExactTimeComponent,
 	ordinary: CoupledImpactResponse,
 	selected: ContactCaptureEndpoint
-): CoupledImpactResponse {
+): CoupledImpactResponse | null {
 	const velocityByBody = new Map(
 		selected.bodyVelocities.map(({ bodyId, velocity }) => [bodyId, velocity])
 	);
+	const bodyVelocities = component.bodies.map(({ id }) => ({
+		bodyId: id,
+		velocity: velocityByBody.get(id)
+	}));
+	if (bodyVelocities.some(({ velocity }) => velocity === undefined)) return null;
 	const selectedByContact = new Map(
 		selected.contacts.map((contact) => [contact.contactId, contact])
 	);
 	const ordinaryByContact = new Map(
 		ordinary.contacts.map((contact) => [contact.contactId, contact])
 	);
-	const finalVelocity = component.bodies.flatMap(({ id }) => velocityByBody.get(id) ?? [0, 0]);
+	const finalVelocity = bodyVelocities.flatMap(({ velocity }) => velocity!);
 	return {
 		...ordinary,
-		bodyVelocities: component.bodies
-			.map(({ id }) => ({ id, velocity: velocityByBody.get(id)! }))
-			.map(({ id, velocity }) => ({ bodyId: id, velocity })),
+		bodyVelocities: bodyVelocities.map(({ bodyId, velocity }) => ({
+			bodyId,
+			velocity: velocity!
+		})),
 		contacts: component.contacts.map((contact) => {
 			const selectedContact = selectedByContact.get(contact.id);
 			return {
@@ -143,13 +151,10 @@ function selectedResponse(
 				postImpactNormalVelocity: relativeNormal(component, contact, velocityByBody)
 			};
 		}),
-		inelasticVelocity: finalVelocity,
 		finalVelocity,
 		diagnostic: {
 			...ordinary.diagnostic,
-			inelasticVelocity: finalVelocity,
-			finalVelocity,
-			restitution: 0
+			finalVelocity
 		}
 	};
 }
