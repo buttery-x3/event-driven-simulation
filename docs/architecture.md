@@ -53,9 +53,10 @@ The canonical board coordinate system, construction and named launch catalogue a
 diagnostics for unsupported geometry, duplicate IDs, malformed coordinates and invalid dimensions.
 
 The named `simulation/world/scenarios` subdomain owns human-readable canonical, board-state,
-adversarial, dynamic-pair, simultaneous-impact, dormant-component, sustained-path-interruption and
-dynamic-support experiment definitions. Each scenario family that has its own descriptor vocabulary
-lives in a named local folder. The shared descriptor declares category, purpose, complete
+adversarial, dynamic-pair, simultaneous-impact, dormant-component, sustained-path-interruption,
+dynamic-support and settling-frontier experiment definitions. Each scenario family that has its own
+descriptor vocabulary lives in a named local folder. The shared descriptor declares category,
+purpose, complete
 `SimulationInput`, permitted outcomes, relevant event/contact expectations, replay expectation,
 coverage and regression provenance. It may describe invalid or unresolved experiments, but it does
 not invoke simulation or select solver behaviour; consumers receive it through `world/index.ts`.

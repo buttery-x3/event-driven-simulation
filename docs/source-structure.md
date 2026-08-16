@@ -115,6 +115,10 @@ src/lib/simulation/
             manifold/
                 index.ts
                 definitions.ts
+            settling/
+                index.ts
+                definitions.ts
+                __tests__/
         __tests__/
 
     run/
@@ -302,8 +306,10 @@ code.
 
 Scenario families with their own descriptor vocabulary live in named folders below
 `world/scenarios`. `dynamic-pairs`, `simultaneous-impact`, `dormant-components`,
-`path-interruptions` and `dynamic-supports` own declarative definitions only; they do not select
-solver policy or invoke private scheduler modules.
+`path-interruptions`, `dynamic-supports` and `settling` own declarative definitions only; they do not
+select solver policy or invoke private scheduler modules. The settling family owns deterministic
+empirical frontier inputs; its tests and issue audit consume public run/verification entry points
+rather than adding production solver policy to `world`.
 
 These responsibilities refine the module descriptions already present in `architecture.md`; they do
 not replace the physical and renderer boundaries documented there.
@@ -473,6 +479,11 @@ FLAME-51 through FLAME-56 added the documented `collision/dynamic-pair`, `run/dy
 `world/scenarios/dynamic-supports`. Their local entry points are private capability boundaries; the
 stable cross-subsystem facades remain `collision/index.ts`, `run/index.ts`, `verification/index.ts`
 and `world/index.ts`.
+
+FLAME-89 added `world/scenarios/settling` for the finite-contact-capture frontier inputs. The named
+family prevents empirical pile geometry and regression-control provenance from enlarging the
+scenario root at its six-file headroom trigger; the workbench continues to consume it through
+`world/index.ts`.
 
 The migration issue must also update the path references in `architecture.md`, `simulation.md`,
 `workflow.md`, ESLint rules and all imports. Do not leave documentation describing paths that no
