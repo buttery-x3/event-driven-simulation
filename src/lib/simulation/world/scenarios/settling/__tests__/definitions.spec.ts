@@ -172,7 +172,7 @@ describe('FLAME-89 finite-capture settling frontier', () => {
 		expect(capturedDecisions(result)).toHaveLength(1);
 		expect(bodyPairEdges(result)).toHaveLength(5);
 		expect(obliqueBodyContacts(result)).toEqual([]);
-		expect(validateSimulationRun(result.input, result).failures).toHaveLength(4);
+		expect(validateSimulationRun(result.input, result).failures).toEqual([]);
 	});
 });
 
