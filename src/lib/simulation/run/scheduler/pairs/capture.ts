@@ -109,13 +109,16 @@ export function selectCoupledContactCapture(
 	};
 }
 
-export function resolveUncapturedLowSpeedImpact(
+export function resolveLowSpeedImpactFallback(
 	state: SchedulerState,
 	component: ExactTimeComponent,
 	selected: SelectedCoupledImpact,
 	tolerance: number
 ): CoupledImpactResult {
-	if (selected.contactCapture.selectedEndpoint === 'captured') {
+	if (
+		selected.contactCapture.selectedEndpoint === 'captured' &&
+		!captureRequiresUnsupportedMovingPair(component, selected.response, tolerance)
+	) {
 		return { type: 'response' as const, response: selected.response };
 	}
 	const impactSpeed = Math.max(
@@ -126,6 +129,29 @@ export function resolveUncapturedLowSpeedImpact(
 		return { type: 'response' as const, response: selected.response };
 	}
 	return resolveCoupledImpact(coupledImpactInput(state, component, tolerance, 1));
+}
+
+function captureRequiresUnsupportedMovingPair(
+	component: ExactTimeComponent,
+	response: CoupledImpactResponse,
+	tolerance: number
+): boolean {
+	const results = new Map(response.contacts.map((contact) => [contact.contactId, contact]));
+	const velocities = new Map(
+		response.bodyVelocities.map(({ bodyId, velocity }) => [bodyId, velocity])
+	);
+	const retained = (contact: ActiveComponentContact) =>
+		(results.get(contact.id)?.postImpactNormalVelocity ?? Number.POSITIVE_INFINITY) <= tolerance;
+	if (!component.contacts.some((contact) => contact.type === 'body-fixed' && retained(contact))) {
+		return false;
+	}
+	return component.contacts.some(
+		(contact) =>
+			contact.type === 'body-body' &&
+			retained(contact) &&
+			Math.hypot(...velocities.get(contact.firstBodyId)!) > tolerance &&
+			Math.hypot(...velocities.get(contact.secondBodyId)!) > tolerance
+	);
 }
 
 function solveInelastic(

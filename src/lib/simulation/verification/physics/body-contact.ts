@@ -99,7 +99,7 @@ function validateResolvedResponse(
 	const tangent: Vec2 = [-normal[1], normal[0]];
 	const outgoingNormal = dot([after[1][0] - after[0][0], after[1][1] - after[0][1]], normal);
 	const expectedOutgoing =
-		-context.submittedInput.settings.restitution * contact.preImpactNormalVelocity;
+		-effectiveRestitution(context, contact) * contact.preImpactNormalVelocity;
 	const momentumBefore: Vec2 = [
 		first.mass * before[0][0] + second.mass * before[1][0],
 		first.mass * before[0][1] + second.mass * before[1][1]
@@ -140,6 +140,16 @@ function validateResolvedResponse(
 			contact.time,
 			first.id
 		);
+}
+
+function effectiveRestitution(
+	context: RunValidationContext,
+	contact: DynamicContactRecord
+): number {
+	const solve = (context.run.diagnostics.impactSolves ?? []).find(
+		(candidate) => candidate.completion === 'complete' && candidate.contactIds.includes(contact.id)
+	);
+	return solve?.restitution ?? context.submittedInput.settings.restitution;
 }
 
 function dot(left: Vec2, right: Vec2): number {

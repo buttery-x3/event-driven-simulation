@@ -16,7 +16,7 @@ import { admitCertifiedDynamicSupports, interruptDynamicSupports } from '../dyna
 import type { PairCommitResult } from './commit';
 import {
 	coupledImpactInput,
-	resolveUncapturedLowSpeedImpact,
+	resolveLowSpeedImpactFallback,
 	selectCoupledContactCapture
 } from './capture';
 import type { ActiveComponentContact, ComponentBodyState, ExactTimeComponent } from './component';
@@ -43,7 +43,7 @@ export function commitCoupledImpact(
 		return rejectCoupledImpact(state, component, result);
 	}
 	const selected = selectCoupledContactCapture(state, component, result.response, tolerance);
-	const finalResult = resolveUncapturedLowSpeedImpact(state, component, selected, tolerance);
+	const finalResult = resolveLowSpeedImpactFallback(state, component, selected, tolerance);
 	selectComponentDiagnostics(state, component, finalResult.type === 'response');
 	if (finalResult.type === 'rejected') {
 		return rejectCoupledImpact(state, component, finalResult, selected.contactCapture);

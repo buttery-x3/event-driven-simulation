@@ -68,6 +68,39 @@ describe('FLAME-88 coupled contact capture', () => {
 		expect(nearestConfiguredAbove?.impactSpeed).toBeGreaterThan(0.05);
 		expect(nearestConfiguredAbove?.solve.restitution).toBe(scenario.input.settings.restitution);
 	});
+
+	it('FLAME-90 bypasses unsupported low-speed moving-pair captures with valid elastic responses', () => {
+		for (const scenarioId of ['off-axis-incremental-pile', 'staggered-twenty-ball-pile']) {
+			const scenario = settlingScenarios.find(({ id }) => id === scenarioId)!;
+			const run = constructSimulationRun(scenario.input);
+			const overrides = (run.diagnostics.impactSolves ?? []).filter(
+				({ contactCapture, restitution }) =>
+					contactCapture?.selectedEndpoint === 'captured' && restitution === 1
+			);
+			const overriddenContactIds = new Set(overrides.flatMap(({ contactIds }) => contactIds));
+			const overriddenBodyContacts = run.dynamicContacts.filter(
+				({ id, participants }) =>
+					overriddenContactIds.has(id) && participants.every(({ type }) => type === 'body')
+			);
+			const validation = validateSimulationRun(scenario.input, run);
+
+			expect(overrides.length, scenarioId).toBeGreaterThan(0);
+			expect(overriddenBodyContacts.length, scenarioId).toBeGreaterThan(0);
+			expect(
+				overriddenBodyContacts.every(({ state }) => state === 'released'),
+				scenarioId
+			).toBe(true);
+			expect(run.terminalReason.type, scenarioId).not.toBe('unsupported-body-body-response');
+			expect(
+				validation.failures.filter(
+					({ message }) =>
+						message ===
+						'The resolved impact must satisfy equal-and-opposite impulse, tangential preservation, momentum, restitution and energy invariants.'
+				),
+				scenarioId
+			).toEqual([]);
+		}
+	}, 10_000);
 });
 
 function input(): SimulationInput {
