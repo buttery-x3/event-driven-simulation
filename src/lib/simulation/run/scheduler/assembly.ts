@@ -8,9 +8,11 @@ import type {
 	SimulationRunRecord,
 	StationaryMotionSegment
 } from '../../contracts';
+import { evaluateCircularContactState } from '../../motion';
 import { getRunOutcome } from '../outcome';
 import { toTerminalDiagnostic } from '../single-ball/diagnostics';
-import type { LocalBodyRuntime } from '../single-ball/local-events';
+import { predictionSegments, type LocalBodyRuntime } from '../single-ball/local-events';
+import { dynamicSupportPathForBody } from './dynamic-support';
 import type { SchedulerState } from './types';
 
 export function finishScheduledRun(
@@ -26,7 +28,7 @@ export function finishScheduledRun(
 		.sort((left, right) => left.body.id.localeCompare(right.body.id))
 		.map((runtime) => ({
 			bodyId: runtime.body.id,
-			segments: trajectorySegments(runtime, state.worldTime)
+			segments: trajectorySegments(state, runtime)
 		}));
 	const events = [...state.runtimes.values()]
 		.flatMap(({ events: localEvents }) => localEvents)
@@ -153,7 +155,7 @@ function bodyState(state: SchedulerState, body: InitialDynamicCircleBodyState): 
 	}
 	const reason = runtime.terminalReason;
 	if (!reason) {
-		return releasedState(body, 'active', runtime.committedTime, null);
+		return releasedState(body, 'active', state.worldTime, null);
 	}
 	if (reason.type === 'completion-region') {
 		return releasedState(body, 'completed', reason.time, 'completed');
@@ -189,11 +191,16 @@ function releasedState(
 }
 
 function trajectorySegments(
-	runtime: LocalBodyRuntime,
-	worldTime: number
+	state: SchedulerState,
+	runtime: LocalBodyRuntime
 ): readonly MotionSegment[] {
+	const worldTime = state.worldTime;
 	const segments = [...runtime.segments];
 	const reason = runtime.terminalReason;
+	if (!reason && !runtime.dormantComponentId) {
+		segments.push(...activeMotionPrefix(state, runtime));
+		return segments;
+	}
 	if (runtime.dormantComponentId && worldTime > runtime.committedTime) {
 		const startPosition =
 			reason?.type === 'resting-contact' ? reason.position : runtime.state.position;
@@ -231,6 +238,39 @@ function trajectorySegments(
 		segments.push(stationary);
 	}
 	return segments;
+}
+
+function activeMotionPrefix(
+	state: SchedulerState,
+	runtime: LocalBodyRuntime
+): readonly MotionSegment[] {
+	const dynamicSupportPath = dynamicSupportPathForBody(state, runtime.body.id);
+	const prediction = state.predictions.get(runtime.body.id);
+	const candidates = dynamicSupportPath
+		? [dynamicSupportPath]
+		: prediction
+			? predictionSegments(runtime, prediction)
+			: [];
+	const validUntilTime = Math.min(
+		state.worldTime,
+		dynamicSupportPath?.endTime ?? prediction?.time ?? runtime.committedTime
+	);
+	return candidates
+		.filter(
+			(segment) => segment.endTime > runtime.committedTime && segment.startTime < validUntilTime
+		)
+		.map((segment) => trimSegment(segment, Math.min(segment.endTime, validUntilTime)))
+		.filter((segment) => segment.endTime > segment.startTime);
+}
+
+function trimSegment(segment: MotionSegment, endTime: number): MotionSegment {
+	if (endTime === segment.endTime) return segment;
+	if (segment.type !== 'circular-contact') return { ...segment, endTime };
+	return {
+		...segment,
+		endTime,
+		endAngle: evaluateCircularContactState(segment, endTime).angle
+	};
 }
 
 function eventOrder(

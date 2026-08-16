@@ -84,6 +84,43 @@ describe('monotonic world scheduler', () => {
 		expect(validateSimulationRun(run.input, run).failures).toEqual([]);
 	});
 
+	it('materialises an active unrelated path through an early global terminal time', () => {
+		const run = constructSimulationRun(
+			input(
+				[
+					body('left', [-2, 5], [1, 0], 0),
+					body('right', [2, 5], [-1, 0], 0),
+					body('unrelated', [0, 8], [0.1, 0], 0)
+				],
+				{ maximumEvents: 1 }
+			)
+		);
+		const unrelated = trajectory(run, 'unrelated');
+		const terminalTime = run.diagnostics.simulatedUntilTime;
+
+		expect(run).toMatchObject({
+			validity: 'valid',
+			outcome: 'event-limit',
+			terminalReason: { type: 'event-limit', time: terminalTime }
+		});
+		expect(unrelated.segments).toHaveLength(1);
+		expect(unrelated.segments[0]).toMatchObject({
+			type: 'free-flight',
+			startTime: 0,
+			endTime: terminalTime
+		});
+		expect(run.bodyStates.find(({ bodyId }) => bodyId === 'unrelated')).toMatchObject({
+			lifecycle: 'active',
+			recordedUntilTime: terminalTime
+		});
+		expect(
+			run.trajectories
+				.flatMap(({ segments }) => segments)
+				.every(({ endTime }) => endTime <= terminalTime)
+		).toBe(true);
+		expect(parseSimulationRunFixture(JSON.stringify(run))).toEqual(run);
+	});
+
 	it('processes simultaneous independent events identically for reversed body arrays', () => {
 		const bodies = [body('left', [-2, 4], [-2, 0], 0), body('right', [2, 7], [2, 0], 0)] as const;
 		const baseline = constructSimulationRun(input(bodies));
@@ -196,6 +233,7 @@ function input(
 		readonly restitution?: number;
 		readonly colliders?: readonly StaticCollider[];
 		readonly regions?: readonly AxisAlignedTerminationRegion[];
+		readonly maximumEvents?: number;
 	} = {}
 ): SimulationInput {
 	return {
@@ -211,7 +249,7 @@ function input(
 			gravity: overrides.gravity ?? [0, 0],
 			restitution: overrides.restitution ?? 0.5,
 			contactCaptureDistance: 1e-9,
-			maximumEvents: 100,
+			maximumEvents: overrides.maximumEvents ?? 100,
 			maximumSimulationTime: 20,
 			tolerances: { contactDistance: 1e-9, eventTime: 1e-9 }
 		}
