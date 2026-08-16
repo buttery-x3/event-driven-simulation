@@ -9,7 +9,8 @@ import {
 	pathInterruptionScenarios,
 	independentBodySchedulerScenarios,
 	manifoldContactScenarios,
-	simultaneousImpactScenarios
+	simultaneousImpactScenarios,
+	settlingScenarios
 } from '$lib/simulation/world';
 import {
 	assessScenarioOutcome,
@@ -30,6 +31,7 @@ describe('workbench scenario catalogue', () => {
 				dormantComponentScenarios.length +
 				dynamicSupportScenarios.length +
 				pathInterruptionScenarios.length +
+				settlingScenarios.length +
 				simultaneousImpactScenarios.length +
 				adversarialScenarios.length
 		);
@@ -44,6 +46,7 @@ describe('workbench scenario catalogue', () => {
 			...dormantComponentScenarios,
 			...dynamicSupportScenarios,
 			...pathInterruptionScenarios,
+			...settlingScenarios,
 			...simultaneousImpactScenarios,
 			...adversarialScenarios
 		]) {

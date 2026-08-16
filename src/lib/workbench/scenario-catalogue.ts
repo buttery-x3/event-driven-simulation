@@ -10,6 +10,7 @@ import {
 	independentBodySchedulerScenarios,
 	manifoldContactScenarios,
 	simultaneousImpactScenarios,
+	settlingScenarios,
 	type ScenarioCategoryId,
 	type VerificationScenario
 } from '$lib/simulation/world';
@@ -46,6 +47,7 @@ export const workbenchScenarios = [
 	...dormantComponentScenarios,
 	...dynamicSupportScenarios,
 	...pathInterruptionScenarios,
+	...settlingScenarios,
 	...adversarialScenarios
 ] as const satisfies readonly WorkbenchScenarioDescriptor[];
 

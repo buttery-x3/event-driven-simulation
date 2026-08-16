@@ -14,6 +14,7 @@ export {
 	dormantComponentScenarios,
 	pathInterruptionScenarios,
 	dynamicSupportScenarios,
+	settlingScenarios,
 	canonicalPlinkoScenarios,
 	defaultCanonicalPlinkoScenario,
 	type BoardStateScenario,

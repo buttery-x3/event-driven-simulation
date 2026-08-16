@@ -100,7 +100,11 @@ export type ScenarioCoverageId =
 	| 'dynamic-support.transmitted-load-release'
 	| 'dynamic-support.external-impact'
 	| 'dynamic-support.detachment'
-	| 'dynamic-support.unsupported-moving-pair';
+	| 'dynamic-support.unsupported-moving-pair'
+	| 'settling.three-ball-capture'
+	| 'settling.incremental-off-axis'
+	| 'settling.twenty-ball-staggered'
+	| 'settling.twenty-ball-legacy-control';
 
 export type ScenarioMotionMode = 'free-flight' | 'linear-contact' | 'circular-contact';
 
