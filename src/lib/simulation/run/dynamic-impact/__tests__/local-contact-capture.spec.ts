@@ -148,6 +148,45 @@ describe('FLAME-87 finite local contact-capture proof', () => {
 		expect(bodyVelocity(proof.input, proof.selectedVelocity, 'ball')).toEqual([0, 0]);
 	});
 
+	it('preserves a meaningful complete corner impact before later floor capture', () => {
+		const bodies = [['ball', 1, [-2, -1e-3]]] as const;
+		const wall = fixedContact('wall', 'ball', [1, 0]);
+		const floor = fixedContact('floor', 'ball', [0, 1]);
+		const forward = evaluateCapture(impact(bodies, [wall, floor], 0.8), {
+			captureResolution: representedCaptureResolution
+		});
+		const reversed = evaluateCapture(impact(bodies, [floor, wall], 0.8), {
+			captureResolution: representedCaptureResolution
+		});
+		const floorAlone = evaluateCapture(impact(bodies, [floor], 0.8), {
+			captureResolution: representedCaptureResolution
+		});
+
+		expect(floorAlone.selectedEndpoint).toBe('inelastic');
+		expect(forward.selectedEndpoint).toBe('ordinary');
+		expect(forward.meaningfulImpulsiveContactIds).toEqual(['wall']);
+		expect(reversed.meaningfulImpulsiveContactIds).toEqual(['wall']);
+		expect(contactResult(forward.ordinary, 'wall').postImpactNormalVelocity).toBeCloseTo(1.6, 12);
+		expect(contactResult(forward.ordinary, 'floor').postImpactNormalVelocity).toBeCloseTo(8e-4, 12);
+		expect(forward.ordinary.finalVelocity).toEqual(reversed.ordinary.finalVelocity);
+		expect(forward.selectedVelocity).toEqual(forward.ordinary.finalVelocity);
+		expect(forward.selectedVelocity).toEqual(reversed.selectedVelocity);
+
+		const postImpactVelocity = bodyVelocity(forward.input, forward.selectedVelocity, 'ball');
+		const recollisionTime = (2 * postImpactVelocity[1]) / -gravity[1];
+		const laterFloorImpact = evaluateCapture(
+			impact([['ball', 1, [postImpactVelocity[0], -postImpactVelocity[1]]]], [floor], 0.8),
+			{ captureResolution: representedCaptureResolution }
+		);
+		expect(recollisionTime).toBeGreaterThan(0);
+		expect(laterFloorImpact.selectedEndpoint).toBe('inelastic');
+		expect(laterFloorImpact.retainedContactIds).toEqual(['floor']);
+		expect(laterFloorImpact.maximumNormalExcursion).toBeLessThan(representedCaptureResolution);
+		expect(bodyVelocity(laterFloorImpact.input, laterFloorImpact.selectedVelocity, 'ball')).toEqual(
+			[1.6, 0]
+		);
+	});
+
 	it('makes capture depend on a distinct declared represented-physics resolution', () => {
 		const lowEnergy = impact(
 			[['ball', 1, [0, -1e-3]]],
@@ -183,8 +222,10 @@ interface CaptureProof {
 	readonly selectedVelocity: readonly number[];
 	readonly retainedContactIds: readonly string[];
 	readonly releasedContactIds: readonly string[];
+	readonly meaningfulImpulsiveContactIds: readonly string[];
 	readonly supportReactions: readonly number[];
 	readonly geometricNormalAccelerations: readonly number[];
+	readonly normalExcursions: readonly number[];
 	readonly maximumNormalExcursion: number;
 }
 
@@ -226,14 +267,8 @@ function evaluateCapture(input: CoupledImpactInput, options: CaptureOptions): Ca
 		if (sameIndices(retainedIndices, nextIndices)) break;
 		retainedIndices = nextIndices;
 	}
-	const capturedImpact =
-		retainedIndices.length > 0
-			? solveImpact({
-					...input,
-					contacts: retainedIndices.map((index) => input.contacts[index]!)
-				})
-			: null;
-	const excursions = retainedIndices.map((index) => {
+	const normalExcursions = input.contacts.map((_, index) => {
+		if (!retainedIndices.includes(index)) return Infinity;
 		const outgoingSpeed = Math.max(0, normalVelocity(input, ordinary.finalVelocity, index));
 		if (outgoingSpeed <= numericalTolerance) return 0;
 		const released = constrainedAcceleration(
@@ -246,7 +281,28 @@ function evaluateCapture(input: CoupledImpactInput, options: CaptureOptions): Ca
 			? (outgoingSpeed * outgoingSpeed) / (2 * pressingAcceleration)
 			: Infinity;
 	});
-	const maximumNormalExcursion = excursions.length > 0 ? Math.max(...excursions) : Infinity;
+	const impulsiveReboundIndices = ordinary.contacts
+		.map((contact, index) => ({ contact, index }))
+		.filter(
+			({ contact }) =>
+				contact.preImpactNormalVelocity < -numericalTolerance * 64 &&
+				contact.postImpactNormalVelocity > numericalTolerance * 64
+		)
+		.map(({ index }) => index);
+	const maximumNormalExcursion =
+		impulsiveReboundIndices.length > 0
+			? Math.max(...impulsiveReboundIndices.map((index) => normalExcursions[index]!))
+			: 0;
+	const meaningfulImpulsiveIndices = impulsiveReboundIndices.filter(
+		(index) => normalExcursions[index]! > options.captureResolution
+	);
+	const capturedImpact =
+		meaningfulImpulsiveIndices.length === 0 && retainedIndices.length > 0
+			? solveImpact({
+					...input,
+					contacts: retainedIndices.map((index) => input.contacts[index]!)
+				})
+			: null;
 	const inelasticIsCompatible =
 		capturedImpact !== null &&
 		retainedIndices.every(
@@ -255,6 +311,7 @@ function evaluateCapture(input: CoupledImpactInput, options: CaptureOptions): Ca
 				numericalTolerance * 64
 		);
 	const capture =
+		meaningfulImpulsiveIndices.length === 0 &&
 		retainedIndices.length > 0 &&
 		inelasticIsCompatible &&
 		maximumNormalExcursion <= options.captureResolution;
@@ -272,8 +329,12 @@ function evaluateCapture(input: CoupledImpactInput, options: CaptureOptions): Ca
 		releasedContactIds: input.contacts
 			.map(({ id }) => id)
 			.filter((id) => !retainedContactIdSet.has(id)),
+		meaningfulImpulsiveContactIds: meaningfulImpulsiveIndices.map(
+			(index) => input.contacts[index]!.id
+		),
 		supportReactions: supported.reactions,
 		geometricNormalAccelerations,
+		normalExcursions,
 		maximumNormalExcursion
 	};
 }
@@ -321,6 +382,12 @@ function solveImpact(input: CoupledImpactInput): CoupledImpactResponse {
 	expect(result.type, result.type === 'rejected' ? result.reason : undefined).toBe('response');
 	if (result.type !== 'response') throw new Error(result.reason);
 	return result.response;
+}
+
+function contactResult(response: CoupledImpactResponse, contactId: string) {
+	const contact = response.contacts.find(({ contactId: id }) => id === contactId);
+	if (!contact) throw new Error(`Missing impact result for ${contactId}.`);
+	return contact;
 }
 
 function contactGradients(input: CoupledImpactInput): number[][] {
