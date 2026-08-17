@@ -176,6 +176,12 @@ src/lib/simulation/
                 index.ts
                 types.ts
                 policy.ts
+            low-speed-elastic/
+                index.ts
+                types.ts
+                problem.ts
+                solver.ts
+                response.ts
             __tests__/
         single-ball/
             index.ts
@@ -513,10 +519,12 @@ dynamic-support sources now feed one exact-contact vocabulary and mode authority
 their specialised discovery, response, path and persistence responsibilities. The public
 `run/index.ts` API and contract topology did not change.
 
-FLAME-96 Phase A added the private `run/dynamic-impact/low-speed-elastic` subdomain for the bounded
-support-constrained elastic kernel. The nested boundary keeps the six-file `dynamic-impact` root
-stable and does not create a scheduler dependency or a new top-level subsystem. Its local exports
-remain internal to `run`; production selection and lifecycle integration are intentionally deferred.
+FLAME-96 Phase A added the private `run/dynamic-impact/low-speed-elastic` subdomain for bounded
+support-constrained elastic physical adaptation and certification. It consumes the root
+solver-neutral terminating-reflection kernel without owning a second reflection algorithm. The
+nested boundary keeps the seven-file `dynamic-impact` root stable and does not create a scheduler
+dependency or a new top-level subsystem. Its local exports remain internal to `run`; production
+selection and lifecycle integration are intentionally deferred.
 
 The migration issue must also update the path references in `architecture.md`, `simulation.md`,
 `workflow.md`, ESLint rules and all imports. Do not leave documentation describing paths that no

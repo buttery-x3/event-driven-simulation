@@ -248,16 +248,16 @@ selection is a separately testable represented-physics policy shared by fixed-wo
 adapters. Its `policy.ts` owns meaningful-rebound veto and unilateral active-set reduction;
 `types.ts` owns its solver-neutral inputs/results and does not add a public entry point.
 
-FLAME-96 Phase A retains the nested `dynamic-impact/low-speed-elastic` subdomain as a physical
-reference only. `problem.ts`, `solver.ts`, `response.ts` and `types.ts` still separate formulation,
-reflection, certification and local vocabulary, but review found that production hardening would
-duplicate the Generalised Reflections solver's lineality and anti-locking responsibilities.
-Comparison tests therefore exercise a test-local adapter over the existing solver without adding a
-second production consumer or scheduler path. The adapter matches the reference outcomes, but its
-synthetic contact semantics, doubled support-contact resource use and absent signed-reaction
-diagnostic vocabulary prevent adoption as a narrow compatibility layer. No production ownership
-split is approved beyond retaining the prototype as an oracle; scheduler activation remains
-absent pending an explicit solver-boundary and diagnostic-contract decision.
+FLAME-96 Phase A keeps the nested `dynamic-impact/low-speed-elastic` subdomain but removes its
+duplicate terminating-reflection responsibility. `problem.ts` owns physical contact validation,
+support/impact partitioning, mass-normalised explicit equalities and complete-component coordinate
+locks. `solver.ts` owns support-compatible projection, invocation of the FLAME-97 solver-neutral
+kernel, and the decomposition into non-negative impact impulses plus signed equality reactions.
+`response.ts` maps back to physical coordinates and owns FLAME-96 feasibility, energy and momentum
+certification; `types.ts` owns the unchanged local API vocabulary. The root
+`terminating-elastic-reflections.ts` file is the sole production owner of terminating reflection,
+implicit impact lineality and anti-locking. Test-local mirrored-contact comparison evidence remains
+non-production. No scheduler consumer or lifecycle responsibility is introduced in Phase A.
 
 FLAME-93 introduced `run/contact-resolution` because exact-time contact representation,
 post-response role classification, supported-motion/resting qualification, support certification

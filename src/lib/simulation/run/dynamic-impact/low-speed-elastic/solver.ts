@@ -6,7 +6,11 @@ import {
 	pseudoInverseSolveSymmetric,
 	weightedNorm
 } from '../linear-algebra';
-import { solveNonnegativeLeastSquares, solveNonnegativeQuadratic } from '../nonnegative-qp';
+import { solveNonnegativeLeastSquares } from '../nonnegative-qp';
+import {
+	solveTerminatingElasticReflections,
+	type TerminatingElasticReflectionEndpoint
+} from '../terminating-elastic-reflections';
 import type { PreparedLowSpeedProblem } from './problem';
 
 export const LOW_SPEED_ELASTIC_IMPACT = 0.05;
@@ -20,11 +24,6 @@ export interface ConstrainedElasticSolution {
 	readonly reflectionCount: number;
 }
 
-interface ElasticEndpoint {
-	readonly velocity: readonly number[];
-	readonly reflectionCount: number;
-}
-
 export function solveConstrainedElastic(
 	problem: PreparedLowSpeedProblem,
 	tolerance: number
@@ -35,7 +34,12 @@ export function solveConstrainedElastic(
 	);
 	const incoming = certifyIncomingCompatibility(problem, equalityBasis, tolerance);
 	if (typeof incoming === 'string') return incoming;
-	const endpoint = solveElastic(problem, equalityBasis, incoming.velocity, tolerance);
+	const endpoint = solveSupportCompatibleEndpoint(
+		problem,
+		equalityBasis,
+		incoming.velocity,
+		tolerance
+	);
 	if (typeof endpoint === 'string') return endpoint;
 	const decomposition = decomposeMomentum(problem, endpoint.velocity, equalityBasis, tolerance);
 	if (typeof decomposition === 'string') return decomposition;
@@ -45,7 +49,7 @@ export function solveConstrainedElastic(
 		equalityReactions: decomposition.equalityReactions,
 		projectionCorrectionNorm: incoming.correctionNorm,
 		momentumResidualNorm: decomposition.residualNorm,
-		reflectionCount: endpoint.reflectionCount
+		reflectionCount: endpoint.reflections.length
 	};
 }
 
@@ -74,89 +78,42 @@ function certifyIncomingCompatibility(
 	return { velocity: projected, correctionNorm };
 }
 
-function solveElastic(
+function solveSupportCompatibleEndpoint(
 	problem: PreparedLowSpeedProblem,
 	equalityBasis: readonly (readonly number[])[],
 	initialVelocity: readonly number[],
 	tolerance: number
-): ElasticEndpoint | string {
-	const projectedImpacts = problem.impactIndices.map((index) => {
-		const gradient = project(problem.massNormalisedContactGradients[index]!, equalityBasis);
-		const length = Math.sqrt(dot(gradient, gradient));
-		return {
-			index,
-			direction: length > tolerance * 16 ? gradient.map((value) => value / length) : null
-		};
-	});
-	const impactSpeed = Math.max(
-		0,
-		...problem.impactIndices.map(
-			(index) => -dot(problem.contactGradients[index]!, problem.velocity)
-		)
-	);
+): TerminatingElasticReflectionEndpoint | string {
 	const incomingFloor = tolerance * Math.max(1, ...problem.velocity.map(Math.abs)) * 32;
-	if (
-		!problem.impactIndices.some(
-			(index) => dot(problem.contactGradients[index]!, problem.velocity) < -incomingFloor
-		)
-	) {
+	const incomingSpeeds = problem.impactIndices.flatMap((index) => {
+		const contact = problem.input.contacts[index]!;
+		const speed = -dot(problem.contactGradients[index]!, problem.velocity);
+		return contact.type === 'body-body' && speed > incomingFloor ? [speed] : [];
+	});
+	if (incomingSpeeds.length === 0) {
 		return 'The low-speed elastic phase has no genuinely incoming non-support impact contact.';
 	}
+	const impactSpeed = Math.max(...incomingSpeeds);
 	if (impactSpeed > LOW_SPEED_ELASTIC_IMPACT + incomingFloor) {
 		return 'The incoming non-support impact speed exceeds the low-speed elastic boundary.';
 	}
-	const initialNorm = Math.sqrt(dot(initialVelocity, initialVelocity));
-	const threshold = Math.max(
-		problem.input.tolerances.absoluteNormalVelocityFloor,
-		problem.input.tolerances.relativeViolationEpsilon * initialNorm
+	const supportCompatibleImpactGradients = problem.impactIndices.map((index) =>
+		project(problem.massNormalisedContactGradients[index]!, equalityBasis)
 	);
-	let velocity = [...initialVelocity];
-	for (
-		let reflectionCount = 0;
-		reflectionCount < problem.input.tolerances.maximumReflections;
-		reflectionCount += 1
-	) {
-		const violating = projectedImpacts.filter(
-			(item) => item.direction && dot(item.direction, velocity) < -threshold
-		);
-		if (violating.length === 0) {
-			const maximumViolation = Math.max(
-				0,
-				...problem.impactIndices.map(
-					(index) => -dot(problem.massNormalisedContactGradients[index]!, velocity)
-				)
-			);
-			if (maximumViolation > threshold * 16) {
-				return 'The reduced elastic response did not imply complete impact feasibility.';
-			}
-			return { velocity, reflectionCount };
+	// Mass-normalised coordinates carry the kinetic metric as the identity.
+	const unitMasses = Array.from({ length: initialVelocity.length }, () => 1);
+	return solveTerminatingElasticReflections({
+		velocity: initialVelocity,
+		masses: unitMasses,
+		inverseMasses: unitMasses,
+		gradients: supportCompatibleImpactGradients,
+		tolerances: {
+			numerical: tolerance,
+			absoluteNormalVelocityFloor: problem.input.tolerances.absoluteNormalVelocityFloor,
+			relativeViolationEpsilon: problem.input.tolerances.relativeViolationEpsilon,
+			maximumReflections: problem.input.tolerances.maximumReflections
 		}
-		const directions = violating.map(({ direction }) => direction!);
-		const solution = solveNonnegativeQuadratic(
-			gramMatrix(directions),
-			directions.map((direction) => 2 * dot(direction, velocity)),
-			tolerance
-		);
-		if (!solution || solution.values.every((value) => value <= tolerance)) {
-			return 'A violating impact subset could not be modified by a non-negative reflection.';
-		}
-		let tentative = [...velocity];
-		for (let index = 0; index < directions.length; index += 1) {
-			tentative = addScaled(tentative, directions[index]!, solution.values[index]!);
-		}
-		const tentativeNorm = Math.sqrt(dot(tentative, tentative));
-		if (
-			!Number.isFinite(tentativeNorm) ||
-			(initialNorm > tolerance && tentativeNorm <= tolerance)
-		) {
-			return 'Elastic energy renormalisation was undefined.';
-		}
-		const factor = tentativeNorm > tolerance ? initialNorm / tentativeNorm : 1;
-		velocity = tentative.map((value) => value * factor);
-		if (!velocity.every(Number.isFinite))
-			return 'The elastic reflection produced non-finite velocity.';
-	}
-	return 'The support-constrained elastic reflection cap was reached.';
+	});
 }
 
 function decomposeMomentum(

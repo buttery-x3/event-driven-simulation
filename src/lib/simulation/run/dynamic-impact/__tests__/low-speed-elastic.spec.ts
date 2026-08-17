@@ -189,6 +189,104 @@ describe('support-preserving low-speed elastic response', () => {
 		expect(response.certification.impactSpeed).toBeCloseTo(LOW_SPEED_ELASTIC_IMPACT, 12);
 		certifyResponse(input, response);
 	});
+
+	it('keeps the 0.05 impact boundary independent of the 0.01 represented-rest threshold', () => {
+		const speedAboveRepresentedRest = 0.02;
+		const input = problem(
+			[
+				['incoming', 1, [speedAboveRepresentedRest, 0]],
+				['target', 1, [0, 0]]
+			],
+			[bodyContact('impact', 'incoming', 'target', [1, 0])],
+			[]
+		);
+		const response = solveSupport(input);
+
+		expect(LOW_SPEED_ELASTIC_IMPACT).toBe(0.05);
+		expect(response.certification.impactSpeed).toBeCloseTo(speedAboveRepresentedRest, 12);
+		expect(velocity(response, 'target')[0]).toBeCloseTo(speedAboveRepresentedRest, 12);
+		certifyResponse(input, response);
+	});
+
+	it('is invariant to physical body, contact and support-ID ordering', () => {
+		const input = problem(
+			[
+				['incoming', 1, [0.04, 0]],
+				['supported', 1, [0, 0]],
+				['right', 1, [0, 0]]
+			],
+			[
+				bodyContact('incoming-contact', 'incoming', 'supported', [1, 0]),
+				bodyContact('transmission-contact', 'supported', 'right', [1, 0]),
+				fixedContact('vertical-support', 'supported', [0, 1])
+			],
+			['vertical-support']
+		);
+		const reversed: LowSpeedElasticInput = {
+			...input,
+			bodies: [...input.bodies].reverse(),
+			contacts: [...input.contacts].reverse(),
+			supportContactIds: [...input.supportContactIds].reverse()
+		};
+		const forward = solveSupport(input);
+		const backward = solveSupport(reversed);
+
+		for (const body of input.bodies) {
+			expect(velocity(backward, body.id)[0]).toBeCloseTo(velocity(forward, body.id)[0], 12);
+			expect(velocity(backward, body.id)[1]).toBeCloseTo(velocity(forward, body.id)[1], 12);
+		}
+		for (const contact of input.contacts.filter(
+			({ id }) => !input.supportContactIds.includes(id)
+		)) {
+			expect(impulse(backward, contact.id)).toBeCloseTo(impulse(forward, contact.id), 12);
+		}
+		certifyResponse(input, forward);
+		certifyResponse(reversed, backward);
+	});
+
+	it('fails closed when the shared terminating-reflection cap is insufficient', () => {
+		const input = problem(
+			[
+				['left', 1, [0.04, 0]],
+				['centre', 1, [0, 0]],
+				['right', 1, [0, 0]]
+			],
+			[
+				bodyContact('left-contact', 'left', 'centre', [1, 0]),
+				bodyContact('right-contact', 'centre', 'right', [1, 0])
+			],
+			[]
+		);
+
+		expect(
+			resolveSupportPreservingElasticResponse({
+				...input,
+				tolerances: { ...input.tolerances, maximumReflections: 1 }
+			})
+		).toEqual({
+			type: 'rejected',
+			reason: expect.stringContaining('defensive reflection cap reached')
+		});
+	});
+
+	it('rejects non-support body-fixed impacts instead of activating from fixed geometry', () => {
+		const input = problem(
+			[
+				['incoming', 1, [0.04, 0]],
+				['target', 1, [0, 0]]
+			],
+			[
+				bodyContact('body-impact', 'incoming', 'target', [1, 0]),
+				fixedContact('ordinary-fixed-impact', 'target', [-1, 0])
+			],
+			[]
+		);
+
+		expect(resolveSupportPreservingElasticResponse(input)).toEqual({
+			type: 'rejected',
+			reason: expect.stringContaining('body-fixed impact remains authoritative')
+		});
+	});
 });
 
 describe('anchored resting-component elastic fallback', () => {

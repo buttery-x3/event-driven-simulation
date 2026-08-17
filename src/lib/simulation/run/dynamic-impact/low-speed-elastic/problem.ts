@@ -129,6 +129,9 @@ function validateInput(input: LowSpeedElasticInput): string | null {
 	}
 	if (supportIds.size === input.contacts.length)
 		return 'At least one non-support impact contact is required.';
+	if (input.contacts.some(({ id, type }) => !supportIds.has(id) && type === 'body-fixed')) {
+		return 'A non-support body-fixed impact remains authoritative outside the low-speed elastic policy.';
+	}
 	const normalTolerance = effectiveLowSpeedTolerance(input) * 16;
 	for (const contact of input.contacts) {
 		const participants =

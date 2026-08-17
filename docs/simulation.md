@@ -407,13 +407,12 @@ neither certified support nor a common release remains unresolved instead of sel
 collider. Diagnostics record the alternating collider set, contracting intervals, candidate limit,
 retained contacts, state distance, support-feasibility result and final classification.
 
-### Support-preserving low-speed elastic reference
+### Support-preserving low-speed elastic response
 
-FLAME-96 Phase A defines a bounded reference response at the provisional physical boundary
+FLAME-96 Phase A defines a bounded internal response at the provisional physical boundary
 `LOW_SPEED_ELASTIC_IMPACT = 0.05 m/s`. It remains separate from the `0.01 m/s` represented-rest
-threshold. The prototype is an oracle for the intended physical outcomes, not an approved sibling
-production solver. It is not selected by production scheduler flow, so current run behaviour and
-saved-run meaning remain unchanged.
+threshold. It is not selected by production scheduler flow, so current run behaviour and saved-run
+meaning remain unchanged.
 
 For an already certified exact-time active contact set `A`, an integrating adapter must eventually
 supply authoritative pre-existing support contacts `S`; every other active contact belongs to
@@ -435,16 +434,15 @@ the response as inconsistent support evidence. A successful endpoint separately 
 equalities, unilateral impact feasibility, kinetic-energy preservation and a concrete generalized
 momentum decomposition through impact impulses plus declared support and lock reactions.
 
-Phase-A comparison tests establish that `resolveCoupledImpact(..., e = 1)` produces the same
-required endpoints when every bilateral support is supplied privately as opposing unilateral
-gradients. The same tests establish that anchored fallback can be reproduced numerically after
-removing complete dormant components from the active degrees of freedom and converting impacts
-against them to fixed-side gradients. These are mathematical comparison encodings only. They do
-not satisfy the existing physical-contact contract, double the contact contribution of each
-support before the solver's sixteen-contact bound, and cannot expose signed support/lock reactions
-through the current impact diagnostic contract. A nine-contact resting stack provides a concrete
-bounded input that becomes seventeen adapter contacts and is rejected. Scheduler integration is
-therefore stopped rather than weakening the resource, contact or diagnostic contracts.
+The adapter constructs an orthonormal basis for the mass-normalised explicit support and lock
+gradients. It projects the near-identical incoming generalized velocity and every real impact
+gradient into the basis nullspace, then calls `solveTerminatingElasticReflections(...)` with unit
+metric coordinates. The shared kernel supplies the terminating elastic endpoint including implicit
+impact lineality and anti-locking. FLAME-96 maps the endpoint through inverse square-root masses and
+solves a physical momentum decomposition using the original impact gradients and explicit signed
+equality reactions. It does not encode equalities as opposing contacts or dormant bodies as fixed
+geometry. The Phase-A reference fixtures remain the physical oracle; scheduler integration stays
+deferred until separate review.
 
 Every ordinary accepted manifold remains one `contact` event. An alternating-limit release keeps
 the last tolerance-resolved single impact as that contact event and records the complete candidate

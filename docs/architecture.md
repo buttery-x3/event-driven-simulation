@@ -233,21 +233,23 @@ and invariant checks, endpoint energies, impulses and completion reason. A persi
 without a fixed-anchored support certificate remains an explicit `unsupported-body-body-response`
 boundary after the instantaneous response succeeds.
 
-FLAME-96 Phase A retains `dynamic-impact/low-speed-elastic` only as a physical reference prototype.
-Its distinct support-preserving and anchored-component fallback operations demonstrated the
-required constrained elastic endpoints and concrete momentum decomposition, but review found that
-hardening its sibling reflection kernel would duplicate Generalised Reflections ownership.
+FLAME-96 Phase A exposes distinct support-preserving and anchored-component fallback operations in
+the private `dynamic-impact/low-speed-elastic` subdomain. It derives explicit bilateral support and
+coordinate-lock equalities from physical inputs, verifies that the incoming velocity already lies
+in their common admissible space apart from numerical drift, and mass-normalises that space. Real
+unilateral impact gradients are projected into the support-compatible space and passed directly to
+`terminating-elastic-reflections.ts`; no mirrored or synthetic physical contacts are constructed.
+The shared kernel remains the sole owner of implicit impact lineality, anti-locking, active-set
+reflection, energy renormalisation and reflection-cap termination.
 
-A comparison-only adapter proved that opposing unilateral gradients can make established supports
-bilateral through the existing lineality projection, and that removing dormant-component degrees
-of freedom can reproduce anchored fallback. That adapter is not an approved production boundary:
-mirrored support normals and dormant-body-as-fixed contacts are synthetic rather than physical
-`CoupledImpactContact` records, paired supports can expand an otherwise valid nine-contact problem
-beyond the existing sixteen-contact resource limit, and `ImpactSolveDiagnostic` cannot declare the
-resulting signed support or coordinate-lock reactions. Resolving those constraints would require a
-solver input/resource and diagnostic-contract decision rather than a narrow scheduler adapter.
-Scheduler integration therefore remains stopped; the Phase A prototype remains unchanged as the
-reference oracle and does not affect production collision behaviour.
+The low-speed adapter maps the shared endpoint back to physical coordinates and independently
+certifies support closure, impact feasibility, kinetic energy and a concrete momentum decomposition
+through non-negative physical impact impulses plus signed support/lock reactions. Anchored fallback
+adds coordinate equalities for every member of each complete declared resting component; it is not
+an arbitrary body-lock operation. The earlier bespoke reflection implementation and the
+comparison-only mirrored-contact adapter remain historical evidence but are absent from the
+production path. Scheduler integration remains deliberately absent pending a separate Phase-B
+review, so current run behaviour and saved-run meaning are unchanged.
 
 The dynamic-impact root has seven implementation files and one file of headroom. Finite capture is
 a separately changing represented-physics policy with two production consumers, so it lives in its
