@@ -23,7 +23,7 @@ export function refreshDynamicSupportPrediction(
 	state: SchedulerState,
 	support: DynamicSupportRuntime
 ): DynamicSupportPrediction | null {
-	const prediction = createPrediction(state, support);
+	const prediction = createDynamicSupportPrediction(state, support);
 	if (!prediction) return null;
 	state.dynamicSupportPredictions.set(support.id, prediction);
 	state.horizons.push({
@@ -109,9 +109,10 @@ export function selectDynamicSupportPrediction(
 	state.dynamicSupportPredictions.delete(prediction.supportId);
 }
 
-function createPrediction(
+export function createDynamicSupportPrediction(
 	state: SchedulerState,
-	support: DynamicSupportRuntime
+	support: DynamicSupportRuntime,
+	outgoingVelocity?: Vec2
 ): DynamicSupportPrediction | null {
 	const movingRuntime = state.runtimes.get(support.movingBodyId);
 	if (!movingRuntime) return null;
@@ -125,7 +126,7 @@ function createPrediction(
 		startTangentialSpeed: support.tangentialSpeed,
 		gravity: state.input.settings.gravity
 	};
-	const request = requestFor(state, support);
+	const request = requestFor(state, support, outgoingVelocity);
 	const ordinary = findEarliestAngularEvent(request, seed);
 	if (!ordinary) return null;
 	const tolerance = supportTolerance(state);
@@ -188,7 +189,8 @@ function createPrediction(
 
 function requestFor(
 	state: SchedulerState,
-	support: DynamicSupportRuntime
+	support: DynamicSupportRuntime,
+	outgoingVelocity?: Vec2
 ): SustainedContactRequest {
 	return {
 		input: state.input,
@@ -197,7 +199,7 @@ function requestFor(
 		time: support.time,
 		position: support.position,
 		normal: support.normal,
-		outgoingVelocity: state.runtimes.get(support.movingBodyId)!.state.velocity,
+		outgoingVelocity: outgoingVelocity ?? state.runtimes.get(support.movingBodyId)!.state.velocity,
 		entryFrom: 'impact',
 		entryReason: 'impact-collapse'
 	};

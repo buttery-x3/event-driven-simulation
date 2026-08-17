@@ -29,8 +29,17 @@ export function validateDynamicBodyContacts(context: RunValidationContext): void
 			({ id }) => id === participants[1]!.bodyId
 		);
 		if (!first || !second) continue;
+		const component = context.run.contactComponents.find(({ activeContactIds }) =>
+			activeContactIds.includes(contact.id)
+		);
+		const constrained = Boolean(
+			component &&
+			context.run.diagnostics.constrainedImpactSolves?.some(
+				({ componentId }) => componentId === component.id
+			)
+		);
 		validateContactState(context, contact, first, second, contactIndex);
-		validateResolvedResponse(context, contact, first, second, contactIndex);
+		if (!constrained) validateResolvedResponse(context, contact, first, second, contactIndex);
 		validateSharedHorizon(context, contact, first, second, contactIndex);
 		challengeEarlierOverlap(context, contact, first, second, contactIndex);
 	}

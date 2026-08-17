@@ -4,6 +4,7 @@ import type {
 	DynamicSupportDiagnostic,
 	ComponentLifecycleEvent,
 	ContactComponentRecord,
+	ConstrainedImpactSolveDiagnostic,
 	ImpactSolveDiagnostic,
 	InitialDynamicCircleBodyState,
 	PairPredictionDiagnostic,
@@ -29,6 +30,7 @@ export interface SchedulerState {
 	readonly contactComponents: ContactComponentRecord[];
 	readonly componentEvents: ComponentLifecycleEvent[];
 	readonly impactSolves: ImpactSolveDiagnostic[];
+	readonly constrainedImpactSolves: ConstrainedImpactSolveDiagnostic[];
 	readonly dynamicSupports: Map<string, DynamicSupportRuntime>;
 	readonly dynamicSupportPredictions: Map<string, DynamicSupportPrediction>;
 	readonly dynamicSupportDiagnostics: DynamicSupportDiagnostic[];

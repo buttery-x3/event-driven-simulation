@@ -55,6 +55,7 @@ export type {
 	DynamicSupportReactionEvidence,
 	ImpactReflectionDiagnostic,
 	ImpactSolveDiagnostic,
+	ConstrainedImpactSolveDiagnostic,
 	BodyEventHorizonDiagnostic,
 	PairPredictionDiagnostic,
 	PredictionDecision,

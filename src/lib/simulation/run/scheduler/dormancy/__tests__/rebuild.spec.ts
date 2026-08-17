@@ -148,6 +148,7 @@ function fixture(): {
 		contactComponents: [],
 		componentEvents: [],
 		impactSolves: [],
+		constrainedImpactSolves: [],
 		dynamicSupports: new Map(),
 		dynamicSupportPredictions: new Map(),
 		dynamicSupportDiagnostics: [],

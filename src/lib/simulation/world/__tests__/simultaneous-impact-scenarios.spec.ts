@@ -69,9 +69,16 @@ describe('production simultaneous-impact scenarios', () => {
 		expect(antiLocking.projectedVelocity[throatIndex]).toBe(0);
 		expect(antiLocking.projectedVelocity[throatIndex + 1]).toBe(-1);
 
-		const scaled = run('floating-point-scale-invariance').diagnostics.impactSolves!;
-		expect(scaled).toHaveLength(3);
+		const scaledRun = run('floating-point-scale-invariance');
+		const scaled = scaledRun.diagnostics.impactSolves!;
+		expect(scaled).toHaveLength(2);
 		expect(scaled.every(({ reflections }) => reflections.length <= 1)).toBe(true);
+		expect(scaledRun.diagnostics.constrainedImpactSolves).toHaveLength(1);
+		expect(
+			scaledRun.diagnostics.constrainedImpactSolves?.every(
+				({ certification }) => certification.reflectionCount <= 1
+			)
+		).toBe(true);
 
 		const multiBody = firstSolve(run('multi-body-lineality-component'));
 		expect(multiBody.bodyIds).toHaveLength(3);

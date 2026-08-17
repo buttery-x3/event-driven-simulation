@@ -28,10 +28,10 @@ export const settlingScenarios = [
 	scenario(
 		'off-axis-incremental-pile',
 		'Off-axis incremental pile',
-		'Three separately scheduled off-axis arrivals join and reactivate a mechanically supported component through changing oblique contacts.',
+		'Three separately scheduled off-axis arrivals join and reactivate a mechanically supported component through changing oblique contacts before pair geometry fails closed.',
 		'settling.incremental-off-axis',
 		offAxisIncrementalPileInput(),
-		['unresolved']
+		['invalid']
 	),
 	scenario(
 		'staggered-twenty-ball-pile',
@@ -47,7 +47,7 @@ export const settlingScenarios = [
 		'The FLAME-57 five-column input remains a control for the former indeterminate dynamic-pair topology failure, not a dense-pile acceptance case.',
 		'settling.twenty-ball-legacy-control',
 		legacyTwentyBallControlInput(),
-		['unresolved'],
+		['event-limit'],
 		true
 	)
 ] as const satisfies readonly VerificationScenario[];

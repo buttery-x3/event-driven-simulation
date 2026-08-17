@@ -145,16 +145,23 @@ src/lib/simulation/
                 component.ts
                 commit.ts
                 coupled-commit.ts
+                coupled-contact-records.ts
                 capture.ts
+                low-speed-escape/
+                    index.ts
+                    selection.ts
+                    support.ts
             dormancy/
                 index.ts
                 admission.ts
+                planning.ts
                 rebuild.ts
                 records.ts
             dynamic-support/
                 index.ts
                 types.ts
                 admission.ts
+                preflight.ts
                 prediction.ts
                 commit.ts
                 interruption.ts
@@ -247,8 +254,10 @@ src/lib/simulation/
                 index.ts
                 validate.ts
                 shape.ts
+                constrained-impact-shape.ts
                 multi-body-shape.ts
                 consistency.ts
+                constrained-impact-consistency.ts
                 migration-v6.ts
             __tests__/
         simulation-input/
@@ -275,6 +284,9 @@ src/lib/simulation/
             collision-free.ts
             contact-dynamics.ts
             coupled-impact.ts
+            constrained-impact/
+                index.ts
+                validate.ts
             dormant-component.ts
             support/
                 index.ts
@@ -319,7 +331,10 @@ construction, while `terminating-elastic-reflections.ts` owns its private solver
 reflection kernel. Its nested `contact-capture` subdomain owns the shared represented-physics
 endpoint-selection policy after either impact solver completes. Inside the scheduler, `pairs` owns continuous pair selection,
 pair-seeded exact-time component construction and commitment; `pairs/capture.ts` is the coupled
-geometry/endpoint adapter to that shared policy. `dormancy` owns supported-state admission and
+geometry/endpoint adapter to that shared policy, while `coupled-contact-records.ts` owns the contact
+history representation emitted by coupled commitment. Its nested `low-speed-escape` capability owns the
+FLAME-96 exact-event support snapshot and ordered scheduler selection without owning response
+mathematics or persistent modes. `dormancy` owns supported-state admission and
 post-impact component rebuilding,
 lifecycle records and retained-contact persistence, and `dynamic-support` owns certified moving
 body-on-anchored-body continuation and interruption. Its nested `resolution` capability adapts
@@ -525,6 +540,13 @@ solver-neutral terminating-reflection kernel without owning a second reflection 
 nested boundary keeps the seven-file `dynamic-impact` root stable and does not create a scheduler
 dependency or a new top-level subsystem. Its local exports remain internal to `run`; production
 selection and lifecycle integration are intentionally deferred.
+
+FLAME-96 Phase B added the private `scheduler/pairs/low-speed-escape` policy adapter. It derives
+support only from represented exact-event modes, preserves configured response and capture
+precedence, and delegates accepted endpoints back to existing dormancy, fixed-contact and dynamic
+support authority. A distinct optional constrained-impact diagnostic preserves signed instantaneous
+support/lock reactions without changing ordinary FLAME-53 diagnostics or non-negative contact
+impulse semantics. V7 shape and independent physics verification own that additive evidence.
 
 The migration issue must also update the path references in `architecture.md`, `simulation.md`,
 `workflow.md`, ESLint rules and all imports. Do not leave documentation describing paths that no

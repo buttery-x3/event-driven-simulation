@@ -233,7 +233,7 @@ and invariant checks, endpoint energies, impulses and completion reason. A persi
 without a fixed-anchored support certificate remains an explicit `unsupported-body-body-response`
 boundary after the instantaneous response succeeds.
 
-FLAME-96 Phase A exposes distinct support-preserving and anchored-component fallback operations in
+FLAME-96 exposes distinct support-preserving and anchored-component fallback operations in
 the private `dynamic-impact/low-speed-elastic` subdomain. It derives explicit bilateral support and
 coordinate-lock equalities from physical inputs, verifies that the incoming velocity already lies
 in their common admissible space apart from numerical drift, and mass-normalises that space. Real
@@ -248,8 +248,15 @@ through non-negative physical impact impulses plus signed support/lock reactions
 adds coordinate equalities for every member of each complete declared resting component; it is not
 an arbitrary body-lock operation. The earlier bespoke reflection implementation and the
 comparison-only mirrored-contact adapter remain historical evidence but are absent from the
-production path. Scheduler integration remains deliberately absent pending a separate Phase-B
-review, so current run behaviour and saved-run meaning are unchanged.
+production path.
+
+The private `scheduler/pairs/low-speed-escape` adapter owns exact-event activation and authoritative
+support extraction after configured response and finite capture. It returns the selected endpoint
+to existing mode and lifecycle owners; it introduces no persistent constraint mode. Anchored
+fallback preserves each selected resting component record and runtime unchanged while committing
+only the escaping bodies. A separate optional constrained-impact diagnostic and verifier record the
+signed equality reactions without changing FLAME-53 diagnostic meaning or ordinary contact-impulse
+semantics.
 
 The dynamic-impact root has seven implementation files and one file of headroom. Finite capture is
 a separately changing represented-physics policy with two production consumers, so it lives in its

@@ -28,6 +28,7 @@ export type {
 	DynamicSupportReactionEvidence,
 	ImpactReflectionDiagnostic,
 	ImpactSolveDiagnostic,
+	ConstrainedImpactSolveDiagnostic,
 	PairPredictionDiagnostic,
 	PredictionDecision,
 	PredictionRevision,

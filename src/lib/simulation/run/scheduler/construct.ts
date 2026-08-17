@@ -151,6 +151,7 @@ function createSchedulerState(input: SimulationInput): SchedulerState {
 		contactComponents: [],
 		componentEvents: [],
 		impactSolves: [],
+		constrainedImpactSolves: [],
 		dynamicSupports: new Map(),
 		dynamicSupportPredictions: new Map(),
 		dynamicSupportDiagnostics: [],

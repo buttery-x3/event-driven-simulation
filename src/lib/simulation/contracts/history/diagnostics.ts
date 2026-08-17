@@ -164,6 +164,48 @@ export interface ImpactSolveDiagnostic {
 	readonly failureReason: string | null;
 }
 
+export interface ConstrainedImpactSolveDiagnostic {
+	readonly kind: 'support-preserving-elastic';
+	readonly componentId: string;
+	readonly mode: 'support-preserving' | 'anchored-fallback';
+	readonly bodyIds: readonly EntityId[];
+	readonly masses: readonly number[];
+	readonly contacts: readonly {
+		readonly contactId: string;
+		readonly role: 'support-constraint' | 'impact';
+		readonly preImpactNormalVelocity: number;
+		readonly postImpactNormalVelocity: number;
+	}[];
+	readonly impactImpulses: readonly {
+		readonly contactId: string;
+		readonly impulse: number;
+	}[];
+	readonly supportReactions: readonly {
+		readonly contactId: string;
+		readonly multiplier: number;
+	}[];
+	readonly lockReactions: readonly {
+		readonly componentId: string;
+		readonly bodyId: EntityId;
+		readonly axis: 'x' | 'y';
+		readonly multiplier: number;
+	}[];
+	readonly preImpactVelocity: readonly number[];
+	readonly finalVelocity: readonly number[];
+	readonly certification: {
+		readonly impactSpeed: number;
+		readonly maximumPreSupportViolation: number;
+		readonly maximumPostSupportViolation: number;
+		readonly maximumPostImpactViolation: number;
+		readonly incomingProjectionCorrectionNorm: number;
+		readonly kineticEnergyBefore: number;
+		readonly kineticEnergyAfter: number;
+		readonly energyError: number;
+		readonly momentumResidualNorm: number;
+		readonly reflectionCount: number;
+	};
+}
+
 export interface ContactCaptureContactDiagnostic {
 	readonly contactId: string;
 	readonly ordinaryPostImpactNormalVelocity: number;
@@ -234,6 +276,7 @@ export interface RunDiagnostics {
 	readonly bodyEventHorizons: readonly BodyEventHorizonDiagnostic[];
 	readonly pairPredictions: readonly PairPredictionDiagnostic[];
 	readonly impactSolves?: readonly ImpactSolveDiagnostic[];
+	readonly constrainedImpactSolves?: readonly ConstrainedImpactSolveDiagnostic[];
 	readonly dynamicSupports?: readonly DynamicSupportDiagnostic[];
 	readonly schedulerSteps?: readonly WorldSchedulerStepDiagnostic[];
 	readonly entries: readonly DiagnosticEntry[];

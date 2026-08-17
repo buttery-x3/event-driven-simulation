@@ -9,6 +9,7 @@ import {
 import {
 	validateCollisionFreeIntervals,
 	validateCoupledImpacts,
+	validateConstrainedImpacts,
 	validateContactDynamics,
 	validateContactGeometry,
 	validateDynamicBodyContacts,
@@ -37,6 +38,7 @@ export function validateSimulationRun(
 	validateDormantComponents(context);
 	validateDynamicSupports(context);
 	validateCoupledImpacts(context);
+	validateConstrainedImpacts(context);
 	validateCollisionFreeIntervals(context);
 	validateContactDynamics(context);
 	validateTerminalOutcome(context);

@@ -6,7 +6,7 @@ import {
 	type ExactContact,
 	type ResolvedContactState
 } from '../../contact-resolution';
-import type { CoupledImpactResponse } from '../../dynamic-impact';
+import type { BodyVelocityResponse } from '../dormancy';
 import type { SchedulerState } from '../types';
 import { refreshDynamicSupportPrediction } from './prediction';
 import type { DynamicSupportRuntime } from './types';
@@ -14,7 +14,7 @@ import type { DynamicSupportRuntime } from './types';
 export function admitCertifiedDynamicSupports(
 	state: SchedulerState,
 	resolvedContacts: ResolvedContactState,
-	response: CoupledImpactResponse,
+	response: BodyVelocityResponse,
 	tolerance: number
 ): ReadonlySet<string> {
 	const component = resolvedContacts.eventState;

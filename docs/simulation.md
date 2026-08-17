@@ -409,17 +409,23 @@ retained contacts, state distance, support-feasibility result and final classifi
 
 ### Support-preserving low-speed elastic response
 
-FLAME-96 Phase A defines a bounded internal response at the provisional physical boundary
+FLAME-96 defines a bounded response at the physical boundary
 `LOW_SPEED_ELASTIC_IMPACT = 0.05 m/s`. It remains separate from the `0.01 m/s` represented-rest
-threshold. It is not selected by production scheduler flow, so current run behaviour and saved-run
-meaning remain unchanged.
+threshold. Production selection occurs only after configured restitution, finite contact capture,
+represented rest and existing sustained-support continuations have been considered.
 
-For an already certified exact-time active contact set `A`, an integrating adapter must eventually
-supply authoritative pre-existing support contacts `S`; every other active contact belongs to
+For an already certified exact-time active contact set `A`, the scheduler derives authoritative
+pre-existing support contacts `S` only from represented resting, fixed-sustained or dynamic-support
+modes at that event; every other active contact belongs to
 `I = A minus S`. Activation speed is measured only from initially incoming contacts in `I`, while the
 elastic propagation includes complete `I`, including unsupported contacts whose initial normal
 velocity is zero. Contacts in `S` are bilateral zero-normal-velocity equalities and contacts in `I`
 are unilateral impact directions with non-negative impulses.
+
+At least one initially incoming contact in `I` must be body/body. An ordinary body/fixed contact in
+`I`, mere touching geometry or a zero-normal contact does not activate the policy. Above `0.05 m/s`
+the configured response remains authoritative. A selected constrained endpoint is passed through
+the same dormancy, fixed-contact and dynamic-support authorities as every ordinary response.
 
 The support-preserving operation and anchored fallback are distinct. Support preservation constrains
 only the supplied support normals and retains their common tangent/nullspace motion. Anchored
@@ -442,7 +448,13 @@ impact lineality and anti-locking. FLAME-96 maps the endpoint through inverse sq
 solves a physical momentum decomposition using the original impact gradients and explicit signed
 equality reactions. It does not encode equalities as opposing contacts or dormant bodies as fixed
 geometry. The Phase-A reference fixtures remain the physical oracle; scheduler integration stays
-deferred until separate review.
+bounded to the policy described above.
+
+Run diagnostics store constrained solves separately from ordinary FLAME-53 `impactSolves`. The
+constrained record carries contact roles, full pre/post generalized velocities, non-negative impact
+impulses, signed instantaneous support reactions, signed anchored-coordinate reactions and the
+projection, feasibility, kinetic-energy and momentum certificate. Dynamic contact impulses remain
+ordinary non-negative instantaneous impulses; bilateral reactions are never placed in that field.
 
 Every ordinary accepted manifold remains one `contact` event. An alternating-limit release keeps
 the last tolerance-resolved single impact as that contact event and records the complete candidate

@@ -229,10 +229,16 @@ world/body outcomes; it is not a speculative layer.
 FLAME-52 introduced enough pair-event policy to require the private `scheduler/pairs` subdomain.
 `selection.ts` owns continuous prediction ordering, `component.ts` owns the pair-seeded adapter to
 the shared exact-time contact graph, `commit.ts` owns isolated pair commitment, `coupled-commit.ts` owns simultaneous
-component commitment, and `capture.ts` adapts coupled geometry and solver endpoints to the shared
+component commitment, `coupled-contact-records.ts` owns resolved/unresolved contact-history
+construction, and `capture.ts` adapts coupled geometry and solver endpoints to the shared
 capture policy. Its local `index.ts` is an explicit internal facade. Scheduler construction
 continues to own global sequencing and imports this capability without re-exporting its internal
 types from `run/index.ts`.
+
+FLAME-96 keeps `coupled-commit.ts` focused on simultaneous commitment sequencing by extracting its
+existing resolved/unresolved contact-history construction to `coupled-contact-records.ts`. The
+`pairs` root is now at the six-implementation-file headroom threshold; another independently
+changing pair policy belongs in a named nested capability rather than another root sibling.
 
 FLAME-53 introduced the sibling `run/dynamic-impact` numerical subdomain. `response.ts` preserves
 the isolated closed-form response, `generalised-reflections.ts` owns the generalized simultaneous
@@ -312,12 +318,20 @@ also reached its six-file headroom threshold with `mode.ts`; it is the source-sp
 the common authority, not a second policy owner. Any further independent fixed-contact policy or
 additional constrained geometry should trigger a nested subdomain assessment rather than a seventh
 root implementation file. FLAME-95 keeps both six-file roots stable: fixed continuation reuses its
-existing mode/result modules, and dynamic-support adds no sibling implementation file.
+existing mode/result modules, and dynamic-support adds no sibling implementation file. FLAME-96
+adds only the bounded, read-only `preflight.ts` representability check and reuses the existing
+prediction certificate without touching lifecycle construction. The dynamic-support root now has
+seven implementation files and one file of headroom; further policy or prediction growth requires
+a nested capability.
 
 Independent checks for dynamic support introduced `verification/physics/support` rather than
 adding another category to the physics orchestrator. `dynamic.ts` owns the body/body geometry,
 tangency, reaction, component-lifecycle and interruption checks; its local entry point leaves the
 public `verification/index.ts` API unchanged.
+
+FLAME-96 similarly places its independently testable constrained-response evidence validator in
+`verification/physics/constrained-impact`. The named subdomain keeps the physics root below its
+eight-file capacity while the root facade and public verification entry point remain unchanged.
 
 FLAME-36 moved restitution response out of `construct.ts` when sustained contact introduced a
 second response mode. The orchestrator retains only state sequencing and run assembly.
@@ -372,6 +386,10 @@ validation. Legacy run shape and consistency remain in the version 6 files. The 
 migration assembly without enlarging the parent directory beyond its headroom threshold. Reusable
 unknown-data assertions and typed fixture failures live in the narrowly named
 `serialization/structural-validation` subdomain and are exposed through its local entry point.
+FLAME-96 extracts constrained-impact shape and cross-record consistency into dedicated V7 modules;
+that directory now has seven implementation files and one file of headroom. A further independently
+changing diagnostic family or run-record revision must use a named nested capability or the next
+version boundary rather than filling the root indiscriminately.
 
 The public `contracts` entry point was decomposed for FLAME-48. `geometry.ts`, `input.ts` and
 `motion.ts` own their respective plain declarations; the named `contracts/history` subdomain owns

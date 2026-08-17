@@ -1,6 +1,7 @@
 import type { SimulationRunRecord } from '../../../contracts';
 import { validateSimulationInputV7 } from '../../simulation-input/v7';
 import { createUnknownDataAssertions, invalidRunRecordField } from '../../structural-validation';
+import { validateConstrainedImpactSolveShape } from './constrained-impact-shape';
 import { validateMultiBodyHistoryShape } from './multi-body-shape';
 
 const assertions = createUnknownDataAssertions(invalidRunRecordField);
@@ -302,6 +303,13 @@ function validateDiagnostics(value: unknown, path: string): void {
 						)
 					);
 		});
+	if (diagnostics.constrainedImpactSolves !== undefined) {
+		assertions
+			.requireArray(diagnostics.constrainedImpactSolves, `${path}.constrainedImpactSolves`)
+			.forEach((entry, index) =>
+				validateConstrainedImpactSolveShape(entry, `${path}.constrainedImpactSolves[${index}]`)
+			);
+	}
 	if (diagnostics.schedulerSteps !== undefined) {
 		assertions
 			.requireArray(diagnostics.schedulerSteps, `${path}.schedulerSteps`)

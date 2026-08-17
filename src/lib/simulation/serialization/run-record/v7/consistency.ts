@@ -5,6 +5,7 @@ import {
 	isOutcomeConsistentWithValidity
 } from '../../../run';
 import { invalidRunRecordField } from '../../structural-validation';
+import { validateConstrainedImpactConsistency } from './constrained-impact-consistency';
 
 export function validateRunConsistencyV7(record: SimulationRunRecord): void {
 	if (record.outcome !== getRunOutcome(record.terminalReason)) {
@@ -18,6 +19,7 @@ export function validateRunConsistencyV7(record: SimulationRunRecord): void {
 	validateTrajectories(record);
 	validateReleases(record);
 	validateContactsAndComponents(record);
+	validateConstrainedImpactConsistency(record);
 	validatePredictions(record);
 	validateTerminalReferences(record);
 	const terminalEntry = record.diagnostics.entries.at(-1);

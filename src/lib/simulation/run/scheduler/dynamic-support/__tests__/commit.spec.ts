@@ -203,6 +203,7 @@ function schedulerState(
 		contactComponents: [component],
 		componentEvents: [],
 		impactSolves: [],
+		constrainedImpactSolves: [],
 		dynamicSupports: new Map([[support.id, support]]),
 		dynamicSupportPredictions: new Map(),
 		dynamicSupportDiagnostics: [],
