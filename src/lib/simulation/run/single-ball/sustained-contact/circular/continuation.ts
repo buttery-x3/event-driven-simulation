@@ -6,7 +6,7 @@ import type {
 import { dotVec2 } from '../../../../math';
 import { circularContactTravelTime, evaluateCircularContactState } from '../../../../motion';
 import { classifySupportedMotion, type SupportedMotionEvidence } from '../../../contact-resolution';
-import { detachedContactResult, restingContactResult } from '../contact-mode-results';
+import { detachedContactResult, selectedRestingContactResult } from '../contact-mode-results';
 import { colliderCandidateAtState } from '../geometry';
 import type { SustainedContactRequest, SustainedContactResult } from '../types';
 import { findEarliestAngularEvent, type CircularContactSeed } from './angular-event-search';
@@ -29,9 +29,8 @@ export function continueCircularContact(
 	contactRadius: number
 ): SustainedContactResult {
 	const motion = circularMotionEvidence(request);
-	if (classifySupportedMotion(motion) === 'resting-qualified') {
-		return restingContactResult(request, motion);
-	}
+	const resting = selectedRestingContactResult(request, motion);
+	if (resting) return resting;
 	const start = classifyCircularLegStart(request, centre, contactRadius);
 	if (start.type === 'detached') return detachedContactResult(request, start.velocity);
 
@@ -203,6 +202,7 @@ function circularMotionEvidence(request: SustainedContactRequest): SupportedMoti
 	const speed = dotVec2(request.outgoingVelocity, tangent);
 	const acceleration = dotVec2(request.input.settings.gravity, tangent);
 	return {
+		velocities: [[tangent[0] * speed, tangent[1] * speed]],
 		velocityComponents: [speed],
 		constrainedAccelerationComponents: [acceleration],
 		tolerance: request.input.settings.tolerances.eventTime

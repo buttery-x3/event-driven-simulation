@@ -10,7 +10,6 @@ import {
 } from '../../../collision';
 import { dotVec2 } from '../../../math';
 import { evaluateMotionSegmentPosition, evaluateMotionSegmentVelocity } from '../../../motion';
-import { classifySupportedMotion } from '../../contact-resolution';
 import { toRunContactSearchDiagnostic } from '../diagnostics';
 import { findEarliestTerminationEntry } from '../termination-search';
 import { continueCircularContact } from './circular';
@@ -18,7 +17,7 @@ import { resolveSustainedBoundaryMode } from './mode';
 import {
 	detachedContactResult,
 	entryTransition,
-	restingContactResult,
+	selectedRestingContactResult,
 	slidingTransition,
 	unresolvedContactResult
 } from './contact-mode-results';
@@ -46,9 +45,8 @@ export function continueLineContact(
 		constrainedAccelerations: [tangentAcceleration],
 		tolerance: request.input.settings.tolerances.eventTime
 	};
-	if (classifySupportedMotion(motion) === 'resting-qualified') {
-		return restingContactResult(request, motion);
-	}
+	const resting = selectedRestingContactResult(request, motion);
+	if (resting) return resting;
 
 	const segmentVector: Vec2 = [
 		collider.physicalShape.end[0] - collider.physicalShape.start[0],

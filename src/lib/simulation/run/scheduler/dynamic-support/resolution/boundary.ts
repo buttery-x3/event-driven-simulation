@@ -1,6 +1,7 @@
 import type { Vec2 } from '../../../../contracts';
 import {
 	classifyPostResponseContacts,
+	certifySupportEquilibrium,
 	selectPostContactMode,
 	type ExactContact,
 	type ExactTimeContactState,
@@ -22,11 +23,16 @@ export interface DynamicSupportModeEvidence {
 	readonly motion?: SupportedMotionEvidence;
 }
 
+export interface DynamicSupportBoundaryResolution {
+	readonly mode: PostContactMode;
+	readonly eventState: ExactTimeContactState;
+}
+
 export function resolveDynamicSupportMode(
 	state: SchedulerState,
 	support: DynamicSupportRuntime,
 	evidence: DynamicSupportModeEvidence
-): PostContactMode {
+): DynamicSupportBoundaryResolution {
 	const eventState = dynamicSupportContactState(state, support, evidence);
 	const released = new Set(evidence.releasedAnchoredContactIds);
 	const reactionById = new Map(
@@ -58,20 +64,40 @@ export function resolveDynamicSupportMode(
 		retainedBodyContact &&
 		evidence.reaction.support !== null &&
 		evidence.reaction.bodyBodyReaction > supportTolerance(state);
-	return selectPostContactMode({
-		contacts,
-		dynamicSupport: dynamicallySupported
-			? {
-					contactId: support.contactId,
-					movingBodyId: support.movingBodyId,
-					supportBodyId: support.supportBodyId,
-					motion: evidence.motion,
-					stationaryDetail:
-						'Dynamic support reached a turning point without a certified direction of departure.'
-				}
-			: null,
-		unsupportedBodyContactId: retainedBodyContact ? support.contactId : null
-	});
+	return {
+		mode: selectPostContactMode({
+			contacts,
+			resting: dynamicallySupported
+				? {
+						bodyIds: eventState.bodies.map(({ id }) => id),
+						motion: {
+							...evidence.motion,
+							velocities: eventState.bodies.map(({ velocity }) => velocity),
+							tolerance: supportTolerance(state)
+						},
+						support: () =>
+							certifySupportEquilibrium(
+								eventState.bodies,
+								eventState.contacts,
+								state.input.settings.gravity,
+								supportTolerance(state)
+							)
+					}
+				: null,
+			dynamicSupport: dynamicallySupported
+				? {
+						contactId: support.contactId,
+						movingBodyId: support.movingBodyId,
+						supportBodyId: support.supportBodyId,
+						motion: evidence.motion,
+						stationaryDetail:
+							'Dynamic support reached a turning point without a certified direction of departure.'
+					}
+				: null,
+			unsupportedBodyContactId: retainedBodyContact ? support.contactId : null
+		}),
+		eventState
+	};
 }
 
 function dynamicSupportContactState(

@@ -190,17 +190,20 @@ Certified stationary components with fixed support become persistent dormant com
 the event-time impact/dormancy admissions changed by FLAME-94, the common mode policy may also admit
 a current-contact subset whose velocity magnitudes are within the represented-rest threshold and
 whose zero-motion support is certified. The private `scheduler/dormancy` subdomain owns their
-admission, post-impact retirement/rebuilding, split/merge lifecycle evidence and retained contact
-records. It consumes the general support-equilibrium certificate and common resting-mode decision
-rather than owning either policy.
+admission, post-impact retirement/rebuilding, split/merge lifecycle evidence, retained contact
+records and commitment of already-selected certified resting components. It consumes the general
+support-equilibrium certificate and common resting-mode decision rather than owning either policy.
 Dormant bodies have stationary authoritative coverage and no local prediction until an exact-time
 component impact reactivates them; the global scheduler remains responsible only for sequencing
 that transition with releases and other selected events.
 
-FLAME-94 does not make represented rest reachable from every persistent supported-motion state.
-Linear and circular sustained-contact continuations retain their historical numerical-zero rest
-entry, and dynamic sustained support has no general transition that commits its moving member into
-an existing resting-anchored component.
+FLAME-95 extends represented rest to existing sustained-motion boundaries without creating a rest
+threshold event. Linear and circular fixed-contact continuations submit their current velocity
+vectors and support evidence to the common mode authority before continuing. At a retained dynamic
+support boundary, the resolution adapter submits the complete anchored contact group; when common
+represented-rest candidacy and the general zero-motion support certificate both succeed,
+dynamic-support retires its runtime and dormancy commits the group through the existing
+`resting-anchored` representation.
 
 A retained dynamic body contact may become a sustained circular support only when the supporting
 body belongs to a fixed-anchored dormant component that remains support-feasible under the moving
@@ -208,8 +211,8 @@ body's transmitted equal-and-opposite load. The private `scheduler/dynamic-suppo
 admission, constrained prediction, exact reaction-loss boundaries, commitment, interruption and
 contract record construction for that state machine. It reuses the general support-equilibrium
 certificate with the transmitted external load and the existing circular angular event search;
-its nested `resolution` adapter sends reaction-boundary roles to the common mode authority. It does
-not convert the support body to static geometry. A third-body impact interrupts the complete
+its nested `resolution` adapter sends reaction-boundary roles and complete current contact evidence
+to the common mode authority. It does not convert the support body to static geometry. A third-body impact interrupts the complete
 anchored component at the exact impact time before the component is rebuilt and re-certified.
 
 The sibling `dynamic-impact` subdomain owns the generalized-coordinate simultaneous-impact law

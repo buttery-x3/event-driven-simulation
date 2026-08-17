@@ -14,6 +14,19 @@ export function restingContactResult(
 		tolerance: request.input.settings.tolerances.eventTime
 	}
 ): SustainedContactResult {
+	return (
+		selectedRestingContactResult(request, motion) ??
+		unresolvedContactResult(
+			request,
+			'The stationary fixed contact did not receive a resting-anchored mode decision.'
+		)
+	);
+}
+
+export function selectedRestingContactResult(
+	request: SustainedContactRequest,
+	motion: SupportedMotionEvidence
+): SustainedContactResult | null {
 	const resolution = resolveSustainedBoundaryMode(
 		request,
 		request.time,
@@ -23,28 +36,24 @@ export function restingContactResult(
 		'retained',
 		motion
 	);
-	if (resolution.mode.type !== 'resting-anchored') {
-		return unresolvedContactResult(
-			request,
-			'The stationary fixed contact did not receive a resting-anchored mode decision.'
-		);
-	}
-	return {
-		segments: [],
-		events: [entryTransition(request, 'resting')],
-		contactSearches: [],
-		terminalReason: {
-			type: 'resting-contact',
-			time: request.time,
-			colliderId: request.colliderId,
-			position: request.position,
-			normal: request.normal,
-			contacts: request.manifoldContacts,
-			reason:
-				request.entryReason === 'impact-collapse' ? 'impact-collapse' : 'zero-tangential-motion'
-		},
-		nextState: null
-	};
+	return resolution.mode.type === 'resting-anchored'
+		? {
+				segments: [],
+				events: [entryTransition(request, 'resting')],
+				contactSearches: [],
+				terminalReason: {
+					type: 'resting-contact',
+					time: request.time,
+					colliderId: request.colliderId,
+					position: request.position,
+					normal: request.normal,
+					contacts: request.manifoldContacts,
+					reason:
+						request.entryReason === 'impact-collapse' ? 'impact-collapse' : 'zero-tangential-motion'
+				},
+				nextState: null
+			}
+		: null;
 }
 
 export function detachedContactResult(

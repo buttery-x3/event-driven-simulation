@@ -257,7 +257,8 @@ scheduler prefix-commitment state,
 retained/released roles, `support-equilibrium.ts` owns the general non-negative contact-graph
 certificate, and `mode.ts` owns supported-motion and represented-rest qualification plus generic
 mode precedence. FLAME-94 consumes represented-rest qualification through event-time impact and
-dormancy admissions; sustained-motion and dynamic-support lifecycle transitions remain unchanged.
+dormancy admissions; FLAME-95 supplies sustained-motion boundary evidence to the same authority
+without moving path or lifecycle construction into this subdomain.
 Its local `index.ts` is private to the
 `run` subsystem; `run/index.ts` and all public contracts remain unchanged. Numerical solvers,
 continuous path algorithms and lifecycle construction remain outside this subdomain.
@@ -265,8 +266,9 @@ continuous path algorithms and lifecycle construction remain outside this subdom
 FLAME-54 introduced a persistent dormant-component state machine and therefore the private
 `scheduler/dormancy` subdomain rather than adding that lifecycle to the scheduler orchestrator.
 `admission.ts` owns initial and single-body promotion, `rebuild.ts` owns post-impact retirement,
-current-contact candidate grouping, split/merge/recreation and reactivation, `records.ts` owns
-stable component/contact persistence,
+current-contact candidate grouping, split/merge/recreation and reactivation, `commit.ts` owns
+commitment of an already-selected certified resting component, and `records.ts` owns stable
+component/contact persistence primitives,
 while general non-negative support certification now belongs to `run/contact-resolution`. The local
 `index.ts` preserves the narrow scheduler-facing lifecycle API. Focused dormant-component scenarios
 and verification protect the extraction; no compatibility wrapper remains at the old flat
@@ -281,21 +283,24 @@ and `types.ts` owns private runtime vocabulary. The local `index.ts` preserves a
 scheduler-facing API, while public run construction remains unchanged through `run/index.ts`.
 
 The subdomain is at the six-implementation-file headroom threshold. Its files remain cohesive parts
-of one independently changing support state machine and no production file exceeds the review
-threshold after record construction was extracted from commitment. A second constrained
-body/body geometry, a replaceable reaction-search backend or independently configurable
-certification policy would require a nested prediction or certification subdomain rather than a
-seventh sibling implementation file.
+of one independently changing support state machine. `commit.ts` exceeds the review trigger but
+remains below the hard limit and owns only selected-boundary transition sequencing; record and
+dormancy persistence construction stay extracted. A second constrained body/body geometry, a
+replaceable reaction-search backend or independently configurable certification policy would
+require a nested prediction or certification subdomain rather than a seventh sibling implementation
+file.
 
 FLAME-93 kept that six-file root stable by adding the narrowly named nested
 `dynamic-support/resolution` capability for adapters from reaction-boundary evidence to the common
-post-contact mode authority. `commit.ts` still owns transition persistence, while
-`resolution/boundary.ts` constructs the event-relative contact roles used to select free flight,
+post-contact mode authority. `commit.ts` still owns dynamic-support transition sequencing while
+delegating selected rest persistence to dormancy; `resolution/boundary.ts` constructs the
+event-relative contact roles and complete retained group used to select rest, free flight,
 continued dynamic support or the existing unsupported boundary. The fixed sustained-contact root
 also reached its six-file headroom threshold with `mode.ts`; it is the source-specific adapter to
 the common authority, not a second policy owner. Any further independent fixed-contact policy or
 additional constrained geometry should trigger a nested subdomain assessment rather than a seventh
-root implementation file.
+root implementation file. FLAME-95 keeps both six-file roots stable: fixed continuation reuses its
+existing mode/result modules, and dynamic-support adds no sibling implementation file.
 
 Independent checks for dynamic support introduced `verification/physics/support` rather than
 adding another category to the physics orchestrator. `dynamic.ts` owns the body/body geometry,

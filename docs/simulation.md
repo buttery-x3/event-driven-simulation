@@ -306,11 +306,18 @@ evidence only for the selected resting mode and only from contacts in its succes
 ordinary retained/released evidence is unchanged when rest is not selected. The policy does not
 infer future contacts, change restitution, add damping or count quiet events.
 
-This policy is not yet a general transition from every persistent supported-motion state. Existing
-linear and circular sustained-motion continuations retain their historical numerical-zero rest
-entry. Dynamic sustained support does not yet have a general transition that commits its moving
-member into an existing `resting-anchored` component. Those capabilities remain explicit follow-up
-work rather than part of FLAME-94.
+FLAME-95 applies the same policy when the simulator reaches an existing exact sustained-motion
+boundary. Fixed linear and circular continuations provide the common authority with the actual
+current velocity vector rather than pre-gating rest on numerical-zero local motion. Retained dynamic
+support provides its moving body, anchored bodies, body/body support contact and anchored contact
+network; the complete group enters the existing `resting-anchored` representation only when the
+general current-geometry support certificate succeeds. Dynamic-support retires its active runtime
+and prediction before dormancy persists the selected group. Failed certification preserves fixed
+continuation, dynamic continuation, reversal, release or unsupported behaviour.
+
+Crossing `0.01 m/s` inside an otherwise continuous supported path is not an event. Sustained paths do
+not search, poll or step for that threshold; represented rest is considered only at a physical
+boundary already selected by the existing path or reaction mathematics.
 
 Diagnostic body horizons and pair predictions record a common validity interval, per-body revision
 stamps and selected/retained/invalidated/stale decisions. Supported free-flight, linear-contact and

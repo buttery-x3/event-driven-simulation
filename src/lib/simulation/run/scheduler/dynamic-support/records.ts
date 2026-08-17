@@ -1,51 +1,10 @@
 import type { DynamicSupportDiagnostic, Vec2 } from '../../../contracts';
-import { certifySupportEquilibrium } from '../../contact-resolution';
 import type { SchedulerState } from '../types';
 import type {
 	DynamicSupportPrediction,
 	DynamicSupportReactionState,
 	DynamicSupportRuntime
 } from './types';
-
-export function createRestingAnchor(
-	state: SchedulerState,
-	support: DynamicSupportRuntime,
-	time: number
-): void {
-	const solution = certifySupportEquilibrium(
-		support.anchoredBodies,
-		support.anchoredContacts,
-		state.input.settings.gravity,
-		supportTolerance(state)
-	);
-	if (!solution) {
-		for (const bodyId of support.anchoredBodyIds)
-			state.runtimes.get(bodyId)!.dormantComponentId = null;
-		return;
-	}
-	const revision = nextDynamicSupportRevision(state, support);
-	const id = `resting-component:${time}:${support.anchoredBodyIds.join('+')}:r${revision}`;
-	state.contactComponents.push({
-		id,
-		type: 'resting-anchored',
-		createdAtTime: time,
-		dissolvedAtTime: null,
-		bodyIds: support.anchoredBodyIds,
-		fixedColliderIds: fixedColliderIds(support),
-		activeContactIds: solution.contacts.map(({ id: contactId }) => contactId),
-		retainedSupportReactions: reactionRecords(solution),
-		revision,
-		futureScheduledEventTimes: []
-	});
-	state.componentEvents.push({
-		type: 'contact-component-lifecycle',
-		time,
-		change: 'created',
-		componentIds: [],
-		resultingComponentIds: [id]
-	});
-	for (const bodyId of support.anchoredBodyIds) state.runtimes.get(bodyId)!.dormantComponentId = id;
-}
 
 export function createDynamicComponent(
 	state: SchedulerState,
@@ -121,8 +80,8 @@ export function dynamicSupportTransition(
 	time: number,
 	position: Vec2,
 	normal: Vec2,
-	to: 'free-flight' | 'impact',
-	reason: 'support-lost' | 'collider-contact' | 'terminal-region'
+	to: 'free-flight' | 'impact' | 'resting',
+	reason: 'support-lost' | 'collider-contact' | 'terminal-region' | 'resting'
 ) {
 	return {
 		type: 'contact-mode-transition' as const,
@@ -280,8 +239,4 @@ function fixedColliderIds(support: DynamicSupportRuntime): readonly string[] {
 			)
 		)
 	].sort();
-}
-
-function supportTolerance(state: SchedulerState): number {
-	return Math.max(state.input.settings.tolerances.contactDistance, Number.EPSILON * 256);
 }

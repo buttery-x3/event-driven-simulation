@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import type { SimulationInput, StaticCollider } from '../../../../contracts';
+import type {
+	SimulationInput,
+	StaticCollider,
+	StaticLineSegmentCollider
+} from '../../../../contracts';
 import { evaluateCircularContactState } from '../../../../motion';
 import {
 	findCircularMotionBoundary,
@@ -11,6 +15,7 @@ import {
 	restingContactResult,
 	unresolvedContactResult
 } from '../contact-mode-results';
+import { continueLineContact } from '../linear-contact';
 import type { SustainedContactRequest } from '../types';
 
 const supportingCollider: StaticCollider = {
@@ -76,6 +81,60 @@ function makeRequest(): SustainedContactRequest {
 }
 
 describe('sustained-contact numerical event policy', () => {
+	it('lets the common mode authority admit low-speed linear supported motion to rest', () => {
+		const floor: StaticLineSegmentCollider = {
+			id: 'floor',
+			motionAuthority: 'static',
+			physicalShape: { type: 'line-segment', start: [-2, 0], end: [2, 0] }
+		};
+		const request = makeRequest();
+		const result = continueLineContact(
+			{
+				...request,
+				colliderId: floor.id,
+				position: [0, 0.1],
+				normal: [0, 1],
+				outgoingVelocity: [0.009, 0],
+				input: {
+					...request.input,
+					scene: { ...request.input.scene, staticColliders: [floor] },
+					settings: { ...request.input.settings, gravity: [0, -10] }
+				}
+			},
+			floor
+		);
+
+		expect(result).toMatchObject({
+			segments: [],
+			events: [{ to: 'resting' }],
+			terminalReason: { type: 'resting-contact', colliderId: 'floor' }
+		});
+	});
+
+	it('supplies full low-speed circular velocity evidence to represented-rest selection', () => {
+		const request = makeRequest();
+		const result = continueCircularContact(
+			{
+				...request,
+				position: [0, 0.6],
+				normal: [0, 1],
+				outgoingVelocity: [0.009, 0],
+				input: {
+					...request.input,
+					settings: { ...request.input.settings, gravity: [0, -10] }
+				}
+			},
+			[0, 0],
+			0.6
+		);
+
+		expect(result).toMatchObject({
+			segments: [],
+			events: [{ to: 'resting' }],
+			terminalReason: { type: 'resting-contact', colliderId: 'peg' }
+		});
+	});
+
 	it('selects a supported turning point before the unavailable continuation', () => {
 		const boundary = findCircularMotionBoundary({
 			centre: [0, 0],

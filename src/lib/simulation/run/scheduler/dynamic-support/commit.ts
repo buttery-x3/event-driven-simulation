@@ -1,10 +1,12 @@
 import type { RunTerminalReason, Vec2 } from '../../../contracts';
 import { dotVec2 } from '../../../math';
 import { evaluateCircularContactState } from '../../../motion';
+import type { ExactTimeContactState, SupportReactionSolution } from '../../contact-resolution';
 import type { SustainedContactRequest } from '../../single-ball/sustained-contact';
 import { colliderCandidateAtState } from '../../single-ball/sustained-contact/geometry';
 import { refreshBodyPrediction } from '../predictions';
 import type { SchedulerState } from '../types';
+import { commitCertifiedRestingComponent, restoreRestingComponent } from '../dormancy';
 import {
 	evaluateDynamicSupportReaction,
 	refreshDynamicSupportPrediction,
@@ -14,7 +16,6 @@ import { resolveDynamicSupportMode } from './resolution';
 import {
 	activeDynamicSupportContactIds,
 	createDynamicComponent,
-	createRestingAnchor,
 	dynamicSupportTransition,
 	nextDynamicSupportRevision,
 	recordDynamicSupportDiagnostic,
@@ -56,7 +57,7 @@ export function commitDynamicSupportPrediction(
 		case 'turning-point': {
 			const tangent: Vec2 = [-endState.normal[1], endState.normal[0]];
 			const constrainedAcceleration = dotVec2(state.input.settings.gravity, tangent);
-			const mode = resolveDynamicSupportMode(state, support, {
+			const resolution = resolveDynamicSupportMode(state, support, {
 				time: prediction.segment.endTime,
 				position: endState.position,
 				velocity: endState.velocity,
@@ -70,14 +71,8 @@ export function commitDynamicSupportPrediction(
 					tolerance: state.input.settings.tolerances.eventTime
 				}
 			});
-			if (mode.type === 'unresolved') {
-				return numericalFailure(prediction.segment.endTime, mode.detail);
-			}
-			if (mode.type !== 'dynamic-sustained-support') {
-				return numericalFailure(
-					prediction.segment.endTime,
-					'The turning-point boundary did not retain dynamic sustained support.'
-				);
+			if (resolution.mode.type === 'unresolved') {
+				return numericalFailure(prediction.segment.endTime, resolution.mode.detail);
 			}
 			recordDynamicSupportDiagnostic(
 				state,
@@ -87,10 +82,26 @@ export function commitDynamicSupportPrediction(
 				[],
 				activeDynamicSupportContactIds(state, support)
 			);
+			if (resolution.mode.type === 'resting-anchored') {
+				return commitDynamicSupportRest(
+					state,
+					support,
+					prediction,
+					resolution.eventState,
+					resolution.mode.support,
+					false
+				);
+			}
+			if (resolution.mode.type !== 'dynamic-sustained-support') {
+				return numericalFailure(
+					prediction.segment.endTime,
+					'The turning-point boundary did not retain dynamic sustained support.'
+				);
+			}
 			return reverseAtTurning(state, support, prediction, endState.position, endState.normal);
 		}
 		case 'support-lost': {
-			const mode = resolveDynamicSupportMode(state, support, {
+			const resolution = resolveDynamicSupportMode(state, support, {
 				time: prediction.segment.endTime,
 				position: endState.position,
 				velocity: endState.velocity,
@@ -100,7 +111,7 @@ export function commitDynamicSupportPrediction(
 				bodyBodyDisposition: 'released',
 				reaction: prediction.endReaction
 			});
-			if (mode.type !== 'free-flight') {
+			if (resolution.mode.type !== 'free-flight') {
 				return numericalFailure(
 					prediction.segment.endTime,
 					'The released dynamic support did not select free flight.'
@@ -134,7 +145,7 @@ export function commitDynamicSupportPrediction(
 			return commitAnchorLoss(state, support, prediction, endState.position, endState.velocity);
 		}
 		case 'contact': {
-			const mode = resolveDynamicSupportMode(state, support, {
+			const resolution = resolveDynamicSupportMode(state, support, {
 				time: prediction.segment.endTime,
 				position: endState.position,
 				velocity: endState.velocity,
@@ -144,7 +155,7 @@ export function commitDynamicSupportPrediction(
 				bodyBodyDisposition: 'released',
 				reaction: prediction.endReaction
 			});
-			if (mode.type !== 'free-flight') {
+			if (resolution.mode.type !== 'free-flight') {
 				return numericalFailure(
 					prediction.segment.endTime,
 					'The fixed-contact interruption did not release dynamic support.'
@@ -250,7 +261,7 @@ function commitAnchorLoss(
 		prediction.seed,
 		prediction.boundary.angle
 	);
-	const mode = resolveDynamicSupportMode(state, support, {
+	const resolution = resolveDynamicSupportMode(state, support, {
 		time: prediction.segment.endTime,
 		position,
 		velocity,
@@ -260,7 +271,17 @@ function commitAnchorLoss(
 		bodyBodyDisposition: 'retained',
 		reaction
 	});
-	if (mode.type === 'dynamic-sustained-support') {
+	if (resolution.mode.type === 'resting-anchored') {
+		return commitDynamicSupportRest(
+			state,
+			support,
+			prediction,
+			resolution.eventState,
+			resolution.mode.support,
+			true
+		);
+	}
+	if (resolution.mode.type === 'dynamic-sustained-support') {
 		const revision = nextDynamicSupportRevision(state, support);
 		support.componentId = `${support.id}:r${revision}`;
 		createDynamicComponent(state, support, reaction, revision);
@@ -269,7 +290,7 @@ function commitAnchorLoss(
 	state.dynamicSupports.delete(support.id);
 	state.dynamicSupportPredictions.delete(support.id);
 	updateTerminalDynamicContact(state, support, prediction, position);
-	if (mode.type !== 'unsupported') {
+	if (resolution.mode.type !== 'unsupported') {
 		return numericalFailure(
 			prediction.segment.endTime,
 			'The anchor-loss boundary did not select a supported or unsupported dynamic mode.'
@@ -280,8 +301,8 @@ function commitAnchorLoss(
 		reason: {
 			type: 'unsupported-body-body-response',
 			time: prediction.segment.endTime,
-			bodyIds: mode.bodyIds,
-			contactId: mode.contactId,
+			bodyIds: resolution.mode.bodyIds,
+			contactId: resolution.mode.contactId,
 			detail:
 				'Anchored support was lost at the certified reaction boundary; continued contact would require a freely moving constrained cluster.'
 		}
@@ -374,7 +395,12 @@ function releaseSupport(
 ): void {
 	state.releasedDynamicPairs.add(pairKey(support.movingBodyId, support.supportBodyId));
 	retireDynamicSupportComponent(state, support.componentId, time);
-	createRestingAnchor(state, support, time);
+	restoreRestingComponent(state, {
+		id: `${support.id}:restored-anchor:${time}`,
+		time,
+		bodies: support.anchoredBodies,
+		contacts: support.anchoredContacts
+	});
 	state.dynamicSupports.delete(support.id);
 	state.dynamicSupportPredictions.delete(support.id);
 	const moving = state.runtimes.get(support.movingBodyId)!;
@@ -388,6 +414,34 @@ function releaseSupport(
 			reason
 		)
 	);
+}
+
+function commitDynamicSupportRest(
+	state: SchedulerState,
+	support: DynamicSupportRuntime,
+	prediction: DynamicSupportPrediction,
+	component: ExactTimeContactState,
+	certifiedSupport: SupportReactionSolution,
+	componentAlreadyRetired: boolean
+): DynamicSupportCommitResult {
+	if (!componentAlreadyRetired) {
+		retireDynamicSupportComponent(state, support.componentId, prediction.segment.endTime);
+	}
+	state.dynamicSupports.delete(support.id);
+	state.dynamicSupportPredictions.delete(support.id);
+	const moving = state.runtimes.get(support.movingBodyId)!;
+	moving.events.push(
+		dynamicSupportTransition(
+			support,
+			prediction.segment.endTime,
+			component.bodies.find(({ id }) => id === support.movingBodyId)!.position,
+			prediction.endReaction.normal,
+			'resting',
+			'resting'
+		)
+	);
+	commitCertifiedRestingComponent(state, component, certifiedSupport);
+	return { type: 'continued' };
 }
 
 function pairKey(firstBodyId: string, secondBodyId: string): string {
