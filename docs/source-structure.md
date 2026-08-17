@@ -301,8 +301,10 @@ The `collision/dynamic-pair` subdomain owns synchronized continuous contact quer
 circle paths. `query.ts` owns polynomial-path root selection, while `bounded-query.ts` owns
 deterministically bounded circular-path isolation using conservative relative-speed exclusion. The
 `run/contact-resolution` subdomain owns the shared exact-event contact vocabulary, fixed-event
-state construction, phase-relative post-response classification, non-negative support-equilibrium
-certification and generic represented-mode selection. It does not own numerical impact response,
+state construction, phase-relative post-response classification, supplied-motion qualification for
+the existing resting mode, non-negative support-equilibrium certification and generic
+represented-mode selection. Scheduler prefix commitment remains pair-adapter state. The subdomain
+does not own numerical impact response,
 continuous path mathematics, scheduler sequencing or persistent component records. The
 `run/dynamic-impact` subdomain owns isolated and simultaneous frictionless impact response. Its
 nested `contact-capture` subdomain owns the shared represented-physics endpoint-selection policy

@@ -54,6 +54,8 @@ export function commitDynamicSupportPrediction(
 
 	switch (prediction.boundary.type) {
 		case 'turning-point': {
+			const tangent: Vec2 = [-endState.normal[1], endState.normal[0]];
+			const constrainedAcceleration = dotVec2(state.input.settings.gravity, tangent);
 			const mode = resolveDynamicSupportMode(state, support, {
 				time: prediction.segment.endTime,
 				position: endState.position,
@@ -62,8 +64,15 @@ export function commitDynamicSupportPrediction(
 				anchoredContacts: support.anchoredContacts,
 				releasedAnchoredContactIds: [],
 				bodyBodyDisposition: 'retained',
-				reaction: prediction.endReaction
+				reaction: prediction.endReaction,
+				motion: {
+					constrainedAccelerationComponents: [constrainedAcceleration],
+					tolerance: state.input.settings.tolerances.eventTime
+				}
 			});
+			if (mode.type === 'unresolved') {
+				return numericalFailure(prediction.segment.endTime, mode.detail);
+			}
 			if (mode.type !== 'dynamic-sustained-support') {
 				return numericalFailure(
 					prediction.segment.endTime,
@@ -201,12 +210,6 @@ function reverseAtTurning(
 ): DynamicSupportCommitResult {
 	const tangent: Vec2 = [-normal[1], normal[0]];
 	const acceleration = dotVec2(state.input.settings.gravity, tangent);
-	if (Math.abs(acceleration) <= state.input.settings.tolerances.eventTime) {
-		return numericalFailure(
-			prediction.segment.endTime,
-			'Dynamic support reached a turning point without a certified direction of departure.'
-		);
-	}
 	support.time = prediction.segment.endTime;
 	support.position = position;
 	support.normal = normal;

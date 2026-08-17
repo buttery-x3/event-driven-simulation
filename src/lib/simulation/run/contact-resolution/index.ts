@@ -1,6 +1,12 @@
 export { classifyPostResponseContacts } from './classification';
 export { fixedContactId, singleBodyFixedContactState } from './exact-state';
-export { selectPostContactMode, type PostContactModeRequest } from './mode';
+export {
+	classifySupportedMotion,
+	selectPostContactMode,
+	type PostContactModeRequest,
+	type SupportedMotionClassification,
+	type SupportedMotionEvidence
+} from './mode';
 export { certifySupportEquilibrium } from './support-equilibrium';
 export type {
 	ExactContact,

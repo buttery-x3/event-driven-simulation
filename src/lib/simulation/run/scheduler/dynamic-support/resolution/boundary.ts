@@ -4,7 +4,8 @@ import {
 	selectPostContactMode,
 	type ExactContact,
 	type ExactTimeContactState,
-	type PostContactMode
+	type PostContactMode,
+	type SupportedMotionEvidence
 } from '../../../contact-resolution';
 import type { SchedulerState } from '../../types';
 import type { DynamicSupportReactionState, DynamicSupportRuntime } from '../types';
@@ -18,6 +19,7 @@ export interface DynamicSupportModeEvidence {
 	readonly releasedAnchoredContactIds: readonly string[];
 	readonly bodyBodyDisposition: 'retained' | 'released';
 	readonly reaction: DynamicSupportReactionState;
+	readonly motion?: SupportedMotionEvidence;
 }
 
 export function resolveDynamicSupportMode(
@@ -62,7 +64,10 @@ export function resolveDynamicSupportMode(
 			? {
 					contactId: support.contactId,
 					movingBodyId: support.movingBodyId,
-					supportBodyId: support.supportBodyId
+					supportBodyId: support.supportBodyId,
+					motion: evidence.motion,
+					stationaryDetail:
+						'Dynamic support reached a turning point without a certified direction of departure.'
 				}
 			: null,
 		unsupportedBodyContactId: retainedBodyContact ? support.contactId : null
@@ -96,8 +101,7 @@ function dynamicSupportContactState(
 				mass: moving.body.mass,
 				radius: moving.body.physicalShape.radius,
 				position: evidence.position,
-				velocity: evidence.velocity,
-				prefixSegment: null
+				velocity: evidence.velocity
 			}
 		],
 		contacts: [bodyContact, ...evidence.anchoredContacts]

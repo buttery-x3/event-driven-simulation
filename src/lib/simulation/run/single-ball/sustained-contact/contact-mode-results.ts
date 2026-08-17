@@ -3,10 +3,17 @@ import type {
 	RunContactSearchDiagnostic,
 	Vec2
 } from '../../../contracts';
+import type { SupportedMotionEvidence } from '../../contact-resolution';
 import { resolveSustainedBoundaryMode } from './mode';
 import type { SustainedContactRequest, SustainedContactResult } from './types';
 
-export function restingContactResult(request: SustainedContactRequest): SustainedContactResult {
+export function restingContactResult(
+	request: SustainedContactRequest,
+	motion: SupportedMotionEvidence = {
+		velocities: [[0, 0]],
+		tolerance: request.input.settings.tolerances.eventTime
+	}
+): SustainedContactResult {
 	const resolution = resolveSustainedBoundaryMode(
 		request,
 		request.time,
@@ -14,7 +21,7 @@ export function restingContactResult(request: SustainedContactRequest): Sustaine
 		request.outgoingVelocity,
 		request.normal,
 		'retained',
-		true
+		motion
 	);
 	if (resolution.mode.type !== 'resting-anchored') {
 		return unresolvedContactResult(
@@ -51,7 +58,7 @@ export function detachedContactResult(
 		velocity,
 		request.normal,
 		'released',
-		false
+		null
 	);
 	if (resolution.mode.type !== 'free-flight') {
 		return unresolvedContactResult(

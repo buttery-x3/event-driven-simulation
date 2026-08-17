@@ -6,6 +6,7 @@ import type {
 import { dotVec2 } from '../../../../math';
 import { evaluateCircularContactState } from '../../../../motion';
 import type { FixedWorldContactCandidate } from '../../../../collision';
+import type { SupportedMotionEvidence } from '../../../contact-resolution';
 import { entryTransition, slidingTransition } from '../contact-mode-results';
 import { resolveSustainedBoundaryMode } from '../mode';
 import type { SustainedContactRequest, SustainedContactResult } from '../types';
@@ -30,7 +31,7 @@ export function circularBoundaryResult(
 			endState.velocity,
 			endState.normal,
 			support < -request.input.settings.tolerances.eventTime ? 'released' : 'retained',
-			false,
+			null,
 			support < -request.input.settings.tolerances.eventTime
 				? 'Circular support was unavailable at the selected turning point.'
 				: null
@@ -76,7 +77,7 @@ export function circularBoundaryResult(
 		endState.velocity,
 		endState.normal,
 		isContact ? 'retained' : 'released',
-		false
+		null
 	);
 	const retained =
 		supportResolution.mode.type === 'fixed-sustained-contact' ? supportResolution.candidate : null;
@@ -131,7 +132,8 @@ export function restingCircularResult(
 	position: Vec2,
 	normal: Vec2,
 	segments: readonly CircularContactMotionSegment[],
-	contactSearches: readonly RunContactSearchDiagnostic[]
+	contactSearches: readonly RunContactSearchDiagnostic[],
+	motion: SupportedMotionEvidence
 ): SustainedContactResult {
 	const resolution = resolveSustainedBoundaryMode(
 		request,
@@ -140,7 +142,7 @@ export function restingCircularResult(
 		[0, 0],
 		normal,
 		'retained',
-		true
+		motion
 	);
 	if (resolution.mode.type !== 'resting-anchored') {
 		return unresolvedCircularResult(

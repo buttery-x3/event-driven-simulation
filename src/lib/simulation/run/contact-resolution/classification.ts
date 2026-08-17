@@ -17,7 +17,7 @@ export function classifyPostResponseContacts(
 		return {
 			contact,
 			participation:
-				result.preResponseNormalVelocity < -tolerance || result.impulse > tolerance
+				result.preResponseNormalVelocity < -tolerance
 					? ('impact' as const)
 					: ('constraint' as const),
 			disposition: retained ? ('retained' as const) : ('released' as const),

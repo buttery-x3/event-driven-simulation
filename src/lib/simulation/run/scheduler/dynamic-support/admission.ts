@@ -1,6 +1,7 @@
 import type { ContactComponentRecord, Vec2 } from '../../../contracts';
 import { dotVec2 } from '../../../math';
 import {
+	classifySupportedMotion,
 	selectPostContactMode,
 	type ExactContact,
 	type ResolvedContactState
@@ -34,7 +35,10 @@ export function admitCertifiedDynamicSupports(
 		if ([...state.dynamicSupports.values()].some((item) => item.movingBodyId === movingBodyId))
 			continue;
 		const movingVelocity = velocityByBody.get(movingBodyId)!;
-		if (Math.hypot(...movingVelocity) <= tolerance) continue;
+		if (
+			classifySupportedMotion({ velocities: [movingVelocity], tolerance }) === 'resting-qualified'
+		)
+			continue;
 		const normal = normalFromSupport(contact, supportBodyId);
 		const tangent: Vec2 = [-normal[1], normal[0]];
 		const signedSpeed = dotVec2(movingVelocity, tangent);

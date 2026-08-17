@@ -169,8 +169,10 @@ becomes invalid or unresolved. Its `release.ts` owns fixed/body overlap admissio
 owns world outcome and per-body lifecycle construction, `predictions.ts` owns local-future evidence,
 the private `pairs` subdomain separates continuous pair selection from exact event commitment, and
 `construct.ts` owns global selection. The sibling `contact-resolution` subdomain owns immutable
-exact-event contact state, phase-relative response classification, general support certification
-and generic represented-mode selection. The sibling `dynamic-impact` subdomain owns the
+exact-event contact state, phase-relative response classification, supplied-motion qualification
+for the existing resting mode, general support certification and generic represented-mode
+selection. Scheduler prefix segments remain pair-adapter state used only by pair commitment. The
+sibling `dynamic-impact` subdomain owns the
 mass-aware closed-form response for one certified isolated frictionless contact.
 
 An incoming pair event now seeds an exact-time contact component. The scheduler evaluates every

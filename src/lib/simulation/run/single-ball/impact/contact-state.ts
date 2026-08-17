@@ -57,21 +57,22 @@ export function resolveFixedPostContactState(
 	const retainedCandidates = contacts.contacts.flatMap(({ contact, disposition }) =>
 		contact.type === 'body-fixed' && disposition === 'retained' ? [contact.candidate] : []
 	);
-	const mayRest = Math.hypot(...response.outgoingVelocity) <= tolerance;
-	const support = mayRest
-		? (initialSupport ??
-			certifySupportEquilibrium(eventState.bodies, eventState.contacts, gravity, tolerance))
-		: null;
 	const mode = selectPostContactMode({
 		contacts,
-		stationaryBodyIds: support ? eventState.bodies.map(({ id }) => id) : [],
-		support,
+		resting: {
+			bodyIds: eventState.bodies.map(({ id }) => id),
+			motion: { velocities: [response.outgoingVelocity], tolerance },
+			support: () =>
+				initialSupport ??
+				certifySupportEquilibrium(eventState.bodies, eventState.contacts, gravity, tolerance)
+		},
 		preferredFixedContactId: retainedCandidates[0] ? fixedContactId(retainedCandidates[0]) : null,
-		unresolvedDetail:
-			acquiredAlternatingLimit && retainedCandidates.length > 0 && !support
+		unresolvedWithoutRestingMode:
+			acquiredAlternatingLimit && retainedCandidates.length > 0
 				? 'The acquired alternating-contact manifold was pressing but had no certified resting support or common release.'
 				: null
 	});
+	const support = mode.type === 'resting-anchored' ? mode.support : null;
 	return { contacts, retainedCandidates, support, mode };
 }
 

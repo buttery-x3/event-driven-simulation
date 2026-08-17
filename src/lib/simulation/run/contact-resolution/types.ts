@@ -1,4 +1,4 @@
-import type { MotionSegment, Vec2 } from '../../contracts';
+import type { Vec2 } from '../../contracts';
 import type { FixedWorldContactCandidate } from '../../collision';
 
 export interface ExactContactBodyState {
@@ -7,7 +7,6 @@ export interface ExactContactBodyState {
 	readonly radius: number;
 	readonly position: Vec2;
 	readonly velocity: Vec2;
-	readonly prefixSegment: MotionSegment | null;
 }
 
 export type ExactContact =

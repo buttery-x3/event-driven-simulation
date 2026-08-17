@@ -5,6 +5,7 @@ import type {
 } from '../../../../contracts';
 import { dotVec2 } from '../../../../math';
 import { circularContactTravelTime, evaluateCircularContactState } from '../../../../motion';
+import { classifySupportedMotion, type SupportedMotionEvidence } from '../../../contact-resolution';
 import { detachedContactResult, restingContactResult } from '../contact-mode-results';
 import { colliderCandidateAtState } from '../geometry';
 import type { SustainedContactRequest, SustainedContactResult } from '../types';
@@ -27,8 +28,11 @@ export function continueCircularContact(
 	centre: Vec2,
 	contactRadius: number
 ): SustainedContactResult {
+	const motion = circularMotionEvidence(request);
+	if (classifySupportedMotion(motion) === 'resting-qualified') {
+		return restingContactResult(request, motion);
+	}
 	const start = classifyCircularLegStart(request, centre, contactRadius);
-	if (start.type === 'resting') return restingContactResult(request);
 	if (start.type === 'detached') return detachedContactResult(request, start.velocity);
 
 	return continueCircularLegs(request, start.value);
@@ -39,7 +43,6 @@ function classifyCircularLegStart(
 	centre: Vec2,
 	contactRadius: number
 ):
-	| { readonly type: 'resting' }
 	| { readonly type: 'detached'; readonly velocity: Vec2 }
 	| { readonly type: 'sliding'; readonly value: CircularLegStart } {
 	const startAngle = Math.atan2(request.normal[1], request.normal[0]);
@@ -47,12 +50,6 @@ function classifyCircularLegStart(
 	const signedSpeed = dotVec2(request.outgoingVelocity, ccwTangent);
 	const tangentAcceleration = dotVec2(request.input.settings.gravity, ccwTangent);
 	const speedIsSignificant = Math.abs(signedSpeed) > request.input.settings.tolerances.eventTime;
-	if (
-		!speedIsSignificant &&
-		Math.abs(tangentAcceleration) <= request.input.settings.tolerances.eventTime
-	) {
-		return { type: 'resting' };
-	}
 	const direction: -1 | 1 = speedIsSignificant
 		? signedSpeed > 0
 			? 1
@@ -158,15 +155,20 @@ function continueCircularLegs(
 			-endState.normal[1],
 			endState.normal[0]
 		]);
+		const motion: SupportedMotionEvidence = {
+			constrainedAccelerationComponents: [tangentAcceleration],
+			tolerance: current.request.input.settings.tolerances.eventTime
+		};
 		const direction: -1 | 1 = tangentAcceleration > 0 ? 1 : -1;
-		if (Math.abs(tangentAcceleration) <= current.request.input.settings.tolerances.eventTime) {
+		if (classifySupportedMotion(motion) === 'resting-qualified') {
 			return restingCircularResult(
 				entryRequest,
 				leg.endTime,
 				endState.position,
 				endState.normal,
 				segments,
-				contactSearches
+				contactSearches,
+				motion
 			);
 		}
 		if (direction === current.seed.direction) {
@@ -194,6 +196,17 @@ function continueCircularLegs(
 			}
 		};
 	}
+}
+
+function circularMotionEvidence(request: SustainedContactRequest): SupportedMotionEvidence {
+	const tangent: Vec2 = [-request.normal[1], request.normal[0]];
+	const speed = dotVec2(request.outgoingVelocity, tangent);
+	const acceleration = dotVec2(request.input.settings.gravity, tangent);
+	return {
+		velocityComponents: [speed],
+		constrainedAccelerationComponents: [acceleration],
+		tolerance: request.input.settings.tolerances.eventTime
+	};
 }
 
 function createCircularLeg(

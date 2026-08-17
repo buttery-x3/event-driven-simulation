@@ -39,6 +39,27 @@ describe('post-contact resolution', () => {
 		]);
 	});
 
+	it('keeps a supported constraint distinct from an incoming impact when it carries impulse', () => {
+		const state = exactState([fixedContact('floor', [0, 1])]);
+		const resolved = classifyPostResponseContacts(
+			state,
+			[
+				{
+					contactId: 'floor',
+					preResponseNormalVelocity: 0,
+					postResponseNormalVelocity: 0,
+					impulse: 2
+				}
+			],
+			1e-9
+		)!;
+
+		expect(resolved.contacts[0]).toMatchObject({
+			participation: 'constraint',
+			impulse: 2
+		});
+	});
+
 	it('certifies mixed circle-line support with non-negative reactions', () => {
 		const contacts = [
 			fixedContact('circle', [-0.6, 0.8], 'circle'),
@@ -83,8 +104,7 @@ function exactState(contacts: readonly ExactContact[]): ExactTimeContactState {
 				mass: 1,
 				radius: 1,
 				position: [0, 0],
-				velocity: [0, 0],
-				prefixSegment: null
+				velocity: [0, 0]
 			}
 		],
 		contacts

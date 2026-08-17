@@ -10,17 +10,23 @@ import {
 	evaluateMotionSegmentPosition,
 	evaluateMotionSegmentVelocity
 } from '../../../motion';
-import type {
-	ExactContact,
-	ExactContactBodyState,
-	ExactTimeContactState
+import {
+	classifySupportedMotion,
+	type ExactContact,
+	type ExactContactBodyState,
+	type ExactTimeContactState
 } from '../../contact-resolution';
 import { predictionSegments, type LocalBodyRuntime } from '../../single-ball/local-events';
 import type { SchedulerState } from '../types';
 import { dynamicSupportPathForBody } from '../dynamic-support/prediction';
 import type { PairSchedulerSelection } from './selection';
 
-export interface ExactTimeComponent extends ExactTimeContactState {
+export interface PairComponentBodyState extends ExactContactBodyState {
+	readonly prefixSegment: MotionSegment | null;
+}
+
+export interface ExactTimeComponent extends Omit<ExactTimeContactState, 'bodies'> {
+	readonly bodies: readonly PairComponentBodyState[];
 	readonly candidateEvidence: NonNullable<ImpactSolveDiagnostic['candidateEvidence']>;
 	readonly selectionDiagnosticIds: readonly string[];
 }
@@ -33,7 +39,7 @@ export function buildExactTimeComponent(
 	const tolerance = Math.max(state.input.settings.tolerances.contactDistance, Number.EPSILON * 256);
 	const bodyStates = [...state.runtimes.values()]
 		.map((runtime) => bodyStateAt(state, runtime, time))
-		.filter((body): body is ExactContactBodyState => body !== null)
+		.filter((body): body is PairComponentBodyState => body !== null)
 		.sort(bodyGeometryOrder);
 	const dynamicCandidates = bodyPairCandidates(bodyStates, selection, time, tolerance);
 	const connectedBodyIds = connectedBodies(selection, dynamicCandidates);
@@ -88,10 +94,12 @@ export function buildStationaryContactComponents(
 	const bodies = [...state.runtimes.values()]
 		.filter((runtime) => runtime.dormantComponentId === null)
 		.map((runtime) => bodyStateAt(state, runtime, time))
-		.filter(
-			(body): body is ExactContactBodyState =>
-				body !== null && Math.hypot(...body.velocity) <= tolerance
-		)
+		.filter((body): body is PairComponentBodyState => {
+			if (body === null) return false;
+			return (
+				classifySupportedMotion({ velocities: [body.velocity], tolerance }) === 'resting-qualified'
+			);
+		})
 		.sort(bodyGeometryOrder);
 	if (bodies.length === 0) return [];
 	const dynamicCandidates = bodyPairCandidates(bodies, null, time, tolerance);
@@ -151,7 +159,7 @@ function bodyStateAt(
 	state: SchedulerState,
 	runtime: LocalBodyRuntime,
 	time: number
-): ExactContactBodyState | null {
+): PairComponentBodyState | null {
 	if (time < runtime.body.releaseTime) return null;
 	const dynamicSupportPath = dynamicSupportPathForBody(state, runtime.body.id);
 	if (

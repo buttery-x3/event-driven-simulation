@@ -1,6 +1,7 @@
 import type { ContactComponentRecord } from '../../../contracts';
 import {
 	certifySupportEquilibrium,
+	classifySupportedMotion,
 	selectPostContactMode,
 	type ExactContact,
 	type ExactTimeContactState,
@@ -23,7 +24,11 @@ export function rebuildDormantComponents(
 	);
 	const stationaryBodyIds = new Set(
 		component.bodies
-			.filter(({ id }) => Math.hypot(...velocityByBody.get(id)!) <= tolerance)
+			.filter(
+				({ id }) =>
+					classifySupportedMotion({ velocities: [velocityByBody.get(id)!], tolerance }) ===
+					'resting-qualified'
+			)
 			.map(({ id }) => id)
 	);
 	const retained: ExactContact[] = [];
@@ -59,8 +64,11 @@ export function rebuildDormantComponents(
 		};
 		const mode = selectPostContactMode({
 			contacts: groupResolvedContacts,
-			stationaryBodyIds: [...bodyIds],
-			support
+			resting: {
+				bodyIds: [...bodyIds],
+				motion: { velocities: bodies.map(({ id }) => velocityByBody.get(id)!), tolerance },
+				support: () => support
+			}
 		});
 		if (mode.type !== 'resting-anchored') continue;
 		const revision = previous.length

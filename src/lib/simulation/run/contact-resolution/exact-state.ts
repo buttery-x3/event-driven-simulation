@@ -19,8 +19,7 @@ export function singleBodyFixedContactState(
 				mass: body.mass,
 				radius: body.physicalShape.radius,
 				position,
-				velocity,
-				prefixSegment: null
+				velocity
 			}
 		],
 		contacts: candidates.map((candidate) => ({

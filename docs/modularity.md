@@ -248,12 +248,14 @@ adapters. Its `policy.ts` owns meaningful-rebound veto and unilateral active-set
 does not add a public entry point.
 
 FLAME-93 introduced `run/contact-resolution` because exact-time contact representation,
-post-response role classification, support certification and represented-mode selection had
+post-response role classification, supported-motion/resting qualification, support certification
+and represented-mode selection had
 multiple independently changing consumers across fixed impact, coupled impact, dormancy, fixed
-sustained contact and dynamic support. `types.ts` owns immutable stage vocabulary,
+sustained contact and dynamic support. `types.ts` owns immutable physical stage vocabulary without
+scheduler prefix-commitment state,
 `exact-state.ts` owns generic fixed-event construction, `classification.ts` owns phase-relative
 retained/released roles, `support-equilibrium.ts` owns the general non-negative contact-graph
-certificate, and `mode.ts` owns generic mode precedence. Its local `index.ts` is private to the
+certificate, and `mode.ts` owns supported-motion qualification and generic mode precedence. Its local `index.ts` is private to the
 `run` subsystem; `run/index.ts` and all public contracts remain unchanged. Numerical solvers,
 continuous path algorithms and lifecycle construction remain outside this subdomain.
 

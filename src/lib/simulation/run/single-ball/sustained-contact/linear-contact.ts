@@ -1,7 +1,6 @@
 import type {
 	LinearContactMotionSegment,
 	RunContactSearchDiagnostic,
-	SimulationInput,
 	StaticLineSegmentCollider,
 	Vec2
 } from '../../../contracts';
@@ -11,6 +10,7 @@ import {
 } from '../../../collision';
 import { dotVec2 } from '../../../math';
 import { evaluateMotionSegmentPosition, evaluateMotionSegmentVelocity } from '../../../motion';
+import { classifySupportedMotion } from '../../contact-resolution';
 import { toRunContactSearchDiagnostic } from '../diagnostics';
 import { findEarliestTerminationEntry } from '../termination-search';
 import { continueCircularContact } from './circular';
@@ -41,8 +41,13 @@ export function continueLineContact(
 	if (normalAcceleration > request.input.settings.tolerances.eventTime) {
 		return detachedContactResult(request, tangentVelocity);
 	}
-	if (isResting(tangentVelocity, tangentAcceleration, request.input)) {
-		return restingContactResult(request);
+	const motion = {
+		velocities: [tangentVelocity],
+		constrainedAccelerations: [tangentAcceleration],
+		tolerance: request.input.settings.tolerances.eventTime
+	};
+	if (classifySupportedMotion(motion) === 'resting-qualified') {
+		return restingContactResult(request, motion);
 	}
 
 	const segmentVector: Vec2 = [
@@ -121,7 +126,7 @@ export function continueLineContact(
 			endVelocity,
 			request.normal,
 			'retained',
-			false
+			null
 		);
 		const retained =
 			supportResolution.mode.type === 'fixed-sustained-contact'
@@ -217,7 +222,7 @@ function leaveLineEndpoint(
 		velocity,
 		endpointNormal,
 		radialFreeAcceleration < -request.input.settings.tolerances.eventTime ? 'retained' : 'released',
-		false
+		null
 	);
 
 	if (supportResolution.mode.type === 'free-flight') {
@@ -269,11 +274,6 @@ function leaveLineEndpoint(
 		events: [entryTransition(request, 'sliding'), ...circular.events.slice(1)],
 		contactSearches: [searchDiagnostic, ...circular.contactSearches]
 	};
-}
-
-function isResting(velocity: Vec2, acceleration: Vec2, input: SimulationInput): boolean {
-	const tolerance = input.settings.tolerances.eventTime;
-	return Math.hypot(...velocity) <= tolerance && Math.hypot(...acceleration) <= tolerance;
 }
 
 function findEndpointTime(

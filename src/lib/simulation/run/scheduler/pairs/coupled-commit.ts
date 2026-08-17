@@ -3,7 +3,6 @@ import {
 	classifyPostResponseContacts,
 	selectPostContactMode,
 	type ExactContact,
-	type ExactContactBodyState,
 	type ResolvedContactRole,
 	type ResolvedContactState
 } from '../../contact-resolution';
@@ -14,7 +13,7 @@ import { rebuildDormantComponents, upsertDynamicContacts } from '../dormancy';
 import { admitCertifiedDynamicSupports, interruptDynamicSupports } from '../dynamic-support';
 import type { PairCommitResult } from './commit';
 import { coupledImpactInput, selectCoupledContactCapture } from './capture';
-import type { ExactTimeComponent } from './component';
+import type { ExactTimeComponent, PairComponentBodyState } from './component';
 import {
 	invalidatePairDiagnostics,
 	retainUnrelatedPairDiagnostics,
@@ -101,7 +100,7 @@ export function commitCoupledImpact(
 	return { type: 'continued' };
 }
 
-function commitPrefixes(state: SchedulerState, bodies: readonly ExactContactBodyState[]): void {
+function commitPrefixes(state: SchedulerState, bodies: readonly PairComponentBodyState[]): void {
 	for (const body of bodies) {
 		const runtime = state.runtimes.get(body.id)!;
 		if (body.prefixSegment && body.prefixSegment.endTime > body.prefixSegment.startTime)

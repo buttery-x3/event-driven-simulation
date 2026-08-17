@@ -6,7 +6,8 @@ import {
 	selectPostContactMode,
 	singleBodyFixedContactState,
 	type PostContactMode,
-	type ResolvedContactState
+	type ResolvedContactState,
+	type SupportedMotionEvidence
 } from '../../contact-resolution';
 import { supportCandidate } from './geometry';
 import type { SustainedContactRequest } from './types';
@@ -24,7 +25,7 @@ export function resolveSustainedBoundaryMode(
 	velocity: Vec2,
 	normal: Vec2,
 	disposition: 'retained' | 'released',
-	stationary: boolean,
+	motion: SupportedMotionEvidence | null,
 	unresolvedDetail: string | null = null
 ): SustainedBoundaryResolution {
 	const candidate = supportCandidate(request, time, position, velocity, normal);
@@ -59,20 +60,23 @@ export function resolveSustainedBoundaryMode(
 		],
 		request.input.settings.tolerances.eventTime
 	)!;
-	const support =
-		stationary && disposition === 'retained'
-			? certifySupportEquilibrium(
-					eventState.bodies,
-					eventState.contacts,
-					request.input.settings.gravity,
-					request.input.settings.tolerances.eventTime
-				)
-			: null;
 	return {
 		mode: selectPostContactMode({
 			contacts,
-			stationaryBodyIds: support ? [request.body.id] : [],
-			support,
+			resting:
+				motion && disposition === 'retained'
+					? {
+							bodyIds: [request.body.id],
+							motion,
+							support: () =>
+								certifySupportEquilibrium(
+									eventState.bodies,
+									eventState.contacts,
+									request.input.settings.gravity,
+									request.input.settings.tolerances.eventTime
+								)
+						}
+					: null,
 			preferredFixedContactId: fixedContactId(candidate),
 			unresolvedDetail
 		}),

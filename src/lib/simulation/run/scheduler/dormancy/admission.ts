@@ -99,8 +99,11 @@ export function promoteStationaryContactComponents(state: SchedulerState, time: 
 		if (!support) continue;
 		const mode = selectPostContactMode({
 			contacts: resolvedContacts,
-			stationaryBodyIds: component.bodies.map(({ id }) => id),
-			support
+			resting: {
+				bodyIds: component.bodies.map(({ id }) => id),
+				motion: { velocities: component.bodies.map(({ velocity }) => velocity), tolerance },
+				support: () => support
+			}
 		});
 		if (mode.type !== 'resting-anchored') continue;
 		const id = restingComponentId(

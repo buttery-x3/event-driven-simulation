@@ -10,6 +10,7 @@ import type { FixedWorldContactCandidate } from '../../../collision';
 import { evaluateMotionSegmentPosition, evaluateMotionSegmentVelocity } from '../../../motion';
 import {
 	certifySupportEquilibrium,
+	classifySupportedMotion,
 	fixedContactId,
 	singleBodyFixedContactState
 } from '../../contact-resolution';
@@ -138,7 +139,10 @@ export function resolveContact(
 	if (
 		acquisition &&
 		!acquisitionSupport &&
-		Math.hypot(...response.outgoingVelocity) > input.settings.tolerances.eventTime
+		classifySupportedMotion({
+			velocities: [response.outgoingVelocity],
+			tolerance: input.settings.tolerances.eventTime
+		}) === 'moving'
 	) {
 		const committed = commitAlternatingLimitRelease(
 			input,
