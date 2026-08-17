@@ -217,11 +217,13 @@ anchored component at the exact impact time before the component is rebuilt and 
 
 The sibling `dynamic-impact` subdomain owns the generalized-coordinate simultaneous-impact law
 and the solver-neutral finite-contact capture policy shared by fixed-world and coupled adapters.
-`generalised-reflections.ts` composes a maximum-dissipation inelastic endpoint, implicit-equality
-anti-locking projection, scale-aware terminating elastic reflections with energy renormalisation,
-and energetic-restitution interpolation. `lineality.ts` owns positive-cone lineality certification
-and equality projection; `nonnegative-qp.ts` owns deterministic bounded non-negative quadratic and
-least-squares selection; `linear-algebra.ts` owns the small dense eigensolve and metric operations.
+`generalised-reflections.ts` composes physical problem preparation, a maximum-dissipation inelastic
+endpoint, energetic-restitution interpolation, physical impulse certification and diagnostics.
+Its private solver-neutral `terminating-elastic-reflections.ts` kernel owns implicit-equality
+anti-locking projection and scale-aware terminating elastic reflections with energy
+renormalisation. `lineality.ts` owns positive-cone lineality certification and equality projection;
+`nonnegative-qp.ts` owns deterministic bounded non-negative quadratic and least-squares selection;
+`linear-algebra.ts` owns the small dense eigensolve and metric operations.
 The nested `contact-capture` subdomain consumes completed ordinary and zero-restitution endpoints,
 local geometry and free acceleration; it owns meaningful-rebound veto, support active-set reduction
 and the common diagnostic schema, but does not own collision discovery or either impact solver.
@@ -231,11 +233,11 @@ and invariant checks, endpoint energies, impulses and completion reason. A persi
 without a fixed-anchored support certificate remains an explicit `unsupported-body-body-response`
 boundary after the instantaneous response succeeds.
 
-The dynamic-impact root remains at six implementation files. Finite capture is a separately
-changing represented-physics policy with two production consumers, so it lives in its named nested
-subdomain instead of enlarging the numerical solver root. A future addition of rotational
-coordinates or sparse numerical backends would justify a distinct nested generalized-impact
-numerical subdomain.
+The dynamic-impact root has seven implementation files and one file of headroom. Finite capture is
+a separately changing represented-physics policy with two production consumers, so it lives in its
+named nested subdomain instead of enlarging the numerical solver root. A future addition of
+rotational coordinates, sparse numerical backends or another independently changing solver policy
+would justify a distinct nested generalized-impact numerical subdomain.
 
 `src/lib/simulation/run/single-ball/local-events` exposes the fixed-world local prediction and
 commit boundary used by the scheduler. It sequences free flight, impact and sustained contact,

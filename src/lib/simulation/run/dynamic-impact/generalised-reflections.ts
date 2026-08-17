@@ -1,7 +1,10 @@
 import type { Vec2 } from '../../contracts';
 import { addScaled, dot, gramMatrix, weightedNorm } from './linear-algebra';
-import { detectLineality, projectEqualityCompatible } from './lineality';
 import { solveNonnegativeLeastSquares, solveNonnegativeQuadratic } from './nonnegative-qp';
+import {
+	solveTerminatingElasticReflections,
+	type TerminatingElasticReflectionEndpoint
+} from './terminating-elastic-reflections';
 import type {
 	CoupledImpactContact,
 	CoupledImpactDiagnostic,
@@ -19,17 +22,6 @@ interface PreparedProblem {
 	readonly gradients: readonly (readonly number[])[];
 }
 
-interface ElasticEndpoint {
-	readonly velocity: readonly number[];
-	readonly projectedVelocity: readonly number[];
-	readonly projectedGradients: readonly (readonly number[])[];
-	readonly removedIndices: readonly number[];
-	readonly linealityIndices: readonly number[];
-	readonly equalityBasis: readonly (readonly number[])[];
-	readonly threshold: number;
-	readonly reflections: readonly ReflectionDiagnostic[];
-}
-
 export function resolveCoupledImpact(input: CoupledImpactInput): CoupledImpactResult {
 	const invalid = validate(input);
 	if (invalid) return { type: 'rejected', reason: invalid };
@@ -38,7 +30,18 @@ export function resolveCoupledImpact(input: CoupledImpactInput): CoupledImpactRe
 	const inelastic = solveInelastic(problem, tolerance);
 	if (!inelastic)
 		return { type: 'rejected', reason: 'The maximum-dissipation endpoint could not be certified.' };
-	const elastic = solveElastic(input, problem, tolerance);
+	const elastic = solveTerminatingElasticReflections({
+		velocity: problem.velocity,
+		masses: problem.masses,
+		inverseMasses: problem.inverseMasses,
+		gradients: problem.gradients,
+		tolerances: {
+			numerical: tolerance,
+			absoluteNormalVelocityFloor: input.tolerances.absoluteNormalVelocityFloor,
+			relativeViolationEpsilon: input.tolerances.relativeViolationEpsilon,
+			maximumReflections: input.tolerances.maximumReflections
+		}
+	});
 	if (typeof elastic === 'string') {
 		return {
 			type: 'rejected',
@@ -109,112 +112,6 @@ function solveInelastic(problem: PreparedProblem, tolerance: number): number[] |
 	return normalVelocities(problem.gradients, velocity).every((value) => value >= -tolerance * 32)
 		? velocity
 		: null;
-}
-
-function solveElastic(
-	input: CoupledImpactInput,
-	problem: PreparedProblem,
-	tolerance: number
-): ElasticEndpoint | string {
-	const lineality = detectLineality(problem.gradients, tolerance);
-	const projectedVelocity = projectEqualityCompatible(
-		problem.velocity,
-		lineality.basis,
-		problem.inverseMasses,
-		tolerance
-	);
-	if (!projectedVelocity)
-		return 'impact-termination-certification-failed: anti-locking projection failed.';
-	const projected: { readonly index: number; readonly gradient: readonly number[] }[] = [];
-	const removedIndices: number[] = [];
-	for (let index = 0; index < problem.gradients.length; index += 1) {
-		const gradient = projectEqualityCompatible(
-			problem.gradients[index]!,
-			lineality.basis,
-			problem.inverseMasses,
-			tolerance
-		);
-		if (!gradient) return 'impact-termination-certification-failed: contact projection failed.';
-		const norm = weightedNorm(gradient, problem.inverseMasses);
-		if (norm <= tolerance * 16) removedIndices.push(index);
-		else projected.push({ index, gradient: gradient.map((value) => value / norm) });
-	}
-	let velocity = [...projectedVelocity];
-	const initialNorm = weightedNorm(projectedVelocity, problem.masses);
-	const threshold = Math.max(
-		input.tolerances.absoluteNormalVelocityFloor,
-		input.tolerances.relativeViolationEpsilon * initialNorm
-	);
-	const reflections: ReflectionDiagnostic[] = [];
-	for (let iteration = 0; iteration < input.tolerances.maximumReflections; iteration += 1) {
-		const violating = projected.filter(({ gradient }) => dot(gradient, velocity) < -threshold);
-		if (violating.length === 0) {
-			if (normalVelocities(problem.gradients, velocity).some((value) => value < -threshold * 16))
-				return 'impact-termination-certification-failed: reduced feasibility did not imply complete feasibility.';
-			return {
-				velocity,
-				projectedVelocity,
-				projectedGradients: projected.map(({ gradient }) => gradient),
-				removedIndices,
-				linealityIndices: lineality.contactIndices,
-				equalityBasis: lineality.basis,
-				threshold,
-				reflections
-			};
-		}
-		const gradients = violating.map(({ gradient }) => gradient);
-		const hessian = gramMatrix(gradients, problem.inverseMasses);
-		const linear = gradients.map((gradient) => 2 * dot(gradient, velocity));
-		const solution = solveNonnegativeQuadratic(hessian, linear, tolerance);
-		if (!solution || solution.values.every((value) => value <= tolerance))
-			return 'impact-termination-certification-failed: a violating subset was not materially modified.';
-		let tentativeMomentum = velocity.map((value, index) => problem.masses[index]! * value);
-		for (let index = 0; index < gradients.length; index += 1)
-			tentativeMomentum = addScaled(tentativeMomentum, gradients[index]!, solution.values[index]!);
-		const tentativeVelocity = tentativeMomentum.map(
-			(value, index) => value * problem.inverseMasses[index]!
-		);
-		const tentativeNorm = weightedNorm(tentativeVelocity, problem.masses);
-		if (!Number.isFinite(tentativeNorm) || (initialNorm > tolerance && tentativeNorm <= tolerance))
-			return 'impact-termination-certification-failed: elastic energy renormalisation was undefined.';
-		const factor = tentativeNorm > tolerance ? initialNorm / tentativeNorm : 1;
-		const next = tentativeVelocity.map((value) => value * factor);
-		const beforeViolation = maximumViolation(projected, velocity);
-		const afterViolation = maximumViolation(projected, next);
-		const energyBefore = kineticEnergy(velocity, problem.masses);
-		const energyAfterTentative = kineticEnergy(tentativeVelocity, problem.masses);
-		const energyAfter = kineticEnergy(next, problem.masses);
-		const modification = weightedNorm(
-			next.map((value, index) => value - velocity[index]!),
-			problem.masses
-		);
-		const checks = {
-			norm: true,
-			kin: Math.abs(energyAfter - energyBefore) <= tolerance * Math.max(1, energyBefore) * 64,
-			one: solution.values.every((value) => value >= -tolerance),
-			vio: violating.every(({ gradient }) => dot(gradient, velocity) < -threshold),
-			mod: modification > tolerance
-		};
-		reflections.push({
-			iteration,
-			violatingContactIds: violating.map(({ index }) => input.contacts[index]!.id),
-			impulse: solution.values,
-			velocityBefore: velocity,
-			tentativeVelocity,
-			velocityAfter: next,
-			energyBefore,
-			energyAfterTentative,
-			energyAfterRenormalisation: energyAfter,
-			energyRenormalisationFactor: factor,
-			maximumSignificantViolationBefore: beforeViolation,
-			maximumSignificantViolationAfter: afterViolation,
-			checks
-		});
-		if (!Object.values(checks).every(Boolean))
-			return 'impact-termination-certification-failed: a reflection invariant failed.';
-		velocity = next;
-	}
-	return 'impact-termination-certification-failed: defensive reflection cap reached.';
 }
 
 function validate(input: CoupledImpactInput): string | null {
@@ -293,17 +190,6 @@ function normalVelocities(
 	return gradients.map((gradient) => dot(gradient, velocity));
 }
 
-function maximumViolation(
-	projected: readonly { readonly gradient: readonly number[] }[],
-	velocity: readonly number[]
-): number {
-	return Math.max(0, ...projected.map(({ gradient }) => -dot(gradient, velocity)));
-}
-
-function kineticEnergy(velocity: readonly number[], masses: readonly number[]): number {
-	return 0.5 * velocity.reduce((sum, value, index) => sum + masses[index]! * value * value, 0);
-}
-
 function effectiveTolerance(input: CoupledImpactInput): number {
 	return Math.max(input.tolerances.numerical, Number.EPSILON * 256);
 }
@@ -312,7 +198,7 @@ function completeDiagnostic(
 	input: CoupledImpactInput,
 	problem: PreparedProblem,
 	inelastic: readonly number[],
-	elastic: ElasticEndpoint,
+	elastic: TerminatingElasticReflectionEndpoint,
 	finalVelocity: readonly number[]
 ): CoupledImpactDiagnostic {
 	return {
@@ -323,18 +209,23 @@ function completeDiagnostic(
 		preImpactMomentum: problem.momentum,
 		contactGradients: problem.gradients,
 		linealityDimension: elastic.equalityBasis.length,
-		linealityContactIds: elastic.linealityIndices.map((index) => input.contacts[index]!.id),
+		linealityContactIds: elastic.linealityGradientIndices.map((index) => input.contacts[index]!.id),
 		equalityBasis: elastic.equalityBasis,
 		projectedVelocity: elastic.projectedVelocity,
 		projectedContactGradients: elastic.projectedGradients,
 		projectedContactIds: input.contacts
-			.filter((_, index) => !elastic.removedIndices.includes(index))
+			.filter((_, index) => !elastic.removedGradientIndices.includes(index))
 			.map(({ id }) => id),
-		removedContactIds: elastic.removedIndices.map((index) => input.contacts[index]!.id),
-		violationThreshold: elastic.threshold,
+		removedContactIds: elastic.removedGradientIndices.map((index) => input.contacts[index]!.id),
+		violationThreshold: elastic.violationThreshold,
 		relativeViolationEpsilon: input.tolerances.relativeViolationEpsilon,
 		absoluteNormalVelocityFloor: input.tolerances.absoluteNormalVelocityFloor,
-		reflections: elastic.reflections,
+		reflections: elastic.reflections.map(
+			({ violatingGradientIndices, ...reflection }): ReflectionDiagnostic => ({
+				...reflection,
+				violatingContactIds: violatingGradientIndices.map((index) => input.contacts[index]!.id)
+			})
+		),
 		inelasticVelocity: inelastic,
 		elasticVelocity: elastic.velocity,
 		finalVelocity,

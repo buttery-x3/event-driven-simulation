@@ -168,6 +168,7 @@ src/lib/simulation/
             types.ts
             response.ts
             generalised-reflections.ts
+			terminating-elastic-reflections.ts
             lineality.ts
             nonnegative-qp.ts
             linear-algebra.ts
@@ -306,9 +307,11 @@ the existing resting mode, non-negative support-equilibrium certification and ge
 represented-mode selection. Scheduler prefix commitment remains pair-adapter state. The subdomain
 does not own numerical impact response,
 continuous path mathematics, scheduler sequencing or persistent component records. The
-`run/dynamic-impact` subdomain owns isolated and simultaneous frictionless impact response. Its
-nested `contact-capture` subdomain owns the shared represented-physics endpoint-selection policy
-after either impact solver completes. Inside the scheduler, `pairs` owns continuous pair selection,
+`run/dynamic-impact` subdomain owns isolated and simultaneous frictionless impact response.
+`generalised-reflections.ts` owns physical coupled-impact adaptation, restitution and diagnostic
+construction, while `terminating-elastic-reflections.ts` owns its private solver-neutral elastic
+reflection kernel. Its nested `contact-capture` subdomain owns the shared represented-physics
+endpoint-selection policy after either impact solver completes. Inside the scheduler, `pairs` owns continuous pair selection,
 pair-seeded exact-time component construction and commitment; `pairs/capture.ts` is the coupled
 geometry/endpoint adapter to that shared policy. `dormancy` owns supported-state admission and
 post-impact component rebuilding,

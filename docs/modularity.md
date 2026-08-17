@@ -236,16 +236,17 @@ types from `run/index.ts`.
 
 FLAME-53 introduced the sibling `run/dynamic-impact` numerical subdomain. `response.ts` preserves
 the isolated closed-form response, `generalised-reflections.ts` owns the generalized simultaneous
-impact operator, `lineality.ts` owns cone-lineality policy, `nonnegative-qp.ts` owns constrained
-selection, and `linear-algebra.ts` owns small dense metric operations. The directory is at its
-headroom-assessment threshold, but those modules still have one cohesive reason to change: the
-frictionless dynamic-impact law. Rotational coordinates, sparse backends or independently
-versioned solver policies would require a nested numerical subdomain rather than another sibling
-implementation file. FLAME-88 adds the nested `contact-capture` subdomain because endpoint
+impact adapter, `lineality.ts` owns cone-lineality policy, `nonnegative-qp.ts` owns constrained
+selection, and `linear-algebra.ts` owns small dense metric operations. FLAME-97 extracts the
+solver-neutral terminating elastic loop into `terminating-elastic-reflections.ts`, leaving physical
+contacts, restitution, impulse certification and diagnostics with the adapter. The root now has
+seven implementation files and one file of headroom, but those modules still have one cohesive
+reason to change: the frictionless dynamic-impact law. Rotational coordinates, sparse backends or
+independently versioned solver policies would require a nested numerical subdomain rather than
+another sibling implementation file. FLAME-88 adds the nested `contact-capture` subdomain because endpoint
 selection is a separately testable represented-physics policy shared by fixed-world and coupled
 adapters. Its `policy.ts` owns meaningful-rebound veto and unilateral active-set reduction;
-`types.ts` owns its solver-neutral inputs/results. This preserves the six-file numerical root and
-does not add a public entry point.
+`types.ts` owns its solver-neutral inputs/results and does not add a public entry point.
 
 FLAME-93 introduced `run/contact-resolution` because exact-time contact representation,
 post-response role classification, supported-motion/resting qualification, support certification
