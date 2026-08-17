@@ -194,9 +194,9 @@ The implemented ownership is:
 - `termination-search.ts` — continuous region entry and supported-bounds exit solving;
 - `impact/response.ts` — fixed-world manifold endpoint solving and adaptation to the shared
   finite-contact capture policy;
-- `impact/resolution.ts` — contact-event commitment, diagnostic evidence, physical support/rest
-  classification and next-state construction;
-- `manifold/` — coupled normal-impulse and support-reaction algorithms;
+- `impact/resolution.ts` — fixed contact-event commitment, response adaptation and result
+  construction; it consumes common `contact-resolution` policy;
+- `manifold/` — fixed-world normal-impulse solving and accumulation-manifold acquisition;
 - `run-assembly.ts` — committed history and terminal run-record assembly;
 - `sustained-contact/index.ts` and `continuation.ts` — the named local capability and shape
   dispatch;
