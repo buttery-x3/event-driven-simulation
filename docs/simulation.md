@@ -291,6 +291,19 @@ state. Component records identify exact-time impact
 or resting-anchored connectivity, active contacts and optional retained support reactions; lifecycle
 events record creation, split, merge and dissolution without exposing solver matrices.
 
+Post-impact dormant admission uses a private represented-motion rest speed of `0.01 m/s`. This is a
+physics representation policy, not a collision tolerance or contact-capture distance. Only actual
+contacts in the selected exact-time component are considered. A contact-connected candidate subset
+is eligible when every body speed is at most the threshold and setting that subset to zero velocity
+passes the existing support-equilibrium solve with fixed anchoring and non-negative reactions.
+Successful admission snaps only that certified subset to zero and reuses the reversible
+`resting-anchored` lifecycle; unsupported or faster bodies retain their ordinary response and active
+predictions. A microscopic separating velocity in the ordinary response does not veto admission
+when the contact exists at the event geometry and the zero-velocity configuration is supportable.
+The ordinary impact evidence remains recorded separately from any retained support contact created
+by the represented-rest transition. The policy is evaluated only at real event boundaries and adds
+no time stepping, quiet-time timer, event-count heuristic or future-collision extrapolation.
+
 Diagnostic body horizons and pair predictions record a common validity interval, per-body revision
 stamps and selected/retained/invalidated/stale decisions. Supported free-flight, linear-contact and
 stationary path pairs are synchronized at the shared search start and reduced to one normalized

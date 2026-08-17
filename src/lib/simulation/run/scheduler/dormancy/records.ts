@@ -21,11 +21,12 @@ export function restingComponentId(
 export function dormantContactRecord(
 	component: ExactTimeComponent,
 	contact: ActiveComponentContact,
-	reaction: number
+	reaction: number,
+	contactId: string = contact.id
 ): DynamicContactRecord {
 	const normal = contact.type === 'body-body' ? contact.normalFromFirstToSecond : contact.normal;
 	return {
-		id: contact.id,
+		id: contactId,
 		time: component.time,
 		participants:
 			contact.type === 'body-body'
@@ -44,6 +45,19 @@ export function dormantContactRecord(
 		impulse: reaction,
 		state: 'retained'
 	};
+}
+
+export function retainedDormantContactId(
+	state: SchedulerState,
+	component: ExactTimeComponent,
+	contact: ActiveComponentContact,
+	reaction: number
+): string {
+	const impactContact = state.dynamicContacts.find(({ id }) => id === contact.id);
+	if (impactContact?.state !== 'released') return contact.id;
+	const contactId = `support-contact:${component.id}:${contact.id}`;
+	upsertDynamicContacts(state, [dormantContactRecord(component, contact, reaction, contactId)]);
+	return contactId;
 }
 
 export function upsertDynamicContacts(

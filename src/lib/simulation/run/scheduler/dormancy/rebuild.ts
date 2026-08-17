@@ -3,7 +3,9 @@ import type { CoupledImpactResponse } from '../../dynamic-impact';
 import type { ActiveComponentContact, ExactTimeComponent } from '../pairs/component';
 import type { SchedulerState } from '../types';
 import { certifySupportEquilibrium } from './support-equilibrium';
-import { futureEventTimes, restingComponentId } from './records';
+import { futureEventTimes, restingComponentId, retainedDormantContactId } from './records';
+
+const perceptualRestSpeed = 0.01;
 
 export function rebuildDormantComponents(
 	state: SchedulerState,
@@ -15,24 +17,23 @@ export function rebuildDormantComponents(
 	const velocityByBody = new Map(
 		response.bodyVelocities.map((body) => [body.bodyId, body.velocity])
 	);
-	const resultByContact = new Map(response.contacts.map((contact) => [contact.contactId, contact]));
-	const stationaryBodyIds = new Set(
+	const quiescentBodyIds = new Set(
 		component.bodies
-			.filter(({ id }) => Math.hypot(...velocityByBody.get(id)!) <= tolerance)
+			.filter(({ id }) => Math.hypot(...velocityByBody.get(id)!) <= perceptualRestSpeed)
 			.map(({ id }) => id)
 	);
-	const retained = component.contacts.filter((contact) => {
-		if ((resultByContact.get(contact.id)?.postImpactNormalVelocity ?? Infinity) > tolerance)
-			return false;
+	const currentCandidateContacts = component.contacts.filter((contact) => {
 		return contact.type === 'body-fixed'
-			? stationaryBodyIds.has(contact.bodyId)
-			: stationaryBodyIds.has(contact.firstBodyId) && stationaryBodyIds.has(contact.secondBodyId);
+			? quiescentBodyIds.has(contact.bodyId)
+			: quiescentBodyIds.has(contact.firstBodyId) && quiescentBodyIds.has(contact.secondBodyId);
 	});
-	const groups = connectedStationaryGroups(stationaryBodyIds, retained);
+	const groups = connectedQuiescentGroups(quiescentBodyIds, currentCandidateContacts);
 	const created: ContactComponentRecord[] = [];
 	for (const [groupIndex, bodyIds] of groups.entries()) {
 		const bodies = component.bodies.filter(({ id }) => bodyIds.has(id));
-		const contacts = retained.filter((contact) => contactBelongsTo(contact, bodyIds));
+		const contacts = currentCandidateContacts.filter((contact) =>
+			contactBelongsTo(contact, bodyIds)
+		);
 		const support = certifySupportEquilibrium(
 			bodies,
 			contacts,
@@ -40,6 +41,9 @@ export function rebuildDormantComponents(
 			tolerance
 		);
 		if (!support) continue;
+		const retainedContactIds = support.contacts.map((contact, index) =>
+			retainedDormantContactId(state, component, contact, support.reactions[index]!)
+		);
 		const revision = previous.length
 			? Math.max(...previous.map((record) => record.revision ?? 0)) + 1
 			: 0;
@@ -57,8 +61,8 @@ export function rebuildDormantComponents(
 						.map((contact) => contact.colliderId)
 				)
 			].sort(),
-			activeContactIds: support.contacts.map(({ id: contactId }) => contactId),
-			retainedSupportReactions: support.contacts.map(({ id: contactId }, index) => ({
+			activeContactIds: retainedContactIds,
+			retainedSupportReactions: retainedContactIds.map((contactId, index) => ({
 				contactId,
 				impulsePerTime: support.reactions[index]!
 			})),
@@ -106,7 +110,7 @@ function retireOverlappingDormantComponents(
 	return previous;
 }
 
-function connectedStationaryGroups(
+function connectedQuiescentGroups(
 	bodyIds: ReadonlySet<string>,
 	contacts: readonly ActiveComponentContact[]
 ): readonly ReadonlySet<string>[] {

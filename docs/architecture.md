@@ -179,8 +179,11 @@ private `scheduler/pairs/component.ts` module owns this geometry-to-component bo
 post-impact runtime state. Disconnected simultaneous components are committed independently, while
 nearby positive-time events remain ordered.
 
-Certified stationary components with fixed support become persistent dormant components. The
-private `scheduler/dormancy` subdomain owns their admission, support-equilibrium certification,
+Certified stationary components with fixed support become persistent dormant components. At a
+selected event boundary, the same admission path may also collapse a current-contact component
+whose complete candidate subset is below the represented-motion rest speed, but only when zero
+velocity passes the existing fixed-anchored support-equilibrium certificate. The private
+`scheduler/dormancy` subdomain owns this admission policy, support-equilibrium certification,
 post-impact retirement/rebuilding, split/merge lifecycle evidence and retained contact records.
 Dormant bodies have stationary authoritative coverage and no local prediction until an exact-time
 component impact reactivates them; the global scheduler remains responsible only for sequencing

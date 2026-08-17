@@ -250,10 +250,11 @@ does not add a public entry point.
 FLAME-54 introduced a persistent dormant-component state machine and therefore the private
 `scheduler/dormancy` subdomain rather than adding that lifecycle to the scheduler orchestrator.
 `admission.ts` owns initial and single-body promotion, `rebuild.ts` owns post-impact retirement,
-split/merge/recreation and reactivation, `records.ts` owns stable component/contact persistence,
-and `support-equilibrium.ts` owns non-negative support certification. The local `index.ts` preserves
-the narrow scheduler-facing API. Focused dormant-component scenarios and verification protect the
-extraction; no compatibility wrapper remains at the old flat scheduler path.
+represented-motion candidate admission, split/merge/recreation and reactivation, `records.ts` owns
+stable component/contact persistence, and `support-equilibrium.ts` owns non-negative support
+certification. The local `index.ts` preserves the narrow scheduler-facing API. Focused
+dormant-component scenarios and verification protect the extraction; no compatibility wrapper
+remains at the old flat scheduler path.
 
 FLAME-56 introduced the distinct `scheduler/dynamic-support` state machine for a moving body held
 in circular contact by a dynamic body whose complete component remains fixed-anchored.
