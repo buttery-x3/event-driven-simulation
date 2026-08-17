@@ -407,11 +407,12 @@ neither certified support nor a common release remains unresolved instead of sel
 collider. Diagnostics record the alternating collider set, contracting intervals, candidate limit,
 retained contacts, state distance, support-feasibility result and final classification.
 
-### Support-preserving low-speed elastic kernel
+### Support-preserving low-speed elastic reference
 
-FLAME-96 Phase A defines a bounded internal response operator at the provisional physical boundary
+FLAME-96 Phase A defines a bounded reference response at the provisional physical boundary
 `LOW_SPEED_ELASTIC_IMPACT = 0.05 m/s`. It remains separate from the `0.01 m/s` represented-rest
-threshold. Phase A is not yet selected by production scheduler flow, so current run behaviour and
+threshold. The prototype is an oracle for the intended physical outcomes, not an approved sibling
+production solver. It is not selected by production scheduler flow, so current run behaviour and
 saved-run meaning remain unchanged.
 
 For an already certified exact-time active contact set `A`, an integrating adapter must eventually
@@ -433,6 +434,17 @@ Mass-metric projection is used only to remove round-off-scale drift; a material 
 the response as inconsistent support evidence. A successful endpoint separately certifies support
 equalities, unilateral impact feasibility, kinetic-energy preservation and a concrete generalized
 momentum decomposition through impact impulses plus declared support and lock reactions.
+
+Phase-A comparison tests establish that `resolveCoupledImpact(..., e = 1)` produces the same
+required endpoints when every bilateral support is supplied privately as opposing unilateral
+gradients. The same tests establish that anchored fallback can be reproduced numerically after
+removing complete dormant components from the active degrees of freedom and converting impacts
+against them to fixed-side gradients. These are mathematical comparison encodings only. They do
+not satisfy the existing physical-contact contract, double the contact contribution of each
+support before the solver's sixteen-contact bound, and cannot expose signed support/lock reactions
+through the current impact diagnostic contract. A nine-contact resting stack provides a concrete
+bounded input that becomes seventeen adapter contacts and is rejected. Scheduler integration is
+therefore stopped rather than weakening the resource, contact or diagnostic contracts.
 
 Every ordinary accepted manifold remains one `contact` event. An alternating-limit release keeps
 the last tolerance-resolved single impact as that contact event and records the complete candidate

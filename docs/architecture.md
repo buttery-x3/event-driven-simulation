@@ -231,16 +231,21 @@ and invariant checks, endpoint energies, impulses and completion reason. A persi
 without a fixed-anchored support certificate remains an explicit `unsupported-body-body-response`
 boundary after the instantaneous response succeeds.
 
-FLAME-96 Phase A adds the private `dynamic-impact/low-speed-elastic` numerical boundary without
-changing or wrapping Generalised Reflections. It exposes distinct support-preserving and
-anchored-component fallback operations over one mass-normalised constrained reflection kernel.
-`problem.ts` validates and prepares the partition between bilateral pre-existing supports and
-unilateral impact contacts, `solver.ts` owns elastic propagation plus the concrete momentum
-decomposition, and `response.ts` certifies contact feasibility, energy and the declared signed
-support/lock reactions. Anchored fallback accepts complete resting-component identities and locks
-all coordinates of every supplied member; the support-preserving operation has no body-lock input.
-This Phase A capability is not selected by the scheduler, does not write run diagnostics and does
-not change production collision behaviour until a separately reviewed integration phase.
+FLAME-96 Phase A retains `dynamic-impact/low-speed-elastic` only as a physical reference prototype.
+Its distinct support-preserving and anchored-component fallback operations demonstrated the
+required constrained elastic endpoints and concrete momentum decomposition, but review found that
+hardening its sibling reflection kernel would duplicate Generalised Reflections ownership.
+
+A comparison-only adapter proved that opposing unilateral gradients can make established supports
+bilateral through the existing lineality projection, and that removing dormant-component degrees
+of freedom can reproduce anchored fallback. That adapter is not an approved production boundary:
+mirrored support normals and dormant-body-as-fixed contacts are synthetic rather than physical
+`CoupledImpactContact` records, paired supports can expand an otherwise valid nine-contact problem
+beyond the existing sixteen-contact resource limit, and `ImpactSolveDiagnostic` cannot declare the
+resulting signed support or coordinate-lock reactions. Resolving those constraints would require a
+solver input/resource and diagnostic-contract decision rather than a narrow scheduler adapter.
+Scheduler integration therefore remains stopped; the Phase A prototype remains unchanged as the
+reference oracle and does not affect production collision behaviour.
 
 The dynamic-impact root remains at six implementation files. Finite capture is a separately
 changing represented-physics policy with two production consumers, so it lives in its named nested

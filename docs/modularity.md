@@ -247,16 +247,16 @@ adapters. Its `policy.ts` owns meaningful-rebound veto and unilateral active-set
 `types.ts` owns its solver-neutral inputs/results. This preserves the six-file numerical root and
 does not add a public entry point.
 
-FLAME-96 Phase A adds the nested `dynamic-impact/low-speed-elastic` subdomain rather than a seventh
-root implementation file or new behaviour inside the substantial Generalised Reflections solver.
-`problem.ts` owns bounded validation, support/impact partitioning, mass-normalised formulation and
-complete anchored-component coordinate locks. `solver.ts` owns equality-compatible elastic
-reflection and the certified decomposition into non-negative unilateral impact impulses plus signed
-bilateral reactions. `response.ts` owns the two explicit operation entry points and final
-feasibility, energy and physical-momentum certification; `types.ts` owns their local vocabulary.
-This split replaced an initial over-limit prototype and keeps formulation, numerical response and
-certification independently reviewable. Scheduler activation and lifecycle commitment remain
-deliberately absent from Phase A.
+FLAME-96 Phase A retains the nested `dynamic-impact/low-speed-elastic` subdomain as a physical
+reference only. `problem.ts`, `solver.ts`, `response.ts` and `types.ts` still separate formulation,
+reflection, certification and local vocabulary, but review found that production hardening would
+duplicate the Generalised Reflections solver's lineality and anti-locking responsibilities.
+Comparison tests therefore exercise a test-local adapter over the existing solver without adding a
+second production consumer or scheduler path. The adapter matches the reference outcomes, but its
+synthetic contact semantics, doubled support-contact resource use and absent signed-reaction
+diagnostic vocabulary prevent adoption as a narrow compatibility layer. No production ownership
+split is approved beyond retaining the prototype as an oracle; scheduler activation remains
+absent pending an explicit solver-boundary and diagnostic-contract decision.
 
 FLAME-93 introduced `run/contact-resolution` because exact-time contact representation,
 post-response role classification, supported-motion/resting qualification, support certification
