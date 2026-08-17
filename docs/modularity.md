@@ -247,6 +247,17 @@ adapters. Its `policy.ts` owns meaningful-rebound veto and unilateral active-set
 `types.ts` owns its solver-neutral inputs/results. This preserves the six-file numerical root and
 does not add a public entry point.
 
+FLAME-96 Phase A adds the nested `dynamic-impact/low-speed-elastic` subdomain rather than a seventh
+root implementation file or new behaviour inside the substantial Generalised Reflections solver.
+`problem.ts` owns bounded validation, support/impact partitioning, mass-normalised formulation and
+complete anchored-component coordinate locks. `solver.ts` owns equality-compatible elastic
+reflection and the certified decomposition into non-negative unilateral impact impulses plus signed
+bilateral reactions. `response.ts` owns the two explicit operation entry points and final
+feasibility, energy and physical-momentum certification; `types.ts` owns their local vocabulary.
+This split replaced an initial over-limit prototype and keeps formulation, numerical response and
+certification independently reviewable. Scheduler activation and lifecycle commitment remain
+deliberately absent from Phase A.
+
 FLAME-93 introduced `run/contact-resolution` because exact-time contact representation,
 post-response role classification, supported-motion/resting qualification, support certification
 and represented-mode selection had

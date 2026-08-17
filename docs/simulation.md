@@ -407,6 +407,33 @@ neither certified support nor a common release remains unresolved instead of sel
 collider. Diagnostics record the alternating collider set, contracting intervals, candidate limit,
 retained contacts, state distance, support-feasibility result and final classification.
 
+### Support-preserving low-speed elastic kernel
+
+FLAME-96 Phase A defines a bounded internal response operator at the provisional physical boundary
+`LOW_SPEED_ELASTIC_IMPACT = 0.05 m/s`. It remains separate from the `0.01 m/s` represented-rest
+threshold. Phase A is not yet selected by production scheduler flow, so current run behaviour and
+saved-run meaning remain unchanged.
+
+For an already certified exact-time active contact set `A`, an integrating adapter must eventually
+supply authoritative pre-existing support contacts `S`; every other active contact belongs to
+`I = A minus S`. Activation speed is measured only from initially incoming contacts in `I`, while the
+elastic propagation includes complete `I`, including unsupported contacts whose initial normal
+velocity is zero. Contacts in `S` are bilateral zero-normal-velocity equalities and contacts in `I`
+are unilateral impact directions with non-negative impulses.
+
+The support-preserving operation and anchored fallback are distinct. Support preservation constrains
+only the supplied support normals and retains their common tangent/nullspace motion. Anchored
+fallback additionally accepts complete authoritative resting components and locks every coordinate
+of every component member; it cannot lock an arbitrary body subset. Support and coordinate-lock
+reaction multipliers are signed because they are bilateral low-speed constraints. Only impact
+contact impulses are constrained non-negative.
+
+The incoming state must already satisfy every supplied equality within numerical tolerance.
+Mass-metric projection is used only to remove round-off-scale drift; a material correction rejects
+the response as inconsistent support evidence. A successful endpoint separately certifies support
+equalities, unilateral impact feasibility, kinetic-energy preservation and a concrete generalized
+momentum decomposition through impact impulses plus declared support and lock reactions.
+
 Every ordinary accepted manifold remains one `contact` event. An alternating-limit release keeps
 the last tolerance-resolved single impact as that contact event and records the complete candidate
 accumulation manifold on the same-time `impact` to `free-flight` transition; this distinguishes

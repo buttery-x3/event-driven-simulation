@@ -231,6 +231,17 @@ and invariant checks, endpoint energies, impulses and completion reason. A persi
 without a fixed-anchored support certificate remains an explicit `unsupported-body-body-response`
 boundary after the instantaneous response succeeds.
 
+FLAME-96 Phase A adds the private `dynamic-impact/low-speed-elastic` numerical boundary without
+changing or wrapping Generalised Reflections. It exposes distinct support-preserving and
+anchored-component fallback operations over one mass-normalised constrained reflection kernel.
+`problem.ts` validates and prepares the partition between bilateral pre-existing supports and
+unilateral impact contacts, `solver.ts` owns elastic propagation plus the concrete momentum
+decomposition, and `response.ts` certifies contact feasibility, energy and the declared signed
+support/lock reactions. Anchored fallback accepts complete resting-component identities and locks
+all coordinates of every supplied member; the support-preserving operation has no body-lock input.
+This Phase A capability is not selected by the scheduler, does not write run diagnostics and does
+not change production collision behaviour until a separately reviewed integration phase.
+
 The dynamic-impact root remains at six implementation files. Finite capture is a separately
 changing represented-physics policy with two production consumers, so it lives in its named nested
 subdomain instead of enlarging the numerical solver root. A future addition of rotational

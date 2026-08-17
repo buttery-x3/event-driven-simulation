@@ -510,6 +510,11 @@ dynamic-support sources now feed one exact-contact vocabulary and mode authority
 their specialised discovery, response, path and persistence responsibilities. The public
 `run/index.ts` API and contract topology did not change.
 
+FLAME-96 Phase A added the private `run/dynamic-impact/low-speed-elastic` subdomain for the bounded
+support-constrained elastic kernel. The nested boundary keeps the six-file `dynamic-impact` root
+stable and does not create a scheduler dependency or a new top-level subsystem. Its local exports
+remain internal to `run`; production selection and lifecycle integration are intentionally deferred.
+
 The migration issue must also update the path references in `architecture.md`, `simulation.md`,
 `workflow.md`, ESLint rules and all imports. Do not leave documentation describing paths that no
 longer exist.
