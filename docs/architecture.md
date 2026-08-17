@@ -170,9 +170,9 @@ owns world outcome and per-body lifecycle construction, `predictions.ts` owns lo
 the private `pairs` subdomain separates continuous pair selection from exact event commitment, and
 `construct.ts` owns global selection. The sibling `contact-resolution` subdomain owns immutable
 exact-event contact state, phase-relative response classification, supplied-motion and
-represented-rest qualification for the existing resting mode, general support certification and
-generic represented-mode selection. Scheduler prefix segments remain pair-adapter state used only
-by pair commitment. The
+represented-rest qualification for event-time impact/dormancy admission to the existing resting
+mode, general support certification and generic represented-mode selection. Scheduler prefix
+segments remain pair-adapter state used only by pair commitment. The
 sibling `dynamic-impact` subdomain owns the
 mass-aware closed-form response for one certified isolated frictionless contact.
 
@@ -186,15 +186,21 @@ post-impact runtime state. Fixed-world impact builds the same vocabulary through
 fixed-event adapter before common post-contact selection. Disconnected simultaneous components are
 committed independently, while nearby positive-time events remain ordered.
 
-Certified stationary components with fixed support become persistent dormant components. At an
-actual contact boundary, the common mode policy may also admit a current-contact subset whose
-velocity magnitudes are within the represented-rest threshold and whose zero-motion support is
-certified. The private `scheduler/dormancy` subdomain owns their admission, post-impact
-retirement/rebuilding, split/merge lifecycle evidence and retained contact records. It consumes the general
-support-equilibrium certificate and common resting-mode decision rather than owning either policy.
+Certified stationary components with fixed support become persistent dormant components. During
+the event-time impact/dormancy admissions changed by FLAME-94, the common mode policy may also admit
+a current-contact subset whose velocity magnitudes are within the represented-rest threshold and
+whose zero-motion support is certified. The private `scheduler/dormancy` subdomain owns their
+admission, post-impact retirement/rebuilding, split/merge lifecycle evidence and retained contact
+records. It consumes the general support-equilibrium certificate and common resting-mode decision
+rather than owning either policy.
 Dormant bodies have stationary authoritative coverage and no local prediction until an exact-time
 component impact reactivates them; the global scheduler remains responsible only for sequencing
 that transition with releases and other selected events.
+
+FLAME-94 does not make represented rest reachable from every persistent supported-motion state.
+Linear and circular sustained-contact continuations retain their historical numerical-zero rest
+entry, and dynamic sustained support has no general transition that commits its moving member into
+an existing resting-anchored component.
 
 A retained dynamic body contact may become a sustained circular support only when the supporting
 body belongs to a fixed-anchored dormant component that remains support-feasible under the moving

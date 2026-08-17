@@ -256,7 +256,9 @@ scheduler prefix-commitment state,
 `exact-state.ts` owns generic fixed-event construction, `classification.ts` owns phase-relative
 retained/released roles, `support-equilibrium.ts` owns the general non-negative contact-graph
 certificate, and `mode.ts` owns supported-motion and represented-rest qualification plus generic
-mode precedence. Its local `index.ts` is private to the
+mode precedence. FLAME-94 consumes represented-rest qualification through event-time impact and
+dormancy admissions; sustained-motion and dynamic-support lifecycle transitions remain unchanged.
+Its local `index.ts` is private to the
 `run` subsystem; `run/index.ts` and all public contracts remain unchanged. Numerical solvers,
 continuous path algorithms and lifecycle construction remain outside this subdomain.
 
