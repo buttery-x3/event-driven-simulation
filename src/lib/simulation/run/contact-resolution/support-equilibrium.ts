@@ -1,16 +1,10 @@
-import type { Vec2 } from '../../../contracts';
-import { solveNonnegativeLeastSquares } from '../../dynamic-impact/nonnegative-qp';
-import type { ActiveComponentContact, ExactTimeComponent } from '../pairs/component';
-
-export interface SupportReactionSolution {
-	readonly contacts: readonly ActiveComponentContact[];
-	readonly reactions: readonly number[];
-	readonly residualNorm: number;
-}
+import type { Vec2 } from '../../contracts';
+import { solveNonnegativeLeastSquares } from '../dynamic-impact';
+import type { ExactContact, ExactContactBodyState, SupportReactionSolution } from './types';
 
 export function certifySupportEquilibrium(
-	bodies: ExactTimeComponent['bodies'],
-	contacts: readonly ActiveComponentContact[],
+	bodies: readonly ExactContactBodyState[],
+	contacts: readonly ExactContact[],
 	gravity: Vec2,
 	tolerance: number,
 	externalLoads: ReadonlyMap<string, Vec2> = new Map()

@@ -1,5 +1,5 @@
 import type { DynamicSupportDiagnostic, Vec2 } from '../../../contracts';
-import { certifySupportEquilibrium } from '../dormancy';
+import { certifySupportEquilibrium } from '../../contact-resolution';
 import type { SchedulerState } from '../types';
 import type {
 	DynamicSupportPrediction,

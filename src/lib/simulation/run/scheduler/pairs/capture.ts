@@ -1,4 +1,5 @@
 import type { ContactCaptureDiagnostic, Vec2 } from '../../../contracts';
+import type { ExactContact } from '../../contact-resolution';
 import {
 	resolveCoupledImpact,
 	selectContactCapture,
@@ -7,7 +8,7 @@ import {
 	type CoupledImpactResponse
 } from '../../dynamic-impact';
 import type { SchedulerState } from '../types';
-import type { ActiveComponentContact, ExactTimeComponent } from './component';
+import type { ExactTimeComponent } from './component';
 
 export interface SelectedCoupledImpact {
 	readonly response: CoupledImpactResponse;
@@ -19,7 +20,7 @@ export function coupledImpactInput(
 	component: ExactTimeComponent,
 	tolerance: number,
 	restitution = state.input.settings.restitution,
-	contacts: readonly ActiveComponentContact[] = component.contacts
+	contacts: readonly ExactContact[] = component.contacts
 ): CoupledImpactInput {
 	return {
 		bodies: component.bodies.map(({ id, mass, velocity }) => ({ id, mass, velocity })),
@@ -109,7 +110,7 @@ export function selectCoupledContactCapture(
 function solveInelastic(
 	state: SchedulerState,
 	component: ExactTimeComponent,
-	contacts: readonly ActiveComponentContact[],
+	contacts: readonly ExactContact[],
 	tolerance: number
 ): CoupledImpactResponse | null {
 	if (contacts.length === 0) return null;
@@ -166,7 +167,7 @@ function endpoint(response: CoupledImpactResponse): ContactCaptureEndpoint {
 function fixedCurvatureRadius(
 	state: SchedulerState,
 	component: ExactTimeComponent,
-	contact: Extract<ActiveComponentContact, { readonly type: 'body-fixed' }>
+	contact: Extract<ExactContact, { readonly type: 'body-fixed' }>
 ): number | null {
 	const bodyRadius = component.bodies.find(({ id }) => id === contact.bodyId)!.radius;
 	if (
@@ -184,7 +185,7 @@ function fixedCurvatureRadius(
 
 function relativeNormal(
 	component: ExactTimeComponent,
-	contact: ActiveComponentContact,
+	contact: ExactContact,
 	velocityByBody: ReadonlyMap<string, Vec2>
 ): number {
 	if (contact.type === 'body-fixed') {

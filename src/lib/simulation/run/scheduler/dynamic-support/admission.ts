@@ -1,26 +1,24 @@
 import type { ContactComponentRecord, Vec2 } from '../../../contracts';
 import { dotVec2 } from '../../../math';
+import type { ExactContact, ResolvedContactState } from '../../contact-resolution';
 import type { CoupledImpactResponse } from '../../dynamic-impact';
-import type { ActiveComponentContact, ExactTimeComponent } from '../pairs/component';
 import type { SchedulerState } from '../types';
 import { refreshDynamicSupportPrediction } from './prediction';
 import type { DynamicSupportRuntime } from './types';
 
 export function admitCertifiedDynamicSupports(
 	state: SchedulerState,
-	component: ExactTimeComponent,
+	resolvedContacts: ResolvedContactState,
 	response: CoupledImpactResponse,
 	tolerance: number
 ): ReadonlySet<string> {
+	const component = resolvedContacts.eventState;
 	const admitted = new Set<string>();
-	const results = new Map(response.contacts.map((contact) => [contact.contactId, contact]));
 	const velocityByBody = new Map(
 		response.bodyVelocities.map((body) => [body.bodyId, body.velocity])
 	);
-	const candidates = component.contacts.filter(
-		(contact): contact is Extract<ActiveComponentContact, { readonly type: 'body-body' }> =>
-			contact.type === 'body-body' &&
-			(results.get(contact.id)?.postImpactNormalVelocity ?? Number.POSITIVE_INFINITY) <= tolerance
+	const candidates = resolvedContacts.contacts.flatMap(({ contact, disposition }) =>
+		contact.type === 'body-body' && disposition === 'retained' ? [contact] : []
 	);
 	for (const contact of candidates) {
 		const firstDormant = activeAnchoredComponent(state, contact.firstBodyId);
@@ -147,7 +145,7 @@ function activeAnchoredComponent(
 }
 
 function normalFromSupport(
-	contact: Extract<ActiveComponentContact, { readonly type: 'body-body' }>,
+	contact: Extract<ExactContact, { readonly type: 'body-body' }>,
 	supportBodyId: string
 ): Vec2 {
 	return supportBodyId === contact.firstBodyId

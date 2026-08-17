@@ -6,7 +6,3 @@ export interface ImpactManifoldSolution {
 	readonly contacts: readonly ContactManifoldMember[];
 	readonly activeCandidates: readonly FixedWorldContactCandidate[];
 }
-
-export interface SupportReactionSolution {
-	readonly reactions: readonly number[];
-}

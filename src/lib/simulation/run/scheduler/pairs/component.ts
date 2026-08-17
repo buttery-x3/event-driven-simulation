@@ -10,46 +10,19 @@ import {
 	evaluateMotionSegmentPosition,
 	evaluateMotionSegmentVelocity
 } from '../../../motion';
+import type {
+	ExactContact,
+	ExactContactBodyState,
+	ExactTimeContactState
+} from '../../contact-resolution';
 import { predictionSegments, type LocalBodyRuntime } from '../../single-ball/local-events';
 import type { SchedulerState } from '../types';
 import { dynamicSupportPathForBody } from '../dynamic-support/prediction';
-import type { PairContactSelection, PairSchedulerSelection } from './selection';
+import type { PairSchedulerSelection } from './selection';
 
-export interface ComponentBodyState {
-	readonly id: string;
-	readonly mass: number;
-	readonly radius: number;
-	readonly position: Vec2;
-	readonly velocity: Vec2;
-	readonly prefixSegment: MotionSegment | null;
-}
-
-export type ActiveComponentContact =
-	| {
-			readonly type: 'body-body';
-			readonly id: string;
-			readonly firstBodyId: string;
-			readonly secondBodyId: string;
-			readonly normalFromFirstToSecond: Vec2;
-			readonly contactPoint: Vec2;
-			readonly selection: PairContactSelection | null;
-	  }
-	| {
-			readonly type: 'body-fixed';
-			readonly id: string;
-			readonly bodyId: string;
-			readonly colliderId: string;
-			readonly normal: Vec2;
-			readonly contactPoint: Vec2;
-			readonly candidate: FixedWorldContactCandidate;
-	  };
-
-export interface ExactTimeComponent {
-	readonly id: string;
-	readonly time: number;
-	readonly bodies: readonly ComponentBodyState[];
-	readonly contacts: readonly ActiveComponentContact[];
+export interface ExactTimeComponent extends ExactTimeContactState {
 	readonly candidateEvidence: NonNullable<ImpactSolveDiagnostic['candidateEvidence']>;
+	readonly selectionDiagnosticIds: readonly string[];
 }
 
 export function buildExactTimeComponent(
@@ -60,7 +33,7 @@ export function buildExactTimeComponent(
 	const tolerance = Math.max(state.input.settings.tolerances.contactDistance, Number.EPSILON * 256);
 	const bodyStates = [...state.runtimes.values()]
 		.map((runtime) => bodyStateAt(state, runtime, time))
-		.filter((body): body is ComponentBodyState => body !== null)
+		.filter((body): body is ExactContactBodyState => body !== null)
 		.sort(bodyGeometryOrder);
 	const dynamicCandidates = bodyPairCandidates(bodyStates, selection, time, tolerance);
 	const connectedBodyIds = connectedBodies(selection, dynamicCandidates);
@@ -95,7 +68,15 @@ export function buildExactTimeComponent(
 		time,
 		bodies,
 		contacts,
-		candidateEvidence
+		candidateEvidence,
+		selectionDiagnosticIds: dynamicCandidates.flatMap(({ contact, selectionDiagnosticId }) =>
+			contact &&
+			selectionDiagnosticId &&
+			connectedBodyIds.has(contact.firstBodyId) &&
+			connectedBodyIds.has(contact.secondBodyId)
+				? [selectionDiagnosticId]
+				: []
+		)
 	};
 }
 
@@ -108,7 +89,7 @@ export function buildStationaryContactComponents(
 		.filter((runtime) => runtime.dormantComponentId === null)
 		.map((runtime) => bodyStateAt(state, runtime, time))
 		.filter(
-			(body): body is ComponentBodyState =>
+			(body): body is ExactContactBodyState =>
 				body !== null && Math.hypot(...body.velocity) <= tolerance
 		)
 		.sort(bodyGeometryOrder);
@@ -160,7 +141,8 @@ export function buildStationaryContactComponents(
 					)
 					.map(({ evidence }) => evidence),
 				...fixedCandidates.map(({ evidence }) => evidence)
-			]
+			],
+			selectionDiagnosticIds: []
 		};
 	});
 }
@@ -169,7 +151,7 @@ function bodyStateAt(
 	state: SchedulerState,
 	runtime: LocalBodyRuntime,
 	time: number
-): ComponentBodyState | null {
+): ExactContactBodyState | null {
 	if (time < runtime.body.releaseTime) return null;
 	const dynamicSupportPath = dynamicSupportPathForBody(state, runtime.body.id);
 	if (
@@ -239,13 +221,14 @@ function truncateSegment(segment: MotionSegment, endTime: number): MotionSegment
 }
 
 function bodyPairCandidates(
-	bodies: readonly ComponentBodyState[],
+	bodies: readonly ExactContactBodyState[],
 	selection: Extract<PairSchedulerSelection, { readonly type: 'contact' }> | null,
 	time: number,
 	tolerance: number
 ): readonly {
-	readonly contact: Extract<ActiveComponentContact, { readonly type: 'body-body' }> | null;
+	readonly contact: Extract<ExactContact, { readonly type: 'body-body' }> | null;
 	readonly evidence: NonNullable<ImpactSolveDiagnostic['candidateEvidence']>[number];
+	readonly selectionDiagnosticId: string | null;
 }[] {
 	const selections = new Map(
 		(selection?.simultaneousContacts ?? []).map((contact) => [
@@ -254,8 +237,9 @@ function bodyPairCandidates(
 		])
 	);
 	const result: {
-		contact: Extract<ActiveComponentContact, { readonly type: 'body-body' }> | null;
+		contact: Extract<ExactContact, { readonly type: 'body-body' }> | null;
 		evidence: NonNullable<ImpactSolveDiagnostic['candidateEvidence']>[number];
+		selectionDiagnosticId: string | null;
 	}[] = [];
 	for (let firstIndex = 0; firstIndex < bodies.length; firstIndex += 1) {
 		for (let secondIndex = firstIndex + 1; secondIndex < bodies.length; secondIndex += 1) {
@@ -291,10 +275,10 @@ function bodyPairCandidates(
 							firstBodyId,
 							secondBodyId,
 							normalFromFirstToSecond: normal,
-							contactPoint: contactPoint as Vec2,
-							selection: selected
+							contactPoint: contactPoint as Vec2
 						}
 					: null,
+				selectionDiagnosticId: selected?.diagnosticId ?? null,
 				evidence: {
 					id,
 					type: 'body-body',
@@ -337,12 +321,12 @@ function connectedBodies(
 }
 
 function fixedCandidate(
-	body: ComponentBodyState,
+	body: ExactContactBodyState,
 	collider: StaticCollider,
 	time: number,
 	tolerance: number
 ): {
-	readonly contact: Extract<ActiveComponentContact, { readonly type: 'body-fixed' }> | null;
+	readonly contact: Extract<ExactContact, { readonly type: 'body-fixed' }> | null;
 	readonly evidence: NonNullable<ImpactSolveDiagnostic['candidateEvidence']>[number];
 } {
 	const geometry = fixedGeometry(body.position, collider);
@@ -457,7 +441,7 @@ function fixedGeometry(
 	};
 }
 
-function bodyGeometryOrder(left: ComponentBodyState, right: ComponentBodyState): number {
+function bodyGeometryOrder(left: ExactContactBodyState, right: ExactContactBodyState): number {
 	return (
 		left.position[0] - right.position[0] ||
 		left.position[1] - right.position[1] ||

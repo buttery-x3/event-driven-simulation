@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Vec2 } from '../../../../contracts';
 import type { FixedWorldContactCandidate } from '../../../../collision';
-import { solveImpactManifold, solveSupportReactions } from '..';
+import { solveImpactManifold } from '..';
 
 describe('fixed-world impact manifolds', () => {
 	it('preserves symmetry and shares the coupled impulse', () => {
@@ -30,21 +30,6 @@ describe('fixed-world impact manifolds', () => {
 
 		expect(result.outgoingVelocity).toEqual([1, 1]);
 		expect(result.contacts.find(({ colliderId }) => colliderId === 'left-wall')!.impulse).toBe(0);
-	});
-
-	it('certifies mixed circle-line support with non-negative reactions', () => {
-		const support = solveSupportReactions(
-			[
-				candidate('circle', [-0.6, 0.8], 'circle'),
-				candidate('line', [0.6, 0.8], 'segment-face-positive')
-			],
-			[0, -10],
-			1e-9
-		)!;
-
-		expect(support.reactions).toHaveLength(2);
-		expect(support.reactions[0]).toBeGreaterThan(0);
-		expect(support.reactions[1]).toBeGreaterThan(0);
 	});
 });
 

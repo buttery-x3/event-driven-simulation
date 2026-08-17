@@ -1,33 +1,39 @@
 import type { ContactComponentRecord } from '../../../contracts';
+import {
+	certifySupportEquilibrium,
+	type ExactContact,
+	type ExactTimeContactState,
+	type ResolvedContactState
+} from '../../contact-resolution';
 import type { CoupledImpactResponse } from '../../dynamic-impact';
-import type { ActiveComponentContact, ExactTimeComponent } from '../pairs/component';
 import type { SchedulerState } from '../types';
-import { certifySupportEquilibrium } from './support-equilibrium';
 import { futureEventTimes, restingComponentId } from './records';
 
 export function rebuildDormantComponents(
 	state: SchedulerState,
-	component: ExactTimeComponent,
+	resolvedContacts: ResolvedContactState,
 	response: CoupledImpactResponse,
 	tolerance: number
 ): ReadonlySet<string> {
+	const component = resolvedContacts.eventState;
 	const previous = retireOverlappingDormantComponents(state, component);
 	const velocityByBody = new Map(
 		response.bodyVelocities.map((body) => [body.bodyId, body.velocity])
 	);
-	const resultByContact = new Map(response.contacts.map((contact) => [contact.contactId, contact]));
 	const stationaryBodyIds = new Set(
 		component.bodies
 			.filter(({ id }) => Math.hypot(...velocityByBody.get(id)!) <= tolerance)
 			.map(({ id }) => id)
 	);
-	const retained = component.contacts.filter((contact) => {
-		if ((resultByContact.get(contact.id)?.postImpactNormalVelocity ?? Infinity) > tolerance)
-			return false;
-		return contact.type === 'body-fixed'
-			? stationaryBodyIds.has(contact.bodyId)
-			: stationaryBodyIds.has(contact.firstBodyId) && stationaryBodyIds.has(contact.secondBodyId);
-	});
+	const retained: ExactContact[] = [];
+	for (const { contact, disposition } of resolvedContacts.contacts) {
+		if (disposition !== 'retained') continue;
+		const stationary =
+			contact.type === 'body-fixed'
+				? stationaryBodyIds.has(contact.bodyId)
+				: stationaryBodyIds.has(contact.firstBodyId) && stationaryBodyIds.has(contact.secondBodyId);
+		if (stationary) retained.push(contact);
+	}
 	const groups = connectedStationaryGroups(stationaryBodyIds, retained);
 	const created: ContactComponentRecord[] = [];
 	for (const [groupIndex, bodyIds] of groups.entries()) {
@@ -86,7 +92,7 @@ export function rebuildDormantComponents(
 
 function retireOverlappingDormantComponents(
 	state: SchedulerState,
-	component: ExactTimeComponent
+	component: ExactTimeContactState
 ): ContactComponentRecord[] {
 	const bodyIds = new Set(component.bodies.map(({ id }) => id));
 	const previous = state.contactComponents.filter(
@@ -108,7 +114,7 @@ function retireOverlappingDormantComponents(
 
 function connectedStationaryGroups(
 	bodyIds: ReadonlySet<string>,
-	contacts: readonly ActiveComponentContact[]
+	contacts: readonly ExactContact[]
 ): readonly ReadonlySet<string>[] {
 	const remaining = new Set(bodyIds);
 	const groups: Set<string>[] = [];
@@ -134,7 +140,7 @@ function connectedStationaryGroups(
 	return groups;
 }
 
-function contactBelongsTo(contact: ActiveComponentContact, bodyIds: ReadonlySet<string>): boolean {
+function contactBelongsTo(contact: ExactContact, bodyIds: ReadonlySet<string>): boolean {
 	return contact.type === 'body-fixed'
 		? bodyIds.has(contact.bodyId)
 		: bodyIds.has(contact.firstBodyId) && bodyIds.has(contact.secondBodyId);

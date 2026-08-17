@@ -1,6 +1,9 @@
 import type { CircularContactMotionSegment, Vec2 } from '../../../contracts';
-import type { SupportReactionSolution } from '../dormancy';
-import type { ActiveComponentContact, ComponentBodyState } from '../pairs/component';
+import type {
+	ExactContact,
+	ExactContactBodyState,
+	SupportReactionSolution
+} from '../../contact-resolution';
 import type { AngularEvent, CircularContactSeed } from '../../single-ball/sustained-contact';
 
 export interface DynamicSupportRuntime {
@@ -10,8 +13,8 @@ export interface DynamicSupportRuntime {
 	readonly supportBodyId: string;
 	componentId: string;
 	readonly anchoredBodyIds: readonly string[];
-	anchoredBodies: readonly ComponentBodyState[];
-	anchoredContacts: readonly ActiveComponentContact[];
+	anchoredBodies: readonly ExactContactBodyState[];
+	anchoredContacts: readonly ExactContact[];
 	time: number;
 	position: Vec2;
 	normal: Vec2;

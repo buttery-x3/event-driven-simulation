@@ -10,7 +10,7 @@ import {
 	type CircularContactSeed,
 	type SustainedContactRequest
 } from '../../single-ball/sustained-contact';
-import { certifySupportEquilibrium } from '../dormancy';
+import { certifySupportEquilibrium } from '../../contact-resolution';
 import type { SchedulerState } from '../types';
 import type {
 	DynamicSupportBoundary,

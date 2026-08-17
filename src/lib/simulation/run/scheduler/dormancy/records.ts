@@ -1,6 +1,6 @@
 import type { DynamicContactRecord } from '../../../contracts';
+import type { ExactContact, ExactTimeContactState } from '../../contact-resolution';
 import type { SchedulerState } from '../types';
-import type { ActiveComponentContact, ExactTimeComponent } from '../pairs/component';
 
 export function futureEventTimes(state: SchedulerState, time: number): readonly number[] {
 	return [
@@ -19,8 +19,8 @@ export function restingComponentId(
 }
 
 export function dormantContactRecord(
-	component: ExactTimeComponent,
-	contact: ActiveComponentContact,
+	component: ExactTimeContactState,
+	contact: ExactContact,
 	reaction: number
 ): DynamicContactRecord {
 	const normal = contact.type === 'body-body' ? contact.normalFromFirstToSecond : contact.normal;

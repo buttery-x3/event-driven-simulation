@@ -1,12 +1,12 @@
 import { evaluateCircularContactState } from '../../../motion';
-import type { ExactTimeComponent } from '../pairs/component';
+import type { ExactTimeContactState } from '../../contact-resolution';
 import type { SchedulerState } from '../types';
 import { evaluateDynamicSupportReaction, invalidateDynamicSupportPrediction } from './prediction';
 import { releaseDynamicContact, updateTerminalDynamicContact } from './records';
 
 export function interruptDynamicSupports(
 	state: SchedulerState,
-	component: ExactTimeComponent
+	component: ExactTimeContactState
 ): void {
 	const affected = new Set(component.bodies.map(({ id }) => id));
 	for (const support of [...state.dynamicSupports.values()]) {

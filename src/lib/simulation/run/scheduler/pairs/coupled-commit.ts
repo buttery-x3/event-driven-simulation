@@ -1,4 +1,12 @@
 import type { DynamicContactRecord, RunTerminalReason, Vec2 } from '../../../contracts';
+import {
+	classifyPostResponseContacts,
+	selectPostContactMode,
+	type ExactContact,
+	type ExactContactBodyState,
+	type ResolvedContactRole,
+	type ResolvedContactState
+} from '../../contact-resolution';
 import { resolveCoupledImpact, type CoupledImpactResponse } from '../../dynamic-impact';
 import { invalidateLocalPrediction, refreshBodyPrediction } from '../predictions';
 import type { SchedulerState } from '../types';
@@ -6,7 +14,7 @@ import { rebuildDormantComponents, upsertDynamicContacts } from '../dormancy';
 import { admitCertifiedDynamicSupports, interruptDynamicSupports } from '../dynamic-support';
 import type { PairCommitResult } from './commit';
 import { coupledImpactInput, selectCoupledContactCapture } from './capture';
-import type { ActiveComponentContact, ComponentBodyState, ExactTimeComponent } from './component';
+import type { ExactTimeComponent } from './component';
 import {
 	invalidatePairDiagnostics,
 	retainUnrelatedPairDiagnostics,
@@ -49,6 +57,17 @@ export function commitCoupledImpact(
 	}
 	const selected = selectCoupledContactCapture(state, component, result.response, tolerance);
 	const response = selected.response;
+	const resolvedContacts = classifyCoupledContacts(component, response, tolerance);
+	if (!resolvedContacts) {
+		return {
+			type: 'terminal',
+			reason: {
+				type: 'numerical-failure',
+				time: component.time,
+				detail: 'The coupled response did not classify every exact-time contact.'
+			}
+		};
+	}
 	state.impactSolves.push({
 		...response.diagnostic,
 		componentId: component.id,
@@ -57,20 +76,19 @@ export function commitCoupledImpact(
 	});
 	upsertDynamicContacts(
 		state,
-		component.contacts.map((contact) => resolvedContact(component, contact, response, tolerance))
+		resolvedContacts.contacts.map((contact) => resolvedContact(component, contact, response))
 	);
 	recordComponent(state, component);
-	applyResponse(state, component, response, tolerance);
+	applyResponse(state, component, response, resolvedContacts);
 	for (const body of component.bodies) state.runtimes.get(body.id)!.revision += 1;
-	const dormantBodyIds = rebuildDormantComponents(state, component, response, tolerance);
-	const admittedContactIds = admitCertifiedDynamicSupports(state, component, response, tolerance);
-	const unsupported = persistentDynamicReason(
-		component,
+	const dormantBodyIds = rebuildDormantComponents(state, resolvedContacts, response, tolerance);
+	const admittedContactIds = admitCertifiedDynamicSupports(
+		state,
+		resolvedContacts,
 		response,
-		tolerance,
-		dormantBodyIds,
-		admittedContactIds
+		tolerance
 	);
+	const unsupported = persistentDynamicReason(resolvedContacts, dormantBodyIds, admittedContactIds);
 	if (unsupported) return { type: 'terminal', reason: unsupported };
 	for (const body of component.bodies) {
 		const runtime = state.runtimes.get(body.id)!;
@@ -83,7 +101,7 @@ export function commitCoupledImpact(
 	return { type: 'continued' };
 }
 
-function commitPrefixes(state: SchedulerState, bodies: readonly ComponentBodyState[]): void {
+function commitPrefixes(state: SchedulerState, bodies: readonly ExactContactBodyState[]): void {
 	for (const body of bodies) {
 		const runtime = state.runtimes.get(body.id)!;
 		if (body.prefixSegment && body.prefixSegment.endTime > body.prefixSegment.startTime)
@@ -102,20 +120,21 @@ function applyResponse(
 	state: SchedulerState,
 	component: ExactTimeComponent,
 	response: CoupledImpactResponse,
-	tolerance: number
+	resolvedContacts: ResolvedContactState
 ): void {
 	const velocities = new Map(
 		response.bodyVelocities.map(({ bodyId, velocity }) => [bodyId, velocity])
 	);
-	const contactResults = new Map(response.contacts.map((contact) => [contact.contactId, contact]));
+	const contactRoles = new Map(
+		resolvedContacts.contacts.map((contact) => [contact.contact.id, contact])
+	);
 	for (const body of component.bodies) {
 		const runtime = state.runtimes.get(body.id)!;
 		const retainedFixed = component.contacts.filter(
-			(contact): contact is Extract<ActiveComponentContact, { readonly type: 'body-fixed' }> =>
+			(contact): contact is Extract<ExactContact, { readonly type: 'body-fixed' }> =>
 				contact.type === 'body-fixed' &&
 				contact.bodyId === body.id &&
-				(contactResults.get(contact.id)?.postImpactNormalVelocity ?? Number.POSITIVE_INFINITY) <=
-					tolerance
+				contactRoles.get(contact.id)?.disposition === 'retained'
 		);
 		runtime.prepared = null;
 		runtime.terminalReason = null;
@@ -129,7 +148,7 @@ function applyResponse(
 			releasedContactColliderId: null,
 			releasedContactColliderIds: component.contacts
 				.filter(
-					(contact): contact is Extract<ActiveComponentContact, { readonly type: 'body-fixed' }> =>
+					(contact): contact is Extract<ExactContact, { readonly type: 'body-fixed' }> =>
 						contact.type === 'body-fixed' &&
 						contact.bodyId === body.id &&
 						!retainedFixed.includes(contact)
@@ -145,10 +164,10 @@ function applyResponse(
 
 function resolvedContact(
 	component: ExactTimeComponent,
-	contact: ActiveComponentContact,
-	response: CoupledImpactResponse,
-	tolerance: number
+	resolved: ResolvedContactRole,
+	response: CoupledImpactResponse
 ): DynamicContactRecord {
+	const contact = resolved.contact;
 	const result = response.contacts.find(({ contactId }) => contactId === contact.id)!;
 	const preVelocities = participantVelocities(component, contact);
 	const postVelocities = participantVelocities(component, contact, response);
@@ -175,13 +194,13 @@ function resolvedContact(
 		postImpactVelocities: postVelocities,
 		impulseOnFirst: scaledVector(normal, -result.impulse),
 		impulseOnSecond: scaledVector(normal, result.impulse),
-		state: result.postImpactNormalVelocity > tolerance ? 'released' : 'retained'
+		state: resolved.disposition
 	};
 }
 
 function unresolvedContact(
 	component: ExactTimeComponent,
-	contact: ActiveComponentContact
+	contact: ExactContact
 ): DynamicContactRecord {
 	const normal = contact.type === 'body-body' ? contact.normalFromFirstToSecond : contact.normal;
 	const velocities = participantVelocities(component, contact);
@@ -210,7 +229,7 @@ function unresolvedContact(
 
 function participantVelocities(
 	component: ExactTimeComponent,
-	contact: ActiveComponentContact,
+	contact: ExactContact,
 	response?: CoupledImpactResponse
 ): readonly [Vec2, Vec2] {
 	const velocity = (bodyId: string): Vec2 =>
@@ -222,35 +241,52 @@ function participantVelocities(
 }
 
 function persistentDynamicReason(
-	component: ExactTimeComponent,
-	response: CoupledImpactResponse,
-	tolerance: number,
+	resolvedContacts: ResolvedContactState,
 	dormantBodyIds: ReadonlySet<string>,
 	admittedContactIds: ReadonlySet<string>
 ): RunTerminalReason | null {
-	const results = new Map(response.contacts.map((contact) => [contact.contactId, contact]));
-	const retainedDynamic = component.contacts.find(
-		(contact) =>
+	const component = resolvedContacts.eventState;
+	const retainedDynamic = resolvedContacts.contacts.find(
+		({ contact, disposition }) =>
 			contact.type === 'body-body' &&
 			!admittedContactIds.has(contact.id) &&
-			(results.get(contact.id)?.postImpactNormalVelocity ?? Number.POSITIVE_INFINITY) <=
-				tolerance &&
+			disposition === 'retained' &&
 			(!dormantBodyIds.has(contact.firstBodyId) || !dormantBodyIds.has(contact.secondBodyId))
-	);
-	const retainedFixed = component.contacts.some(
-		(contact) =>
-			contact.type === 'body-fixed' &&
-			(results.get(contact.id)?.postImpactNormalVelocity ?? Number.POSITIVE_INFINITY) <= tolerance
+	)?.contact;
+	const retainedFixed = resolvedContacts.contacts.some(
+		({ contact, disposition }) => contact.type === 'body-fixed' && disposition === 'retained'
 	);
 	if (!retainedDynamic || !retainedFixed || retainedDynamic.type !== 'body-body') return null;
+	const mode = selectPostContactMode({
+		contacts: resolvedContacts,
+		unsupportedBodyContactId: retainedDynamic.id
+	});
+	if (mode.type !== 'unsupported') return null;
 	return {
 		type: 'unsupported-body-body-response',
 		time: component.time,
-		bodyIds: [retainedDynamic.firstBodyId, retainedDynamic.secondBodyId],
-		contactId: retainedDynamic.id,
+		bodyIds: mode.bodyIds,
+		contactId: mode.contactId,
 		detail:
 			'The instantaneous coupled impact succeeded, but retained dynamic contact with fixed support requires a persistent body-body mode.'
 	};
+}
+
+function classifyCoupledContacts(
+	component: ExactTimeComponent,
+	response: CoupledImpactResponse,
+	tolerance: number
+): ResolvedContactState | null {
+	return classifyPostResponseContacts(
+		component,
+		response.contacts.map((contact) => ({
+			contactId: contact.contactId,
+			preResponseNormalVelocity: contact.preImpactNormalVelocity,
+			postResponseNormalVelocity: contact.postImpactNormalVelocity,
+			impulse: contact.impulse
+		})),
+		tolerance
+	);
 }
 
 function invalidateAffectedFutures(state: SchedulerState, component: ExactTimeComponent): void {
@@ -277,12 +313,7 @@ function selectComponentDiagnostics(
 	component: ExactTimeComponent,
 	resolved: boolean
 ): void {
-	const diagnosticIds = component.contacts
-		.filter(
-			(contact): contact is Extract<ActiveComponentContact, { readonly type: 'body-body' }> =>
-				contact.type === 'body-body' && contact.selection !== null
-		)
-		.map((contact) => contact.selection!.diagnosticId);
+	const diagnosticIds = component.selectionDiagnosticIds;
 	selectPairDiagnostics(
 		state,
 		new Set(diagnosticIds),

@@ -1,9 +1,8 @@
 import type { ContactComponentRecord, RunTerminalReason } from '../../../contracts';
+import { certifySupportEquilibrium, type ExactContact } from '../../contact-resolution';
 import { invalidateLocalPrediction } from '../predictions';
 import type { SchedulerState } from '../types';
-import type { ActiveComponentContact } from '../pairs/component';
 import { buildStationaryContactComponents } from '../pairs/component';
-import { certifySupportEquilibrium } from './support-equilibrium';
 import { dormantContactRecord, futureEventTimes, restingComponentId } from './records';
 
 export function registerSingleBodyDormancy(
@@ -129,13 +128,13 @@ function makeBodyDormant(
 	time: number,
 	componentId: string,
 	body: ReturnType<typeof buildStationaryContactComponents>[number]['bodies'][number],
-	contacts: readonly ActiveComponentContact[],
+	contacts: readonly ExactContact[],
 	reactions: readonly number[]
 ): void {
 	const runtime = state.runtimes.get(body.id)!;
 	runtime.dormantComponentId = componentId;
 	const fixedContacts = contacts.filter(
-		(contact): contact is Extract<ActiveComponentContact, { readonly type: 'body-fixed' }> =>
+		(contact): contact is Extract<ExactContact, { readonly type: 'body-fixed' }> =>
 			contact.type === 'body-fixed' && contact.bodyId === body.id
 	);
 	const representative = fixedContacts[0];

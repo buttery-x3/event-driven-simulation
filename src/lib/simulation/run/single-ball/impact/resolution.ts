@@ -8,11 +8,18 @@ import type {
 } from '../../../contracts';
 import type { FixedWorldContactCandidate } from '../../../collision';
 import { evaluateMotionSegmentPosition, evaluateMotionSegmentVelocity } from '../../../motion';
-import { acquireAlternatingContactLimit, solveSupportReactions } from '../manifold';
+import { certifySupportEquilibrium } from '../../contact-resolution';
+import { acquireAlternatingContactLimit } from '../manifold';
 import { appendSustainedContact, type RunAssembly } from '../run-assembly';
 import { continueSustainedContact } from '../sustained-contact';
 import { commitAlternatingLimitRelease } from './alternating-limit';
 import { recordAlternatingLimitEvidence, recordImpactEvidence } from './evidence';
+import {
+	fixedContactId,
+	fixedImpactContactState,
+	resolveFixedPostContactState,
+	supportReactionsInCandidateOrder
+} from './contact-state';
 import { isContractingAlternatingImpactSequence, resolveImpactResponse } from './response';
 
 export interface ImpactNextState {
@@ -84,9 +91,17 @@ export function resolveContact(
 			)
 		: null;
 	const manifoldCandidates = acquisition?.candidates ?? candidates;
+	const eventState = fixedImpactContactState(
+		body,
+		event.time,
+		state.position,
+		state.velocity,
+		manifoldCandidates
+	);
 	const acquisitionSupport = acquisition
-		? solveSupportReactions(
-				manifoldCandidates,
+		? certifySupportEquilibrium(
+				eventState.bodies,
+				eventState.contacts,
 				input.settings.gravity,
 				input.settings.tolerances.eventTime
 			)
@@ -104,6 +119,20 @@ export function resolveContact(
 		return numericalFailure(
 			event,
 			'The restitution response did not produce a finite outgoing velocity.'
+		);
+	}
+	const postContact = resolveFixedPostContactState(
+		eventState,
+		response,
+		input.settings.gravity,
+		input.settings.tolerances.eventTime,
+		acquisitionSupport,
+		acquisition !== null
+	);
+	if (!postContact) {
+		return numericalFailure(
+			event,
+			'The selected response did not classify every exact-time contact.'
 		);
 	}
 	if (
@@ -141,18 +170,7 @@ export function resolveContact(
 		preContactVelocity: state.velocity,
 		postContactVelocity: response.outgoingVelocity
 	};
-	const retainedAfterImpact = response.enterSustainedContact
-		? manifoldCandidates.filter((candidate, index) => {
-				const evidence = response.contacts[index];
-				const pressing = dotGravity(input.settings.gravity, candidate.normal) < 0;
-				return Boolean(
-					evidence &&
-					pressing &&
-					(response.collapseReason !== null ||
-						Math.abs(evidence.postImpactNormalVelocity) <= input.settings.tolerances.eventTime)
-				);
-			})
-		: [];
+	const retainedAfterImpact = postContact.retainedCandidates;
 	recordImpactEvidence(
 		assembly,
 		body,
@@ -163,19 +181,7 @@ export function resolveContact(
 		retainedAfterImpact,
 		input.settings.tolerances.eventTime
 	);
-	if (!response.enterSustainedContact) {
-		return freeFlightAfterManifold(event, response.outgoingVelocity, manifoldCandidates);
-	}
-
-	const mayRest = Math.hypot(...response.outgoingVelocity) <= input.settings.tolerances.eventTime;
-	const support = mayRest
-		? (acquisitionSupport ??
-			solveSupportReactions(
-				manifoldCandidates,
-				input.settings.gravity,
-				input.settings.tolerances.eventTime
-			))
-		: null;
+	const support = postContact.support;
 	if (acquisition) {
 		recordAlternatingLimitEvidence(
 			assembly,
@@ -186,23 +192,28 @@ export function resolveContact(
 			retainedAfterImpact.length === 0
 		);
 	}
-	if (support) return restingManifold(body, event, response, support.reactions, assembly);
-	if (acquisition && retainedAfterImpact.length > 0) {
+	const mode = postContact.mode;
+	if (mode.type === 'resting-anchored') {
+		return restingManifold(
+			body,
+			event,
+			response,
+			supportReactionsInCandidateOrder(mode.support, manifoldCandidates),
+			assembly
+		);
+	}
+	if (mode.type === 'unresolved') {
 		return {
 			type: 'terminal',
 			time: event.time,
-			reason: {
-				type: 'unresolved-collision-search',
-				time: event.time,
-				detail:
-					'The acquired alternating-contact manifold was pressing but had no certified resting support or common release.'
-			}
+			reason: { type: 'unresolved-collision-search', time: event.time, detail: mode.detail }
 		};
 	}
-
-	const supportCandidate = retainedAfterImpact[0];
-	if (!supportCandidate)
+	if (mode.type !== 'fixed-sustained-contact')
 		return freeFlightAfterManifold(event, response.outgoingVelocity, manifoldCandidates);
+	const supportCandidate = retainedAfterImpact.find(
+		(candidate) => fixedContactId(candidate) === mode.contactId
+	)!;
 	const continuation = continueSustainedContact({
 		input,
 		body,
@@ -342,10 +353,6 @@ function stateFromPath(
 				velocity: evaluateMotionSegmentVelocity(path, time)
 			}
 		: null;
-}
-
-function dotGravity(gravity: Vec2, normal: Vec2): number {
-	return gravity[0] * normal[0] + gravity[1] * normal[1];
 }
 
 function isFiniteVec2(vector: Vec2): boolean {

@@ -8,6 +8,7 @@ import type { FixedWorldContactCandidate } from '../../../collision';
 import { dotVec2 } from '../../../math';
 import { selectContactCapture, type ContactCaptureEndpoint } from '../../dynamic-impact';
 import { solveImpactManifold } from '../manifold';
+import { fixedContactId } from './contact-state';
 
 export interface ImpactObservation {
 	readonly manifoldKey: string;
@@ -42,7 +43,7 @@ export function resolveImpactResponse(
 	const inelastic = solveImpactManifold(candidates, incomingVelocity, 0, tolerance);
 	if (!ordinary) return null;
 	if (!inelastic) return ordinaryOnlyResponse(input, candidates, ordinary);
-	const ids = candidates.map(contactId);
+	const ids = candidates.map(fixedContactId);
 	const selected = selectContactCapture({
 		bodies: [
 			{
@@ -53,7 +54,7 @@ export function resolveImpactResponse(
 			}
 		],
 		contacts: candidates.map((candidate) => ({
-			id: contactId(candidate),
+			id: fixedContactId(candidate),
 			type: 'body-fixed' as const,
 			bodyId: candidate.bodyId,
 			normal: candidate.normal,
@@ -64,7 +65,9 @@ export function resolveImpactResponse(
 		contactCaptureDistance: input.settings.contactCaptureDistance,
 		numericalTolerance: tolerance,
 		solveInelastic: (contactIds) => {
-			const retained = candidates.filter((candidate) => contactIds.includes(contactId(candidate)));
+			const retained = candidates.filter((candidate) =>
+				contactIds.includes(fixedContactId(candidate))
+			);
 			const result = solveImpactManifold(retained, incomingVelocity, 0, tolerance);
 			return result ? endpoint(retained, result.outgoingVelocity, result.contacts) : null;
 		}
@@ -75,9 +78,11 @@ export function resolveImpactResponse(
 	);
 	const ordinaryById = new Map(ordinary.contacts.map((contact, index) => [ids[index]!, contact]));
 	const retained = new Set(selected.diagnostic.retainedContactIds);
-	const activeCandidates = candidates.filter((candidate) => retained.has(contactId(candidate)));
+	const activeCandidates = candidates.filter((candidate) =>
+		retained.has(fixedContactId(candidate))
+	);
 	const contacts = candidates.map((candidate) => {
-		const id = contactId(candidate);
+		const id = fixedContactId(candidate);
 		const result = selectedById.get(id);
 		return {
 			...ordinaryById.get(id)!,
@@ -116,7 +121,7 @@ function ordinaryOnlyResponse(
 	const retained = candidates.filter(
 		(_, index) => ordinary.contacts[index]!.postImpactNormalVelocity <= tolerance
 	);
-	const retainedIds = retained.map(contactId);
+	const retainedIds = retained.map(fixedContactId);
 	const retainedSet = new Set(retainedIds);
 	return {
 		outgoingVelocity: ordinary.outgoingVelocity,
@@ -131,9 +136,9 @@ function ordinaryOnlyResponse(
 			meaningfulReboundContactIds: [],
 			activeSetRemovalSequence: [],
 			retainedContactIds: retainedIds,
-			releasedContactIds: candidates.map(contactId).filter((id) => !retainedSet.has(id)),
+			releasedContactIds: candidates.map(fixedContactId).filter((id) => !retainedSet.has(id)),
 			contacts: candidates.map((candidate, index) => ({
-				contactId: contactId(candidate),
+				contactId: fixedContactId(candidate),
 				ordinaryPostImpactNormalVelocity: ordinary.contacts[index]!.postImpactNormalVelocity,
 				geometricNormalAcceleration: geometricNormalAcceleration(
 					input,
@@ -145,7 +150,7 @@ function ordinaryOnlyResponse(
 				withinCaptureDistance: null,
 				impulsivelyActive: ordinary.contacts[index]!.impulse > tolerance,
 				supportReaction: 0,
-				retained: retainedSet.has(contactId(candidate))
+				retained: retainedSet.has(fixedContactId(candidate))
 			}))
 		}
 	};
@@ -159,7 +164,7 @@ function endpoint(
 	return {
 		bodyVelocities: [{ bodyId: candidates[0]!.bodyId, velocity }],
 		contacts: contacts.map((contact, index) => ({
-			contactId: contactId(candidates[index]!),
+			contactId: fixedContactId(candidates[index]!),
 			impulse: contact.impulse,
 			preImpactNormalVelocity: contact.preImpactNormalVelocity,
 			postImpactNormalVelocity: contact.postImpactNormalVelocity
@@ -195,10 +200,6 @@ function geometricNormalAcceleration(
 
 function normalizeZero(value: number): number {
 	return Object.is(value, -0) ? 0 : value;
-}
-
-function contactId(candidate: FixedWorldContactCandidate): string {
-	return `${candidate.colliderId}:${candidate.feature}`;
 }
 
 export function impactObservation(
