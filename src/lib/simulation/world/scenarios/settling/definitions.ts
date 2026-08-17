@@ -23,7 +23,7 @@ export const settlingScenarios = [
 		'The supported moving FLAME-57 three-body reproducer audits whether finite contact capture replaces its contracting collision sequence.',
 		'settling.three-ball-capture',
 		threeBallSettlementInput(),
-		['time-limit']
+		['settled']
 	),
 	scenario(
 		'off-axis-incremental-pile',

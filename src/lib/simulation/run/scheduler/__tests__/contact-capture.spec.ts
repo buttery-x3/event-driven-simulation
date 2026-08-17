@@ -68,7 +68,7 @@ function input(): SimulationInput {
 		settings: {
 			gravity: [0, -10],
 			restitution: 0.8,
-			contactCaptureDistance: 1e-6,
+			contactCaptureDistance: 1e-3,
 			maximumEvents: 30,
 			maximumSimulationTime: 0.25,
 			tolerances: { contactDistance: 1e-9, eventTime: 1e-9 }
@@ -83,7 +83,8 @@ function body(id: string, position: Vec2): InitialDynamicCircleBodyState {
 		physicalShape: { type: 'circle', radius: 0.25 },
 		mass: 1,
 		position,
-		velocity: [0, -1e-3],
+		// Keep this capture oracle just above represented-rest admission.
+		velocity: [0, -0.011],
 		releaseTime: 0
 	};
 }

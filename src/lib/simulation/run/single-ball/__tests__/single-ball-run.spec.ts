@@ -154,6 +154,35 @@ describe('authoritative event-driven single-ball runs', () => {
 		);
 	});
 
+	it('represents a supportable microscopic rebound as reversible rest at the impact boundary', () => {
+		const run = constructSingleBallRun(
+			input({
+				position: [0, 0.1],
+				velocity: [0, -0.018],
+				colliders: [floor()],
+				restitution: 0.5,
+				maximumSimulationTime: 1
+			})
+		);
+		const contact = run.events.find((event) => event.type === 'contact');
+
+		expect(run).toMatchObject({
+			outcome: 'settled',
+			terminalReason: { type: 'resting-contact', colliderId: 'floor' }
+		});
+		expect(contact).toMatchObject({
+			preContactVelocity: [0, -0.018]
+		});
+		if (!contact || contact.type !== 'contact') return;
+		expect(contact.postContactVelocity?.[1]).toBeCloseTo(0.009, 12);
+		expect(run.events.at(-1)).toMatchObject({
+			type: 'contact-mode-transition',
+			from: 'impact',
+			to: 'resting'
+		});
+		expect(run.trajectories[0]!.segments).toEqual([]);
+	});
+
 	it('slides along a sloped segment with projected gravity and leaves at its endpoint', () => {
 		const ramp: StaticCollider = {
 			id: 'ramp',

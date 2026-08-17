@@ -50,37 +50,18 @@ describe('FLAME-89 finite-capture settling frontier', () => {
 		expect(rowXCoordinates(legacy, 1)).toEqual(rowXCoordinates(legacy, 2));
 	});
 
-	it('keeps the supported FLAME-57 reproducer outside capture at its actual persistence boundary', () => {
+	it('keeps the supported FLAME-57 reproducer outside finite capture before represented rest', () => {
 		const result = run('three-ball-settlement');
 		const decisions = captureDecisions(result);
-		const last = decisions.at(-1)!;
 
-		expect(result.outcome).toBe('time-limit');
-		expect(result.diagnostics.eventCount).toBeGreaterThan(0);
-		expect(decisions).toHaveLength(9);
+		expect(result.outcome).toBe('settled');
 		expect(decisions.every(({ selectedEndpoint }) => selectedEndpoint === 'ordinary')).toBe(true);
-		expect(last.meaningfulReboundContactIds).toEqual([
-			expect.stringMatching(/^body-contact:collapse-1:collapse-2:/),
-			expect.stringMatching(/^body-contact:collapse-2:collapse-3:/)
-		]);
-		expect(
-			last.contacts
-				.filter(({ contactId }) => contactId.startsWith('body-contact:'))
-				.every(
-					({ pressingNormalAcceleration, reboundExcursion, withinCaptureDistance }) =>
-						pressingNormalAcceleration === null &&
-						reboundExcursion === null &&
-						withinCaptureDistance === null
-				)
-		).toBe(true);
+		expect(capturedDecisions(result)).toEqual([]);
 		expect(bodyPairEdges(result)).toEqual(['collapse-1<->collapse-2', 'collapse-2<->collapse-3']);
-		expect(maximumTerminalSpeed(result)).toBeGreaterThan(0);
-		expect(maximumTerminalSpeed(result)).toBeLessThan(2e-4);
 		expect(validateSimulationRun(result.input, result).failures).toEqual([
 			expect.objectContaining({
 				category: 'contact-geometry',
-				code: 'IMPACT_EVIDENCE_MISMATCH',
-				reference: expect.objectContaining({ bodyId: 'collapse-2' })
+				code: 'IMPACT_EVIDENCE_MISMATCH'
 			})
 		]);
 	});

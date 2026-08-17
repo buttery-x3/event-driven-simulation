@@ -291,6 +291,21 @@ state. Component records identify exact-time impact
 or resting-anchored connectivity, active contacts and optional retained support reactions; lifecycle
 events record creation, split, merge and dissolution without exposing solver matrices.
 
+At an actual contact-event boundary, `0.01 m/s` is the represented-motion rest speed. It is a
+physics representation policy, not a collision, event-time, solver or support tolerance. A
+currently contacting body or contact-connected subset is only a candidate when every member's
+velocity magnitude is at or below that speed. The existing zero-velocity support-equilibrium solve
+then decides admission: the current contact graph must anchor the candidate to fixed support with
+valid non-negative reactions. A successful candidate selects the existing `resting-anchored` mode,
+snaps only its certified members to zero and reuses reversible dormancy; otherwise every body keeps
+its ordinary moving mode.
+
+The certificate may use a current-geometry contact that the ordinary impact response classified as
+released because of a microscopic separating velocity. That override creates retained support
+evidence only for the selected resting mode and only from contacts in its successful certificate;
+ordinary retained/released evidence is unchanged when rest is not selected. The policy does not
+infer future contacts, change restitution, add damping or count quiet events.
+
 Diagnostic body horizons and pair predictions record a common validity interval, per-body revision
 stamps and selected/retained/invalidated/stale decisions. Supported free-flight, linear-contact and
 stationary path pairs are synchronized at the shared search start and reduced to one normalized

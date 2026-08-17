@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { FixedWorldContactCandidate } from '../../../collision';
 import type { Vec2 } from '../../../contracts';
 import {
+	PERCEPTUAL_REST_SPEED,
 	certifySupportEquilibrium,
 	classifyPostResponseContacts,
 	selectPostContactMode,
@@ -91,6 +92,67 @@ describe('post-contact resolution', () => {
 			type: 'fixed-sustained-contact',
 			contactId: 'floor'
 		});
+	});
+
+	it.each([
+		{ speed: 0.009, expected: 'resting-anchored' },
+		{ speed: 0.011, expected: 'free-flight' }
+	])('admits represented rest by velocity magnitude at $speed m/s', ({ speed, expected }) => {
+		const state = exactState([fixedContact('floor', [0, 1])]);
+		const contacts = classifyPostResponseContacts(
+			state,
+			[
+				{
+					contactId: 'floor',
+					preResponseNormalVelocity: -speed,
+					postResponseNormalVelocity: speed,
+					impulse: 0
+				}
+			],
+			1e-9
+		)!;
+
+		const mode = selectPostContactMode({
+			contacts,
+			resting: {
+				bodyIds: ['ball'],
+				motion: { velocities: [[0, speed]], tolerance: 1e-9 },
+				support: () => certifySupportEquilibrium(state.bodies, state.contacts, [0, -10], 1e-9)
+			}
+		});
+
+		expect(PERCEPTUAL_REST_SPEED).toBe(0.01);
+		expect(mode.type).toBe(expected);
+		if (mode.type === 'resting-anchored') expect(mode.support.contacts).toEqual(state.contacts);
+	});
+
+	it('preserves the ordinary moving mode when low-motion support certification fails', () => {
+		const state = exactState([fixedContact('ceiling', [0, -1], 'segment-face-negative')]);
+		const contacts = classifyPostResponseContacts(
+			state,
+			[
+				{
+					contactId: 'ceiling',
+					preResponseNormalVelocity: 0,
+					postResponseNormalVelocity: 0,
+					impulse: 0,
+					retentionEligible: true
+				}
+			],
+			1e-9
+		)!;
+
+		expect(
+			selectPostContactMode({
+				contacts,
+				resting: {
+					bodyIds: ['ball'],
+					motion: { velocities: [[0.009, 0]], tolerance: 1e-9 },
+					support: () => certifySupportEquilibrium(state.bodies, state.contacts, [0, -10], 1e-9)
+				},
+				preferredFixedContactId: 'ceiling'
+			})
+		).toEqual({ type: 'fixed-sustained-contact', contactId: 'ceiling' });
 	});
 });
 

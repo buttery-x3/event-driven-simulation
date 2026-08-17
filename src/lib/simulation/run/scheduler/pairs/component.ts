@@ -11,7 +11,7 @@ import {
 	evaluateMotionSegmentVelocity
 } from '../../../motion';
 import {
-	classifySupportedMotion,
+	isRepresentedRestCandidate,
 	type ExactContact,
 	type ExactContactBodyState,
 	type ExactTimeContactState
@@ -96,9 +96,7 @@ export function buildStationaryContactComponents(
 		.map((runtime) => bodyStateAt(state, runtime, time))
 		.filter((body): body is PairComponentBodyState => {
 			if (body === null) return false;
-			return (
-				classifySupportedMotion({ velocities: [body.velocity], tolerance }) === 'resting-qualified'
-			);
+			return isRepresentedRestCandidate([body.velocity]);
 		})
 		.sort(bodyGeometryOrder);
 	if (bodies.length === 0) return [];

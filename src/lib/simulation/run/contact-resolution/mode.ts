@@ -1,6 +1,8 @@
 import type { Vec2 } from '../../contracts';
 import type { PostContactMode, ResolvedContactState, SupportReactionSolution } from './types';
 
+export const PERCEPTUAL_REST_SPEED = 0.01;
+
 export interface SupportedMotionEvidence {
 	readonly velocities?: readonly Vec2[];
 	readonly velocityComponents?: readonly number[];
@@ -59,6 +61,13 @@ export function classifySupportedMotion(
 	return 'resting-qualified';
 }
 
+export function isRepresentedRestCandidate(velocities: readonly Vec2[]): boolean {
+	return (
+		velocities.length > 0 &&
+		velocities.every((velocity) => Math.hypot(...velocity) <= PERCEPTUAL_REST_SPEED)
+	);
+}
+
 export function selectPostContactMode(request: PostContactModeRequest): PostContactMode {
 	if (request.unresolvedDetail) {
 		return { type: 'unresolved', detail: request.unresolvedDetail };
@@ -68,7 +77,12 @@ export function selectPostContactMode(request: PostContactModeRequest): PostCont
 			.filter(({ disposition }) => disposition === 'retained')
 			.map(({ contact }) => contact.id)
 	);
-	if (request.resting && classifySupportedMotion(request.resting.motion) === 'resting-qualified') {
+	if (
+		request.resting &&
+		(classifySupportedMotion(request.resting.motion) === 'resting-qualified' ||
+			(request.resting.motion.velocities?.length === request.resting.bodyIds.length &&
+				isRepresentedRestCandidate(request.resting.motion.velocities)))
+	) {
 		const support = request.resting.support();
 		if (support) {
 			return {

@@ -169,9 +169,10 @@ becomes invalid or unresolved. Its `release.ts` owns fixed/body overlap admissio
 owns world outcome and per-body lifecycle construction, `predictions.ts` owns local-future evidence,
 the private `pairs` subdomain separates continuous pair selection from exact event commitment, and
 `construct.ts` owns global selection. The sibling `contact-resolution` subdomain owns immutable
-exact-event contact state, phase-relative response classification, supplied-motion qualification
-for the existing resting mode, general support certification and generic represented-mode
-selection. Scheduler prefix segments remain pair-adapter state used only by pair commitment. The
+exact-event contact state, phase-relative response classification, supplied-motion and
+represented-rest qualification for the existing resting mode, general support certification and
+generic represented-mode selection. Scheduler prefix segments remain pair-adapter state used only
+by pair commitment. The
 sibling `dynamic-impact` subdomain owns the
 mass-aware closed-form response for one certified isolated frictionless contact.
 
@@ -185,9 +186,11 @@ post-impact runtime state. Fixed-world impact builds the same vocabulary through
 fixed-event adapter before common post-contact selection. Disconnected simultaneous components are
 committed independently, while nearby positive-time events remain ordered.
 
-Certified stationary components with fixed support become persistent dormant components. The
-private `scheduler/dormancy` subdomain owns their admission, post-impact retirement/rebuilding,
-split/merge lifecycle evidence and retained contact records. It consumes the general
+Certified stationary components with fixed support become persistent dormant components. At an
+actual contact boundary, the common mode policy may also admit a current-contact subset whose
+velocity magnitudes are within the represented-rest threshold and whose zero-motion support is
+certified. The private `scheduler/dormancy` subdomain owns their admission, post-impact
+retirement/rebuilding, split/merge lifecycle evidence and retained contact records. It consumes the general
 support-equilibrium certificate and common resting-mode decision rather than owning either policy.
 Dormant bodies have stationary authoritative coverage and no local prediction until an exact-time
 component impact reactivates them; the global scheduler remains responsible only for sequencing

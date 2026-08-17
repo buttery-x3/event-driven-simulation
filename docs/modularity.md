@@ -255,14 +255,16 @@ sustained contact and dynamic support. `types.ts` owns immutable physical stage 
 scheduler prefix-commitment state,
 `exact-state.ts` owns generic fixed-event construction, `classification.ts` owns phase-relative
 retained/released roles, `support-equilibrium.ts` owns the general non-negative contact-graph
-certificate, and `mode.ts` owns supported-motion qualification and generic mode precedence. Its local `index.ts` is private to the
+certificate, and `mode.ts` owns supported-motion and represented-rest qualification plus generic
+mode precedence. Its local `index.ts` is private to the
 `run` subsystem; `run/index.ts` and all public contracts remain unchanged. Numerical solvers,
 continuous path algorithms and lifecycle construction remain outside this subdomain.
 
 FLAME-54 introduced a persistent dormant-component state machine and therefore the private
 `scheduler/dormancy` subdomain rather than adding that lifecycle to the scheduler orchestrator.
 `admission.ts` owns initial and single-body promotion, `rebuild.ts` owns post-impact retirement,
-split/merge/recreation and reactivation, `records.ts` owns stable component/contact persistence,
+current-contact candidate grouping, split/merge/recreation and reactivation, `records.ts` owns
+stable component/contact persistence,
 while general non-negative support certification now belongs to `run/contact-resolution`. The local
 `index.ts` preserves the narrow scheduler-facing lifecycle API. Focused dormant-component scenarios
 and verification protect the extraction; no compatibility wrapper remains at the old flat
