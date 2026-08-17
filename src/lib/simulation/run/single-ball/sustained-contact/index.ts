@@ -1,4 +1,5 @@
 export { continueSustainedContact } from './continuation';
+export { resolveSustainedBoundaryMode } from './mode';
 export {
 	findCircularMotionBoundary,
 	findEarliestAngularEvent,

@@ -14,7 +14,7 @@ import { evaluateMotionSegmentPosition, evaluateMotionSegmentVelocity } from '..
 import { toRunContactSearchDiagnostic } from '../diagnostics';
 import { findEarliestTerminationEntry } from '../termination-search';
 import { continueCircularContact } from './circular';
-import { supportCandidate } from './geometry';
+import { resolveSustainedBoundaryMode } from './mode';
 import {
 	detachedContactResult,
 	entryTransition,
@@ -114,13 +114,19 @@ export function continueLineContact(
 	if (contactResult.type === 'contact') {
 		const endSegment = { ...path, endTime: contactResult.event.time };
 		const endVelocity = evaluateMotionSegmentVelocity(endSegment, contactResult.event.time);
-		const retained = supportCandidate(
+		const supportResolution = resolveSustainedBoundaryMode(
 			request,
 			contactResult.event.time,
 			contactResult.event.position,
 			endVelocity,
-			request.normal
+			request.normal,
+			'retained',
+			false
 		);
+		const retained =
+			supportResolution.mode.type === 'fixed-sustained-contact'
+				? supportResolution.candidate
+				: null;
 		return {
 			segments: [endSegment],
 			events: [
@@ -204,8 +210,17 @@ function leaveLineEndpoint(
 	const endpointNormal: Vec2 = [offset[0] / distance, offset[1] / distance];
 	const radialFreeAcceleration =
 		dotVec2(request.input.settings.gravity, endpointNormal) + dotVec2(velocity, velocity) / radius;
+	const supportResolution = resolveSustainedBoundaryMode(
+		request,
+		endpoint.time,
+		position,
+		velocity,
+		endpointNormal,
+		radialFreeAcceleration < -request.input.settings.tolerances.eventTime ? 'retained' : 'released',
+		false
+	);
 
-	if (radialFreeAcceleration >= -request.input.settings.tolerances.eventTime) {
+	if (supportResolution.mode.type === 'free-flight') {
 		return {
 			segments: [completed],
 			events: [
@@ -232,6 +247,9 @@ function leaveLineEndpoint(
 				acceptInitialContact: false
 			}
 		};
+	}
+	if (supportResolution.mode.type === 'unresolved') {
+		return unresolvedContactResult(request, supportResolution.mode.detail, [searchDiagnostic]);
 	}
 
 	const circular = continueCircularContact(

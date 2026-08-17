@@ -1,4 +1,5 @@
 export { classifyPostResponseContacts } from './classification';
+export { fixedContactId, singleBodyFixedContactState } from './exact-state';
 export { selectPostContactMode, type PostContactModeRequest } from './mode';
 export { certifySupportEquilibrium } from './support-equilibrium';
 export type {

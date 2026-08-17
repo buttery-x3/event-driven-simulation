@@ -3,9 +3,25 @@ import type {
 	RunContactSearchDiagnostic,
 	Vec2
 } from '../../../contracts';
+import { resolveSustainedBoundaryMode } from './mode';
 import type { SustainedContactRequest, SustainedContactResult } from './types';
 
 export function restingContactResult(request: SustainedContactRequest): SustainedContactResult {
+	const resolution = resolveSustainedBoundaryMode(
+		request,
+		request.time,
+		request.position,
+		request.outgoingVelocity,
+		request.normal,
+		'retained',
+		true
+	);
+	if (resolution.mode.type !== 'resting-anchored') {
+		return unresolvedContactResult(
+			request,
+			'The stationary fixed contact did not receive a resting-anchored mode decision.'
+		);
+	}
 	return {
 		segments: [],
 		events: [entryTransition(request, 'resting')],
@@ -28,6 +44,21 @@ export function detachedContactResult(
 	request: SustainedContactRequest,
 	velocity: Vec2
 ): SustainedContactResult {
+	const resolution = resolveSustainedBoundaryMode(
+		request,
+		request.time,
+		request.position,
+		velocity,
+		request.normal,
+		'released',
+		false
+	);
+	if (resolution.mode.type !== 'free-flight') {
+		return unresolvedContactResult(
+			request,
+			'The released fixed contact did not receive a free-flight mode decision.'
+		);
+	}
 	return {
 		segments: [],
 		events: [entryTransition(request, 'free-flight', 'support-lost')],

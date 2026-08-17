@@ -1,6 +1,10 @@
 import type { ContactComponentRecord, Vec2 } from '../../../contracts';
 import { dotVec2 } from '../../../math';
-import type { ExactContact, ResolvedContactState } from '../../contact-resolution';
+import {
+	selectPostContactMode,
+	type ExactContact,
+	type ResolvedContactState
+} from '../../contact-resolution';
 import type { CoupledImpactResponse } from '../../dynamic-impact';
 import type { SchedulerState } from '../types';
 import { refreshDynamicSupportPrediction } from './prediction';
@@ -68,6 +72,15 @@ export function admitCertifiedDynamicSupports(
 			state.dynamicSupports.delete(id);
 			continue;
 		}
+		const mode = selectPostContactMode({
+			contacts: resolvedContacts,
+			dynamicSupport: { contactId: contact.id, movingBodyId, supportBodyId }
+		});
+		if (mode.type !== 'dynamic-sustained-support') {
+			state.dynamicSupports.delete(id);
+			state.dynamicSupportPredictions.delete(id);
+			continue;
+		}
 		retireAnchoredComponent(state, anchor, component.time);
 		const supportSolution = prediction.startReaction.support!;
 		const record: ContactComponentRecord = {
@@ -88,10 +101,10 @@ export function admitCertifiedDynamicSupports(
 			revision: (anchor.revision ?? 0) + 1,
 			futureScheduledEventTimes: anchor.futureScheduledEventTimes,
 			dynamicSupport: {
-				movingBodyId,
-				supportBodyId,
+				movingBodyId: mode.movingBodyId,
+				supportBodyId: mode.supportBodyId,
 				anchoredBodyIds: [...anchoredBodyIds].sort(),
-				bodyBodyContactId: contact.id
+				bodyBodyContactId: mode.contactId
 			}
 		};
 		state.contactComponents.push(record);

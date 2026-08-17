@@ -8,18 +8,17 @@ import type {
 } from '../../../contracts';
 import type { FixedWorldContactCandidate } from '../../../collision';
 import { evaluateMotionSegmentPosition, evaluateMotionSegmentVelocity } from '../../../motion';
-import { certifySupportEquilibrium } from '../../contact-resolution';
+import {
+	certifySupportEquilibrium,
+	fixedContactId,
+	singleBodyFixedContactState
+} from '../../contact-resolution';
 import { acquireAlternatingContactLimit } from '../manifold';
 import { appendSustainedContact, type RunAssembly } from '../run-assembly';
 import { continueSustainedContact } from '../sustained-contact';
 import { commitAlternatingLimitRelease } from './alternating-limit';
 import { recordAlternatingLimitEvidence, recordImpactEvidence } from './evidence';
-import {
-	fixedContactId,
-	fixedImpactContactState,
-	resolveFixedPostContactState,
-	supportReactionsInCandidateOrder
-} from './contact-state';
+import { resolveFixedPostContactState, supportReactionsInCandidateOrder } from './contact-state';
 import { isContractingAlternatingImpactSequence, resolveImpactResponse } from './response';
 
 export interface ImpactNextState {
@@ -91,12 +90,13 @@ export function resolveContact(
 			)
 		: null;
 	const manifoldCandidates = acquisition?.candidates ?? candidates;
-	const eventState = fixedImpactContactState(
+	const eventState = singleBodyFixedContactState(
 		body,
 		event.time,
 		state.position,
 		state.velocity,
-		manifoldCandidates
+		manifoldCandidates,
+		`fixed-impact:${event.time}:${body.id}`
 	);
 	const acquisitionSupport = acquisition
 		? certifySupportEquilibrium(

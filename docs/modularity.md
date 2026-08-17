@@ -227,8 +227,8 @@ global state machine, scheduled releases, later body-pair interruption consumer 
 world/body outcomes; it is not a speculative layer.
 
 FLAME-52 introduced enough pair-event policy to require the private `scheduler/pairs` subdomain.
-`selection.ts` owns continuous prediction ordering, `component.ts` owns exact-time contact graph
-construction, `commit.ts` owns isolated pair commitment, `coupled-commit.ts` owns simultaneous
+`selection.ts` owns continuous prediction ordering, `component.ts` owns the pair-seeded adapter to
+the shared exact-time contact graph, `commit.ts` owns isolated pair commitment, `coupled-commit.ts` owns simultaneous
 component commitment, and `capture.ts` adapts coupled geometry and solver endpoints to the shared
 capture policy. Its local `index.ts` is an explicit internal facade. Scheduler construction
 continues to own global sequencing and imports this capability without re-exporting its internal
@@ -247,13 +247,24 @@ adapters. Its `policy.ts` owns meaningful-rebound veto and unilateral active-set
 `types.ts` owns its solver-neutral inputs/results. This preserves the six-file numerical root and
 does not add a public entry point.
 
+FLAME-93 introduced `run/contact-resolution` because exact-time contact representation,
+post-response role classification, support certification and represented-mode selection had
+multiple independently changing consumers across fixed impact, coupled impact, dormancy, fixed
+sustained contact and dynamic support. `types.ts` owns immutable stage vocabulary,
+`exact-state.ts` owns generic fixed-event construction, `classification.ts` owns phase-relative
+retained/released roles, `support-equilibrium.ts` owns the general non-negative contact-graph
+certificate, and `mode.ts` owns generic mode precedence. Its local `index.ts` is private to the
+`run` subsystem; `run/index.ts` and all public contracts remain unchanged. Numerical solvers,
+continuous path algorithms and lifecycle construction remain outside this subdomain.
+
 FLAME-54 introduced a persistent dormant-component state machine and therefore the private
 `scheduler/dormancy` subdomain rather than adding that lifecycle to the scheduler orchestrator.
 `admission.ts` owns initial and single-body promotion, `rebuild.ts` owns post-impact retirement,
 split/merge/recreation and reactivation, `records.ts` owns stable component/contact persistence,
-and `support-equilibrium.ts` owns non-negative support certification. The local `index.ts` preserves
-the narrow scheduler-facing API. Focused dormant-component scenarios and verification protect the
-extraction; no compatibility wrapper remains at the old flat scheduler path.
+while general non-negative support certification now belongs to `run/contact-resolution`. The local
+`index.ts` preserves the narrow scheduler-facing lifecycle API. Focused dormant-component scenarios
+and verification protect the extraction; no compatibility wrapper remains at the old flat
+scheduler path.
 
 FLAME-56 introduced the distinct `scheduler/dynamic-support` state machine for a moving body held
 in circular contact by a dynamic body whose complete component remains fixed-anchored.
@@ -269,6 +280,16 @@ threshold after record construction was extracted from commitment. A second cons
 body/body geometry, a replaceable reaction-search backend or independently configurable
 certification policy would require a nested prediction or certification subdomain rather than a
 seventh sibling implementation file.
+
+FLAME-93 kept that six-file root stable by adding the narrowly named nested
+`dynamic-support/resolution` capability for adapters from reaction-boundary evidence to the common
+post-contact mode authority. `commit.ts` still owns transition persistence, while
+`resolution/boundary.ts` constructs the event-relative contact roles used to select free flight,
+continued dynamic support or the existing unsupported boundary. The fixed sustained-contact root
+also reached its six-file headroom threshold with `mode.ts`; it is the source-specific adapter to
+the common authority, not a second policy owner. Any further independent fixed-contact policy or
+additional constrained geometry should trigger a nested subdomain assessment rather than a seventh
+root implementation file.
 
 Independent checks for dynamic support introduced `verification/physics/support` rather than
 adding another category to the physics orchestrator. `dynamic.ts` owns the body/body geometry,

@@ -7,7 +7,7 @@ import { dotVec2 } from '../../../../math';
 import { evaluateCircularContactState } from '../../../../motion';
 import type { FixedWorldContactCandidate } from '../../../../collision';
 import { entryTransition, slidingTransition } from '../contact-mode-results';
-import { supportCandidate } from '../geometry';
+import { resolveSustainedBoundaryMode } from '../mode';
 import type { SustainedContactRequest, SustainedContactResult } from '../types';
 import type { AngularEvent } from './angular-event-search';
 
@@ -23,7 +23,19 @@ export function circularBoundaryResult(
 ): SustainedContactResult | null {
 	if (boundary.type === 'turning-point') {
 		const support = -dotVec2(request.input.settings.gravity, endState.normal);
-		return support < -request.input.settings.tolerances.eventTime
+		const resolution = resolveSustainedBoundaryMode(
+			request,
+			leg.endTime,
+			endState.position,
+			endState.velocity,
+			endState.normal,
+			support < -request.input.settings.tolerances.eventTime ? 'released' : 'retained',
+			false,
+			support < -request.input.settings.tolerances.eventTime
+				? 'Circular support was unavailable at the selected turning point.'
+				: null
+		);
+		return resolution.mode.type === 'unresolved'
 			? unresolvedCircularResult(
 					entryRequest,
 					{
@@ -35,7 +47,7 @@ export function circularBoundaryResult(
 					},
 					segments,
 					contactSearches,
-					'Circular support was unavailable at the selected turning point.'
+					resolution.mode.detail
 				)
 			: null;
 	}
@@ -57,9 +69,17 @@ export function circularBoundaryResult(
 		);
 	}
 	const isContact = boundary.type === 'contact';
-	const retained = isContact
-		? supportCandidate(request, leg.endTime, endState.position, endState.velocity, endState.normal)
-		: null;
+	const supportResolution = resolveSustainedBoundaryMode(
+		request,
+		leg.endTime,
+		endState.position,
+		endState.velocity,
+		endState.normal,
+		isContact ? 'retained' : 'released',
+		false
+	);
+	const retained =
+		supportResolution.mode.type === 'fixed-sustained-contact' ? supportResolution.candidate : null;
 	return completedResult(
 		entryRequest,
 		segments,
@@ -113,6 +133,24 @@ export function restingCircularResult(
 	segments: readonly CircularContactMotionSegment[],
 	contactSearches: readonly RunContactSearchDiagnostic[]
 ): SustainedContactResult {
+	const resolution = resolveSustainedBoundaryMode(
+		request,
+		time,
+		position,
+		[0, 0],
+		normal,
+		'retained',
+		true
+	);
+	if (resolution.mode.type !== 'resting-anchored') {
+		return unresolvedCircularResult(
+			request,
+			{ ...request, time, position, normal, outgoingVelocity: [0, 0] },
+			segments,
+			contactSearches,
+			'The stationary circular contact did not receive a resting-anchored mode decision.'
+		);
+	}
 	return {
 		segments,
 		events: [

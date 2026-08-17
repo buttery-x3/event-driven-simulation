@@ -10,6 +10,7 @@ import {
 	refreshDynamicSupportPrediction,
 	selectDynamicSupportPrediction
 } from './prediction';
+import { resolveDynamicSupportMode } from './resolution';
 import {
 	activeDynamicSupportContactIds,
 	createDynamicComponent,
@@ -52,7 +53,23 @@ export function commitDynamicSupportPrediction(
 	recordDynamicSupportStep(state, prediction);
 
 	switch (prediction.boundary.type) {
-		case 'turning-point':
+		case 'turning-point': {
+			const mode = resolveDynamicSupportMode(state, support, {
+				time: prediction.segment.endTime,
+				position: endState.position,
+				velocity: endState.velocity,
+				normal: endState.normal,
+				anchoredContacts: support.anchoredContacts,
+				releasedAnchoredContactIds: [],
+				bodyBodyDisposition: 'retained',
+				reaction: prediction.endReaction
+			});
+			if (mode.type !== 'dynamic-sustained-support') {
+				return numericalFailure(
+					prediction.segment.endTime,
+					'The turning-point boundary did not retain dynamic sustained support.'
+				);
+			}
 			recordDynamicSupportDiagnostic(
 				state,
 				support,
@@ -62,7 +79,24 @@ export function commitDynamicSupportPrediction(
 				activeDynamicSupportContactIds(state, support)
 			);
 			return reverseAtTurning(state, support, prediction, endState.position, endState.normal);
-		case 'support-lost':
+		}
+		case 'support-lost': {
+			const mode = resolveDynamicSupportMode(state, support, {
+				time: prediction.segment.endTime,
+				position: endState.position,
+				velocity: endState.velocity,
+				normal: endState.normal,
+				anchoredContacts: support.anchoredContacts,
+				releasedAnchoredContactIds: [],
+				bodyBodyDisposition: 'released',
+				reaction: prediction.endReaction
+			});
+			if (mode.type !== 'free-flight') {
+				return numericalFailure(
+					prediction.segment.endTime,
+					'The released dynamic support did not select free flight.'
+				);
+			}
 			recordDynamicSupportDiagnostic(
 				state,
 				support,
@@ -75,6 +109,7 @@ export function commitDynamicSupportPrediction(
 			releaseSupport(state, support, prediction.segment.endTime, 'support-lost');
 			activateMovingBody(state, support, endState.position, endState.velocity);
 			return { type: 'continued' };
+		}
 		case 'anchored-support-lost': {
 			const releasedContactIds = prediction.boundary.releasedContactIds;
 			recordDynamicSupportDiagnostic(
@@ -87,9 +122,25 @@ export function commitDynamicSupportPrediction(
 					(id) => !releasedContactIds.includes(id)
 				)
 			);
-			return commitAnchorLoss(state, support, prediction, endState.position);
+			return commitAnchorLoss(state, support, prediction, endState.position, endState.velocity);
 		}
-		case 'contact':
+		case 'contact': {
+			const mode = resolveDynamicSupportMode(state, support, {
+				time: prediction.segment.endTime,
+				position: endState.position,
+				velocity: endState.velocity,
+				normal: endState.normal,
+				anchoredContacts: support.anchoredContacts,
+				releasedAnchoredContactIds: [],
+				bodyBodyDisposition: 'released',
+				reaction: prediction.endReaction
+			});
+			if (mode.type !== 'free-flight') {
+				return numericalFailure(
+					prediction.segment.endTime,
+					'The fixed-contact interruption did not release dynamic support.'
+				);
+			}
 			recordDynamicSupportDiagnostic(
 				state,
 				support,
@@ -99,6 +150,7 @@ export function commitDynamicSupportPrediction(
 				[]
 			);
 			return commitFixedContact(state, support, prediction, endState.position, endState.velocity);
+		}
 		case 'terminal':
 			recordDynamicSupportDiagnostic(
 				state,
@@ -173,7 +225,8 @@ function commitAnchorLoss(
 	state: SchedulerState,
 	support: DynamicSupportRuntime,
 	prediction: DynamicSupportPrediction,
-	position: Vec2
+	position: Vec2,
+	velocity: Vec2
 ): DynamicSupportCommitResult {
 	const released = new Set(
 		prediction.boundary.type === 'anchored-support-lost'
@@ -194,7 +247,17 @@ function commitAnchorLoss(
 		prediction.seed,
 		prediction.boundary.angle
 	);
-	if (reaction.support && reaction.bodyBodyReaction > supportTolerance(state)) {
+	const mode = resolveDynamicSupportMode(state, support, {
+		time: prediction.segment.endTime,
+		position,
+		velocity,
+		normal: reaction.normal,
+		anchoredContacts: support.anchoredContacts,
+		releasedAnchoredContactIds: [...released],
+		bodyBodyDisposition: 'retained',
+		reaction
+	});
+	if (mode.type === 'dynamic-sustained-support') {
 		const revision = nextDynamicSupportRevision(state, support);
 		support.componentId = `${support.id}:r${revision}`;
 		createDynamicComponent(state, support, reaction, revision);
@@ -203,13 +266,19 @@ function commitAnchorLoss(
 	state.dynamicSupports.delete(support.id);
 	state.dynamicSupportPredictions.delete(support.id);
 	updateTerminalDynamicContact(state, support, prediction, position);
+	if (mode.type !== 'unsupported') {
+		return numericalFailure(
+			prediction.segment.endTime,
+			'The anchor-loss boundary did not select a supported or unsupported dynamic mode.'
+		);
+	}
 	return {
 		type: 'terminal',
 		reason: {
 			type: 'unsupported-body-body-response',
 			time: prediction.segment.endTime,
-			bodyIds: [support.movingBodyId, support.supportBodyId],
-			contactId: support.contactId,
+			bodyIds: mode.bodyIds,
+			contactId: mode.contactId,
 			detail:
 				'Anchored support was lost at the certified reaction boundary; continued contact would require a freely moving constrained cluster.'
 		}
@@ -320,10 +389,6 @@ function releaseSupport(
 
 function pairKey(firstBodyId: string, secondBodyId: string): string {
 	return [firstBodyId, secondBodyId].sort().join('\u0000');
-}
-
-function supportTolerance(state: SchedulerState): number {
-	return Math.max(state.input.settings.tolerances.contactDistance, Number.EPSILON * 256);
 }
 
 function numericalFailure(time: number, detail: string): DynamicSupportCommitResult {

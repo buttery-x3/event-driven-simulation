@@ -1,5 +1,10 @@
 import type { ContactComponentRecord, RunTerminalReason } from '../../../contracts';
-import { certifySupportEquilibrium, type ExactContact } from '../../contact-resolution';
+import {
+	certifySupportEquilibrium,
+	classifyPostResponseContacts,
+	selectPostContactMode,
+	type ExactContact
+} from '../../contact-resolution';
 import { invalidateLocalPrediction } from '../predictions';
 import type { SchedulerState } from '../types';
 import { buildStationaryContactComponents } from '../pairs/component';
@@ -73,6 +78,18 @@ export function registerSingleBodyDormancy(
 export function promoteStationaryContactComponents(state: SchedulerState, time: number): void {
 	const tolerance = Math.max(state.input.settings.tolerances.contactDistance, Number.EPSILON * 256);
 	for (const component of buildStationaryContactComponents(state, time)) {
+		const resolvedContacts = classifyPostResponseContacts(
+			component,
+			component.contacts.map((contact) => ({
+				contactId: contact.id,
+				preResponseNormalVelocity: 0,
+				postResponseNormalVelocity: 0,
+				impulse: 0,
+				retentionEligible: true
+			})),
+			tolerance
+		);
+		if (!resolvedContacts) continue;
 		const support = certifySupportEquilibrium(
 			component.bodies,
 			component.contacts,
@@ -80,12 +97,18 @@ export function promoteStationaryContactComponents(state: SchedulerState, time: 
 			tolerance
 		);
 		if (!support) continue;
+		const mode = selectPostContactMode({
+			contacts: resolvedContacts,
+			stationaryBodyIds: component.bodies.map(({ id }) => id),
+			support
+		});
+		if (mode.type !== 'resting-anchored') continue;
 		const id = restingComponentId(
 			time,
 			component.bodies.map(({ id: bodyId }) => bodyId),
 			0
 		);
-		for (const contact of support.contacts) {
+		for (const contact of mode.support.contacts) {
 			state.dynamicContacts.push(dormantContactRecord(component, contact, 0));
 		}
 		const record: ContactComponentRecord = {
@@ -101,10 +124,10 @@ export function promoteStationaryContactComponents(state: SchedulerState, time: 
 						.map((contact) => contact.colliderId)
 				)
 			].sort(),
-			activeContactIds: support.contacts.map(({ id: contactId }) => contactId),
-			retainedSupportReactions: support.contacts.map(({ id: contactId }, index) => ({
+			activeContactIds: mode.support.contacts.map(({ id: contactId }) => contactId),
+			retainedSupportReactions: mode.support.contacts.map(({ id: contactId }, index) => ({
 				contactId,
-				impulsePerTime: support.reactions[index]!
+				impulsePerTime: mode.support.reactions[index]!
 			})),
 			revision: 0,
 			futureScheduledEventTimes: futureEventTimes(state, time)
@@ -118,7 +141,7 @@ export function promoteStationaryContactComponents(state: SchedulerState, time: 
 			resultingComponentIds: [id]
 		});
 		for (const body of component.bodies) {
-			makeBodyDormant(state, time, id, body, support.contacts, support.reactions);
+			makeBodyDormant(state, time, id, body, mode.support.contacts, mode.support.reactions);
 		}
 	}
 }

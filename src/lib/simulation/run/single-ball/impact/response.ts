@@ -6,9 +6,9 @@ import type {
 } from '../../../contracts';
 import type { FixedWorldContactCandidate } from '../../../collision';
 import { dotVec2 } from '../../../math';
+import { fixedContactId } from '../../contact-resolution';
 import { selectContactCapture, type ContactCaptureEndpoint } from '../../dynamic-impact';
 import { solveImpactManifold } from '../manifold';
-import { fixedContactId } from './contact-state';
 
 export interface ImpactObservation {
 	readonly manifoldKey: string;

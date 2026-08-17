@@ -168,20 +168,25 @@ It rejects overlapping release batches and fails the world conservatively when a
 becomes invalid or unresolved. Its `release.ts` owns fixed/body overlap admission, `assembly.ts`
 owns world outcome and per-body lifecycle construction, `predictions.ts` owns local-future evidence,
 the private `pairs` subdomain separates continuous pair selection from exact event commitment, and
-`construct.ts` owns global selection. The sibling `dynamic-impact` subdomain owns the mass-aware
-closed-form response for one certified isolated frictionless contact.
+`construct.ts` owns global selection. The sibling `contact-resolution` subdomain owns immutable
+exact-event contact state, phase-relative response classification, general support certification
+and generic represented-mode selection. The sibling `dynamic-impact` subdomain owns the
+mass-aware closed-form response for one certified isolated frictionless contact.
 
 An incoming pair event now seeds an exact-time contact component. The scheduler evaluates every
 released body at that common time, admits geometrically touching body-body and body-fixed contacts,
 expands connectivity only through dynamic bodies, and records rejected separated candidates. The
-private `scheduler/pairs/component.ts` module owns this geometry-to-component boundary;
+private `scheduler/pairs/component.ts` module owns the pair-seeded scheduler adapter while the
+physical body/contact vocabulary belongs to `run/contact-resolution`;
 `coupled-commit.ts` owns prefix commitment, future invalidation, contact/component records and
-post-impact runtime state. Disconnected simultaneous components are committed independently, while
-nearby positive-time events remain ordered.
+post-impact runtime state. Fixed-world impact builds the same vocabulary through its narrow
+fixed-event adapter before common post-contact selection. Disconnected simultaneous components are
+committed independently, while nearby positive-time events remain ordered.
 
 Certified stationary components with fixed support become persistent dormant components. The
-private `scheduler/dormancy` subdomain owns their admission, support-equilibrium certification,
-post-impact retirement/rebuilding, split/merge lifecycle evidence and retained contact records.
+private `scheduler/dormancy` subdomain owns their admission, post-impact retirement/rebuilding,
+split/merge lifecycle evidence and retained contact records. It consumes the general
+support-equilibrium certificate and common resting-mode decision rather than owning either policy.
 Dormant bodies have stationary authoritative coverage and no local prediction until an exact-time
 component impact reactivates them; the global scheduler remains responsible only for sequencing
 that transition with releases and other selected events.
@@ -190,8 +195,9 @@ A retained dynamic body contact may become a sustained circular support only whe
 body belongs to a fixed-anchored dormant component that remains support-feasible under the moving
 body's transmitted equal-and-opposite load. The private `scheduler/dynamic-support` subdomain owns
 admission, constrained prediction, exact reaction-loss boundaries, commitment, interruption and
-contract record construction for that state machine. It reuses the dormant support-equilibrium
-solver with the transmitted external load and the existing circular angular event search; it does
+contract record construction for that state machine. It reuses the general support-equilibrium
+certificate with the transmitted external load and the existing circular angular event search;
+its nested `resolution` adapter sends reaction-boundary roles to the common mode authority. It does
 not convert the support body to static geometry. A third-body impact interrupts the complete
 anchored component at the exact impact time before the component is rebuilt and re-certified.
 
@@ -221,15 +227,15 @@ numerical subdomain.
 commit boundary used by the scheduler. It sequences free flight, impact and sustained contact,
 including prepared constrained-motion horizons that remain interruptible until selected. The
 private `impact` subdomain owns contact-event
-commitment and classification: `response.ts` adapts fixed-world manifold solver endpoints to the
+commitment and fixed-source adaptation: `response.ts` adapts fixed-world manifold solver endpoints to the
 shared finite-capture policy, `evidence.ts` owns impact, capture and accumulation diagnostics,
 `alternating-limit.ts` owns the acquired-manifold release transition, and `resolution.ts` owns
-support selection, rest classification and construction of the next authoritative state. The private `manifold` subdomain
+specialised path/result construction after consuming the common contact roles and mode. The private `manifold` subdomain
 owns deterministic active-set normal-impulse solving, geometry/history-based acquisition of a
-fixed-circle accumulation manifold, and non-negative support-reaction certification for one dynamic
-circle against fixed contacts. The named `sustained-contact` subdomain owns
+fixed-circle accumulation manifold. The named `sustained-contact` subdomain owns
 support-shape dispatch, line continuation, shared contact-mode result construction and
-constrained-path geometry. Its private `circular` subdomain owns changing-normal continuation,
+constrained-path geometry. Its `mode.ts` adapter sends exact boundary evidence to the common mode
+authority. Its private `circular` subdomain owns changing-normal continuation,
 turning-point reversal and independently testable angular motion/scene-event ordering.
 Validation, termination search and diagnostic construction remain separate modules in the parent
 single-ball subdomain. The `run` entry point exposes `constructSimulationRun` and preserves both

@@ -1,6 +1,7 @@
 import type { ContactComponentRecord } from '../../../contracts';
 import {
 	certifySupportEquilibrium,
+	selectPostContactMode,
 	type ExactContact,
 	type ExactTimeContactState,
 	type ResolvedContactState
@@ -46,6 +47,22 @@ export function rebuildDormantComponents(
 			tolerance
 		);
 		if (!support) continue;
+		const contactIds = new Set(contacts.map(({ id }) => id));
+		const groupResolvedContacts: ResolvedContactState = {
+			eventState: {
+				...component,
+				id: `${component.id}:stationary:${groupIndex}`,
+				bodies,
+				contacts
+			},
+			contacts: resolvedContacts.contacts.filter(({ contact }) => contactIds.has(contact.id))
+		};
+		const mode = selectPostContactMode({
+			contacts: groupResolvedContacts,
+			stationaryBodyIds: [...bodyIds],
+			support
+		});
+		if (mode.type !== 'resting-anchored') continue;
 		const revision = previous.length
 			? Math.max(...previous.map((record) => record.revision ?? 0)) + 1
 			: 0;
@@ -63,10 +80,10 @@ export function rebuildDormantComponents(
 						.map((contact) => contact.colliderId)
 				)
 			].sort(),
-			activeContactIds: support.contacts.map(({ id: contactId }) => contactId),
-			retainedSupportReactions: support.contacts.map(({ id: contactId }, index) => ({
+			activeContactIds: mode.support.contacts.map(({ id: contactId }) => contactId),
+			retainedSupportReactions: mode.support.contacts.map(({ id: contactId }, index) => ({
 				contactId,
-				impulsePerTime: support.reactions[index]!
+				impulsePerTime: mode.support.reactions[index]!
 			})),
 			revision,
 			futureScheduledEventTimes: futureEventTimes(state, component.time)

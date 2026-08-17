@@ -124,6 +124,14 @@ src/lib/simulation/
     run/
         index.ts
         outcome.ts
+        contact-resolution/
+            index.ts
+            types.ts
+            exact-state.ts
+            classification.ts
+            support-equilibrium.ts
+            mode.ts
+            __tests__/
         scheduler/
             index.ts
             types.ts
@@ -143,7 +151,6 @@ src/lib/simulation/
                 admission.ts
                 rebuild.ts
                 records.ts
-                support-equilibrium.ts
             dynamic-support/
                 index.ts
                 types.ts
@@ -152,6 +159,9 @@ src/lib/simulation/
                 commit.ts
                 interruption.ts
                 records.ts
+                resolution/
+                    index.ts
+                    boundary.ts
             __tests__/
         dynamic-impact/
             index.ts
@@ -184,12 +194,12 @@ src/lib/simulation/
 				evidence.ts
 				response.ts
 				resolution.ts
+				contact-state.ts
             manifold/
                 index.ts
                 types.ts
                 acquisition.ts
                 impulse-solver.ts
-                support-reactions.ts
                 __tests__/
             sustained-contact/
                 index.ts
@@ -198,6 +208,7 @@ src/lib/simulation/
                 linear-contact.ts
                 contact-mode-results.ts
                 geometry.ts
+                mode.ts
                 circular/
                     index.ts
                     continuation.ts
@@ -289,14 +300,20 @@ or depend on browser download APIs.
 The `collision/dynamic-pair` subdomain owns synchronized continuous contact queries for two dynamic
 circle paths. `query.ts` owns polynomial-path root selection, while `bounded-query.ts` owns
 deterministically bounded circular-path isolation using conservative relative-speed exclusion. The
+`run/contact-resolution` subdomain owns the shared exact-event contact vocabulary, fixed-event
+state construction, phase-relative post-response classification, non-negative support-equilibrium
+certification and generic represented-mode selection. It does not own numerical impact response,
+continuous path mathematics, scheduler sequencing or persistent component records. The
 `run/dynamic-impact` subdomain owns isolated and simultaneous frictionless impact response. Its
 nested `contact-capture` subdomain owns the shared represented-physics endpoint-selection policy
 after either impact solver completes. Inside the scheduler, `pairs` owns continuous pair selection,
-exact-time component construction and commitment; `pairs/capture.ts` is the coupled
-geometry/endpoint adapter to that shared policy. `dormancy` owns support-equilibrium admission,
+pair-seeded exact-time component construction and commitment; `pairs/capture.ts` is the coupled
+geometry/endpoint adapter to that shared policy. `dormancy` owns supported-state admission and
 post-impact component rebuilding,
 lifecycle records and retained-contact persistence, and `dynamic-support` owns certified moving
-body-on-anchored-body continuation and interruption. These are private run capabilities;
+body-on-anchored-body continuation and interruption. Its nested `resolution` capability adapts
+dynamic-support boundary evidence to the common mode authority without owning trajectory search or
+lifecycle persistence. These are private run capabilities;
 cross-subsystem consumers continue to enter through `collision/index.ts` and `run/index.ts`.
 
 Within verification, the private `physics/support` subdomain owns independently calculated support
@@ -484,6 +501,12 @@ FLAME-89 added `world/scenarios/settling` for the finite-contact-capture frontie
 family prevents empirical pile geometry and regression-control provenance from enlarging the
 scenario root at its six-file headroom trigger; the workbench continues to consume it through
 `world/index.ts`.
+
+FLAME-93 added the private sibling `run/contact-resolution` boundary and the nested
+`scheduler/dynamic-support/resolution` adapter. Fixed-world, pair, sustained-contact, dormancy and
+dynamic-support sources now feed one exact-contact vocabulary and mode authority while retaining
+their specialised discovery, response, path and persistence responsibilities. The public
+`run/index.ts` API and contract topology did not change.
 
 The migration issue must also update the path references in `architecture.md`, `simulation.md`,
 `workflow.md`, ESLint rules and all imports. Do not leave documentation describing paths that no
