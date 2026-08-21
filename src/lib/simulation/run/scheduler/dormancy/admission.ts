@@ -72,6 +72,12 @@ export function registerSingleBodyDormancy(
 		componentIds: [],
 		resultingComponentIds: [componentId]
 	});
+	runtime.state = {
+		...runtime.state,
+		time: reason.time,
+		position: reason.position,
+		velocity: [0, 0]
+	};
 	runtime.dormantComponentId = componentId;
 }
 

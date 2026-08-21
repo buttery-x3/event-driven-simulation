@@ -195,7 +195,10 @@ records and commitment of already-selected certified resting components. It cons
 support-equilibrium certificate and common resting-mode decision rather than owning either policy.
 Dormant bodies have stationary authoritative coverage and no local prediction until an exact-time
 component impact reactivates them; the global scheduler remains responsible only for sequencing
-that transition with releases and other selected events.
+that transition with releases and other selected events. Every dormancy admission path, including
+single-body rest promotion, writes the resting boundary time, position and zero velocity into
+scheduler runtime state so later pair prediction uses the same current state as exact-time
+evaluation.
 
 FLAME-95 extends represented rest to existing sustained-motion boundaries without creating a rest
 threshold event. Linear and circular fixed-contact continuations submit their current velocity

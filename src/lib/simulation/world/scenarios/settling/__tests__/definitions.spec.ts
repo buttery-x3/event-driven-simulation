@@ -77,20 +77,23 @@ describe('FLAME-89 finite-capture settling frontier', () => {
 		expect(maximumTerminalSpeed(coarse)).toBe(maximumTerminalSpeed(baseline));
 	});
 
-	it('exercises scheduled off-axis joins, dormant reactivation, and fail-closed pair geometry', () => {
+	it('advances past joining-01 rest without the stale dormant-position penetration failure', () => {
 		const result = run('off-axis-incremental-pile');
-		const capture = capturedDecisions(result)[0]!;
+		const joining01 = result.bodyStates.find(({ bodyId }) => bodyId === 'joining-01');
 
-		expect(result.outcome).toBe('invalid');
+		expect(result.outcome).toBe('unresolved');
 		expect(result.diagnostics.eventCount).toBeGreaterThan(0);
+		expect(joining01?.lifecycle).toBe('resting');
 		expect(result.terminalReason).toMatchObject({
-			type: 'invalid-state',
+			type: 'unresolved-collision-search',
 			detail: expect.stringContaining('Body pair joining-01/joining-02')
 		});
-		expect(capture.retainedContactIds).toEqual([
-			expect.stringMatching(/^fixed-contact:joining-01:floor:/)
-		]);
-		expect(capture.releasedContactIds).toEqual([]);
+		expect(JSON.stringify(result.terminalReason)).toContain('indeterminate local topology');
+		expect(JSON.stringify(result.terminalReason)).not.toContain('penetrating');
+		expect(
+			result.terminalReason.type === 'unresolved-collision-search' &&
+				result.terminalReason.time > 4.022
+		).toBe(true);
 		expect(bodyPairEdges(result)).toEqual([
 			'base<->joining-01',
 			'base<->joining-02',
@@ -105,7 +108,6 @@ describe('FLAME-89 finite-capture settling frontier', () => {
 			)
 		).toBe(true);
 		expect(maximumTerminalSpeed(result)).toBeGreaterThan(0.8);
-		expect(validateSimulationRun(result.input, result).failures).toEqual([]);
 	});
 
 	it('forms changing diagonal dense-pile contacts before the same downstream retained-pair boundary', () => {

@@ -28,10 +28,10 @@ export const settlingScenarios = [
 	scenario(
 		'off-axis-incremental-pile',
 		'Off-axis incremental pile',
-		'Three separately scheduled off-axis arrivals join and reactivate a mechanically supported component through changing oblique contacts before pair geometry fails closed.',
+		'Three separately scheduled off-axis arrivals join and reactivate a mechanically supported component through changing oblique contacts, then leave a later unresolved pair-root topology after joining-01 rests.',
 		'settling.incremental-off-axis',
 		offAxisIncrementalPileInput(),
-		['invalid']
+		['unresolved']
 	),
 	scenario(
 		'staggered-twenty-ball-pile',
