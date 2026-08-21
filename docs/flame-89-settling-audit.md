@@ -57,3 +57,8 @@ retained outgoing constrained segment.
 No audited input reaches the former indeterminate dynamic-pair root-topology terminal reason. The
 remaining failures occur after or outside the finite-capture decision and do not justify an
 accumulation detector, broader capture distance, or solver rewrite in FLAME-89.
+
+FLAME-100 later made capture persistence internally authoritative. The legacy control still ends at
+event-limit without the former root-topology reason, but independent verification can now also
+report `EARLY_GEOMETRY_CROSSING` after zero-velocity floor contacts are released by that
+authority. That is a later independent frontier, not a return of indeterminate pair-root topology.

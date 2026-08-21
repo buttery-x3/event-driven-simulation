@@ -1,17 +1,20 @@
 import type { RunTerminalReason } from '../../../contracts';
 import {
-	classifyPostResponseContacts,
 	selectPostContactMode,
 	type ExactContact,
 	type ResolvedContactState
 } from '../../contact-resolution';
-import { resolveCoupledImpact, type CoupledImpactResponse } from '../../dynamic-impact';
+import { resolveCoupledImpact } from '../../dynamic-impact';
 import { invalidateLocalPrediction, refreshBodyPrediction } from '../predictions';
 import type { SchedulerState } from '../types';
 import { rebuildDormantComponents, upsertDynamicContacts } from '../dormancy';
 import { admitCertifiedDynamicSupports, interruptDynamicSupports } from '../dynamic-support';
 import type { PairCommitResult } from './commit';
-import { coupledImpactInput, selectCoupledContactCapture } from './capture';
+import {
+	classifySelectedCoupledContacts,
+	coupledImpactInput,
+	selectCoupledContactCapture
+} from './capture';
 import type { ExactTimeComponent, PairComponentBodyState } from './component';
 import {
 	resolvedCoupledContactRecord,
@@ -88,7 +91,7 @@ export function commitCoupledImpact(
 		: selected.selected.response;
 	const resolvedContacts = constrained
 		? selected.resolvedContacts
-		: classifyCoupledContacts(component, selected.selected.response, tolerance);
+		: classifySelectedCoupledContacts(component, selected.selected, tolerance);
 	if (!resolvedContacts) {
 		return {
 			type: 'terminal',
@@ -248,23 +251,6 @@ function persistentDynamicReason(
 		detail:
 			'The instantaneous coupled impact succeeded, but retained dynamic contact with fixed support requires a persistent body-body mode.'
 	};
-}
-
-function classifyCoupledContacts(
-	component: ExactTimeComponent,
-	response: CoupledImpactResponse,
-	tolerance: number
-): ResolvedContactState | null {
-	return classifyPostResponseContacts(
-		component,
-		response.contacts.map((contact) => ({
-			contactId: contact.contactId,
-			preResponseNormalVelocity: contact.preImpactNormalVelocity,
-			postResponseNormalVelocity: contact.postImpactNormalVelocity,
-			impulse: contact.impulse
-		})),
-		tolerance
-	);
 }
 
 function invalidateAffectedFutures(

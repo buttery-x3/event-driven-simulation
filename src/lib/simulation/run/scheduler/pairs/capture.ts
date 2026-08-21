@@ -1,9 +1,14 @@
 import type { ContactCaptureDiagnostic, Vec2 } from '../../../contracts';
-import type { ExactContact } from '../../contact-resolution';
+import {
+	classifyPostResponseContacts,
+	type ExactContact,
+	type ResolvedContactState
+} from '../../contact-resolution';
 import {
 	resolveCoupledImpact,
 	selectContactCapture,
 	type ContactCaptureEndpoint,
+	type ContactCaptureResult,
 	type CoupledImpactInput,
 	type CoupledImpactResponse
 } from '../../dynamic-impact';
@@ -12,7 +17,28 @@ import type { ExactTimeComponent } from './component';
 
 export interface SelectedCoupledImpact {
 	readonly response: CoupledImpactResponse;
+	readonly retainedContactIds: readonly string[];
+	readonly releasedContactIds: readonly string[];
 	readonly contactCapture: ContactCaptureDiagnostic;
+}
+
+export function classifySelectedCoupledContacts(
+	component: ExactTimeComponent,
+	selected: SelectedCoupledImpact,
+	tolerance: number
+): ResolvedContactState | null {
+	const retained = new Set(selected.retainedContactIds);
+	return classifyPostResponseContacts(
+		component,
+		selected.response.contacts.map((contact) => ({
+			contactId: contact.contactId,
+			preResponseNormalVelocity: contact.preImpactNormalVelocity,
+			postResponseNormalVelocity: contact.postImpactNormalVelocity,
+			impulse: contact.impulse,
+			retentionEligible: retained.has(contact.contactId)
+		})),
+		tolerance
+	);
 }
 
 export function coupledImpactInput(
@@ -97,14 +123,11 @@ export function selectCoupledContactCapture(
 		}
 	});
 	if (selected.diagnostic.selectedEndpoint === 'ordinary') {
-		return { response: ordinary, contactCapture: selected.diagnostic };
+		return fromCaptureResult(ordinary, selected);
 	}
 	const response = selectedResponse(component, ordinary, selected.endpoint);
 	if (!response) return ordinaryFallback(state, component, ordinary, tolerance);
-	return {
-		response,
-		contactCapture: selected.diagnostic
-	};
+	return fromCaptureResult(response, selected);
 }
 
 function solveInelastic(
@@ -210,8 +233,13 @@ function ordinaryFallback(
 		.filter(({ postImpactNormalVelocity }) => postImpactNormalVelocity <= tolerance)
 		.map(({ contactId }) => contactId);
 	const retainedContactIdSet = new Set(retainedContactIds);
+	const releasedContactIds = ordinary.contacts
+		.filter(({ contactId }) => !retainedContactIdSet.has(contactId))
+		.map(({ contactId }) => contactId);
 	return {
 		response: ordinary,
+		retainedContactIds,
+		releasedContactIds,
 		contactCapture: {
 			captureDistance: state.input.settings.contactCaptureDistance,
 			selectedEndpoint: 'ordinary',
@@ -219,9 +247,7 @@ function ordinaryFallback(
 			meaningfulReboundContactIds: [],
 			activeSetRemovalSequence: [],
 			retainedContactIds,
-			releasedContactIds: ordinary.contacts
-				.filter(({ contactId }) => !retainedContactIdSet.has(contactId))
-				.map(({ contactId }) => contactId),
+			releasedContactIds,
 			contacts: component.contacts.map((contact) => ({
 				contactId: contact.id,
 				ordinaryPostImpactNormalVelocity: ordinary.contacts.find(
@@ -236,5 +262,17 @@ function ordinaryFallback(
 				retained: retainedContactIdSet.has(contact.id)
 			}))
 		}
+	};
+}
+
+function fromCaptureResult(
+	response: CoupledImpactResponse,
+	selected: ContactCaptureResult
+): SelectedCoupledImpact {
+	return {
+		response,
+		retainedContactIds: selected.retainedContactIds,
+		releasedContactIds: selected.releasedContactIds,
+		contactCapture: selected.diagnostic
 	};
 }

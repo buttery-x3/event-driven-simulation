@@ -76,7 +76,6 @@ export function selectContactCapture(input: ContactCaptureInput): ContactCapture
 
 	let endpoint = input.ordinary;
 	let selected: 'ordinary' | 'captured' = 'ordinary';
-	let retained: readonly number[] = selectedContactIndices(input, input.ordinary, tolerance);
 	let finalActive: readonly number[] = active;
 	let finalAcceleration = acceleration;
 	const removals = [...reduction.removalSequence];
@@ -92,23 +91,28 @@ export function selectContactCapture(input: ContactCaptureInput): ContactCapture
 		if (capture) {
 			endpoint = capture.endpoint;
 			selected = 'captured';
-			retained = capture.activeIndices;
 			finalActive = capture.activeIndices;
 			finalAcceleration = capture.solution;
 		}
 	}
-	const retainedIds = retained.map((index) => input.contacts[index]!.id);
-	const retainedSet = new Set(retainedIds);
+	const velocityEligible = selectedContactIndices(input, endpoint, tolerance);
+	const finalActiveSet = new Set(finalActive);
+	const persistence = persistenceFromIndices(
+		input,
+		velocityEligible.filter((index) => finalActiveSet.has(index))
+	);
 	return {
 		endpoint,
+		retainedContactIds: persistence.retainedContactIds,
+		releasedContactIds: persistence.releasedContactIds,
 		diagnostic: {
 			captureDistance: input.contactCaptureDistance,
 			selectedEndpoint: selected,
 			meaningfulReboundVeto: meaningful.length > 0,
 			meaningfulReboundContactIds: meaningful.map((index) => input.contacts[index]!.id),
 			activeSetRemovalSequence: removals,
-			retainedContactIds: retainedIds,
-			releasedContactIds: input.contacts.map(({ id }) => id).filter((id) => !retainedSet.has(id)),
+			retainedContactIds: persistence.retainedContactIds,
+			releasedContactIds: persistence.releasedContactIds,
 			contacts: input.contacts.map((contact, index) => ({
 				contactId: contact.id,
 				ordinaryPostImpactNormalVelocity:
@@ -122,7 +126,7 @@ export function selectContactCapture(input: ContactCaptureInput): ContactCapture
 						: excursion[index]!.distance! <= input.contactCaptureDistance,
 				impulsivelyActive: excursion[index]!.impulsive,
 				supportReaction: finalAcceleration?.reactions[index] ?? 0,
-				retained: finalActive.includes(index) && retainedSet.has(contact.id)
+				retained: persistence.retainedSet.has(contact.id)
 			}))
 		}
 	};
@@ -356,23 +360,26 @@ function ordinaryFallback(
 	const ordinaryById = new Map(
 		input.ordinary.contacts.map((contact) => [contact.contactId, contact])
 	);
-	const retained = selectedContactIndices(input, input.ordinary, tolerance);
-	const retainedIds = retained.map((index) => input.contacts[index]!.id);
-	const retainedSet = new Set(retainedIds);
+	const persistence = persistenceFromIndices(
+		input,
+		selectedContactIndices(input, input.ordinary, tolerance)
+	);
 	const ordinaryVelocity = endpointVelocity(input, input.ordinary);
 	const geometric = ordinaryVelocity
 		? geometricAccelerations(input, ordinaryVelocity, bodyIndex)
 		: input.contacts.map(() => 0);
 	return {
 		endpoint: input.ordinary,
+		retainedContactIds: persistence.retainedContactIds,
+		releasedContactIds: persistence.releasedContactIds,
 		diagnostic: {
 			captureDistance: input.contactCaptureDistance,
 			selectedEndpoint: 'ordinary',
 			meaningfulReboundVeto: false,
 			meaningfulReboundContactIds: [],
 			activeSetRemovalSequence: [],
-			retainedContactIds: retainedIds,
-			releasedContactIds: input.contacts.map(({ id }) => id).filter((id) => !retainedSet.has(id)),
+			retainedContactIds: persistence.retainedContactIds,
+			releasedContactIds: persistence.releasedContactIds,
 			contacts: input.contacts.map((contact, index) => ({
 				contactId: contact.id,
 				ordinaryPostImpactNormalVelocity:
@@ -383,9 +390,26 @@ function ordinaryFallback(
 				withinCaptureDistance: null,
 				impulsivelyActive: false,
 				supportReaction: 0,
-				retained: retainedSet.has(contact.id)
+				retained: persistence.retainedSet.has(contact.id)
 			}))
 		}
+	};
+}
+
+function persistenceFromIndices(
+	input: ContactCaptureInput,
+	retainedIndices: readonly number[]
+): {
+	readonly retainedContactIds: readonly string[];
+	readonly releasedContactIds: readonly string[];
+	readonly retainedSet: ReadonlySet<string>;
+} {
+	const retainedContactIds = retainedIndices.map((index) => input.contacts[index]!.id);
+	const retainedSet = new Set(retainedContactIds);
+	return {
+		retainedContactIds,
+		releasedContactIds: input.contacts.map(({ id }) => id).filter((id) => !retainedSet.has(id)),
+		retainedSet
 	};
 }
 

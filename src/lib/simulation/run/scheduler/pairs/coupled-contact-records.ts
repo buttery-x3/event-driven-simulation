@@ -47,7 +47,15 @@ export function resolvedCoupledContactRecord(
 		postImpactVelocities: postVelocities,
 		impulseOnFirst: scaledVector(normal, -result.impulse),
 		impulseOnSecond: scaledVector(normal, result.impulse),
-		state: resolved.disposition
+		state: resolved.disposition,
+		...(resolved.disposition === 'released'
+			? {
+					releaseReason:
+						result.postImpactNormalVelocity > 0
+							? ('impact-separation' as const)
+							: ('support-reaction-zero' as const)
+				}
+			: {})
 	};
 }
 

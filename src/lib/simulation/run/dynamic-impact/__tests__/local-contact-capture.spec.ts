@@ -243,6 +243,36 @@ describe('FLAME-87 finite local contact-capture proof', () => {
 		expect(coarseTolerance.selectedEndpoint).toBe('ordinary');
 	});
 
+	it('releases a zero-velocity contact when acceleration-level capture empties the active set', () => {
+		const proof = evaluateCapture(
+			impact([['ball', 2, [5, -1e-3]]], [fixedContact('peg', 'ball', [0, 1])], 0),
+			{
+				captureResolution: representedCaptureResolution,
+				curvedContactRadii: new Map([['peg', 2]])
+			}
+		);
+
+		expect(contactResult(proof.ordinary, 'peg').postImpactNormalVelocity).toBeCloseTo(0, 12);
+		expect(proof.retainedContactIds).toEqual([]);
+		expect(proof.releasedContactIds).toEqual(['peg']);
+		expect(proof.diagnostic.contacts[0]?.retained).toBe(false);
+	});
+
+	it('retains a zero-velocity contact whose final active set still supports it', () => {
+		const proof = evaluateCapture(
+			impact([['ball', 2, [3, -1e-3]]], [fixedContact('peg', 'ball', [0, 1])], 0),
+			{
+				captureResolution: representedCaptureResolution,
+				curvedContactRadii: new Map([['peg', 2]])
+			}
+		);
+
+		expect(contactResult(proof.ordinary, 'peg').postImpactNormalVelocity).toBeCloseTo(0, 12);
+		expect(proof.retainedContactIds).toEqual(['peg']);
+		expect(proof.releasedContactIds).toEqual([]);
+		expect(proof.diagnostic.contacts[0]?.retained).toBe(true);
+	});
+
 	it('falls back to the ordinary response when a captured endpoint omits a body', () => {
 		const input = impact([['ball', 1, [0, -1e-3]]], [fixedContact('floor', 'ball', [0, 1])], 0.8);
 		const ordinary = solveImpact(input);
@@ -272,6 +302,16 @@ describe('FLAME-87 finite local contact-capture proof', () => {
 
 		expect(result.endpoint).toEqual(endpoint(ordinary));
 		expect(result.diagnostic.selectedEndpoint).toBe('ordinary');
+		expect(result.retainedContactIds).toEqual(result.diagnostic.retainedContactIds);
+		expect(result.releasedContactIds).toEqual(result.diagnostic.releasedContactIds);
+		expect(result.retainedContactIds).toEqual(
+			ordinary.contacts
+				.filter(({ postImpactNormalVelocity }) => postImpactNormalVelocity <= numericalTolerance)
+				.map(({ contactId }) => contactId)
+		);
+		expect(result.diagnostic.contacts.map(({ retained }) => retained)).toEqual(
+			result.retainedContactIds.length > 0 ? [true] : [false]
+		);
 	});
 });
 
@@ -284,6 +324,7 @@ interface CaptureProof {
 	readonly selectedVelocity: readonly number[];
 	readonly retainedContactIds: readonly string[];
 	readonly releasedContactIds: readonly string[];
+	readonly diagnostic: ReturnType<typeof selectContactCapture>['diagnostic'];
 	readonly meaningfulImpulsiveContactIds: readonly string[];
 	readonly supportReactions: readonly number[];
 	readonly geometricNormalAccelerations: readonly number[];
@@ -330,6 +371,14 @@ function evaluateCapture(input: CoupledImpactInput, options: CaptureOptions): Ca
 		}
 	});
 	const diagnostic = result.diagnostic;
+	expect(result.retainedContactIds).toEqual(diagnostic.retainedContactIds);
+	expect(result.releasedContactIds).toEqual(diagnostic.releasedContactIds);
+	expect(diagnostic.contacts.map(({ contactId, retained }) => ({ contactId, retained }))).toEqual(
+		input.contacts.map(({ id }) => ({
+			contactId: id,
+			retained: result.retainedContactIds.includes(id)
+		}))
+	);
 	const normalExcursions = diagnostic.contacts.map(
 		({ reboundExcursion }) => reboundExcursion ?? Infinity
 	);
@@ -345,8 +394,9 @@ function evaluateCapture(input: CoupledImpactInput, options: CaptureOptions): Ca
 			const velocity = result.endpoint.bodyVelocities.find(({ bodyId }) => bodyId === id)!.velocity;
 			return velocity;
 		}),
-		retainedContactIds: diagnostic.retainedContactIds,
-		releasedContactIds: diagnostic.releasedContactIds,
+		retainedContactIds: result.retainedContactIds,
+		releasedContactIds: result.releasedContactIds,
+		diagnostic,
 		meaningfulImpulsiveContactIds: diagnostic.meaningfulReboundContactIds,
 		supportReactions: diagnostic.contacts.map(({ supportReaction }) => supportReaction),
 		geometricNormalAccelerations: diagnostic.contacts.map(

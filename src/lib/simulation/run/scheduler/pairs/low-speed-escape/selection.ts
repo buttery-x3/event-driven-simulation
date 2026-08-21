@@ -17,7 +17,11 @@ import {
 	type DynamicSupportPreflightAnchor
 } from '../../dynamic-support';
 import type { SchedulerState } from '../../types';
-import { coupledImpactInput, type SelectedCoupledImpact } from '../capture';
+import {
+	classifySelectedCoupledContacts,
+	coupledImpactInput,
+	type SelectedCoupledImpact
+} from '../capture';
 import type { ExactTimeComponent } from '../component';
 import {
 	authoritativeSupportContext,
@@ -65,7 +69,7 @@ export function selectLowSpeedEscape(
 	if (impactSpeed > LOW_SPEED_ELASTIC_IMPACT + incomingFloor) {
 		return { type: 'ordinary', selected: ordinary };
 	}
-	const ordinaryResolved = classifyResponse(component, ordinary.response, tolerance);
+	const ordinaryResolved = classifySelectedCoupledContacts(component, ordinary, tolerance);
 	if (!ordinaryResolved) {
 		return { type: 'rejected', reason: 'The configured response could not be classified.' };
 	}
@@ -154,29 +158,31 @@ function hasStableRepresentedOutcome(
 	) {
 		return false;
 	}
-	if (dormantPlans.length > 0) return true;
+	const covered = new Set(dormantBodyIds);
 	const fixed = resolved.contacts.find(
 		({ contact, disposition }) => contact.type === 'body-fixed' && disposition === 'retained'
 	)?.contact;
-	if (fixed) {
-		return (
-			selectPostContactMode({ contacts: resolved, preferredFixedContactId: fixed.id }).type ===
+	if (
+		fixed &&
+		selectPostContactMode({ contacts: resolved, preferredFixedContactId: fixed.id }).type ===
 			'fixed-sustained-contact'
-		);
+	) {
+		for (const { contact, disposition } of resolved.contacts) {
+			if (disposition === 'retained' && contact.type === 'body-fixed') covered.add(contact.bodyId);
+		}
 	}
-	return resolved.contacts.some(
-		({ contact, disposition }) =>
+	const anchors = supportAnchors(support, dormantPlans);
+	for (const { contact, disposition } of resolved.contacts) {
+		if (
 			contact.type === 'body-body' &&
 			disposition === 'retained' &&
-			isRepresentableDynamicSupport(
-				state,
-				resolved,
-				contact,
-				response,
-				tolerance,
-				supportAnchors(support, dormantPlans)
-			)
-	);
+			isRepresentableDynamicSupport(state, resolved, contact, response, tolerance, anchors)
+		) {
+			covered.add(contact.firstBodyId);
+			covered.add(contact.secondBodyId);
+		}
+	}
+	return resolved.eventState.bodies.every(({ id }) => covered.has(id));
 }
 
 function unsupportedRetainedBodyContacts(

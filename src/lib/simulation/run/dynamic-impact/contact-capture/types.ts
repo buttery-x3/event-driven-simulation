@@ -48,5 +48,7 @@ export interface ContactCaptureInput {
 
 export interface ContactCaptureResult {
 	readonly endpoint: ContactCaptureEndpoint;
+	readonly retainedContactIds: readonly string[];
+	readonly releasedContactIds: readonly string[];
 	readonly diagnostic: ContactCaptureDiagnostic;
 }

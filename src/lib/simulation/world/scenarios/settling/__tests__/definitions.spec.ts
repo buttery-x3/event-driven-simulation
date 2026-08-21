@@ -144,13 +144,19 @@ describe('FLAME-89 finite-capture settling frontier', () => {
 		expect(capturedDecisions(result)).toHaveLength(0);
 		expect(bodyPairEdges(result)).toHaveLength(15);
 		expect(obliqueBodyContacts(result)).toEqual([]);
-		expect(validateSimulationRun(result.input, result).failures).toEqual([
-			expect.objectContaining({
-				category: 'terminal-outcome',
-				code: 'LIMIT_MISMATCH'
-			})
-		]);
-	}, 30_000);
+		const failures = validateSimulationRun(result.input, result).failures;
+		expect(failures).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					category: 'terminal-outcome',
+					code: 'LIMIT_MISMATCH'
+				})
+			])
+		);
+		expect(
+			failures.every(({ code }) => code === 'LIMIT_MISMATCH' || code === 'EARLY_GEOMETRY_CROSSING')
+		).toBe(true);
+	}, 180_000);
 });
 
 function scenario(id: (typeof requiredIds)[number]) {

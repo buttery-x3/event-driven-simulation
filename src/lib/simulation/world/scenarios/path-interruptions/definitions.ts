@@ -95,7 +95,7 @@ export const pathInterruptionScenarios = [
 	scenario(
 		'unsupported-dynamic-support-after-impact',
 		'Unsupported dynamic support after impact',
-		'A certified impact ends explicitly when continuation would require persistent dynamic support.',
+		'A captured striker impact releases both the body-body contact and the slider-peg contact instead of inventing a persistent body-body mode.',
 		'path-interruption.unsupported-dynamic-support',
 		input(
 			'unsupported-dynamic-support-after-impact-board',
@@ -108,7 +108,7 @@ export const pathInterruptionScenarios = [
 			0,
 			3
 		),
-		['unresolved']
+		['time-limit']
 	)
 ] as const satisfies readonly VerificationScenario[];
 

@@ -111,17 +111,30 @@ describe('FLAME-55 sustained-path interruption scenarios', () => {
 		);
 	});
 
-	it('terminates unsupported persistent dynamic support at the certified impact boundary', () => {
+	it('releases capture-ineligible contacts instead of inventing persistent dynamic support', () => {
 		const run = namedRun('unsupported-dynamic-support-after-impact');
-		expect(run.terminalReason.type).toBe('unsupported-body-body-response');
-		const time = run.terminalReason.time!;
-		expect(
-			run.dynamicContacts.some(
-				({ time: contactTime, state }) => contactTime === time && state === 'retained'
-			)
-		).toBe(true);
+		const falsePositiveTime = 0.38237867892976357;
+		const impactContacts = run.dynamicContacts.filter(
+			({ time }) => Math.abs(time - falsePositiveTime) < 1e-9
+		);
+		const capture = run.diagnostics.impactSolves?.find(
+			({ contactCapture, bodyIds }) =>
+				contactCapture &&
+				bodyIds.includes('captured-striker') &&
+				bodyIds.includes('supported-slider')
+		)?.contactCapture;
+
+		expect(run.terminalReason.type).not.toBe('unsupported-body-body-response');
+		expect(run.terminalReason.time).not.toBe(falsePositiveTime);
+		expect(impactContacts.length).toBeGreaterThan(0);
+		expect(impactContacts.every(({ state }) => state === 'released')).toBe(true);
+		expect(capture?.retainedContactIds).toEqual([]);
+		expect(capture?.releasedContactIds.length).toBeGreaterThan(0);
+		expect(run.outcome).toBe('time-limit');
 		for (const trajectory of run.trajectories) {
-			expect(Math.max(...trajectory.segments.map(({ endTime }) => endTime))).toBe(time);
+			expect(Math.max(...trajectory.segments.map(({ endTime }) => endTime))).toBeGreaterThan(
+				falsePositiveTime
+			);
 		}
 	});
 });

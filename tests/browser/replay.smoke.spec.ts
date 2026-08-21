@@ -429,7 +429,7 @@ test('groups verification scenarios, replaces worlds on Run and reports authorit
 		{
 			id: 'unsupported-dynamic-support-after-impact',
 			sceneId: 'unsupported-dynamic-support-after-impact-board',
-			outcome: 'unresolved'
+			outcome: 'time-limit'
 		},
 		{ id: 'no-pegs', sceneId: 'no-pegs-board', outcome: 'exited' },
 		{ id: 'dense', sceneId: 'dense-board', outcome: 'exited' },

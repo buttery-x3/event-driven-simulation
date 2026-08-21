@@ -11,6 +11,28 @@ import {
 } from '..';
 
 describe('post-contact resolution', () => {
+	it('releases a zero post-response velocity contact when retentionEligible is false', () => {
+		const state = exactState([fixedContact('peg', [0, 1])]);
+		const resolved = classifyPostResponseContacts(
+			state,
+			[
+				{
+					contactId: 'peg',
+					preResponseNormalVelocity: -5.66,
+					postResponseNormalVelocity: 0,
+					impulse: 1,
+					retentionEligible: false
+				}
+			],
+			1e-9
+		)!;
+
+		expect(resolved.contacts[0]).toMatchObject({
+			participation: 'impact',
+			disposition: 'released'
+		});
+	});
+
 	it('classifies contact roles relative to one completed response', () => {
 		const state = exactState([fixedContact('floor', [0, 1]), fixedContact('wall', [1, 0])]);
 		const resolved = classifyPostResponseContacts(

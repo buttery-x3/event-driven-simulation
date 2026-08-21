@@ -77,7 +77,7 @@ export function resolveImpactResponse(
 		selected.endpoint.contacts.map((contact) => [contact.contactId, contact])
 	);
 	const ordinaryById = new Map(ordinary.contacts.map((contact, index) => [ids[index]!, contact]));
-	const retained = new Set(selected.diagnostic.retainedContactIds);
+	const retained = new Set(selected.retainedContactIds);
 	const activeCandidates = candidates.filter((candidate) =>
 		retained.has(fixedContactId(candidate))
 	);
