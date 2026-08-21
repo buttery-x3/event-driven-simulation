@@ -150,6 +150,7 @@ src/lib/simulation/
                 low-speed-escape/
                     index.ts
                     selection.ts
+                    represented-continuation.ts
                     support.ts
             dormancy/
                 index.ts
@@ -323,8 +324,9 @@ deterministically bounded circular-path isolation using conservative relative-sp
 state construction, phase-relative post-response classification, supplied-motion qualification for
 the existing resting mode, admissible residual velocity under current contact constraints,
 non-negative support-equilibrium certification and generic
-represented-mode selection. `mode.ts` applies `PERCEPTUAL_REST_SPEED` to that residual motion rather
-than to unconstrained world-space speed. Scheduler prefix commitment remains pair-adapter state. The subdomain
+represented-mode selection. `mode.ts` applies `REPRESENTED_MOTION_SPEED` (`0.01 m/s`) to that residual
+motion rather than to unconstrained world-space speed, and to whether a microscopic contact-normal
+degree of motion is represented at all. Scheduler prefix commitment remains pair-adapter state. The subdomain
 does not own numerical impact response,
 continuous path mathematics, scheduler sequencing or persistent component records. The
 `run/dynamic-impact` subdomain owns isolated and simultaneous frictionless impact response.
@@ -336,7 +338,10 @@ pair-seeded exact-time component construction and commitment; `pairs/capture.ts`
 geometry/endpoint adapter to that shared policy, while `coupled-contact-records.ts` owns the contact
 history representation emitted by coupled commitment. Its nested `low-speed-escape` capability owns the
 FLAME-96 exact-event support snapshot and ordered scheduler selection without owning response
-mathematics or persistent modes. `dormancy` owns supported-state admission and
+mathematics or persistent modes. After ordinary capture and represented rest/stable coverage, and
+before FLAME-96 elastic escape, `represented-continuation.ts` may select the existing
+`dynamic-sustained-support` continuation for an eligible sub-resolution released body/body contact.
+`dormancy` owns supported-state admission and
 post-impact component rebuilding,
 lifecycle records and retained-contact persistence, and `dynamic-support` owns certified moving
 body-on-anchored-body continuation and interruption. Its nested `resolution` capability adapts

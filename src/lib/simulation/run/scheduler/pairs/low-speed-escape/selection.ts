@@ -23,6 +23,7 @@ import {
 	type SelectedCoupledImpact
 } from '../capture';
 import type { ExactTimeComponent } from '../component';
+import { tryRepresentedDynamicSupportContinuation } from './represented-continuation';
 import {
 	authoritativeSupportContext,
 	type AuthoritativeAnchoredComponent,
@@ -31,6 +32,14 @@ import {
 
 export type LowSpeedEscapeSelection =
 	| { readonly type: 'ordinary'; readonly selected: SelectedCoupledImpact }
+	| {
+			readonly type: 'represented-support';
+			readonly selected: SelectedCoupledImpact;
+			readonly response: {
+				readonly bodyVelocities: SelectedCoupledImpact['response']['bodyVelocities'];
+			};
+			readonly resolvedContacts: ResolvedContactState;
+	  }
 	| {
 			readonly type: 'constrained';
 			readonly mode: 'support-preserving' | 'anchored-fallback';
@@ -75,6 +84,19 @@ export function selectLowSpeedEscape(
 	}
 	if (hasStableRepresentedOutcome(state, ordinaryResolved, ordinary.response, tolerance, support)) {
 		return { type: 'ordinary', selected: ordinary };
+	}
+	const represented = tryRepresentedDynamicSupportContinuation(
+		state,
+		ordinaryResolved,
+		ordinary.response,
+		supportAnchors(
+			support,
+			planDormantComponents(state, ordinaryResolved, ordinary.response, tolerance)
+		),
+		tolerance
+	);
+	if (represented) {
+		return { type: 'represented-support', selected: ordinary, ...represented };
 	}
 	const input = {
 		...coupledImpactInput(state, component, tolerance, 1),

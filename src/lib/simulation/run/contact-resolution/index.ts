@@ -1,10 +1,11 @@
 export { classifyPostResponseContacts } from './classification';
 export { fixedContactId, singleBodyFixedContactState } from './exact-state';
 export {
-	PERCEPTUAL_REST_SPEED,
+	REPRESENTED_MOTION_SPEED,
 	admissibleConstrainedVelocities,
 	classifySupportedMotion,
 	isRepresentedRestCandidate,
+	isSubResolutionNormalMotion,
 	selectPostContactMode,
 	type PostContactModeRequest,
 	type SupportedMotionClassification,

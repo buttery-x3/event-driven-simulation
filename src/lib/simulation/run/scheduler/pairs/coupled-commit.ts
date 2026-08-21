@@ -86,12 +86,19 @@ export function commitCoupledImpact(
 	}
 	const constrained = selected.type === 'constrained';
 	selectComponentDiagnostics(state, component, true);
-	const response: CommittedCoupledResponse = constrained
-		? constrainedResponse(selected.response)
-		: selected.selected.response;
-	const resolvedContacts = constrained
-		? selected.resolvedContacts
-		: classifySelectedCoupledContacts(component, selected.selected, tolerance);
+	const response: CommittedCoupledResponse =
+		selected.type === 'constrained'
+			? constrainedResponse(selected.response)
+			: selected.type === 'represented-support'
+				? {
+						bodyVelocities: selected.response.bodyVelocities,
+						contacts: selected.selected.response.contacts
+					}
+				: selected.selected.response;
+	const resolvedContacts =
+		selected.type === 'ordinary'
+			? classifySelectedCoupledContacts(component, selected.selected, tolerance)
+			: selected.resolvedContacts;
 	if (!resolvedContacts) {
 		return {
 			type: 'terminal',
@@ -114,11 +121,12 @@ export function commitCoupledImpact(
 	recordSchedulerSteps(state, selection, component);
 	if (constrained) state.constrainedImpactSolves.push(selected.diagnostic);
 	else {
+		const ordinary = selected.selected;
 		state.impactSolves.push({
-			...selected.selected.response.diagnostic,
+			...ordinary.response.diagnostic,
 			componentId: component.id,
 			candidateEvidence: component.candidateEvidence,
-			contactCapture: selected.selected.contactCapture
+			contactCapture: ordinary.contactCapture
 		});
 	}
 	upsertDynamicContacts(

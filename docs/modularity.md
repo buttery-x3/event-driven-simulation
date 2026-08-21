@@ -273,12 +273,15 @@ sustained contact and dynamic support. `types.ts` owns immutable physical stage 
 scheduler prefix-commitment state,
 `exact-state.ts` owns generic fixed-event construction, `classification.ts` owns phase-relative
 retained/released roles, `support-equilibrium.ts` owns the general non-negative contact-graph
-certificate, and `mode.ts` owns supported-motion and represented-rest qualification plus generic
-mode precedence. FLAME-94 consumes represented-rest qualification through event-time impact and
+certificate, and `mode.ts` owns supported-motion and represented-motion qualification plus generic
+mode precedence. The production owner is `REPRESENTED_MOTION_SPEED = 0.01 m/s`; it governs both
+represented rest and whether a microscopic contact-normal degree of motion is represented.
+FLAME-94 consumes represented-rest qualification through event-time impact and
 dormancy admissions; FLAME-95 supplies sustained-motion boundary evidence to the same authority
 without moving path or lifecycle construction into this subdomain. FLAME-101 keeps that ownership
-and applies the represented-rest speed threshold to admissible residual motion under the current
-contact constraints rather than to raw world-space speed.
+and applies the represented-motion speed threshold to admissible residual motion under the current
+contact constraints rather than to raw world-space speed. FLAME-103 reuses the same owner for
+sub-resolution normal suppression when existing dynamic support certifies.
 Its local `index.ts` is private to the
 `run` subsystem; `run/index.ts` and all public contracts remain unchanged. Numerical solvers,
 continuous path algorithms and lifecycle construction remain outside this subdomain.

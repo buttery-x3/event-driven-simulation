@@ -8,7 +8,7 @@ import type {
 	SupportReactionSolution
 } from './types';
 
-export const PERCEPTUAL_REST_SPEED = 0.01;
+export const REPRESENTED_MOTION_SPEED = 0.01;
 
 export interface SupportedMotionEvidence {
 	readonly velocities?: readonly Vec2[];
@@ -72,7 +72,17 @@ export function classifySupportedMotion(
 export function isRepresentedRestCandidate(velocities: readonly Vec2[]): boolean {
 	return (
 		velocities.length > 0 &&
-		velocities.every((velocity) => Math.hypot(...velocity) <= PERCEPTUAL_REST_SPEED)
+		velocities.every((velocity) => Math.hypot(...velocity) <= REPRESENTED_MOTION_SPEED)
+	);
+}
+
+export function isSubResolutionNormalMotion(
+	preNormalVelocity: number,
+	postNormalVelocity: number
+): boolean {
+	return (
+		Math.abs(preNormalVelocity) <= REPRESENTED_MOTION_SPEED &&
+		Math.abs(postNormalVelocity) <= REPRESENTED_MOTION_SPEED
 	);
 }
 

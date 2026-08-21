@@ -257,8 +257,12 @@ comparison-only mirrored-contact adapter remain historical evidence but are abse
 production path.
 
 The private `scheduler/pairs/low-speed-escape` adapter owns exact-event activation and authoritative
-support extraction after configured response and finite capture. It returns the selected endpoint
-to existing mode and lifecycle owners; it introduces no persistent constraint mode. Anchored
+support extraction after configured response and finite capture. After represented rest or retained
+support coverage, it may select the existing `dynamic-sustained-support` continuation for a
+sub-resolution released body/body contact whose tangent-projected candidate certifies; otherwise it
+falls through to FLAME-96 elastic escape. It returns the selected endpoint
+to existing mode and lifecycle owners; it introduces no persistent constraint mode. Capture
+retained/released diagnostics remain the instantaneous capture result. Anchored
 fallback preserves each selected resting component record and runtime unchanged while committing
 only the escaping bodies. A separate optional constrained-impact diagnostic and verifier record the
 signed equality reactions without changing FLAME-53 diagnostic meaning or ordinary contact-impulse

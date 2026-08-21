@@ -292,8 +292,10 @@ or resting-anchored connectivity, active contacts and optional retained support 
 events record creation, split, merge and dissolution without exposing solver matrices.
 
 For the event-time fixed-impact and dormancy admissions implemented by FLAME-94, `0.01 m/s` is the
-represented-motion rest speed. It is a physics representation policy, not a collision, event-time,
-solver or support tolerance. A currently contacting body or contact-connected subset is only a
+represented-motion speed (`REPRESENTED_MOTION_SPEED`). It is a physics representation policy, not a
+collision, event-time, solver or support tolerance. The same value is the boundary below which a
+microscopic contact-normal degree of motion may be discarded when an existing represented supported
+continuation successfully replaces it. A currently contacting body or contact-connected subset is only a
 candidate when every member's velocity magnitude is at or below that speed. The existing
 zero-velocity support-equilibrium solve then decides admission: the current contact graph must
 anchor the candidate to fixed support with valid non-negative reactions. A successful candidate
@@ -413,9 +415,13 @@ retained contacts, state distance, support-feasibility result and final classifi
 ### Support-preserving low-speed elastic response
 
 FLAME-96 defines a bounded response at the physical boundary
-`LOW_SPEED_ELASTIC_IMPACT = 0.05 m/s`. It remains separate from the `0.01 m/s` represented-rest
-threshold. Production selection occurs only after configured restitution, finite contact capture,
-represented rest and existing sustained-support continuations have been considered.
+`LOW_SPEED_ELASTIC_IMPACT = 0.05 m/s`. It remains separate from `REPRESENTED_MOTION_SPEED = 0.01 m/s`.
+Production selection occurs only after configured restitution, finite contact capture, represented
+rest, and existing sustained-support continuations — including a sub-resolution released body/body
+contact absorbed by certified `dynamic-sustained-support` — have been considered. FLAME-96 is the
+fallback escape law when no existing represented rest or support mode absorbs the event. Analogous
+to FLAME-94 rest, a microscopic ordinary rebound may be discarded only when that represented
+continuation certifies; low-speed released contacts are not globally redefined as retained.
 
 For an already certified exact-time active contact set `A`, the scheduler derives authoritative
 pre-existing support contacts `S` only from represented resting, fixed-sustained or dynamic-support

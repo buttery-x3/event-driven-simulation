@@ -2,10 +2,11 @@ import { describe, expect, it } from 'vitest';
 import type { FixedWorldContactCandidate } from '../../../collision';
 import type { Vec2 } from '../../../contracts';
 import {
-	PERCEPTUAL_REST_SPEED,
+	REPRESENTED_MOTION_SPEED,
 	admissibleConstrainedVelocities,
 	certifySupportEquilibrium,
 	classifyPostResponseContacts,
+	isSubResolutionNormalMotion,
 	selectPostContactMode,
 	type ExactContact,
 	type ExactContactBodyState,
@@ -145,7 +146,9 @@ describe('post-contact resolution', () => {
 			}
 		});
 
-		expect(PERCEPTUAL_REST_SPEED).toBe(0.01);
+		expect(REPRESENTED_MOTION_SPEED).toBe(0.01);
+		expect(isSubResolutionNormalMotion(-0.005, 0.005)).toBe(true);
+		expect(isSubResolutionNormalMotion(-0.02, 0.02)).toBe(false);
 		expect(mode.type).toBe(expected);
 		if (mode.type === 'resting-anchored') expect(mode.support.contacts).toEqual(state.contacts);
 	});
@@ -203,7 +206,7 @@ describe('post-contact resolution', () => {
 			preferredFixedContactId: 'floor'
 		});
 
-		expect(Math.hypot(0.5, 0.5)).toBeGreaterThan(PERCEPTUAL_REST_SPEED);
+		expect(Math.hypot(0.5, 0.5)).toBeGreaterThan(REPRESENTED_MOTION_SPEED);
 		expect(mode.type).toBe('resting-anchored');
 	});
 

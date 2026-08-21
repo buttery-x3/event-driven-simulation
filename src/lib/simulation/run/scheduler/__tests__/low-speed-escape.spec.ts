@@ -176,6 +176,70 @@ describe('FLAME-96 low-speed escape policy', () => {
 		expect(validateSimulationRun(input, run).failures).toEqual([]);
 	});
 
+	it('absorbs a sub-resolution released rebound into existing dynamic support before elastic escape', () => {
+		const input = simulationInput(
+			[body('support', [0, 1], [0, 0]), body('slider', [0, 2.000001], [0.7, -0.005], 0.5)],
+			[peg('wedge-left', [-0.6, 0.2]), peg('wedge-right', [0.6, 0.2])],
+			[0, -2],
+			1
+		);
+		const run = constructSimulationRun(input);
+		const pairContact = bodyPairContact(run, 'support', 'slider');
+		const sliderSegment = run.trajectories
+			.find(({ bodyId }) => bodyId === 'slider')
+			?.segments.find(
+				(segment) => segment.type === 'circular-contact' && segment.supportingBodyId === 'support'
+			);
+
+		expect(run.diagnostics.constrainedImpactSolves ?? []).toEqual([]);
+		expect(run.contactComponents).toContainEqual(
+			expect.objectContaining({
+				type: 'dynamic-sustained-support',
+				dynamicSupport: expect.objectContaining({
+					movingBodyId: 'slider',
+					supportBodyId: 'support'
+				})
+			})
+		);
+		expect(pairContact?.state).toBe('retained');
+		expect(captureReleased(run, pairContact?.id)).toBe(true);
+		expect(sliderSegment).toMatchObject({ type: 'circular-contact', supportingBodyId: 'support' });
+		expect(validateSimulationRun(input, run).failures).toEqual([]);
+	});
+
+	it('leaves a 0.02 normal impact below 0.05 to FLAME-96 instead of represented-support suppression', () => {
+		const input = simulationInput(
+			[
+				body('support', [0, 1], [0, 0]),
+				body('slider', [0, 2], [0, 0]),
+				body('incoming', [-0.75, 2], [0.02, 0], 1, 0.25, 0.5)
+			],
+			[peg('wedge-left', [-0.6, 0.2]), peg('wedge-right', [0.6, 0.2])],
+			[0, -2],
+			0
+		);
+		const run = constructSimulationRun(input);
+
+		expect(run.diagnostics.constrainedImpactSolves?.[0]?.mode).toBe('support-preserving');
+		expect(validateSimulationRun(input, run).failures).toEqual([]);
+	});
+
+	it('does not fabricate dynamic support for an unsupported microscopic pair', () => {
+		const input = simulationInput(
+			[body('incoming', [-0.5, 2], [0.005, 0]), body('target', [0.5, 2], [0, 0])],
+			[],
+			[0, 0],
+			1
+		);
+		const run = constructSimulationRun(input);
+
+		expect(run.diagnostics.constrainedImpactSolves?.[0]?.mode).toBe('support-preserving');
+		expect(run.contactComponents.some(({ type }) => type === 'dynamic-sustained-support')).toBe(
+			false
+		);
+		expect(validateSimulationRun(input, run).failures).toEqual([]);
+	});
+
 	it('round-trips constrained evidence and rejects corrupted impulse certification', () => {
 		const input = simulationInput(
 			[body('incoming', [-0.5, 2], [0.04, 0]), body('target', [0.5, 2], [0, 0])],
@@ -272,4 +336,27 @@ function peg(id: string, centre: Vec2): StaticCollider {
 function velocity(values: readonly number[], bodyIds: readonly string[], bodyId: string): Vec2 {
 	const index = bodyIds.indexOf(bodyId) * 2;
 	return [values[index]!, values[index + 1]!];
+}
+
+function bodyPairContact(
+	run: ReturnType<typeof constructSimulationRun>,
+	first: string,
+	second: string
+) {
+	return run.dynamicContacts.find(({ participants }) => {
+		const bodyIds = participants.flatMap((participant) =>
+			participant.type === 'body' ? [participant.bodyId] : []
+		);
+		return bodyIds.includes(first) && bodyIds.includes(second);
+	});
+}
+
+function captureReleased(
+	run: ReturnType<typeof constructSimulationRun>,
+	contactId: string | undefined
+): boolean {
+	if (!contactId) return false;
+	return (run.diagnostics.impactSolves ?? []).some(({ contactCapture }) =>
+		contactCapture?.releasedContactIds.includes(contactId)
+	);
 }
