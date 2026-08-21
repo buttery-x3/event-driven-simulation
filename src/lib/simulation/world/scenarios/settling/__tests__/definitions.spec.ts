@@ -58,12 +58,7 @@ describe('FLAME-89 finite-capture settling frontier', () => {
 		expect(decisions.every(({ selectedEndpoint }) => selectedEndpoint === 'ordinary')).toBe(true);
 		expect(capturedDecisions(result)).toEqual([]);
 		expect(bodyPairEdges(result)).toEqual(['collapse-1<->collapse-2', 'collapse-2<->collapse-3']);
-		expect(validateSimulationRun(result.input, result).failures).toEqual([
-			expect.objectContaining({
-				category: 'contact-geometry',
-				code: 'IMPACT_EVIDENCE_MISMATCH'
-			})
-		]);
+		expect(validateSimulationRun(result.input, result).failures).toEqual([]);
 	});
 
 	it('finds no three-ball sensitivity in the one permitted FLAME-87 proof-scale comparison', () => {
@@ -134,17 +129,7 @@ describe('FLAME-89 finite-capture settling frontier', () => {
 		expect(hasChangingPartners(result)).toBe(true);
 		expect(obliqueBodyContacts(result).some(({ time }) => time >= floorTime)).toBe(true);
 		expect(maximumTerminalSpeed(result)).toBeGreaterThan(2);
-		const failures = validateSimulationRun(result.input, result).failures;
-		expect(failures.length).toBeGreaterThan(0);
-		expect(failures).toEqual(
-			expect.arrayContaining([
-				expect.objectContaining({
-					category: 'contact-geometry',
-					code: 'IMPACT_EVIDENCE_MISMATCH',
-					reference: expect.objectContaining({ bodyId: 'staggered-1-1' })
-				})
-			])
-		);
+		expect(validateSimulationRun(result.input, result).failures).toEqual([]);
 	}, 60_000);
 
 	it('uses the five-column legacy input only to show capture replaced its former root-topology failure', () => {
@@ -157,19 +142,12 @@ describe('FLAME-89 finite-capture settling frontier', () => {
 		expect(capturedDecisions(result)).toHaveLength(0);
 		expect(bodyPairEdges(result)).toHaveLength(15);
 		expect(obliqueBodyContacts(result)).toEqual([]);
-		const failures = validateSimulationRun(result.input, result).failures;
-		expect(failures).toEqual(
-			expect.arrayContaining([
-				expect.objectContaining({
-					category: 'contact-geometry',
-					code: 'IMPACT_EVIDENCE_MISMATCH'
-				}),
-				expect.objectContaining({
-					category: 'terminal-outcome',
-					code: 'LIMIT_MISMATCH'
-				})
-			])
-		);
+		expect(validateSimulationRun(result.input, result).failures).toEqual([
+			expect.objectContaining({
+				category: 'terminal-outcome',
+				code: 'LIMIT_MISMATCH'
+			})
+		]);
 	}, 30_000);
 });
 

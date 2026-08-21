@@ -10,13 +10,6 @@ export function validateDynamicBodyContacts(context: RunValidationContext): void
 		const terminalDiscovery =
 			context.run.terminalReason.type === 'unsupported-body-body-response' &&
 			context.run.terminalReason.contactId === contact.id;
-		const continuousPrediction = context.run.diagnostics.pairPredictions.some(
-			(prediction) =>
-				prediction.queryOutcome === 'contact' &&
-				prediction.decision === 'selected' &&
-				prediction.predictedTime === contact.time
-		);
-		if (!terminalDiscovery && !continuousPrediction) continue;
 		const participants = contact.participants.filter(
 			(participant): participant is Extract<typeof participant, { type: 'body' }> =>
 				participant.type === 'body'
@@ -32,6 +25,10 @@ export function validateDynamicBodyContacts(context: RunValidationContext): void
 		const component = context.run.contactComponents.find(({ activeContactIds }) =>
 			activeContactIds.includes(contact.id)
 		);
+		const continuousPrediction = selectedContactPairPrediction(context, contact, first, second);
+		if (!terminalDiscovery && !(component?.type === 'exact-time-impact' && continuousPrediction)) {
+			continue;
+		}
 		const constrained = Boolean(
 			component &&
 			context.run.diagnostics.constrainedImpactSolves?.some(
@@ -44,6 +41,31 @@ export function validateDynamicBodyContacts(context: RunValidationContext): void
 		challengeEarlierOverlap(context, contact, first, second, contactIndex);
 	}
 	validateTerminalPairBoundary(context);
+}
+
+function selectedPairPrediction(
+	context: RunValidationContext,
+	contact: DynamicContactRecord,
+	first: InitialDynamicCircleBodyState,
+	second: InitialDynamicCircleBodyState
+) {
+	return context.run.diagnostics.pairPredictions.find(
+		(candidate) =>
+			candidate.decision === 'selected' &&
+			candidate.predictedTime === contact.time &&
+			candidate.bodyIds[0] === first.id &&
+			candidate.bodyIds[1] === second.id
+	);
+}
+
+function selectedContactPairPrediction(
+	context: RunValidationContext,
+	contact: DynamicContactRecord,
+	first: InitialDynamicCircleBodyState,
+	second: InitialDynamicCircleBodyState
+) {
+	const prediction = selectedPairPrediction(context, contact, first, second);
+	return prediction?.queryOutcome === 'contact' ? prediction : undefined;
 }
 
 function validateResolvedResponse(
@@ -228,13 +250,7 @@ function validateSharedHorizon(
 	second: InitialDynamicCircleBodyState,
 	contactIndex: number
 ): void {
-	const prediction = context.run.diagnostics.pairPredictions.find(
-		(candidate) =>
-			candidate.decision === 'selected' &&
-			candidate.predictedTime === contact.time &&
-			candidate.bodyIds[0] === first.id &&
-			candidate.bodyIds[1] === second.id
-	);
+	const prediction = selectedPairPrediction(context, contact, first, second);
 	const component = context.run.contactComponents.find(({ activeContactIds }) =>
 		activeContactIds.includes(contact.id)
 	);

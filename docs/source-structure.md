@@ -345,7 +345,10 @@ cross-subsystem consumers continue to enter through `collision/index.ts` and `ru
 Within verification, the private `physics/support` subdomain owns independently calculated support
 evidence. Its dynamic validator checks recorded circular body/body geometry, tangency, load and
 reaction signs, exact component dissolution and impact interruption without importing run solver
-code.
+code. `physics/body-contact.ts` owns instantaneous body/body impact truth for contacts belonging
+to an `exact-time-impact` component, plus the existing unsupported body/body terminal path.
+Post-impact `resting-anchored` support records at the same timestamp remain owned by
+`validateDormantComponents()`.
 
 Scenario families with their own descriptor vocabulary live in named folders below
 `world/scenarios`. `dynamic-pairs`, `simultaneous-impact`, `dormant-components`,

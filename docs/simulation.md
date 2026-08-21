@@ -304,7 +304,10 @@ The certificate may use a current-geometry contact that the ordinary impact resp
 released because of a microscopic separating velocity. That override creates retained support
 evidence only for the selected resting mode and only from contacts in its successful certificate;
 ordinary retained/released evidence is unchanged when rest is not selected. The policy does not
-infer future contacts, change restitution, add damping or count quiet events.
+infer future contacts, change restitution, add damping or count quiet events. Independent
+body-contact validation applies impact-phase checks only to contacts owned by an
+`exact-time-impact` component, plus the existing unsupported body/body terminal path; a
+post-impact `resting-anchored` support record at the same time is not incoming impact evidence.
 
 FLAME-95 applies the same policy when the simulator reaches an existing exact sustained-motion
 boundary. Fixed linear and circular continuations provide the common authority with the actual

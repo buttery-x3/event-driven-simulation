@@ -19,6 +19,11 @@ acceptance tolerances.
 | `off-axis-incremental-pile`  | `unresolved`; 50 events; maximum terminal speed about `1.48 m/s`             | Capture first occurs at `3.9456529677 s`, retaining `joining-01 <-> joining-02` and `joining-01 <-> floor`; no contact is released by that decision.                                                                                           | Three distinct body edges occur, eight recorded body contacts are oblique, partners change, and the initially dormant base is reactivated by the first scheduled join.                                                                              | The capture is accepted, then scheduler commitment ends at `unsupported-body-body-response`: retained dynamic contact requires a persistent body/body mode beyond the current fixed-anchored support capability. Independent validation of the prefix passes.                           |
 | `staggered-twenty-ball-pile` | `unresolved`; 18 events; maximum terminal speed about `2.67 m/s`             | Capture first occurs at `0.4470560360 s`, retaining `staggered-1-2 <-> staggered-2-2` and `staggered-1-2 <-> floor`; no contact is released by that decision.                                                                                  | Twenty positively separated bodies start in five four-ball rows with alternating half-spacing offsets. The prefix records seven distinct body edges, 25 oblique body contacts, changing partners, and oblique joins after floor interaction begins. | Independent verification identifies the earliest wrong evidence at `0.4467507866 s`: `IMPACT_EVIDENCE_MISMATCH` for `staggered-1-1`. The scheduler subsequently ends at the same downstream `unsupported-body-body-response` boundary seen by the small pile.                           |
 
+FLAME-98 later showed the three-ball and related settling `IMPACT_EVIDENCE_MISMATCH` reports were
+verifier eligibility false positives: a post-impact `resting-anchored` support record at the same
+timestamp was checked as incoming impact evidence. The represented-rest transition itself was
+already authoritative.
+
 ## Capture-distance sensitivity
 
 The one permitted comparison reruns only `three-ball-settlement` at the FLAME-87 proof scale of
