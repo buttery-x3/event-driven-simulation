@@ -1,6 +1,6 @@
 export { resolveIsolatedBodyImpact } from './response';
 export { resolveCoupledImpact } from './generalised-reflections';
-export { solveNonnegativeLeastSquares } from './nonnegative-qp';
+export { solveNonnegativeLeastSquares, solveNonnegativeQuadratic } from './nonnegative-qp';
 export { selectContactCapture } from './contact-capture';
 export {
 	LOW_SPEED_ELASTIC_IMPACT,

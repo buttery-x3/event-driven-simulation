@@ -1,4 +1,5 @@
 import {
+	admissibleConstrainedVelocities,
 	certifySupportEquilibrium,
 	isRepresentedRestCandidate,
 	selectPostContactMode,
@@ -32,9 +33,20 @@ export function planDormantComponents(
 	const velocityByBody = new Map(
 		response.bodyVelocities.map((body) => [body.bodyId, body.velocity])
 	);
+	const lockedBodyIds = lockedAnchoredBodyIds(state, component.time, velocityByBody, tolerance);
+	const residual = admissibleConstrainedVelocities(
+		component.bodies,
+		component.contacts,
+		component.bodies.map(({ id }) => velocityByBody.get(id)!),
+		lockedBodyIds,
+		tolerance
+	);
+	const residualByBody = new Map(
+		component.bodies.map((body, index) => [body.id, residual[index]!])
+	);
 	const candidateBodyIds = new Set(
 		component.bodies
-			.filter(({ id }) => isRepresentedRestCandidate([velocityByBody.get(id)!]))
+			.filter(({ id }) => isRepresentedRestCandidate([residualByBody.get(id)!]))
 			.map(({ id }) => id)
 	);
 	const currentCandidateContacts = component.contacts.filter((contact) =>
@@ -69,6 +81,7 @@ export function planDormantComponents(
 				contacts: groupResolvedContacts,
 				resting: {
 					bodyIds: [...bodyIds],
+					lockedBodyIds: [...lockedBodyIds],
 					motion: { velocities: bodies.map(({ id }) => velocityByBody.get(id)!), tolerance },
 					support: () => support
 				}
@@ -106,6 +119,29 @@ function connectedCandidateGroups(
 		groups.push(group);
 	}
 	return groups;
+}
+
+function lockedAnchoredBodyIds(
+	state: SchedulerState,
+	time: number,
+	velocityByBody: ReadonlyMap<string, readonly [number, number]>,
+	tolerance: number
+): ReadonlySet<string> {
+	const bodyIds = new Set<string>();
+	for (const [bodyId, runtime] of state.runtimes) {
+		if (runtime.dormantComponentId !== null) bodyIds.add(bodyId);
+	}
+	for (const record of state.contactComponents) {
+		if (record.type !== 'resting-anchored') continue;
+		if (record.dissolvedAtTime !== null && record.dissolvedAtTime !== time) continue;
+		for (const bodyId of record.bodyIds) bodyIds.add(bodyId);
+	}
+	return new Set(
+		[...bodyIds].filter((bodyId) => {
+			const velocity = velocityByBody.get(bodyId);
+			return velocity !== undefined && Math.hypot(...velocity) <= tolerance;
+		})
+	);
 }
 
 function contactBelongsTo(contact: ExactContact, bodyIds: ReadonlySet<string>): boolean {

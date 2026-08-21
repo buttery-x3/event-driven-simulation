@@ -46,6 +46,40 @@ describe('represented-motion dormancy rebuilding', () => {
 			dormant?.retainedSupportReactions.every(({ impulsePerTime }) => impulsePerTime >= 0)
 		).toBe(true);
 	});
+
+	it('rests a supportable jammed stack whose raw post-impact speeds exceed perceptual rest', () => {
+		const { state, contacts, response } = jammedStackFixture();
+		const dormantBodyIds = rebuildDormantComponents(state, contacts, response, tolerance);
+		const dormant = state.contactComponents.find(({ type }) => type === 'resting-anchored');
+
+		expect([...dormantBodyIds].sort()).toEqual(['lower', 'upper']);
+		expect(dormant).toMatchObject({
+			bodyIds: ['lower', 'upper'],
+			fixedColliderIds: ['floor']
+		});
+		expect(state.runtimes.get('lower')?.state.velocity).toEqual([0, 0]);
+		expect(state.runtimes.get('upper')?.state.velocity).toEqual([0, 0]);
+		expect(response.bodyVelocities.every(({ velocity }) => Math.hypot(...velocity) > 0.01)).toBe(
+			true
+		);
+	});
+
+	it('does not rest a floor slider whose tangential residual remains large', () => {
+		const { state, contacts, response } = sliderFixture();
+		const dormantBodyIds = rebuildDormantComponents(state, contacts, response, tolerance);
+
+		expect([...dormantBodyIds]).toEqual([]);
+		expect(state.runtimes.get('slider')?.state.velocity).toEqual([0.4, -0.8]);
+	});
+
+	it('does not freeze a previously dormant body that still has admissible tangent motion', () => {
+		const { state, contacts, response } = anchoredSupportFixture();
+		const dormantBodyIds = rebuildDormantComponents(state, contacts, response, tolerance);
+
+		expect([...dormantBodyIds]).toEqual(['support']);
+		expect(state.runtimes.get('support')?.state.velocity).toEqual([0, 0]);
+		expect(state.runtimes.get('slider')?.state.velocity).toEqual([0, 0.8]);
+	});
 });
 
 function fixture(): {
@@ -158,6 +192,111 @@ function fixture(): {
 	return { state, contacts, response };
 }
 
+function jammedStackFixture(): {
+	readonly state: SchedulerState;
+	readonly contacts: ResolvedContactState;
+	readonly response: CoupledImpactResponse;
+} {
+	const input = jammedInput();
+	const bodies = [
+		exactBody('lower', [0, 0.25], [0, -0.5]),
+		exactBody('upper', [0, 0.75], [0, -0.5])
+	];
+	const exactContacts: ExactContact[] = [
+		{
+			type: 'body-body',
+			id: 'body:lower:upper',
+			firstBodyId: 'lower',
+			secondBodyId: 'upper',
+			normalFromFirstToSecond: [0, 1],
+			contactPoint: [0, 0.5]
+		},
+		floorContact()
+	];
+	return componentFixture(
+		input,
+		bodies,
+		exactContacts,
+		new Map([
+			['body:lower:upper', 0],
+			['fixed:lower:floor', 0]
+		])
+	);
+}
+
+function anchoredSupportFixture(): {
+	readonly state: SchedulerState;
+	readonly contacts: ResolvedContactState;
+	readonly response: CoupledImpactResponse;
+} {
+	const input = jammedInput(
+		['support', 'slider'],
+		[
+			[0, 0.25],
+			[0.5, 0.25]
+		]
+	);
+	const bodies = [
+		exactBody('support', [0, 0.25], [0, 0]),
+		exactBody('slider', [0.5, 0.25], [0, 0.8])
+	];
+	const exactContacts: ExactContact[] = [
+		floorContact('support'),
+		{
+			type: 'body-body',
+			id: 'body:support:slider',
+			firstBodyId: 'support',
+			secondBodyId: 'slider',
+			normalFromFirstToSecond: [1, 0],
+			contactPoint: [0.25, 0.25]
+		}
+	];
+	const fixture = componentFixture(
+		input,
+		bodies,
+		exactContacts,
+		new Map([
+			['fixed:support:floor', 0],
+			['body:support:slider', 0]
+		])
+	);
+	fixture.state.contactComponents.push({
+		id: 'resting-component:0:support+slider:r0',
+		type: 'resting-anchored',
+		createdAtTime: 0,
+		dissolvedAtTime: null,
+		bodyIds: ['slider', 'support'],
+		fixedColliderIds: ['floor'],
+		activeContactIds: ['fixed:support:floor', 'body:support:slider'],
+		retainedSupportReactions: [
+			{ contactId: 'fixed:support:floor', impulsePerTime: 10 },
+			{ contactId: 'body:support:slider', impulsePerTime: 0 }
+		],
+		revision: 0,
+		futureScheduledEventTimes: []
+	});
+	fixture.state.runtimes.get('support')!.dormantComponentId =
+		'resting-component:0:support+slider:r0';
+	fixture.state.runtimes.get('slider')!.dormantComponentId =
+		'resting-component:0:support+slider:r0';
+	return fixture;
+}
+
+function sliderFixture(): {
+	readonly state: SchedulerState;
+	readonly contacts: ResolvedContactState;
+	readonly response: CoupledImpactResponse;
+} {
+	const input = jammedInput(['slider'], [[0, 0.25]]);
+	const bodies = [exactBody('slider', [0, 0.25], [0.4, -0.8])];
+	return componentFixture(
+		input,
+		bodies,
+		[floorContact('slider')],
+		new Map([['fixed:slider:floor', 0]])
+	);
+}
+
 function simulationInput(): SimulationInput {
 	return {
 		scene: {
@@ -194,6 +333,111 @@ function simulationInput(): SimulationInput {
 	};
 }
 
+function jammedInput(
+	ids: readonly string[] = ['lower', 'upper'],
+	positions: readonly Vec2[] = [
+		[0, 0.25],
+		[0, 0.75]
+	]
+): SimulationInput {
+	const input = simulationInput();
+	return {
+		...input,
+		scene: { ...input.scene, id: 'jammed-stack-rest' },
+		initialDynamicBodies: ids.map((id, index) => body(id, positions[index]!))
+	};
+}
+
+function exactBody(
+	id: string,
+	position: Vec2,
+	velocity: Vec2
+): ExactTimeComponent['bodies'][number] {
+	return { id, mass: 1, radius: 0.25, position, velocity, prefixSegment: null };
+}
+
+function componentFixture(
+	input: SimulationInput,
+	bodies: ExactTimeComponent['bodies'],
+	exactContacts: readonly ExactContact[],
+	postVelocity: ReadonlyMap<string, number>
+): {
+	readonly state: SchedulerState;
+	readonly contacts: ResolvedContactState;
+	readonly response: CoupledImpactResponse;
+} {
+	const eventState: ExactTimeComponent = {
+		id: 'exact-component:1',
+		time: 1,
+		bodies,
+		contacts: exactContacts,
+		candidateEvidence: [],
+		selectionDiagnosticIds: []
+	};
+	const contacts: ResolvedContactState = {
+		eventState,
+		contacts: exactContacts.map((contact) => ({
+			contact,
+			participation: 'impact',
+			disposition: (postVelocity.get(contact.id) ?? 0) > tolerance ? 'released' : 'retained',
+			preResponseNormalVelocity: -0.5,
+			postResponseNormalVelocity: postVelocity.get(contact.id) ?? 0,
+			impulse: 0,
+			supportReaction: null
+		}))
+	};
+	const response: CoupledImpactResponse = {
+		bodyVelocities: bodies.map(({ id: bodyId, velocity }) => ({ bodyId, velocity })),
+		contacts: exactContacts.map(({ id: contactId }) => ({
+			contactId,
+			impulse: 0,
+			preImpactNormalVelocity: -0.5,
+			postImpactNormalVelocity: postVelocity.get(contactId) ?? 0
+		})),
+		inelasticVelocity: [],
+		elasticVelocity: [],
+		finalVelocity: [],
+		diagnostic: {} as CoupledImpactResponse['diagnostic']
+	};
+	const runtimes = new Map(
+		input.initialDynamicBodies.map((item) => {
+			const runtime = createLocalBodyRuntime(input, item);
+			const velocity = response.bodyVelocities.find(({ bodyId }) => bodyId === item.id)!.velocity;
+			runtime.committedTime = eventState.time;
+			runtime.state = { ...runtime.state, time: eventState.time, velocity };
+			return [item.id, runtime] as const;
+		})
+	);
+	const predictions = new Map(
+		input.initialDynamicBodies.map((item) => [item.id, prediction(item.id)] as const)
+	);
+	const state: SchedulerState = {
+		input,
+		wallTimeStart: Date.now(),
+		worldTime: eventState.time,
+		scheduled: [],
+		runtimes,
+		predictions,
+		releases: [],
+		horizons: [],
+		steps: [],
+		pairPredictions: [],
+		dynamicContacts: exactContacts.map((contact) =>
+			impactContact(contact, postVelocity.get(contact.id) ?? 0)
+		),
+		contactComponents: [],
+		componentEvents: [],
+		impactSolves: [],
+		constrainedImpactSolves: [],
+		dynamicSupports: new Map(),
+		dynamicSupportPredictions: new Map(),
+		dynamicSupportDiagnostics: [],
+		releasedDynamicPairs: new Set(),
+		rejectedBodyIds: new Set()
+	};
+	return { state, contacts, response };
+}
+
 function body(id: string, position: Vec2): InitialDynamicCircleBodyState {
 	return {
 		id,
@@ -206,17 +450,17 @@ function body(id: string, position: Vec2): InitialDynamicCircleBodyState {
 	};
 }
 
-function floorContact(): ExactContact {
+function floorContact(bodyId = 'lower'): ExactContact {
 	return {
 		type: 'body-fixed',
-		id: 'fixed:lower:floor',
-		bodyId: 'lower',
+		id: `fixed:${bodyId}:floor`,
+		bodyId,
 		colliderId: 'floor',
 		normal: [0, 1],
 		contactPoint: [0, 0],
 		candidate: {
 			type: 'contact-candidate',
-			bodyId: 'lower',
+			bodyId,
 			colliderId: 'floor',
 			colliderKind: 'boundary',
 			feature: 'segment-face-positive',

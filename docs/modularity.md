@@ -276,7 +276,9 @@ retained/released roles, `support-equilibrium.ts` owns the general non-negative 
 certificate, and `mode.ts` owns supported-motion and represented-rest qualification plus generic
 mode precedence. FLAME-94 consumes represented-rest qualification through event-time impact and
 dormancy admissions; FLAME-95 supplies sustained-motion boundary evidence to the same authority
-without moving path or lifecycle construction into this subdomain.
+without moving path or lifecycle construction into this subdomain. FLAME-101 keeps that ownership
+and applies the represented-rest speed threshold to admissible residual motion under the current
+contact constraints rather than to raw world-space speed.
 Its local `index.ts` is private to the
 `run` subsystem; `run/index.ts` and all public contracts remain unchanged. Numerical solvers,
 continuous path algorithms and lifecycle construction remain outside this subdomain.

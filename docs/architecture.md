@@ -187,9 +187,12 @@ fixed-event adapter before common post-contact selection. Disconnected simultane
 committed independently, while nearby positive-time events remain ordered.
 
 Certified stationary components with fixed support become persistent dormant components. During
-the event-time impact/dormancy admissions changed by FLAME-94, the common mode policy may also admit
-a current-contact subset whose velocity magnitudes are within the represented-rest threshold and
-whose zero-motion support is certified. The private `scheduler/dormancy` subdomain owns their
+the event-time impact/dormancy admissions changed by FLAME-94 and FLAME-101, the common mode policy
+may also admit a current-contact subset whose admissible residual motion under the current
+exact-time contact constraints is within the represented-rest threshold and whose zero-motion
+support is certified. Raw world-space speed is not by itself a gate against rest: blocked
+post-impact velocity that has no physically admissible continuation may be discarded when support
+equilibrium succeeds. The private `scheduler/dormancy` subdomain owns their
 admission, post-impact retirement/rebuilding, split/merge lifecycle evidence, retained contact
 records and commitment of already-selected certified resting components. It consumes the general
 support-equilibrium certificate and common resting-mode decision rather than owning either policy.

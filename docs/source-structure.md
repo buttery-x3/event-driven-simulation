@@ -321,8 +321,10 @@ circle paths. `query.ts` owns polynomial-path root selection, while `bounded-que
 deterministically bounded circular-path isolation using conservative relative-speed exclusion. The
 `run/contact-resolution` subdomain owns the shared exact-event contact vocabulary, fixed-event
 state construction, phase-relative post-response classification, supplied-motion qualification for
-the existing resting mode, non-negative support-equilibrium certification and generic
-represented-mode selection. Scheduler prefix commitment remains pair-adapter state. The subdomain
+the existing resting mode, admissible residual velocity under current contact constraints,
+non-negative support-equilibrium certification and generic
+represented-mode selection. `mode.ts` applies `PERCEPTUAL_REST_SPEED` to that residual motion rather
+than to unconstrained world-space speed. Scheduler prefix commitment remains pair-adapter state. The subdomain
 does not own numerical impact response,
 continuous path mathematics, scheduler sequencing or persistent component records. The
 `run/dynamic-impact` subdomain owns isolated and simultaneous frictionless impact response.
