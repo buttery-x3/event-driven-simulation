@@ -7,6 +7,7 @@ import {
 	certifySupportEquilibrium,
 	classifyPostResponseContacts,
 	isSubResolutionNormalMotion,
+	isSubResolutionPostNormalMotion,
 	selectPostContactMode,
 	type ExactContact,
 	type ExactContactBodyState,
@@ -149,6 +150,9 @@ describe('post-contact resolution', () => {
 		expect(REPRESENTED_MOTION_SPEED).toBe(0.01);
 		expect(isSubResolutionNormalMotion(-0.005, 0.005)).toBe(true);
 		expect(isSubResolutionNormalMotion(-0.02, 0.02)).toBe(false);
+		expect(isSubResolutionPostNormalMotion(0.005)).toBe(true);
+		expect(isSubResolutionPostNormalMotion(0.011)).toBe(false);
+		expect(isSubResolutionNormalMotion(-0.5, 0.005)).toBe(false);
 		expect(mode.type).toBe(expected);
 		if (mode.type === 'resting-anchored') expect(mode.support.contacts).toEqual(state.contacts);
 	});

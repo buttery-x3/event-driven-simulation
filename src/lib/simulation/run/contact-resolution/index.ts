@@ -6,6 +6,7 @@ export {
 	classifySupportedMotion,
 	isRepresentedRestCandidate,
 	isSubResolutionNormalMotion,
+	isSubResolutionPostNormalMotion,
 	selectPostContactMode,
 	type PostContactModeRequest,
 	type SupportedMotionClassification,

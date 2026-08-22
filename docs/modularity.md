@@ -281,7 +281,11 @@ dormancy admissions; FLAME-95 supplies sustained-motion boundary evidence to the
 without moving path or lifecycle construction into this subdomain. FLAME-101 keeps that ownership
 and applies the represented-motion speed threshold to admissible residual motion under the current
 contact constraints rather than to raw world-space speed. FLAME-103 reuses the same owner for
-sub-resolution normal suppression when existing dynamic support certifies.
+sub-resolution normal suppression when existing dynamic support certifies. FLAME-105 applies the
+same owner to isolated body/fixed entry in `single-ball/impact/contact-state.ts` rather than adding
+a seventh impact-directory file; gravity orientation is no longer a retention authority, and
+`resolution.ts` only consumes the selected represented outgoing velocity plus a bounded
+continuation-or-release handoff.
 Its local `index.ts` is private to the
 `run` subsystem; `run/index.ts` and all public contracts remain unchanged. Numerical solvers,
 continuous path algorithms and lifecycle construction remain outside this subdomain.

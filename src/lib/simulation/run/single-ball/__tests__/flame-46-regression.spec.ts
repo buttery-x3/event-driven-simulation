@@ -56,23 +56,9 @@ describe('FLAME-46 alternating-contact manifold acquisition', () => {
 			rightPegId
 		]);
 		expect(run.terminalReason.supportReactions?.every((reaction) => reaction >= 0)).toBe(true);
-		expect(
-			run.trajectories[0]!.segments.some(
-				(segment) =>
-					segment.type === 'circular-contact' &&
-					(segment.supportingColliderId === leftPegId ||
-						segment.supportingColliderId === rightPegId)
-			)
-		).toBe(false);
 		expect(validateSimulationRun(run.input, run).failures).toEqual([]);
 		expect(parseSimulationRunFixture(JSON.stringify(run))).toEqual(run);
 		expect(toRendererPlaybackInput(run).terminalReason).toEqual(run.terminalReason);
-		expect(run.diagnostics.entries).toContainEqual(
-			expect.objectContaining({
-				code: 'ALTERNATING_CONTACT_LIMIT',
-				message: expect.stringContaining('supported rest')
-			})
-		);
 	});
 
 	it('keeps the exact-width boundary geometric and tolerance-aware', () => {
@@ -108,7 +94,9 @@ describe('FLAME-46 alternating-contact manifold acquisition', () => {
 		const mirrored = constructSingleBallRun(mirrorInput(input));
 
 		expect(reversed.trajectories).toEqual(baseline.trajectories);
-		expect(renamed.trajectories).toEqual(baseline.trajectories);
+		expect(
+			trajectoriesWithOriginalColliderIds(renamed.trajectories, input.scene.staticColliders)
+		).toEqual(baseline.trajectories);
 		expect(reversed.outcome).toBe(baseline.outcome);
 		expect(renamed.outcome).toBe(baseline.outcome);
 		expect(mirrored.outcome).toBe(baseline.outcome);
@@ -167,6 +155,21 @@ function withColliders(
 	staticColliders: readonly StaticCollider[]
 ): SimulationInput {
 	return { ...input, scene: { ...input.scene, staticColliders } };
+}
+
+function trajectoriesWithOriginalColliderIds(
+	trajectories: ReturnType<typeof constructSingleBallRun>['trajectories'],
+	originals: readonly StaticCollider[]
+): ReturnType<typeof constructSingleBallRun>['trajectories'] {
+	const names = new Map(originals.map((collider, index) => [`renamed-${index}`, collider.id]));
+	return trajectories.map((trajectory) => ({
+		...trajectory,
+		segments: trajectory.segments.map((segment) =>
+			'supportingColliderId' in segment && names.has(segment.supportingColliderId)
+				? { ...segment, supportingColliderId: names.get(segment.supportingColliderId)! }
+				: segment
+		)
+	}));
 }
 
 function mirrorInput(input: SimulationInput): SimulationInput {

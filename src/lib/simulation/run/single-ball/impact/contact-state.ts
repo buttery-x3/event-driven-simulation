@@ -4,6 +4,7 @@ import {
 	certifySupportEquilibrium,
 	classifyPostResponseContacts,
 	fixedContactId,
+	isSubResolutionPostNormalMotion,
 	selectPostContactMode,
 	type ExactTimeContactState,
 	type PostContactMode,
@@ -17,6 +18,7 @@ export interface FixedPostContactResolution {
 	readonly retainedCandidates: readonly FixedWorldContactCandidate[];
 	readonly support: SupportReactionSolution | null;
 	readonly mode: PostContactMode;
+	readonly outgoingVelocity: Vec2;
 }
 
 export function resolveFixedPostContactState(
@@ -25,17 +27,23 @@ export function resolveFixedPostContactState(
 	gravity: Vec2,
 	tolerance: number,
 	initialSupport: SupportReactionSolution | null,
-	acquiredAlternatingLimit: boolean
+	acquiredAlternatingLimit: boolean,
+	priorRetainedIds: ReadonlySet<string> = new Set()
 ): FixedPostContactResolution | null {
 	const active = new Set(response.activeCandidates.map(fixedContactId));
 	const captureEvidence = new Map(
 		response.contactCapture.contacts.map((contact) => [contact.contactId, contact])
 	);
+	const hasMeaningfulPostSeparation = eventState.contacts.some((_, index) => {
+		const result = response.contacts[index];
+		return result != null && !isSubResolutionPostNormalMotion(result.postImpactNormalVelocity);
+	});
 	const contacts = classifyPostResponseContacts(
 		eventState,
 		eventState.contacts.map((contact, index) => {
 			const result = response.contacts[index]!;
 			const candidate = contact.type === 'body-fixed' ? contact.candidate : null;
+			const subResolution = isSubResolutionPostNormalMotion(result.postImpactNormalVelocity);
 			return {
 				contactId: contact.id,
 				preResponseNormalVelocity: result.preImpactNormalVelocity,
@@ -43,10 +51,10 @@ export function resolveFixedPostContactState(
 				impulse: result.impulse,
 				retentionEligible: Boolean(
 					candidate &&
-					active.has(contact.id) &&
-					dot(gravity, candidate.normal) < 0 &&
-					(response.collapseReason !== null ||
-						Math.abs(result.postImpactNormalVelocity) <= tolerance)
+					((!acquiredAlternatingLimit &&
+						subResolution &&
+						(!hasMeaningfulPostSeparation || priorRetainedIds.has(contact.id))) ||
+						(response.collapseReason !== null && active.has(contact.id)))
 				),
 				supportReaction: captureEvidence.get(contact.id)?.supportReaction ?? null
 			};
@@ -73,7 +81,13 @@ export function resolveFixedPostContactState(
 				: null
 	});
 	const support = mode.type === 'resting-anchored' ? mode.support : null;
-	return { contacts, retainedCandidates, support, mode };
+	return {
+		contacts,
+		retainedCandidates,
+		support,
+		mode,
+		outgoingVelocity: mode.type === 'resting-anchored' ? [0, 0] : response.outgoingVelocity
+	};
 }
 
 export function supportReactionsInCandidateOrder(
@@ -84,8 +98,4 @@ export function supportReactionsInCandidateOrder(
 		support.contacts.map((contact, index) => [contact.id, support.reactions[index]!])
 	);
 	return candidates.map((candidate) => reactions.get(fixedContactId(candidate)) ?? 0);
-}
-
-function dot(left: Vec2, right: Vec2): number {
-	return left[0] * right[0] + left[1] * right[1];
 }

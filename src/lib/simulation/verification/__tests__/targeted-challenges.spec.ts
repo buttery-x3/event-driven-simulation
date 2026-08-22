@@ -79,7 +79,9 @@ describe('bounded difficult-family challenges', () => {
 			contacts: [{}, {}]
 		});
 		expect(reversed.trajectories).toEqual(baseline.trajectories);
-		expect(renamed.trajectories).toEqual(baseline.trajectories);
+		expect(
+			trajectoriesWithOriginalColliderIds(renamed.trajectories, input.scene.staticColliders)
+		).toEqual(baseline.trajectories);
 		expect(validateSimulationRun(input, baseline).failures).toEqual([]);
 		expect(validateSimulationRun(reversedInput, reversed).failures).toEqual([]);
 		expect(validateSimulationRun(renamedInput, renamed).failures).toEqual([]);
@@ -138,4 +140,19 @@ function withColliders(
 	staticColliders: readonly StaticCollider[]
 ): SimulationInput {
 	return { ...input, scene: { ...input.scene, staticColliders } };
+}
+
+function trajectoriesWithOriginalColliderIds(
+	trajectories: ReturnType<typeof constructSingleBallRun>['trajectories'],
+	originals: readonly StaticCollider[]
+): ReturnType<typeof constructSingleBallRun>['trajectories'] {
+	const names = new Map(originals.map((collider, index) => [`renamed-${index}`, collider.id]));
+	return trajectories.map((trajectory) => ({
+		...trajectory,
+		segments: trajectory.segments.map((segment) =>
+			'supportingColliderId' in segment && names.has(segment.supportingColliderId)
+				? { ...segment, supportingColliderId: names.get(segment.supportingColliderId)! }
+				: segment
+		)
+	}));
 }

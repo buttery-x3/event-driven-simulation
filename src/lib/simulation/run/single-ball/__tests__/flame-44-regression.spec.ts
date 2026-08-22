@@ -58,7 +58,9 @@ describe('FLAME-44 coupled fixed-world impact manifolds', () => {
 		);
 
 		expect(reversed.trajectories).toEqual(baseline.trajectories);
-		expect(renamed.trajectories).toEqual(baseline.trajectories);
+		expect(
+			trajectoriesWithOriginalColliderIds(renamed.trajectories, closeContacts.scene.staticColliders)
+		).toEqual(baseline.trajectories);
 		expect(reversed.terminalReason.time).toBe(baseline.terminalReason.time);
 		expect(renamed.terminalReason.time).toBe(baseline.terminalReason.time);
 	});
@@ -304,6 +306,21 @@ describe('FLAME-44 coupled fixed-world impact manifolds', () => {
 
 function withColliders(colliders: SimulationInput['scene']['staticColliders']): SimulationInput {
 	return { ...closeContacts, scene: { ...closeContacts.scene, staticColliders: colliders } };
+}
+
+function trajectoriesWithOriginalColliderIds(
+	trajectories: ReturnType<typeof constructSingleBallRun>['trajectories'],
+	originals: readonly StaticCollider[]
+): ReturnType<typeof constructSingleBallRun>['trajectories'] {
+	const names = new Map(originals.map((collider, index) => [`renamed-${index}`, collider.id]));
+	return trajectories.map((trajectory) => ({
+		...trajectory,
+		segments: trajectory.segments.map((segment) =>
+			'supportingColliderId' in segment && names.has(segment.supportingColliderId)
+				? { ...segment, supportingColliderId: names.get(segment.supportingColliderId)! }
+				: segment
+		)
+	}));
 }
 
 function line(id: string, start: Vec2, end: Vec2): StaticCollider {

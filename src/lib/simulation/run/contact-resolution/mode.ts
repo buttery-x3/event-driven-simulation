@@ -82,8 +82,12 @@ export function isSubResolutionNormalMotion(
 ): boolean {
 	return (
 		Math.abs(preNormalVelocity) <= REPRESENTED_MOTION_SPEED &&
-		Math.abs(postNormalVelocity) <= REPRESENTED_MOTION_SPEED
+		isSubResolutionPostNormalMotion(postNormalVelocity)
 	);
+}
+
+export function isSubResolutionPostNormalMotion(postNormalVelocity: number): boolean {
+	return Math.abs(postNormalVelocity) <= REPRESENTED_MOTION_SPEED;
 }
 
 export function admissibleConstrainedVelocities(

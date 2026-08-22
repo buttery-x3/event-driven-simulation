@@ -183,7 +183,10 @@ private `scheduler/pairs/component.ts` module owns the pair-seeded scheduler ada
 physical body/contact vocabulary belongs to `run/contact-resolution`;
 `coupled-commit.ts` owns prefix commitment, future invalidation, contact/component records and
 post-impact runtime state. Fixed-world impact builds the same vocabulary through its narrow
-fixed-event adapter before common post-contact selection. Disconnected simultaneous components are
+fixed-event adapter before common post-contact selection. That adapter applies
+`REPRESENTED_MOTION_SPEED` to post-response body/fixed normal separation rather than a
+gravity-orientation gate, and commits tangent-projected velocity when represented fixed
+continuation succeeds. Disconnected simultaneous components are
 committed independently, while nearby positive-time events remain ordered.
 
 Certified stationary components with fixed support become persistent dormant components. During

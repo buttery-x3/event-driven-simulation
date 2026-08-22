@@ -326,7 +326,9 @@ the existing resting mode, admissible residual velocity under current contact co
 non-negative support-equilibrium certification and generic
 represented-mode selection. `mode.ts` applies `REPRESENTED_MOTION_SPEED` (`0.01 m/s`) to that residual
 motion rather than to unconstrained world-space speed, and to whether a microscopic contact-normal
-degree of motion is represented at all. Scheduler prefix commitment remains pair-adapter state. The subdomain
+degree of motion is represented at all. `isSubResolutionPostNormalMotion` is the post-only bound used
+by the isolated fixed-event adapter; body/body continuation still uses the pre-and-post helper.
+Scheduler prefix commitment remains pair-adapter state. The subdomain
 does not own numerical impact response,
 continuous path mathematics, scheduler sequencing or persistent component records. The
 `run/dynamic-impact` subdomain owns isolated and simultaneous frictionless impact response.

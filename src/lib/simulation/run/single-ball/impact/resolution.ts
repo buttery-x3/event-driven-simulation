@@ -16,10 +16,14 @@ import {
 } from '../../contact-resolution';
 import { acquireAlternatingContactLimit } from '../manifold';
 import { appendSustainedContact, type RunAssembly } from '../run-assembly';
-import { continueSustainedContact } from '../sustained-contact';
+import { continueSustainedContact, type SustainedContactResult } from '../sustained-contact';
 import { commitAlternatingLimitRelease } from './alternating-limit';
 import { recordAlternatingLimitEvidence, recordImpactEvidence } from './evidence';
-import { resolveFixedPostContactState, supportReactionsInCandidateOrder } from './contact-state';
+import {
+	resolveFixedPostContactState,
+	supportReactionsInCandidateOrder,
+	type FixedPostContactResolution
+} from './contact-state';
 import { isContractingAlternatingImpactSequence, resolveImpactResponse } from './response';
 
 export interface ImpactNextState {
@@ -53,7 +57,8 @@ export function resolvePendingContact(
 				makeContactEvent(candidate),
 				mergeContactCandidates(state.retainedSupportCandidates, state.pendingContactCandidates),
 				assembly,
-				{ position: state.position, velocity: state.velocity }
+				{ position: state.position, velocity: state.velocity },
+				state.retainedSupportCandidates
 			)
 		: null;
 }
@@ -65,7 +70,8 @@ export function resolveContact(
 	event: ContactEvent,
 	candidates: readonly FixedWorldContactCandidate[],
 	assembly: RunAssembly,
-	authoritativeState: { readonly position: Vec2; readonly velocity: Vec2 } | null
+	authoritativeState: { readonly position: Vec2; readonly velocity: Vec2 } | null,
+	priorRetainedCandidates: readonly FixedWorldContactCandidate[] = []
 ): ImpactResolution {
 	const state = authoritativeState ?? stateFromPath(path, event.time);
 	if (!state || !isFiniteVec2(state.velocity) || !isFiniteVec2(state.position)) {
@@ -128,7 +134,8 @@ export function resolveContact(
 		input.settings.gravity,
 		input.settings.tolerances.eventTime,
 		acquisitionSupport,
-		acquisition !== null
+		acquisition !== null,
+		new Set(priorRetainedCandidates.map(fixedContactId))
 	);
 	if (!postContact) {
 		return numericalFailure(
@@ -168,13 +175,13 @@ export function resolveContact(
 			manifoldCandidates.map(({ colliderId }) => colliderId)
 		);
 	}
+	const represented = selectRepresentedFixedContinuation(input, body, event, response, postContact);
 	const committedEvent: ContactEvent = {
 		...event,
 		contacts: response.contacts,
 		preContactVelocity: state.velocity,
 		postContactVelocity: response.outgoingVelocity
 	};
-	const retainedAfterImpact = postContact.retainedCandidates;
 	recordImpactEvidence(
 		assembly,
 		body,
@@ -182,7 +189,7 @@ export function resolveContact(
 		manifoldCandidates,
 		state.velocity,
 		response,
-		retainedAfterImpact,
+		represented.retainedCandidates,
 		input.settings.tolerances.eventTime
 	);
 	const support = postContact.support;
@@ -193,7 +200,7 @@ export function resolveContact(
 			event.time,
 			acquisition,
 			support !== null,
-			retainedAfterImpact.length === 0
+			represented.retainedCandidates.length === 0
 		);
 	}
 	const mode = postContact.mode;
@@ -213,37 +220,18 @@ export function resolveContact(
 			reason: { type: 'unresolved-collision-search', time: event.time, detail: mode.detail }
 		};
 	}
-	if (mode.type !== 'fixed-sustained-contact')
-		return freeFlightAfterManifold(event, response.outgoingVelocity, manifoldCandidates);
-	const supportCandidate = retainedAfterImpact.find(
-		(candidate) => fixedContactId(candidate) === mode.contactId
-	)!;
-	const continuation = continueSustainedContact({
-		input,
-		body,
-		colliderId: supportCandidate.colliderId,
-		time: event.time,
-		position: event.position,
-		normal: supportCandidate.normal,
-		outgoingVelocity: response.outgoingVelocity,
-		entryFrom: response.collapseReason === 'initial-supported-state' ? 'free-flight' : 'impact',
-		entryReason:
-			response.collapseReason === 'initial-supported-state'
-				? 'supported-initial-state'
-				: response.collapseReason
-					? 'impact-collapse'
-					: 'collider-contact',
-		manifoldContacts: response.contacts
-	});
-	appendSustainedContact(assembly, continuation);
-	if (continuation.terminalReason) {
-		return {
-			type: 'terminal',
-			time: continuation.terminalReason.time ?? event.time,
-			reason: continuation.terminalReason
-		};
+	if (represented.continuation) {
+		appendSustainedContact(assembly, represented.continuation);
+		if (represented.continuation.terminalReason) {
+			return {
+				type: 'terminal',
+				time: represented.continuation.terminalReason.time ?? event.time,
+				reason: represented.continuation.terminalReason
+			};
+		}
+		return { type: 'continue', nextState: represented.continuation.nextState! };
 	}
-	return { type: 'continue', nextState: continuation.nextState! };
+	return freeFlightAfterManifold(event, represented.outgoingVelocity, manifoldCandidates);
 }
 
 export function mergeContactCandidates(
@@ -261,6 +249,68 @@ export function mergeContactCandidates(
 			merged.push(candidate);
 	}
 	return merged;
+}
+
+function selectRepresentedFixedContinuation(
+	input: SimulationInput,
+	body: InitialDynamicCircleBodyState,
+	event: ContactEvent,
+	response: NonNullable<ReturnType<typeof resolveImpactResponse>>,
+	postContact: FixedPostContactResolution
+): {
+	readonly outgoingVelocity: Vec2;
+	readonly retainedCandidates: readonly FixedWorldContactCandidate[];
+	readonly continuation: SustainedContactResult | null;
+} {
+	const mode = postContact.mode;
+	if (mode.type !== 'fixed-sustained-contact') {
+		return {
+			outgoingVelocity: postContact.outgoingVelocity,
+			retainedCandidates: postContact.retainedCandidates,
+			continuation: null
+		};
+	}
+	const supportCandidate = postContact.retainedCandidates.find(
+		(candidate) => fixedContactId(candidate) === mode.contactId
+	)!;
+	const continuation = continueSustainedContact({
+		input,
+		body,
+		colliderId: supportCandidate.colliderId,
+		time: event.time,
+		position: event.position,
+		normal: supportCandidate.normal,
+		outgoingVelocity: postContact.outgoingVelocity,
+		entryFrom: response.collapseReason === 'initial-supported-state' ? 'free-flight' : 'impact',
+		entryReason:
+			response.collapseReason === 'initial-supported-state'
+				? 'supported-initial-state'
+				: response.collapseReason
+					? 'impact-collapse'
+					: 'collider-contact',
+		manifoldContacts: response.contacts
+	});
+	if (representsFixedContinuation(continuation) || continuation.terminalReason) {
+		return {
+			outgoingVelocity: postContact.outgoingVelocity,
+			retainedCandidates: postContact.retainedCandidates,
+			continuation
+		};
+	}
+	return {
+		outgoingVelocity: response.outgoingVelocity,
+		retainedCandidates: [],
+		continuation: null
+	};
+}
+
+function representsFixedContinuation(continuation: SustainedContactResult): boolean {
+	if (continuation.terminalReason?.type === 'resting-contact') return true;
+	return continuation.segments.some(
+		(segment) =>
+			(segment.type === 'linear-contact' || segment.type === 'circular-contact') &&
+			segment.endTime > segment.startTime
+	);
 }
 
 function makeContactEvent(candidate: FixedWorldContactCandidate): ContactEvent {

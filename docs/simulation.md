@@ -295,7 +295,12 @@ For the event-time fixed-impact and dormancy admissions implemented by FLAME-94,
 represented-motion speed (`REPRESENTED_MOTION_SPEED`). It is a physics representation policy, not a
 collision, event-time, solver or support tolerance. The same value is the boundary below which a
 microscopic contact-normal degree of motion may be discarded when an existing represented supported
-continuation successfully replaces it. A currently contacting body or contact-connected subset is only a
+continuation successfully replaces it. Isolated body/fixed entry uses only that post-response
+normal speed; it does not require the incoming impact to be below the bound and does not use
+gravity orientation as a retention gate. Floors, walls, slopes and static circles share the same
+rule. Existing linear or circular sustained-contact mechanics still decide whether the continuation
+can be represented, and gravity remains part of support equilibrium and of those continuation
+laws. A currently contacting body or contact-connected subset is only a
 candidate when every member's velocity magnitude is at or below that speed. The existing
 zero-velocity support-equilibrium solve then decides admission: the current contact graph must
 anchor the candidate to fixed support with valid non-negative reactions. A successful candidate

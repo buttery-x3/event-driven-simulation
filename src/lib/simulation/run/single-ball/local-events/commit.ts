@@ -108,7 +108,8 @@ function commitContact(
 			prediction.result.activeCandidates
 		),
 		scratch,
-		prediction.path ? null : { position: runtime.state.position, velocity: runtime.state.velocity }
+		prediction.path ? null : { position: runtime.state.position, velocity: runtime.state.velocity },
+		runtime.state.retainedSupportCandidates
 	);
 	commitSeededSearch(runtime, prediction.search !== null, scratch.contactSearches[0]);
 	runtime.impactHistory.push(...scratch.impactHistory.slice(priorImpactCount));
