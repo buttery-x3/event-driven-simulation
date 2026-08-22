@@ -225,6 +225,107 @@ describe('continuous dynamic circle-path contact solving', () => {
 		});
 		expect(reversed).toMatchObject({ type: 'invalid-input' });
 	});
+
+	it('isolates the off-axis free-flight and circular-contact pair instead of aborting at the isolation floor', () => {
+		const result = findEarliestDynamicPairContact(offAxisFrontierQuery());
+
+		expect(result.type).toBe('contact');
+		if (result.type !== 'contact') return;
+		expect(result.state.time).toBeCloseTo(4.035212, 5);
+		expect(result.state.relativeNormalMotion).toBeLessThan(-1e-9);
+		expect(result.diagnostics.pathTypes).toEqual(['free-flight', 'circular-contact']);
+		expect(result.diagnostics.candidates[0]).toMatchObject({
+			topology: 'entering',
+			classification: 'accepted-impact'
+		});
+		expect(result.state.time).toBeGreaterThan(result.diagnostics.searchInterval[0]);
+		expect(result.state.time).toBeLessThan(result.diagnostics.searchInterval[1]);
+		const residual = Math.hypot(
+			result.state.secondPosition[0] - result.state.firstPosition[0],
+			result.state.secondPosition[1] - result.state.firstPosition[1]
+		);
+		expect(Math.abs(residual - 1)).toBeLessThan(1e-9);
+	});
+
+	it('certifies a nearby free-flight and circular-contact near miss as no-contact', () => {
+		const source = offAxisFrontierQuery();
+		const result = findEarliestDynamicPairContact({
+			...source,
+			first: {
+				...source.first,
+				path: {
+					...source.first.path,
+					startPosition: [source.first.path.startPosition[0] + 0.02, 0.5]
+				}
+			}
+		});
+
+		expect(result.type).toBe('no-contact');
+	});
+
+	it('certifies an earlier separated approach before accepting a later entering circular root', () => {
+		const circular = circularPath('slider', [0, 0], 2, 0, Math.PI, 1);
+		const free = path('free', [3, 2], [-1, 0], [0, 0], 'free-flight', 0, Math.PI);
+		const result = findEarliestDynamicPairContact({
+			first: { ...participant(circular), radius: 0.5 },
+			second: { ...participant(free), radius: 0.5 },
+			currentTime: 0
+		});
+
+		expect(result.type).toBe('contact');
+		if (result.type !== 'contact') return;
+		expect(result.state.time).toBeGreaterThan(0.5);
+		expect(result.state.relativeNormalMotion).toBeLessThan(-1e-9);
+		expect(result.diagnostics.candidates[0]?.classification).toBe('accepted-impact');
+	});
+
+	it('preserves circular mixed-path contact time and reverses the normal when participant order is swapped', () => {
+		const forward = findEarliestDynamicPairContact(offAxisFrontierQuery());
+		const source = offAxisFrontierQuery();
+		const swapped = findEarliestDynamicPairContact({
+			first: source.second,
+			second: source.first,
+			currentTime: source.currentTime
+		});
+
+		expect(forward.type).toBe('contact');
+		expect(swapped.type).toBe('contact');
+		if (forward.type !== 'contact' || swapped.type !== 'contact') return;
+		expect(swapped.state.time).toBeCloseTo(forward.state.time, 12);
+		expect(swapped.state.response).toBe(forward.state.response);
+		expect(swapped.state.normalFromFirstToSecond[0]).toBeCloseTo(
+			-forward.state.normalFromFirstToSecond[0],
+			12
+		);
+		expect(swapped.state.normalFromFirstToSecond[1]).toBeCloseTo(
+			-forward.state.normalFromFirstToSecond[1],
+			12
+		);
+	});
+
+	it('returns unresolved when a non-certifiable circular interval exhausts its isolation budget', () => {
+		const result = findEarliestDynamicPairContact({
+			first: {
+				...participant(path('fast', [0, -0.5], [1_000, 0], [0, 0], 'free-flight', 0, 1)),
+				radius: 0.5
+			},
+			second: {
+				...participant(circularPath('hover', [0, 1.000000005], 0.5, -Math.PI / 2, Math.PI / 2, 1)),
+				radius: 0.5
+			},
+			currentTime: 0,
+			maximumIsolationIntervals: 8
+		});
+
+		expect(result.type).toBe('unresolved');
+		if (result.type !== 'unresolved') return;
+		expect(result.reason).toMatch(/interval bound|numerical progress/i);
+		expect(
+			result.diagnostics.candidates.some(
+				({ classification }) => classification === 'accepted-impact'
+			)
+		).toBe(false);
+	});
 });
 
 function query(firstPath: MotionSegment, secondPath: MotionSegment): DynamicPairContactQuery {
@@ -246,6 +347,50 @@ function participant<T extends MotionSegment>(
 		revision: 0,
 		radius: 0.5,
 		path: pathValue
+	};
+}
+
+function offAxisFrontierQuery(): DynamicPairContactQuery {
+	const currentTime = 4.0334887421011185;
+	return {
+		first: {
+			bodyId: 'base',
+			revision: 31,
+			radius: 0.5,
+			path: {
+				type: 'free-flight',
+				bodyId: 'base',
+				startTime: currentTime,
+				endTime: 4.035839872511614,
+				startPosition: [0.8407441226651726, 0.5],
+				startVelocity: [0.8088784037562395, 0.0115322946634807],
+				acceleration: [0, -9.81]
+			}
+		},
+		second: {
+			bodyId: 'joining-02',
+			revision: 25,
+			radius: 0.5,
+			path: {
+				type: 'circular-contact',
+				bodyId: 'joining-02',
+				startTime: 4.025827379793903,
+				endTime: 4.164166796854933,
+				startPosition: [-0.007801446057311677, 1.0391675024858644],
+				startVelocity: [0.3936520349730825, -0.6148982887180198],
+				supportingColliderId: 'joining-01',
+				supportingBodyId: 'joining-01',
+				supportingComponentId: 'dynamic-support:4.025827379793903:joining-02->joining-01',
+				centre: [-0.8500000000000001, 0.49999999999999994],
+				contactRadius: 1,
+				startAngle: 0.5694483149857902,
+				endAngle: 0.38715754940640956,
+				direction: -1,
+				startTangentialSpeed: 0.730110834125065,
+				gravity: [0, -9.81]
+			}
+		},
+		currentTime
 	};
 }
 

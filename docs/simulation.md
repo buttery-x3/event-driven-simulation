@@ -219,10 +219,12 @@ will use. The runner never advances collision state through renderer frames or p
 
 Body-pair search synchronizes the two authoritative paths over their shared time interval. Pairs of
 polynomial paths use relative contact-polynomial roots. When either path is a changing-normal
-circular continuation, a bounded continuous search excludes intervals using a conservative
-relative-speed limit and refines entering brackets to the configured tolerances. If that proof
-cannot distinguish separation from contact within its deterministic interval budget, the run is
-unresolved. An accepted pair event truncates both incoming paths at the exact contact time and seeds
+circular continuation, a bounded continuous search excludes sub-intervals using a conservative
+relative-speed limit, refines entering brackets to the configured tolerances, and keeps subdividing
+uncertain intervals in chronological order. `eventTime` is the selected-event accuracy; it does not
+turn an otherwise refinable interval into an unresolved run. If that proof cannot distinguish
+separation from contact within its deterministic interval budget, reaches non-finite geometry, or
+cannot make further numerical progress, the run is unresolved. An accepted pair event truncates both incoming paths at the exact contact time and seeds
 the same exact-time component response used by free-flight impacts.
 
 Each selected contact set is evaluated directly on the incoming path. For one contact, restitution
@@ -243,7 +245,8 @@ Certified non-impulsive onset uses the unchanged incoming velocity and proceeds 
 sustained-contact support classification. The contact position becomes the next segment's exact
 start position. No positional nudge or arbitrary time advance is applied. If the next query still
 selects a contradictory contact without a positive collision-free interval, the unchanged
-`zero-time-loop` guard stops the run and preserves the certified prefix.
+`zero-time-loop` guard stops the run and preserves the certified prefix. The world scheduler applies
+the same fail-closed stop when it restagnates at one world time without recording new contacts.
 
 Axis-aligned completion and escape regions are intersected continuously with the same ballistic
 path. A contact at or before a region entry wins; otherwise the committed terminal segment ends

@@ -25,6 +25,8 @@ export function constructSimulationRun(input: SimulationInput): SimulationRunRec
 	const state = createSchedulerState(input);
 	const invalid = validateSimulationInput(input)[0];
 	if (invalid) return invalidInputRun(state, invalid.path, invalid.message);
+	let stagnantSameTimeLoops = 0;
+	let lastStagnantContactCount = -1;
 
 	while (true) {
 		const nextPair = predictEarliestBodyPair(state);
@@ -63,6 +65,19 @@ export function constructSimulationRun(input: SimulationInput): SimulationRunRec
 				type: 'numerical-failure',
 				time: state.worldTime,
 				detail: 'The global scheduler selected an event before committed world time.'
+			});
+		}
+		const contactCount = contactEventCount(state);
+		if (nextTime === state.worldTime && contactCount === lastStagnantContactCount) {
+			stagnantSameTimeLoops += 1;
+		} else stagnantSameTimeLoops = 0;
+		lastStagnantContactCount = contactCount;
+		if (stagnantSameTimeLoops >= 256) {
+			return finishScheduledRun(state, 'valid', {
+				type: 'zero-time-loop',
+				time: state.worldTime,
+				colliderId: nextPair?.type === 'contact' ? nextPair.first.bodyId : 'scheduler',
+				detail: 'The scheduler selected another event without a positive collision-free interval.'
 			});
 		}
 		state.worldTime = nextTime;

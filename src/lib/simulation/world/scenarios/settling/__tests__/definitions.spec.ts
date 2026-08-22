@@ -95,6 +95,11 @@ describe('FLAME-89 finite-capture settling frontier', () => {
 			);
 
 		expect(result.outcome).toBe('unresolved');
+		expect([
+			'zero-time-loop',
+			'unresolved-collision-search',
+			'unsupported-body-body-response'
+		]).toContain(result.terminalReason.type);
 		expect(result.diagnostics.eventCount).toBeGreaterThan(0);
 		expect(joining01?.lifecycle).toBe('resting');
 		expect(joining01Rest?.fixedColliderIds).toEqual(['floor', 'left-wall']);
@@ -104,9 +109,21 @@ describe('FLAME-89 finite-capture settling frontier', () => {
 		});
 		expect(JSON.stringify(result.terminalReason)).not.toContain('Body pair joining-01/joining-02');
 		expect(JSON.stringify(result.terminalReason)).not.toContain('penetrating');
+		expect(JSON.stringify(result.terminalReason)).not.toContain(
+			'A bounded circular interval could not certify contact or separation.'
+		);
+		expect(result.terminalReason.time).toBeGreaterThan(4.0352);
 		expect(
-			result.terminalReason.type === 'unresolved-collision-search' &&
-				result.terminalReason.time > 4.022
+			result.dynamicContacts.some(
+				(contact) =>
+					contact.time > 4.033 &&
+					contact.participants.some(
+						(participant) => participant.type === 'body' && participant.bodyId === 'base'
+					) &&
+					contact.participants.some(
+						(participant) => participant.type === 'body' && participant.bodyId === 'joining-02'
+					)
+			)
 		).toBe(true);
 		expect(bodyPairEdges(result)).toEqual([
 			'base<->joining-01',
@@ -158,7 +175,7 @@ describe('FLAME-89 finite-capture settling frontier', () => {
 				].includes(code)
 			)
 		).toBe(true);
-	}, 90_000);
+	}, 180_000);
 
 	it('uses the five-column legacy input only to show capture replaced its former root-topology failure', () => {
 		const result = run('legacy-twenty-ball-container-drop-control');

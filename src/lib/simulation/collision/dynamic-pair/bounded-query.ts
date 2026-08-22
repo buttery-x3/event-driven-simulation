@@ -1,6 +1,15 @@
-import type { MotionSegment } from '../../contracts';
-import { evaluateMotionSegmentVelocity } from '../../motion';
-import { dynamicPairSurfaceSeparation, evaluateDynamicPairCandidate } from './contact-polynomial';
+import { evaluateDynamicPairCandidate } from './contact-polynomial';
+import {
+	earliestEnteringBracket,
+	intervalCertifiesSeparation,
+	intervalRelativeSpeedBound,
+	laterSeparatedRemainder,
+	pairSeparation,
+	refineEnteringRoot,
+	splitSearchInterval,
+	type SearchInterval,
+	type SeparationSample
+} from './interval-bound';
 import type {
 	DynamicPairCandidateClassification,
 	DynamicPairContactCandidateDiagnostic,
@@ -10,19 +19,28 @@ import type {
 	DynamicPairContactTolerances
 } from './types';
 
-interface SearchInterval {
-	readonly start: number;
-	readonly end: number;
-	readonly startSeparation: number;
-	readonly endSeparation: number;
-}
+type IntervalDecision =
+	| { readonly type: 'discard'; readonly refinementIterations: number }
+	| { readonly type: 'contact'; readonly result: DynamicPairContactQueryResult }
+	| { readonly type: 'unresolved'; readonly reason: string; readonly refinementIterations: number }
+	| {
+			readonly type: 'subdivide';
+			readonly earlier: SearchInterval;
+			readonly later: SearchInterval;
+			readonly refinementIterations: number;
+	  }
+	| {
+			readonly type: 'search-after';
+			readonly remainder: SearchInterval;
+			readonly refinementIterations: number;
+	  };
 
-const maximumIsolationIntervals = 65_536;
+const defaultMaximumIsolationIntervals = 65_536;
 
 /**
  * Isolates contacts involving a circular sustained path by recursively excluding
- * time intervals with a conservative relative-speed bound. This is a bounded
- * continuous query: render frames and temporal advancement never participate.
+ * time intervals with a conservative relative-speed bound. Uncertain intervals
+ * remain search work; eventTime is the selected-root accuracy, not an abort floor.
  */
 export function findEarliestBoundedDynamicPairContact(
 	query: DynamicPairContactQuery,
@@ -31,7 +49,7 @@ export function findEarliestBoundedDynamicPairContact(
 ): DynamicPairContactQueryResult {
 	const searchStart = initialDiagnostics.searchInterval[0];
 	const searchEnd = initialDiagnostics.searchInterval[1];
-	const initialSeparation = separationAt(query, searchStart);
+	const initialSeparation = pairSeparation(query, searchStart);
 	if (!Number.isFinite(initialSeparation)) {
 		return unresolved(
 			'The synchronized circular pair geometry was not finite.',
@@ -58,33 +76,19 @@ export function findEarliestBoundedDynamicPairContact(
 		return { type: 'no-contact', diagnostics: { ...initialDiagnostics, candidates } };
 	}
 
-	const relativeSpeedBound =
-		pathSpeedBound(query.first.path, searchStart, searchEnd) +
-		pathSpeedBound(query.second.path, searchStart, searchEnd);
-	if (!Number.isFinite(relativeSpeedBound)) {
-		return unresolved('A finite circular-path relative-speed bound could not be established.', {
-			...initialDiagnostics,
-			candidates
-		});
-	}
-	const isolationTimeTolerance = Math.min(
-		tolerances.eventTime,
-		tolerances.contactDistance / Math.max(relativeSpeedBound, Number.EPSILON)
-	);
-
 	const stack: SearchInterval[] = [
 		{
 			start: searchStart,
 			end: searchEnd,
 			startSeparation: initialSeparation,
-			endSeparation: separationAt(query, searchEnd)
+			endSeparation: pairSeparation(query, searchEnd)
 		}
 	];
+	const isolationBudget = query.maximumIsolationIntervals ?? defaultMaximumIsolationIntervals;
 	let isolationIntervals = 0;
 	let refinementIterations = 0;
-	let lastCandidateTime = Number.NEGATIVE_INFINITY;
 	while (stack.length > 0) {
-		if (isolationIntervals >= maximumIsolationIntervals) {
+		if (isolationIntervals >= isolationBudget) {
 			return unresolved('Circular pair root isolation exceeded its deterministic interval bound.', {
 				...initialDiagnostics,
 				refinementIterations,
@@ -92,138 +96,258 @@ export function findEarliestBoundedDynamicPairContact(
 			});
 		}
 		isolationIntervals += 1;
-		const interval = stack.pop()!;
-		if (![interval.startSeparation, interval.endSeparation].every(Number.isFinite)) {
-			return unresolved('Circular pair interval geometry was not finite.', {
-				...initialDiagnostics,
-				refinementIterations,
-				candidates
-			});
-		}
-		const middle = (interval.start + interval.end) / 2;
-		const middleSeparation = separationAt(query, middle);
-		if (!Number.isFinite(middleSeparation)) {
-			return unresolved('Circular pair midpoint geometry was not finite.', {
-				...initialDiagnostics,
-				refinementIterations,
-				candidates
-			});
-		}
-		const halfWidth = (interval.end - interval.start) / 2;
-		if (middleSeparation - relativeSpeedBound * halfWidth > tolerances.contactDistance) continue;
-
-		if (interval.end - interval.start > isolationTimeTolerance) {
-			stack.push({
-				start: middle,
-				end: interval.end,
-				startSeparation: middleSeparation,
-				endSeparation: interval.endSeparation
-			});
-			stack.push({
-				start: interval.start,
-				end: middle,
-				startSeparation: interval.startSeparation,
-				endSeparation: middleSeparation
-			});
-			continue;
-		}
-
-		const samples = [
-			{ time: interval.start, separation: interval.startSeparation },
-			{ time: middle, separation: middleSeparation },
-			{ time: interval.end, separation: interval.endSeparation }
-		];
-		const bracketIndex = samples.findIndex(
-			(sample, index) =>
-				index < samples.length - 1 && sample.separation > 0 && samples[index + 1]!.separation <= 0
-		);
-		if (bracketIndex < 0) {
-			const closest = [...samples].sort(
-				(left, right) => Math.abs(left.separation) - Math.abs(right.separation)
-			)[0]!;
-			if (Math.abs(closest.separation) > tolerances.contactDistance) {
-				return unresolved('A bounded circular interval could not certify contact or separation.', {
-					...initialDiagnostics,
-					refinementIterations,
-					candidates
-				});
-			}
-			const closestState = stateAt(query, closest.time, tolerances);
-			if (!closestState) {
-				return unresolved('A bounded circular candidate had indeterminate geometry.', {
-					...initialDiagnostics,
-					refinementIterations,
-					candidates
-				});
-			}
-			const classification = classifyVelocity(closestState.relativeNormalMotion, tolerances);
-			if (closest.time - lastCandidateTime > tolerances.eventTime) {
-				candidates.push(
-					candidate(
-						query,
-						closest.time,
-						closest.separation,
-						closestState.relativeNormalMotion,
-						classification,
-						[interval.start, interval.end],
-						0,
-						classification === 'rejected-grazing' ? 'grazing' : 'indeterminate'
-					)
-				);
-				lastCandidateTime = closest.time;
-			}
-			if (classification === 'accepted-impact') {
-				return contactResult(closestState, candidates, initialDiagnostics, refinementIterations);
-			}
-			if (classification === 'accepted-non-impulsive') {
-				return unresolved(
-					'Circular pair contact had indeterminate persistent zero-normal motion.',
-					{
-						...initialDiagnostics,
-						refinementIterations,
-						candidates
-					}
-				);
-			}
-			continue;
-		}
-
-		const refined = refineEnteringRoot(
+		const decision = examineInterval(
 			query,
-			samples[bracketIndex]!,
-			samples[bracketIndex + 1]!,
 			tolerances,
-			query.maximumRefinementIterations ?? 128
+			initialDiagnostics,
+			stack.pop()!,
+			candidates,
+			refinementIterations
 		);
-		refinementIterations += refined.iterations;
-		const rootState = stateAt(query, refined.time, tolerances);
-		if (!rootState || Math.abs(refined.separation) > tolerances.contactDistance) {
-			return unresolved('A bounded circular root could not be refined within geometry tolerance.', {
+		if (decision.type === 'contact') return decision.result;
+		refinementIterations = decision.refinementIterations;
+		if (decision.type === 'unresolved') {
+			return unresolved(decision.reason, {
 				...initialDiagnostics,
 				refinementIterations,
 				candidates
 			});
 		}
-		const classification = classifyVelocity(rootState.relativeNormalMotion, tolerances);
-		candidates.push(
-			candidate(
-				query,
-				refined.time,
-				refined.separation,
-				rootState.relativeNormalMotion,
-				classification,
-				[interval.start, interval.end],
-				refined.iterations,
-				classification === 'accepted-impact' ? 'entering' : 'indeterminate'
-			)
-		);
-		lastCandidateTime = refined.time;
-		if (classification === 'accepted-impact') {
-			return contactResult(rootState, candidates, initialDiagnostics, refinementIterations);
+		if (decision.type === 'discard') continue;
+		if (decision.type === 'search-after') {
+			stack.push(decision.remainder);
+			continue;
 		}
+		stack.push(decision.later);
+		stack.push(decision.earlier);
 	}
 
 	return noContactResult(initialDiagnostics, candidates, refinementIterations);
+}
+
+function examineInterval(
+	query: DynamicPairContactQuery,
+	tolerances: DynamicPairContactTolerances,
+	diagnostics: DynamicPairContactDiagnostics,
+	interval: SearchInterval,
+	candidates: DynamicPairContactCandidateDiagnostic[],
+	refinementIterations: number
+): IntervalDecision {
+	if (![interval.startSeparation, interval.endSeparation].every(Number.isFinite)) {
+		return {
+			type: 'unresolved',
+			reason: 'Circular pair interval geometry was not finite.',
+			refinementIterations
+		};
+	}
+	if (interval.end <= interval.start) return { type: 'discard', refinementIterations };
+	if (interval.startSeparation <= 0 && interval.endSeparation <= 0) {
+		return { type: 'discard', refinementIterations };
+	}
+
+	const middleTime = (interval.start + interval.end) / 2;
+	const middleSeparation = pairSeparation(query, middleTime);
+	if (!Number.isFinite(middleSeparation)) {
+		return {
+			type: 'unresolved',
+			reason: 'Circular pair midpoint geometry was not finite.',
+			refinementIterations
+		};
+	}
+	const relativeSpeedBound = intervalRelativeSpeedBound(
+		query.first,
+		query.second,
+		interval.start,
+		interval.end
+	);
+	if (!Number.isFinite(relativeSpeedBound)) {
+		return {
+			type: 'unresolved',
+			reason: 'A finite circular-path relative-speed bound could not be established.',
+			refinementIterations
+		};
+	}
+	const halfWidth = (interval.end - interval.start) / 2;
+	if (
+		intervalCertifiesSeparation(
+			middleSeparation,
+			relativeSpeedBound,
+			halfWidth,
+			tolerances.contactDistance
+		)
+	) {
+		return { type: 'discard', refinementIterations };
+	}
+
+	const start = { time: interval.start, separation: interval.startSeparation };
+	const middle = { time: middleTime, separation: middleSeparation };
+	const end = { time: interval.end, separation: interval.endSeparation };
+	const bracket = earliestEnteringBracket(start, middle, end, tolerances.contactDistance);
+	if (bracket) {
+		return refineBracketedInterval(
+			query,
+			tolerances,
+			diagnostics,
+			interval,
+			bracket,
+			candidates,
+			refinementIterations
+		);
+	}
+
+	if (!(middleTime > interval.start && middleTime < interval.end)) {
+		return terminalUncertainInterval(
+			query,
+			tolerances,
+			diagnostics,
+			interval,
+			[start, middle, end],
+			candidates,
+			refinementIterations
+		);
+	}
+	return splitIntervalDecision(interval, middleTime, middleSeparation, refinementIterations);
+}
+
+function refineBracketedInterval(
+	query: DynamicPairContactQuery,
+	tolerances: DynamicPairContactTolerances,
+	diagnostics: DynamicPairContactDiagnostics,
+	interval: SearchInterval,
+	bracket: readonly [SeparationSample, SeparationSample],
+	candidates: DynamicPairContactCandidateDiagnostic[],
+	refinementIterations: number
+): IntervalDecision {
+	const refined = refineEnteringRoot(
+		query,
+		bracket[0],
+		bracket[1],
+		tolerances,
+		query.maximumRefinementIterations ?? 128
+	);
+	const totalRefinement = refinementIterations + refined.iterations;
+	const rootState = stateAt(query, refined.time, tolerances);
+	if (!rootState || Math.abs(refined.separation) > tolerances.contactDistance) {
+		const middleTime = (interval.start + interval.end) / 2;
+		if (!(middleTime > interval.start && middleTime < interval.end)) {
+			return {
+				type: 'unresolved',
+				reason: 'A bounded circular root could not be refined within geometry tolerance.',
+				refinementIterations: totalRefinement
+			};
+		}
+		return splitIntervalDecision(
+			interval,
+			middleTime,
+			pairSeparation(query, middleTime),
+			totalRefinement
+		);
+	}
+	const classification = classifyVelocity(rootState.relativeNormalMotion, tolerances);
+	candidates.push(
+		candidate(
+			query,
+			refined.time,
+			refined.separation,
+			rootState.relativeNormalMotion,
+			classification,
+			[interval.start, interval.end],
+			refined.iterations,
+			classification === 'accepted-impact' ? 'entering' : 'indeterminate'
+		)
+	);
+	if (classification === 'accepted-impact') {
+		return {
+			type: 'contact',
+			result: contactResult(rootState, candidates, diagnostics, totalRefinement)
+		};
+	}
+	if (classification === 'accepted-non-impulsive') {
+		return {
+			type: 'unresolved',
+			reason: 'Circular pair contact had indeterminate persistent zero-normal motion.',
+			refinementIterations: totalRefinement
+		};
+	}
+	const remainder = laterSeparatedRemainder(
+		query,
+		interval,
+		refined.time,
+		bracket[1].time,
+		tolerances
+	);
+	if (!remainder) return { type: 'discard', refinementIterations: totalRefinement };
+	return {
+		type: 'search-after',
+		remainder,
+		refinementIterations: totalRefinement
+	};
+}
+
+function terminalUncertainInterval(
+	query: DynamicPairContactQuery,
+	tolerances: DynamicPairContactTolerances,
+	diagnostics: DynamicPairContactDiagnostics,
+	interval: SearchInterval,
+	samples: readonly SeparationSample[],
+	candidates: DynamicPairContactCandidateDiagnostic[],
+	refinementIterations: number
+): IntervalDecision {
+	const closest = [...samples].sort(
+		(left, right) => Math.abs(left.separation) - Math.abs(right.separation)
+	)[0]!;
+	if (Math.abs(closest.separation) > tolerances.contactDistance) {
+		return {
+			type: 'unresolved',
+			reason: 'A bounded circular interval could not make further numerical progress.',
+			refinementIterations
+		};
+	}
+	const closestState = stateAt(query, closest.time, tolerances);
+	if (!closestState) {
+		return {
+			type: 'unresolved',
+			reason: 'A bounded circular candidate had indeterminate geometry.',
+			refinementIterations
+		};
+	}
+	const classification = classifyVelocity(closestState.relativeNormalMotion, tolerances);
+	candidates.push(
+		candidate(
+			query,
+			closest.time,
+			closest.separation,
+			closestState.relativeNormalMotion,
+			classification,
+			[interval.start, interval.end],
+			0,
+			classification === 'accepted-impact' ? 'entering' : 'indeterminate'
+		)
+	);
+	if (classification === 'accepted-impact') {
+		return {
+			type: 'contact',
+			result: contactResult(closestState, candidates, diagnostics, refinementIterations)
+		};
+	}
+	return {
+		type: 'unresolved',
+		reason: 'A bounded circular interval could not make further numerical progress.',
+		refinementIterations
+	};
+}
+
+function splitIntervalDecision(
+	interval: SearchInterval,
+	middleTime: number,
+	middleSeparation: number,
+	refinementIterations: number
+): IntervalDecision {
+	return {
+		type: 'subdivide',
+		...splitSearchInterval(interval, middleTime, middleSeparation),
+		refinementIterations
+	};
 }
 
 function resolveInitialBoundary(
@@ -280,48 +404,6 @@ function noContactResult(
 	};
 }
 
-function refineEnteringRoot(
-	query: DynamicPairContactQuery,
-	leftSeed: { readonly time: number; readonly separation: number },
-	rightSeed: { readonly time: number; readonly separation: number },
-	tolerances: DynamicPairContactTolerances,
-	maximumIterations: number
-): { readonly time: number; readonly separation: number; readonly iterations: number } {
-	let left = leftSeed;
-	let right = rightSeed;
-	let iterations = 0;
-	while (
-		iterations < maximumIterations &&
-		right.time - left.time > tolerances.eventTime &&
-		Math.abs(right.separation) > tolerances.contactDistance
-	) {
-		const time = (left.time + right.time) / 2;
-		const separation = separationAt(query, time);
-		if (separation > 0) left = { time, separation };
-		else right = { time, separation };
-		iterations += 1;
-	}
-	return Math.abs(left.separation) < Math.abs(right.separation)
-		? { ...left, iterations }
-		: { ...right, iterations };
-}
-
-function pathSpeedBound(path: MotionSegment, start: number, end: number): number {
-	if (path.type === 'stationary') return 0;
-	if (path.type === 'circular-contact') {
-		return Math.sqrt(
-			Math.max(
-				0,
-				path.startTangentialSpeed ** 2 + 4 * Math.hypot(...path.gravity) * path.contactRadius
-			)
-		);
-	}
-	return (
-		Math.hypot(...evaluateMotionSegmentVelocity(path, start)) +
-		Math.hypot(...path.acceleration) * (end - start)
-	);
-}
-
 function classifyVelocity(
 	relativeNormalMotion: number,
 	tolerances: DynamicPairContactTolerances
@@ -371,10 +453,6 @@ function stateAt(
 	tolerances: DynamicPairContactTolerances
 ) {
 	return evaluateDynamicPairCandidate(query.first, query.second, time, tolerances.contactDistance);
-}
-
-function separationAt(query: DynamicPairContactQuery, time: number): number {
-	return dynamicPairSurfaceSeparation(query.first, query.second, time);
 }
 
 function contactResult(

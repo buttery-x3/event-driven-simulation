@@ -38,6 +38,11 @@ export function validateDynamicPairContactQuery(
 		(!Number.isInteger(query.maximumRefinementIterations) || query.maximumRefinementIterations < 1)
 	)
 		return 'The maximum refinement iteration count must be a positive integer.';
+	if (
+		query.maximumIsolationIntervals !== undefined &&
+		(!Number.isInteger(query.maximumIsolationIntervals) || query.maximumIsolationIntervals < 1)
+	)
+		return 'The maximum isolation interval count must be a positive integer.';
 	return null;
 }
 

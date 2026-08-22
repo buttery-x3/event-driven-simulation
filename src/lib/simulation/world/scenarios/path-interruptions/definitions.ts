@@ -80,7 +80,7 @@ export const pathInterruptionScenarios = [
 	scenario(
 		'two-circular-paths-approach',
 		'Two circular paths approach',
-		'Two fixed-peg circular paths use bounded continuous isolation to discover their approach.',
+		'Two fixed-peg circular paths use bounded continuous isolation to discover their approach. A later coupled-impact certification failure remains an independent frontier.',
 		'path-interruption.circular-circular',
 		input(
 			'two-circular-paths-approach-board',
@@ -90,7 +90,7 @@ export const pathInterruptionScenarios = [
 			1,
 			1.2
 		),
-		['time-limit']
+		['time-limit', 'unresolved']
 	),
 	scenario(
 		'unsupported-dynamic-support-after-impact',

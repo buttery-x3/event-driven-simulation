@@ -28,7 +28,7 @@ export const settlingScenarios = [
 	scenario(
 		'off-axis-incremental-pile',
 		'Off-axis incremental pile',
-		'Three separately scheduled off-axis arrivals join and reactivate a mechanically supported component through changing oblique contacts. joining-01 retains left-wall contact into floor rest; a later independent frontier remains unresolved.',
+		'Three separately scheduled off-axis arrivals join and reactivate a mechanically supported component through changing oblique contacts. joining-01 retains left-wall contact into floor rest; free-flight base collides with circular-contact joining-02 after the floor event. A later independent frontier remains unresolved.',
 		'settling.incremental-off-axis',
 		offAxisIncrementalPileInput(),
 		['unresolved']

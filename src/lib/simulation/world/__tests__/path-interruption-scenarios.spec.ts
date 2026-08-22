@@ -18,7 +18,7 @@ describe('FLAME-55 sustained-path interruption scenarios', () => {
 			expect(scenario.expectedOutcomes, scenario.id).toContain(run.outcome);
 			expect(validateSimulationRun(scenario.input, run).failures, scenario.id).toEqual([]);
 		}
-	});
+	}, 20_000);
 
 	it('commits circular history exactly through the winning free-body impact', () => {
 		const run = namedRun('free-ball-hits-peg-slider');

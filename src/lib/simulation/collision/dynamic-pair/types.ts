@@ -26,6 +26,7 @@ export interface DynamicPairContactQuery {
 	readonly currentTime: number;
 	readonly tolerances?: DynamicPairContactTolerances;
 	readonly maximumRefinementIterations?: number;
+	readonly maximumIsolationIntervals?: number;
 }
 
 export type DynamicPairCandidateClassification =

@@ -78,6 +78,7 @@ src/lib/simulation/
             types.ts
             query.ts
             bounded-query.ts
+            interval-bound.ts
             query-validation.ts
             contact-polynomial.ts
         __tests__/
@@ -319,7 +320,8 @@ or depend on browser download APIs.
 
 The `collision/dynamic-pair` subdomain owns synchronized continuous contact queries for two dynamic
 circle paths. `query.ts` owns polynomial-path root selection, while `bounded-query.ts` owns
-deterministically bounded circular-path isolation using conservative relative-speed exclusion. The
+deterministically bounded circular-path isolation. `interval-bound.ts` owns the per-sub-interval
+conservative relative-speed exclusion used by that isolator. The
 `run/contact-resolution` subdomain owns the shared exact-event contact vocabulary, fixed-event
 state construction, phase-relative post-response classification, supplied-motion qualification for
 the existing resting mode, admissible residual velocity under current contact constraints,

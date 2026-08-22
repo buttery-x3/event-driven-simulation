@@ -325,8 +325,11 @@ returns typed contact/no-contact/invalid/unresolved results. Free-flight, linear
 stationary pairs use one swap-invariant relative contact polynomial and the shared normalized root
 isolation and circle topology policy. A pair containing a changing-normal circular path uses a
 deterministically bounded interval isolator: conservative relative-speed bounds exclude separated
-intervals, entering brackets are refined to the configured time/geometry tolerances, and an
-uncertifiable interval fails closed rather than advancing through samples.
+sub-intervals, entering brackets are refined to the configured time/geometry tolerances, and an
+interval that is still uncertain is subdivided with the earlier half examined first. `eventTime` is
+the selected-root accuracy, not an abort floor. The search fails closed only when it exhausts its
+deterministic interval budget, reaches non-finite geometry, or cannot make further numerical
+progress.
 `simulation/math/polynomial-roots.ts` contains the shared interval root isolation and exposes
 geometry-neutral isolating intervals and neighbouring polynomial samples to both geometry solvers.
 None of these modules advances state through fixed timesteps or imports rendering code. Renderer

@@ -378,13 +378,13 @@ and result construction, and `types.ts` owns the local path/result contracts. Th
 entry points preserve an explicit public collision capability without exposing scheduler state.
 
 FLAME-55 added changing-normal circular paths without enlarging the already substantial polynomial
-query. `bounded-query.ts` has one primary reason to change: conservative circular-path contact
-isolation, refinement and typed evidence under a deterministic interval budget. At 389 lines it is
-above the new-file review threshold, but splitting its interval state machine from its result and
-candidate construction would obscure the fail-closed algorithm without establishing another
-independently changing policy. The directory is at its headroom-assessment threshold. Another
-numerical query family, independently configurable isolation backend or additional curved path
-model must introduce a nested bounded-isolation subdomain rather than a seventh sibling file.
+query. FLAME-106 completes that isolator as an adaptive earliest-contact search: uncertain intervals
+remain search work, `eventTime` is only selected-root accuracy, and `interval-bound.ts` owns the
+independently testable per-sub-interval conservative relative-speed exclusion. `bounded-query.ts`
+keeps search orchestration, entering-root refinement and typed evidence. The directory is at its
+six-implementation-file headroom-assessment threshold. Another numerical query family, independently
+configurable isolation backend or additional curved path model must introduce a nested
+bounded-isolation subdomain rather than a seventh sibling file.
 
 ### Fixture validation
 
