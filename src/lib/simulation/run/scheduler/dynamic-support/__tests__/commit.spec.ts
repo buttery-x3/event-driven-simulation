@@ -208,7 +208,10 @@ function schedulerState(
 		dynamicSupportPredictions: new Map(),
 		dynamicSupportDiagnostics: [],
 		releasedDynamicPairs: new Set(),
-		rejectedBodyIds: new Set()
+		rejectedBodyIds: new Set(),
+		frozenBodies: new Map(),
+		failureContinuations: [],
+		physicalAuthority: 'certified'
 	};
 }
 

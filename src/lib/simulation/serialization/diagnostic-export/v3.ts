@@ -1,16 +1,16 @@
-import type { SimulationRunRecord } from '../../contracts';
+import type { PhysicalAuthority, SimulationRunRecord } from '../../contracts';
 import type {
 	DiagnosticExportIndependentValidation,
 	DiagnosticExportMetadata,
 	DiagnosticExportRunSummary,
-	DiagnosticExportV2
+	DiagnosticExportV3
 } from './types';
 
 export function createDiagnosticExport(
 	run: SimulationRunRecord,
 	metadata: DiagnosticExportMetadata,
 	independentValidation: DiagnosticExportIndependentValidation
-): DiagnosticExportV2 {
+): DiagnosticExportV3 {
 	const trajectorySegmentCount = run.trajectories.reduce(
 		(total, trajectory) => total + trajectory.segments.length,
 		0
@@ -20,6 +20,8 @@ export function createDiagnosticExport(
 		0
 	);
 	const simulatedUntilTime = run.diagnostics.simulatedUntilTime;
+	const physicalAuthority = physicalAuthorityOf(run);
+	const failureContinuations = run.diagnostics.failureContinuations ?? [];
 	const summary: DiagnosticExportRunSummary = {
 		validity: independentValidation.valid ? run.validity : 'invalid',
 		authoritativeValidity: run.validity,
@@ -42,13 +44,17 @@ export function createDiagnosticExport(
 		},
 		runLimits: {
 			maximumEvents: run.input.settings.maximumEvents,
-			maximumSimulationTime: run.input.settings.maximumSimulationTime
+			maximumSimulationTime: run.input.settings.maximumSimulationTime,
+			failureContinuation: run.input.settings.failureContinuation ?? 'strict'
 		},
 		numericalPolicy: {
 			gravity: run.input.settings.gravity,
 			restitution: run.input.settings.restitution,
 			tolerances: run.input.settings.tolerances
 		},
+		physicalAuthority,
+		firstFallbackTime: firstFallbackTime(physicalAuthority),
+		failureContinuationCount: failureContinuations.length,
 		validPrefix: {
 			untilTime: simulatedUntilTime,
 			trajectorySegmentCount,
@@ -58,7 +64,7 @@ export function createDiagnosticExport(
 
 	return {
 		kind: 'simulation-diagnostic-export',
-		schemaVersion: 2,
+		schemaVersion: 3,
 		provenance: {
 			exportedAt: metadata.exportedAt,
 			runId: metadata.runId ?? null,
@@ -76,6 +82,7 @@ export function createDiagnosticExport(
 			validity: run.validity,
 			outcome: run.outcome,
 			terminalReason: run.terminalReason,
+			physicalAuthority,
 			bodyStates: run.bodyStates,
 			trajectories: run.trajectories,
 			events: run.events,
@@ -89,6 +96,14 @@ export function createDiagnosticExport(
 	};
 }
 
-export function serializeDiagnosticExport(bundle: DiagnosticExportV2): string {
+export function serializeDiagnosticExport(bundle: DiagnosticExportV3): string {
 	return `${JSON.stringify(bundle, null, 2)}\n`;
+}
+
+function physicalAuthorityOf(run: SimulationRunRecord): PhysicalAuthority {
+	return run.physicalAuthority ?? 'certified';
+}
+
+function firstFallbackTime(authority: PhysicalAuthority): number | null {
+	return typeof authority === 'object' ? authority.time : null;
 }

@@ -3,7 +3,7 @@ import path from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import type { SimulationInput } from '../../src/lib/simulation/contracts';
 import { constructSingleBallRun } from '../../src/lib/simulation/run';
-import type { DiagnosticExportV2 } from '../../src/lib/simulation/serialization/diagnostic-export';
+import type { DiagnosticExportV3 } from '../../src/lib/simulation/serialization/diagnostic-export';
 
 interface FilePayload {
 	readonly name: string;
@@ -226,10 +226,10 @@ test('downloads accepted run diagnostics separately from the editable scenario',
 	);
 	const downloadPath = await download.path();
 	if (!downloadPath) throw new Error('Expected Playwright to retain the diagnostic download.');
-	const bundle = JSON.parse((await readFile(downloadPath)).toString('utf8')) as DiagnosticExportV2;
+	const bundle = JSON.parse((await readFile(downloadPath)).toString('utf8')) as DiagnosticExportV3;
 
 	expect(bundle.kind).toBe('simulation-diagnostic-export');
-	expect(bundle.schemaVersion).toBe(2);
+	expect(bundle.schemaVersion).toBe(3);
 	expect(bundle.provenance).toMatchObject({
 		runId: 'canonical-event-driven-offset-drop',
 		descriptiveName: 'canonical-event-driven-offset-drop.json',
@@ -319,7 +319,7 @@ test('loads, filters, edits and exports labelled multi-body contract evidence', 
 		throw new Error('Expected the multi-body diagnostic export to be retained.');
 	const diagnosticBundle = JSON.parse(
 		(await readFile(diagnosticsPath)).toString('utf8')
-	) as DiagnosticExportV2;
+	) as DiagnosticExportV3;
 	expect(diagnosticBundle.submittedInput.initialDynamicBodies).toHaveLength(2);
 	expect(diagnosticBundle.authoritativeRun.dynamicContacts).toHaveLength(1);
 	expect(diagnosticBundle.authoritativeRun.contactComponents).toHaveLength(1);
@@ -637,7 +637,7 @@ test('labels independently invalid solver history as forensic evidence in playba
 	const download = await downloadPromise;
 	const downloadPath = await download.path();
 	if (!downloadPath) throw new Error('Expected Playwright to retain the diagnostic download.');
-	const bundle = JSON.parse((await readFile(downloadPath)).toString('utf8')) as DiagnosticExportV2;
+	const bundle = JSON.parse((await readFile(downloadPath)).toString('utf8')) as DiagnosticExportV3;
 
 	expect(bundle.summary).toMatchObject({
 		validity: 'invalid',

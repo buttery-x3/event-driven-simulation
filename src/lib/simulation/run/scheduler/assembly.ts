@@ -83,8 +83,14 @@ export function finishScheduledRun(
 			constrainedImpactSolves: state.constrainedImpactSolves,
 			dynamicSupports: state.dynamicSupportDiagnostics,
 			schedulerSteps: state.steps,
-			entries
-		}
+			entries,
+			...(state.failureContinuations.length > 0
+				? { failureContinuations: state.failureContinuations }
+				: {})
+		},
+		...(state.physicalAuthority === 'certified'
+			? {}
+			: { physicalAuthority: state.physicalAuthority })
 	};
 }
 
@@ -136,6 +142,9 @@ function bodyState(state: SchedulerState, body: InitialDynamicCircleBodyState): 
 			recordedUntilTime: null,
 			terminalOutcome: null
 		};
+	}
+	if (state.frozenBodies?.has(body.id)) {
+		return releasedState(body, 'active', state.worldTime, null);
 	}
 	if (runtime.dormantComponentId) {
 		return releasedState(body, 'resting', state.worldTime, null);
@@ -197,6 +206,23 @@ function trajectorySegments(
 ): readonly MotionSegment[] {
 	const worldTime = state.worldTime;
 	const segments = [...runtime.segments];
+	const frozen = state.frozenBodies?.get(runtime.body.id);
+	if (frozen) {
+		if (worldTime > frozen.freezeTime) {
+			const stationary: StationaryMotionSegment = {
+				type: 'stationary',
+				bodyId: runtime.body.id,
+				startTime: frozen.freezeTime,
+				endTime: worldTime,
+				startPosition: frozen.position,
+				startVelocity: [0, 0],
+				reason: 'frozen-after-unresolved',
+				componentId: null
+			};
+			segments.push(stationary);
+		}
+		return segments;
+	}
 	const reason = runtime.terminalReason;
 	if (!reason && !runtime.dormantComponentId) {
 		segments.push(...activeMotionPrefix(state, runtime));

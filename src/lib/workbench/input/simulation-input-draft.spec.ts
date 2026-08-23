@@ -24,7 +24,8 @@ function prepare(changes: DraftChanges = {}) {
 		'gravityY',
 		'restitution',
 		'maximumSimulationTime',
-		'maximumEvents'
+		'maximumEvents',
+		'failureContinuation'
 	]);
 	const settings = Object.fromEntries(
 		Object.entries(changes).filter(([key]) => settingKeys.has(key))
@@ -56,8 +57,16 @@ describe('simulation input drafts', () => {
 			gravityY: String(angledScenario.input.settings.gravity[1]),
 			restitution: String(angledScenario.input.settings.restitution),
 			maximumSimulationTime: String(angledScenario.input.settings.maximumSimulationTime),
-			maximumEvents: String(angledScenario.input.settings.maximumEvents)
+			maximumEvents: String(angledScenario.input.settings.maximumEvents),
+			failureContinuation: 'strict'
 		});
+	});
+
+	it('submits an explicit freeze-and-continue run policy', () => {
+		const result = prepare({ failureContinuation: 'freeze-and-continue' });
+		expect(result.valid).toBe(true);
+		if (!result.valid) return;
+		expect(result.input.settings.failureContinuation).toBe('freeze-and-continue');
 	});
 
 	it.each([

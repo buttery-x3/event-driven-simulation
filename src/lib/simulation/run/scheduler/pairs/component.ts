@@ -19,6 +19,7 @@ import {
 import { predictionSegments, type LocalBodyRuntime } from '../../single-ball/local-events';
 import type { SchedulerState } from '../types';
 import { dynamicSupportPathForBody } from '../dynamic-support/prediction';
+import { frozenStationaryPath } from '../failure-continuation';
 import type { PairSchedulerSelection } from './selection';
 
 export interface PairComponentBodyState extends ExactContactBodyState {
@@ -173,6 +174,17 @@ function bodyStateAt(
 			velocity: evaluateMotionSegmentVelocity(dynamicSupportPath, time),
 			prefixSegment:
 				time > dynamicSupportPath.startTime ? truncateSegment(dynamicSupportPath, time) : null
+		};
+	}
+	const frozenPath = frozenStationaryPath(state, runtime);
+	if (frozenPath && time >= frozenPath.startTime) {
+		return {
+			id: runtime.body.id,
+			mass: runtime.body.mass,
+			radius: runtime.body.physicalShape.radius,
+			position: frozenPath.startPosition,
+			velocity: [0, 0],
+			prefixSegment: time > frozenPath.startTime ? { ...frozenPath, endTime: time } : null
 		};
 	}
 	const reason = runtime.terminalReason;

@@ -83,6 +83,16 @@
 			<dt>Playable until</dt>
 			<dd>{formatRecordedSeconds(playableUntilTime)}</dd>
 		</div>
+		<div class="wide">
+			<dt>Physical authority</dt>
+			<dd>
+				{#if run.physicalAuthority && typeof run.physicalAuthority === 'object'}
+					approximate after {formatRecordedSeconds(run.physicalAuthority.time)}
+				{:else}
+					certified
+				{/if}
+			</dd>
+		</div>
 	</dl>
 
 	<section class="counts" aria-labelledby="counts-heading">
@@ -155,6 +165,10 @@
 			<div>
 				<dt>Maximum simulation time</dt>
 				<dd>{formatRecordedSeconds(run.input.settings.maximumSimulationTime)}</dd>
+			</div>
+			<div>
+				<dt>Unresolved frontier</dt>
+				<dd>{run.input.settings.failureContinuation ?? 'strict'}</dd>
 			</div>
 			<div>
 				<dt>Contact tolerance</dt>

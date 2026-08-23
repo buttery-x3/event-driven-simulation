@@ -13,6 +13,7 @@ export type {
 } from './geometry';
 export type {
 	InitialDynamicCircleBodyState,
+	FailureContinuationPolicy,
 	SimulationInput,
 	SimulationSettings,
 	SimulationTolerances
@@ -44,6 +45,7 @@ export type {
 	ReleaseEvent,
 	RunContactCandidateDiagnostic,
 	RunContactSearchDiagnostic,
+	PhysicalAuthority,
 	RunDiagnostics,
 	RunOutcome,
 	RunTerminalReason,
@@ -51,6 +53,7 @@ export type {
 	SimulationRunRecord,
 	WorldRunOutcome,
 	DiagnosticEntry,
+	FailureContinuationDiagnostic,
 	DynamicSupportDiagnostic,
 	DynamicSupportReactionEvidence,
 	ImpactReflectionDiagnostic,

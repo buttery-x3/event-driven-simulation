@@ -50,7 +50,7 @@ export interface StationaryMotionSegment {
 	readonly endTime: number;
 	readonly startPosition: Vec2;
 	readonly startVelocity: readonly [0, 0];
-	readonly reason: 'resting-contact' | 'dormant-component';
+	readonly reason: 'resting-contact' | 'dormant-component' | 'frozen-after-unresolved';
 	readonly componentId: string | null;
 }
 

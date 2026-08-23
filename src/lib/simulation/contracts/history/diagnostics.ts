@@ -1,4 +1,5 @@
 import type { EntityId, Vec2 } from '../geometry';
+import type { RunTerminalReason } from './outcomes';
 
 export interface DiagnosticEntry {
 	readonly severity: 'info' | 'warning' | 'error';
@@ -265,6 +266,21 @@ export interface DynamicSupportDiagnostic {
 	readonly releasedContactIds: readonly string[];
 }
 
+export interface FailureContinuationDiagnostic {
+	readonly freezeTime: number;
+	readonly originalFailure: RunTerminalReason;
+	readonly affectedBodyIds: readonly EntityId[];
+	readonly positions: readonly { readonly bodyId: EntityId; readonly position: Vec2 }[];
+	readonly velocitiesBeforeFreeze: readonly {
+		readonly bodyId: EntityId;
+		readonly velocity: Vec2;
+	}[];
+	readonly representedModes?: readonly string[];
+	readonly supportComponentIds?: readonly string[];
+	readonly triggeringPairOrContactId?: string;
+	readonly action: 'freeze-and-continue';
+}
+
 export interface RunDiagnostics {
 	readonly iterations: number;
 	readonly simulatedUntilTime: number;
@@ -279,5 +295,6 @@ export interface RunDiagnostics {
 	readonly constrainedImpactSolves?: readonly ConstrainedImpactSolveDiagnostic[];
 	readonly dynamicSupports?: readonly DynamicSupportDiagnostic[];
 	readonly schedulerSteps?: readonly WorldSchedulerStepDiagnostic[];
+	readonly failureContinuations?: readonly FailureContinuationDiagnostic[];
 	readonly entries: readonly DiagnosticEntry[];
 }

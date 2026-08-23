@@ -187,7 +187,10 @@ function fixture(): {
 		dynamicSupportPredictions: new Map(),
 		dynamicSupportDiagnostics: [],
 		releasedDynamicPairs: new Set(),
-		rejectedBodyIds: new Set()
+		rejectedBodyIds: new Set(),
+		frozenBodies: new Map(),
+		failureContinuations: [],
+		physicalAuthority: 'certified'
 	};
 	return { state, contacts, response };
 }
@@ -433,7 +436,10 @@ function componentFixture(
 		dynamicSupportPredictions: new Map(),
 		dynamicSupportDiagnostics: [],
 		releasedDynamicPairs: new Set(),
-		rejectedBodyIds: new Set()
+		rejectedBodyIds: new Set(),
+		frozenBodies: new Map(),
+		failureContinuations: [],
+		physicalAuthority: 'certified'
 	};
 	return { state, contacts, response };
 }

@@ -2,6 +2,10 @@ import type { SimulationRunRecord } from '../../../contracts';
 import { validateSimulationInputV7 } from '../../simulation-input/v7';
 import { createUnknownDataAssertions, invalidRunRecordField } from '../../structural-validation';
 import { validateConstrainedImpactSolveShape } from './constrained-impact-shape';
+import {
+	validateFailureContinuations,
+	validatePhysicalAuthority
+} from './failure-continuation-shape';
 import { validateMultiBodyHistoryShape } from './multi-body-shape';
 
 const assertions = createUnknownDataAssertions(invalidRunRecordField);
@@ -26,6 +30,8 @@ export function validateRunRecordShapeV7(value: unknown): SimulationRunRecord {
 		'$.outcome'
 	);
 	validateTerminalReason(run.terminalReason, '$.terminalReason');
+	if (run.physicalAuthority !== undefined)
+		validatePhysicalAuthority(run.physicalAuthority, '$.physicalAuthority');
 	validateTrajectories(run.trajectories, '$.trajectories');
 	validatePhysicalEvents(run.events, '$.events');
 	validateMultiBodyHistoryShape(run);
@@ -177,7 +183,7 @@ function validateTrajectories(value: unknown, path: string): void {
 						invalidRunRecordField(`${segmentPath}.startVelocity`, 'must be [0, 0]');
 					assertions.requireOneOf(
 						item.reason,
-						['resting-contact', 'dormant-component'],
+						['resting-contact', 'dormant-component', 'frozen-after-unresolved'],
 						`${segmentPath}.reason`
 					);
 					assertions.requireNullableString(item.componentId, `${segmentPath}.componentId`);
@@ -338,6 +344,13 @@ function validateDiagnostics(value: unknown, path: string): void {
 						assertions.requireString(bodyId, `${itemPath}.retainedBodyIds[${bodyIndex}]`)
 					);
 			});
+	}
+	if (diagnostics.failureContinuations !== undefined) {
+		validateFailureContinuations(
+			diagnostics.failureContinuations,
+			`${path}.failureContinuations`,
+			validateTerminalReason
+		);
 	}
 	if (diagnostics.dynamicSupports !== undefined) {
 		assertions

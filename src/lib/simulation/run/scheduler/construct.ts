@@ -16,6 +16,19 @@ import {
 import { aggregateWorldReason, finishScheduledRun } from './assembly';
 import { commitDynamicSupportPrediction, predictEarliestDynamicSupport } from './dynamic-support';
 import { promoteStationaryContactComponents, registerSingleBodyDormancy } from './dormancy';
+import {
+	coupledFreezeBodies,
+	dynamicSupportEventIdentity,
+	eventIdentityKey,
+	expandAffectedBodies,
+	localEventIdentity,
+	localFailureBodies,
+	pairEventIdentity,
+	pairFailureBodies,
+	recoverOrTerminate,
+	zeroTimeLoopReason,
+	type SelectedEventIdentity
+} from './failure-continuation';
 import { commitBodyPairEvent, invalidatePairDiagnostics, predictEarliestBodyPair } from './pairs';
 import { refreshBodyPrediction, selectLocalPrediction } from './predictions';
 import { releaseOverlapReasons } from './release';
@@ -25,24 +38,37 @@ export function constructSimulationRun(input: SimulationInput): SimulationRunRec
 	const state = createSchedulerState(input);
 	const invalid = validateSimulationInput(input)[0];
 	if (invalid) return invalidInputRun(state, invalid.path, invalid.message);
-	let stagnantSameTimeLoops = 0;
-	let lastStagnantContactCount = -1;
+	const seenIdentities = new Set<string>();
+	let seenTime = Number.NaN;
+	let sameTimeSteps = 0;
 
 	while (true) {
+		const certifiedWorldTime = state.worldTime;
 		const nextPair = predictEarliestBodyPair(state);
 		const nextDynamicSupport = predictEarliestDynamicSupport(state);
 		if (nextPair?.type === 'failure') {
-			return finishScheduledRun(
-				state,
-				nextPair.reason.type === 'invalid-state' ? 'invalid' : 'valid',
-				nextPair.reason
-			);
+			const recovered = recoverOrTerminate(state, {
+				freezeTime: certifiedWorldTime,
+				originalFailure: nextPair.reason,
+				affectedBodyIds: pairFailureBodies(state, nextPair.bodyIds),
+				triggeringPairOrContactId: `${nextPair.bodyIds[0]}/${nextPair.bodyIds[1]}`
+			});
+			if (recovered.type === 'terminal') {
+				return finishScheduledRun(
+					state,
+					nextPair.reason.type === 'invalid-state' ? 'invalid' : 'valid',
+					recovered.reason
+				);
+			}
+			seenIdentities.clear();
+			continue;
 		}
 		if (
 			!nextPair &&
 			!nextDynamicSupport &&
 			state.predictions.size === 0 &&
-			state.scheduled.length === 0
+			state.scheduled.length === 0 &&
+			state.frozenBodies.size === 0
 		) {
 			return finishScheduledRun(state, 'valid', aggregateWorldReason(state));
 		}
@@ -67,18 +93,35 @@ export function constructSimulationRun(input: SimulationInput): SimulationRunRec
 				detail: 'The global scheduler selected an event before committed world time.'
 			});
 		}
-		const contactCount = contactEventCount(state);
-		if (nextTime === state.worldTime && contactCount === lastStagnantContactCount) {
-			stagnantSameTimeLoops += 1;
-		} else stagnantSameTimeLoops = 0;
-		lastStagnantContactCount = contactCount;
-		if (stagnantSameTimeLoops >= 256) {
+		if (nextTime !== seenTime) {
+			seenIdentities.clear();
+			seenTime = nextTime;
+			sameTimeSteps = 0;
+		}
+		sameTimeSteps += 1;
+		if (sameTimeSteps > input.settings.maximumEvents) {
 			return finishScheduledRun(state, 'valid', {
-				type: 'zero-time-loop',
+				type: 'numerical-failure',
 				time: state.worldTime,
-				colliderId: nextPair?.type === 'contact' ? nextPair.first.bodyId : 'scheduler',
-				detail: 'The scheduler selected another event without a positive collision-free interval.'
+				detail: 'The scheduler exceeded the run event limit without leaving one certified time.'
 			});
+		}
+		const identity = selectedIdentity(state, nextPair, nextDynamicSupport, nextTime);
+		if (identity && seenIdentities.has(eventIdentityKey(identity))) {
+			const reason = zeroTimeLoopReason(
+				nextTime,
+				nextPair?.type === 'contact' ? nextPair.first.bodyId : 'scheduler'
+			);
+			const recovered = recoverOrTerminate(state, {
+				freezeTime: nextTime,
+				originalFailure: reason,
+				affectedBodyIds: expandAffectedBodies(state, identity.bodyIds),
+				triggeringPairOrContactId: identity.topology
+			});
+			if (recovered.type === 'terminal')
+				return finishScheduledRun(state, 'valid', recovered.reason);
+			seenIdentities.clear();
+			continue;
 		}
 		state.worldTime = nextTime;
 
@@ -98,54 +141,157 @@ export function constructSimulationRun(input: SimulationInput): SimulationRunRec
 			if (nextPairTime === nextTime) continue;
 		}
 
-		if (nextPair?.type === 'contact' && nextPair.time === nextTime) {
-			const result = commitBodyPairEvent(state, nextPair);
-			if (result.type === 'terminal') return finishScheduledRun(state, 'valid', result.reason);
-			if (contactEventCount(state) >= input.settings.maximumEvents) {
-				return finishScheduledRun(state, 'valid', {
-					type: 'event-limit',
-					time: state.worldTime,
-					limit: input.settings.maximumEvents
-				});
-			}
-			continue;
-		}
-
-		if (nextDynamicSupport && nextDynamicSupport.segment.endTime === nextTime) {
-			const result = commitDynamicSupportPrediction(state, nextDynamicSupport);
-			if (result.type === 'terminal') return finishScheduledRun(state, 'valid', result.reason);
-			continue;
-		}
-
-		const selected = [...state.predictions.values()]
-			.filter(({ time }) => time === nextTime)
-			.sort((left, right) => left.bodyId.localeCompare(right.bodyId));
-		if (selected.length > 0) {
-			const failure = commitLocalBatch(state, selected);
-			if (failure) {
-				return finishScheduledRun(
-					state,
-					failure.type === 'invalid-state' ? 'invalid' : 'valid',
-					failure
-				);
-			}
-			if (contactEventCount(state) >= input.settings.maximumEvents) {
-				return finishScheduledRun(state, 'valid', {
-					type: 'event-limit',
-					time: state.worldTime,
-					limit: input.settings.maximumEvents
-				});
-			}
-		}
+		const committed = commitSelectedEvent(
+			state,
+			input,
+			nextPair,
+			nextDynamicSupport,
+			identity,
+			nextTime,
+			certifiedWorldTime,
+			seenIdentities
+		);
+		if (committed.type === 'done') return committed.run;
+		if (committed.type === 'continue') continue;
 
 		if (
 			state.predictions.size === 0 &&
 			state.dynamicSupportPredictions.size === 0 &&
-			state.scheduled.length === 0
+			state.scheduled.length === 0 &&
+			state.frozenBodies.size === 0
 		) {
 			return finishScheduledRun(state, 'valid', aggregateWorldReason(state));
 		}
 	}
+}
+
+type CommitStep =
+	| { readonly type: 'done'; readonly run: SimulationRunRecord }
+	| { readonly type: 'continue' }
+	| { readonly type: 'check-complete' };
+
+function commitSelectedEvent(
+	state: SchedulerState,
+	input: SimulationInput,
+	nextPair: ReturnType<typeof predictEarliestBodyPair>,
+	nextDynamicSupport: ReturnType<typeof predictEarliestDynamicSupport>,
+	identity: SelectedEventIdentity | null,
+	nextTime: number,
+	certifiedWorldTime: number,
+	seenIdentities: Set<string>
+): CommitStep {
+	if (nextPair?.type === 'contact' && nextPair.time === nextTime) {
+		const result = commitBodyPairEvent(state, nextPair);
+		if (result.type === 'terminal') {
+			const recovered = recoverOrTerminate(
+				state,
+				{
+					freezeTime: nextTime,
+					originalFailure: result.reason,
+					affectedBodyIds: coupledFreezeBodies(
+						state,
+						[nextPair.first.bodyId, nextPair.second.bodyId],
+						result.reason
+					),
+					triggeringPairOrContactId: nextPair.diagnosticId
+				},
+				true
+			);
+			if (recovered.type === 'terminal')
+				return { type: 'done', run: finishScheduledRun(state, 'valid', recovered.reason) };
+			seenIdentities.clear();
+			return { type: 'continue' };
+		}
+		if (contactEventCount(state) >= input.settings.maximumEvents) {
+			return { type: 'done', run: eventLimitRun(state, input) };
+		}
+		if (identity) seenIdentities.add(eventIdentityKey(identity));
+		return { type: 'continue' };
+	}
+
+	if (nextDynamicSupport && nextDynamicSupport.segment.endTime === nextTime) {
+		const result = commitDynamicSupportPrediction(state, nextDynamicSupport);
+		if (result.type === 'terminal') {
+			const support = state.dynamicSupports.get(nextDynamicSupport.supportId);
+			const recovered = recoverOrTerminate(
+				state,
+				{
+					freezeTime: nextTime,
+					originalFailure: result.reason,
+					affectedBodyIds: support
+						? pairFailureBodies(state, [support.movingBodyId, support.supportBodyId])
+						: (identity?.bodyIds ?? []),
+					triggeringPairOrContactId: nextDynamicSupport.supportId
+				},
+				true
+			);
+			if (recovered.type === 'terminal')
+				return { type: 'done', run: finishScheduledRun(state, 'valid', recovered.reason) };
+			seenIdentities.clear();
+			return { type: 'continue' };
+		}
+		if (identity) seenIdentities.add(eventIdentityKey(identity));
+		return { type: 'continue' };
+	}
+
+	const selected = [...state.predictions.values()]
+		.filter(({ time }) => time === nextTime)
+		.sort((left, right) => left.bodyId.localeCompare(right.bodyId));
+	if (selected.length > 0) {
+		const failure = commitLocalBatch(state, selected);
+		if (failure) {
+			const freezeTime =
+				failure.type === 'unresolved-collision-search' ? certifiedWorldTime : nextTime;
+			const recovered = recoverOrTerminate(state, {
+				freezeTime,
+				originalFailure: failure,
+				affectedBodyIds: localFailureBodies(state, selected[0]!.bodyId)
+			});
+			if (recovered.type === 'terminal') {
+				return {
+					type: 'done',
+					run: finishScheduledRun(
+						state,
+						failure.type === 'invalid-state' ? 'invalid' : 'valid',
+						recovered.reason
+					)
+				};
+			}
+			state.worldTime = freezeTime;
+			seenIdentities.clear();
+			return { type: 'continue' };
+		}
+		if (contactEventCount(state) >= input.settings.maximumEvents) {
+			return { type: 'done', run: eventLimitRun(state, input) };
+		}
+		if (identity) seenIdentities.add(eventIdentityKey(identity));
+	}
+	return { type: 'check-complete' };
+}
+
+function eventLimitRun(state: SchedulerState, input: SimulationInput): SimulationRunRecord {
+	return finishScheduledRun(state, 'valid', {
+		type: 'event-limit',
+		time: state.worldTime,
+		limit: input.settings.maximumEvents
+	});
+}
+
+function selectedIdentity(
+	state: SchedulerState,
+	nextPair: ReturnType<typeof predictEarliestBodyPair>,
+	nextDynamicSupport: ReturnType<typeof predictEarliestDynamicSupport>,
+	nextTime: number
+): SelectedEventIdentity | null {
+	if (nextPair?.type === 'contact' && nextPair.time === nextTime)
+		return pairEventIdentity(state, nextPair);
+	if (nextDynamicSupport && nextDynamicSupport.segment.endTime === nextTime)
+		return dynamicSupportEventIdentity(state, nextDynamicSupport);
+	const selected = [...state.predictions.values()]
+		.filter(({ time }) => time === nextTime)
+		.sort((left, right) => left.bodyId.localeCompare(right.bodyId));
+	if (selected.length > 0) return localEventIdentity(state, selected);
+	return null;
 }
 
 function createSchedulerState(input: SimulationInput): SchedulerState {
@@ -171,7 +317,10 @@ function createSchedulerState(input: SimulationInput): SchedulerState {
 		dynamicSupportPredictions: new Map(),
 		dynamicSupportDiagnostics: [],
 		releasedDynamicPairs: new Set(),
-		rejectedBodyIds: new Set()
+		rejectedBodyIds: new Set(),
+		frozenBodies: new Map(),
+		failureContinuations: [],
+		physicalAuthority: 'certified'
 	};
 }
 

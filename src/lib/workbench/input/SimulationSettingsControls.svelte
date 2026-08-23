@@ -115,6 +115,32 @@
 				{/if}
 			</label>
 		</div>
+		<label>
+			<span>Unresolved frontier</span>
+			<small class="hint"
+				>Strict stops at certified physics. Freeze-and-continue is exploratory.</small
+			>
+			<select
+				value={draft.failureContinuation}
+				aria-invalid={fieldError('failureContinuation') ? 'true' : undefined}
+				aria-describedby={fieldError('failureContinuation')
+					? 'failure-continuation-error'
+					: undefined}
+				onchange={(event) =>
+					changeField(
+						'failureContinuation',
+						event.currentTarget.value === 'freeze-and-continue' ? 'freeze-and-continue' : 'strict'
+					)}
+			>
+				<option value="strict">Strict — terminate unresolved</option>
+				<option value="freeze-and-continue">Freeze-and-continue — exploratory</option>
+			</select>
+			{#if fieldError('failureContinuation')}
+				<small class="error" id="failure-continuation-error"
+					>{fieldError('failureContinuation')!.message}</small
+				>
+			{/if}
+		</label>
 	</fieldset>
 </div>
 
@@ -172,7 +198,8 @@
 		line-height: 1.4;
 	}
 
-	input[type='number'] {
+	input[type='number'],
+	select {
 		width: 100%;
 		min-height: 2.5rem;
 		box-sizing: border-box;
@@ -184,7 +211,8 @@
 		font-family: var(--font-mono);
 	}
 
-	input[aria-invalid='true'] {
+	input[aria-invalid='true'],
+	select[aria-invalid='true'] {
 		border-color: var(--color-danger);
 	}
 
@@ -199,7 +227,8 @@
 			grid-template-columns: 1fr;
 		}
 
-		input[type='number'] {
+		input[type='number'],
+		select {
 			min-height: 2.75rem;
 		}
 	}

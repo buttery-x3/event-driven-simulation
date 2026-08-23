@@ -18,6 +18,7 @@ import {
 import { evaluateMotionSegmentPosition } from '../../../motion';
 import type { SchedulerState } from '../types';
 import { dynamicSupportPathForBody } from '../dynamic-support/prediction';
+import { frozenStationaryPath, skipFrozenPair } from '../failure-continuation';
 
 export interface PairContactSelection {
 	readonly type: 'contact';
@@ -30,7 +31,11 @@ export interface PairContactSelection {
 
 export type PairSchedulerSelection =
 	| (PairContactSelection & { readonly simultaneousContacts: readonly PairContactSelection[] })
-	| { readonly type: 'failure'; readonly reason: RunTerminalReason };
+	| {
+			readonly type: 'failure';
+			readonly reason: RunTerminalReason;
+			readonly bodyIds: readonly [string, string];
+	  };
 
 export function predictEarliestBodyPair(state: SchedulerState): PairSchedulerSelection | null {
 	const participants = [...state.runtimes.values()]
@@ -43,6 +48,7 @@ export function predictEarliestBodyPair(state: SchedulerState): PairSchedulerSel
 			const first = participants[firstIndex]!;
 			const second = participants[secondIndex]!;
 			if (isActiveSupportPair(state, first.bodyId, second.bodyId)) continue;
+			if (skipFrozenPair(state, first.bodyId, second.bodyId)) continue;
 			if (skipReleasedPair(state, first, second)) continue;
 			const result = queryPair(state, first, second);
 			const diagnostic = toPairDiagnostic(result);
@@ -54,7 +60,8 @@ export function predictEarliestBodyPair(state: SchedulerState): PairSchedulerSel
 						type: result.type === 'invalid-input' ? 'invalid-state' : 'unresolved-collision-search',
 						time: state.worldTime,
 						detail: `Body pair ${first.bodyId}/${second.bodyId}: ${result.reason}`
-					}
+					},
+					bodyIds: [first.bodyId, second.bodyId]
 				};
 			}
 			if (result.type === 'contact') {
@@ -225,6 +232,8 @@ function polynomialPath(
 ): DynamicCirclePathParticipant['path'] | null {
 	const dynamicSupportPath = dynamicSupportPathForBody(state, runtime.body.id);
 	if (dynamicSupportPath) return dynamicSupportPath;
+	const frozenPath = frozenStationaryPath(state, runtime);
+	if (frozenPath) return frozenPath;
 	if (runtime.dormantComponentId) {
 		const component = state.contactComponents.find(({ id }) => id === runtime.dormantComponentId);
 		const stationary: StationaryMotionSegment = {

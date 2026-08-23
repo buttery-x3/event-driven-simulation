@@ -1,4 +1,5 @@
 import type { RunTerminalReason } from '../../../contracts';
+import { unfreezeBodies } from '../failure-continuation';
 import type { SchedulerState } from '../types';
 import { commitCoupledImpact } from './coupled-commit';
 import { buildExactTimeComponent } from './component';
@@ -23,5 +24,9 @@ export function commitBodyPairEvent(
 			}
 		};
 	}
+	unfreezeBodies(
+		state,
+		component.bodies.map(({ id }) => id)
+	);
 	return commitCoupledImpact(state, selection, component);
 }

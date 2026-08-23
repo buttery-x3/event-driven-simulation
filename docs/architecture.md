@@ -64,15 +64,20 @@ not invoke simulation or select solver behaviour; consumers receive it through `
 ## Contract responsibilities
 
 - `SimulationInput` groups the scene's `staticColliders`, scheduled `initialDynamicBodies` and all
-  current behavioural settings and numerical tolerances. Every body has a stable ID, positive
+  current behavioural settings and numerical tolerances. Optional `failureContinuation` selects
+  `strict` (default) or `freeze-and-continue` unresolved-frontier policy; omitted JSON is strict.
+  Every body has a stable ID, positive
   finite mass and non-negative release time; an unreleased body is not physically present.
 - `MotionSegment`, `BodyTrajectory` and `PhysicalEvent` describe the calculated history without
   requiring frame-by-frame simulation during playback. Segment discriminants distinguish
   `free-flight`, `linear-contact`, `circular-contact` and explicit `stationary` coverage;
   contact-mode transition events make entry to and exit from resting or sliding states explicit.
-- `SimulationRunRecord` preserves the input, prefix validity, typed terminal reason, physical
-  events, per-body lifecycle, release history, dynamic contacts, contact components, trajectory
-  prefix and diagnostics needed for saved runs and regression fixtures.
+- `SimulationRunRecord` preserves the input, prefix validity, typed terminal reason, optional
+  `physicalAuthority`, physical events, per-body lifecycle, release history, dynamic contacts,
+  contact components, trajectory prefix and diagnostics needed for saved runs and regression
+  fixtures. A freeze-and-continue run records `physicalAuthority: { type: 'approximate-after', time }`
+  after the first fallback and structured `failureContinuations` diagnostics; omitted authority
+  means the prefix is wholly physically certified.
 - `RendererPlaybackInput` contains only plain data needed to present a run. It carries the same
   scene and initial body definitions as simulation input, so physical dimensions have one source
   of truth, and it retains validity and the terminal reason so incomplete output cannot silently
@@ -141,10 +146,11 @@ never evaluates motion beyond the committed segment boundary.
 ## Diagnostic export boundary
 
 Diagnostic export is a separate versioned external representation under
-`simulation/serialization/diagnostic-export`. Version 2 uses the stable
+`simulation/serialization/diagnostic-export`. Version 3 uses the stable
 `simulation-diagnostic-export` discriminator and snapshots explicit provenance, the submitted
 `SimulationInput`, a derived run summary, authoritative trajectories and events, contact-search
-evidence, structured diagnostic entries and the workbench's independent run-validation result. It
+evidence, structured diagnostic entries, freeze-and-continue fallback evidence, physical authority
+and the workbench's independent run-validation result. It
 preserves the solver's validity and terminal result as authoritative evidence while presenting a
 failed independent validation as invalid for ordinary playback/export status; it does not rewrite
 the run, scrape presentation text or add a solver-iteration trace.
@@ -168,7 +174,11 @@ It rejects overlapping release batches and fails the world conservatively when a
 becomes invalid or unresolved. Its `release.ts` owns fixed/body overlap admission, `assembly.ts`
 owns world outcome and per-body lifecycle construction, `predictions.ts` owns local-future evidence,
 the private `pairs` subdomain separates continuous pair selection from exact event commitment, and
-`construct.ts` owns global selection. The sibling `contact-resolution` subdomain owns immutable
+`construct.ts` owns global selection. The private `scheduler/failure-continuation` subdomain owns
+the explicit unresolved-frontier policy: `strict` terminates on the first equivalent same-time
+event identity, while `freeze-and-continue` freezes the affected dynamic component at already
+certified state and continues the world. Freeze uses stationary `frozen-after-unresolved` coverage
+without claiming `resting-anchored` rest. The sibling `contact-resolution` subdomain owns immutable
 exact-event contact state, phase-relative response classification, supplied-motion and
 represented-rest qualification for event-time impact/dormancy admission to the existing resting
 mode, general support certification and generic represented-mode selection. Scheduler prefix

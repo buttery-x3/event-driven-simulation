@@ -245,8 +245,13 @@ Certified non-impulsive onset uses the unchanged incoming velocity and proceeds 
 sustained-contact support classification. The contact position becomes the next segment's exact
 start position. No positional nudge or arbitrary time advance is applied. If the next query still
 selects a contradictory contact without a positive collision-free interval, the unchanged
-`zero-time-loop` guard stops the run and preserves the certified prefix. The world scheduler applies
-the same fail-closed stop when it restagnates at one world time without recording new contacts.
+`zero-time-loop` guard stops the run and preserves the certified prefix. The world scheduler detects
+equivalent same-time events on the first repeated connected-component identity; it does not retry
+an unchanged event. Under `failureContinuation: 'strict'` that recurrence terminates unresolved.
+Under `freeze-and-continue` the scheduler freezes the affected dynamic component at the already
+certified time with stationary `frozen-after-unresolved` motion, records the original failure, and
+continues unrelated scheduling. Frozen bodies remain dynamic participants and are not certified
+rest.
 
 Axis-aligned completion and escape regions are intersected continuously with the same ballistic
 path. A contact at or before a region entry wins; otherwise the committed terminal segment ends

@@ -15,6 +15,8 @@ export interface SimulationTolerances {
 	readonly eventTime: number;
 }
 
+export type FailureContinuationPolicy = 'strict' | 'freeze-and-continue';
+
 export interface SimulationSettings {
 	readonly gravity: Vec2;
 	readonly restitution: number;
@@ -22,6 +24,8 @@ export interface SimulationSettings {
 	readonly maximumEvents: number;
 	readonly maximumSimulationTime: number;
 	readonly tolerances: SimulationTolerances;
+	/** Omitted JSON defaults to `strict`. Never inferred from solver internals. */
+	readonly failureContinuation?: FailureContinuationPolicy;
 }
 
 export interface SimulationInput {

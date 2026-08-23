@@ -24,6 +24,16 @@ describe('simulation input fixture boundary', () => {
 		expect(parseSimulationInputFixture(fixture)).toEqual(input);
 	});
 
+	it('round-trips an explicit freeze-and-continue run policy', () => {
+		const source = canonicalPlinkoScenarios[0].input;
+		const input = {
+			...source,
+			settings: { ...source.settings, failureContinuation: 'freeze-and-continue' as const }
+		};
+
+		expect(parseSimulationInputFixture(serializeSimulationInputFixture(input))).toEqual(input);
+	});
+
 	it('normalises missing version 7 capture distance from the historical contact tolerance', () => {
 		const fixture = JSON.parse(
 			serializeSimulationInputFixture(canonicalPlinkoScenarios[0].input)

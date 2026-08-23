@@ -171,6 +171,14 @@ src/lib/simulation/
                 resolution/
                     index.ts
                     boundary.ts
+            failure-continuation/
+                index.ts
+                types.ts
+                policy.ts
+                identity.ts
+                affected-component.ts
+                apply.ts
+                diagnostics.ts
             __tests__/
         dynamic-impact/
             index.ts
@@ -238,7 +246,7 @@ src/lib/simulation/
         diagnostic-export/
             index.ts
             types.ts
-            v2.ts
+            v3.ts
             __tests__/
         structural-validation/
             index.ts
@@ -257,6 +265,7 @@ src/lib/simulation/
                 validate.ts
                 shape.ts
                 constrained-impact-shape.ts
+                failure-continuation-shape.ts
                 multi-body-shape.ts
                 consistency.ts
                 constrained-impact-consistency.ts
@@ -350,7 +359,10 @@ post-impact component rebuilding,
 lifecycle records and retained-contact persistence, and `dynamic-support` owns certified moving
 body-on-anchored-body continuation and interruption. Its nested `resolution` capability adapts
 dynamic-support boundary evidence to the common mode authority without owning trajectory search or
-lifecycle persistence. These are private run capabilities;
+lifecycle persistence. `failure-continuation` owns the explicit run-level `strict` versus
+`freeze-and-continue` policy, equivalent same-time event identity, affected-component selection and
+non-authoritative freeze application. It does not own impact mathematics, rest certification or a
+second scheduler. These are private run capabilities;
 cross-subsystem consumers continue to enter through `collision/index.ts` and `run/index.ts`.
 
 Within verification, the private `physics/support` subdomain owns independently calculated support

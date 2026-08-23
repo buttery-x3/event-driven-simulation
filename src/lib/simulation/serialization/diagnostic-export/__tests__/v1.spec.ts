@@ -6,7 +6,7 @@ import { createDiagnosticExport, serializeDiagnosticExport } from '..';
 
 const exportedAt = '2026-08-02T11:23:27.123Z';
 
-describe('diagnostic export v2', () => {
+describe('diagnostic export v3', () => {
 	it('preserves a successful run and its raw contact-search evidence', () => {
 		const run = constructSingleBallRun(defaultCanonicalPlinkoScenario.input);
 		const validation = validateSimulationRun(defaultCanonicalPlinkoScenario.input, run);
@@ -46,7 +46,7 @@ describe('diagnostic export v2', () => {
 		});
 		expect(parsed).toMatchObject({
 			kind: 'simulation-diagnostic-export',
-			schemaVersion: 2,
+			schemaVersion: 3,
 			provenance: {
 				exportedAt,
 				runId: 'run-123',
@@ -134,5 +134,65 @@ describe('diagnostic export v2', () => {
 			terminalReason: run.terminalReason
 		});
 		expect(bundle.independentValidation).toEqual(failure);
+	});
+
+	it('exports certified authority for a run that never used fallback', () => {
+		const run = constructSingleBallRun(defaultCanonicalPlinkoScenario.input);
+		const bundle = createDiagnosticExport(
+			run,
+			{ exportedAt },
+			validateSimulationRun(defaultCanonicalPlinkoScenario.input, run)
+		);
+
+		expect(bundle.summary.physicalAuthority).toBe('certified');
+		expect(bundle.summary.firstFallbackTime).toBeNull();
+		expect(bundle.summary.failureContinuationCount).toBe(0);
+		expect(bundle.summary.runLimits.failureContinuation).toBe('strict');
+		expect(bundle.authoritativeRun.physicalAuthority).toBe('certified');
+	});
+
+	it('exports structured fallback evidence without dropping the original failure', () => {
+		const run = constructSingleBallRun(defaultCanonicalPlinkoScenario.input);
+		const originalFailure = {
+			type: 'zero-time-loop' as const,
+			time: 0.25,
+			colliderId: 'scheduler',
+			detail: 'The scheduler selected another event without a positive collision-free interval.'
+		};
+		const continuation = {
+			freezeTime: 0.25,
+			originalFailure,
+			affectedBodyIds: ['ball-primary'],
+			positions: [{ bodyId: 'ball-primary', position: [0, 1] as const }],
+			velocitiesBeforeFreeze: [{ bodyId: 'ball-primary', velocity: [0.1, -0.2] as const }],
+			action: 'freeze-and-continue' as const
+		};
+		const fallbackRun = {
+			...run,
+			input: {
+				...run.input,
+				settings: { ...run.input.settings, failureContinuation: 'freeze-and-continue' as const }
+			},
+			physicalAuthority: { type: 'approximate-after' as const, time: 0.25 },
+			diagnostics: { ...run.diagnostics, failureContinuations: [continuation] }
+		};
+		const bundle = createDiagnosticExport(
+			fallbackRun,
+			{ exportedAt },
+			validateSimulationRun(fallbackRun.input, fallbackRun)
+		);
+		const parsed = JSON.parse(serializeDiagnosticExport(bundle));
+
+		expect(parsed.schemaVersion).toBe(3);
+		expect(parsed.summary.physicalAuthority).toEqual({ type: 'approximate-after', time: 0.25 });
+		expect(parsed.summary.firstFallbackTime).toBe(0.25);
+		expect(parsed.summary.failureContinuationCount).toBe(1);
+		expect(parsed.summary.runLimits.failureContinuation).toBe('freeze-and-continue');
+		expect(parsed.diagnostics.failureContinuations).toEqual([continuation]);
+		expect(parsed.diagnostics.failureContinuations[0].originalFailure).toEqual(originalFailure);
+		expect(parsed.authoritativeRun.physicalAuthority).toEqual({
+			type: 'approximate-after',
+			time: 0.25
+		});
 	});
 });

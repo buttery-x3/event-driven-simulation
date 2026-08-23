@@ -91,6 +91,13 @@ export function validateSimulationInputV7(
 	if ((tolerances.contactDistance as number) <= 0 || (tolerances.eventTime as number) <= 0) {
 		fail(`${path}.settings.tolerances`, 'must contain positive tolerances');
 	}
+	if (settings.failureContinuation !== undefined) {
+		assertions.requireOneOf(
+			settings.failureContinuation,
+			['strict', 'freeze-and-continue'],
+			`${path}.settings.failureContinuation`
+		);
+	}
 
 	const typed = {
 		...(value as Omit<SimulationInput, 'settings'>),

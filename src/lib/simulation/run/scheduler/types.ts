@@ -5,15 +5,18 @@ import type {
 	ComponentLifecycleEvent,
 	ContactComponentRecord,
 	ConstrainedImpactSolveDiagnostic,
+	FailureContinuationDiagnostic,
 	ImpactSolveDiagnostic,
 	InitialDynamicCircleBodyState,
 	PairPredictionDiagnostic,
+	PhysicalAuthority,
 	ReleaseEvent,
 	SimulationInput,
 	WorldSchedulerStepDiagnostic
 } from '../../contracts';
 import type { LocalBodyPrediction, LocalBodyRuntime } from '../single-ball/local-events';
 import type { DynamicSupportPrediction, DynamicSupportRuntime } from './dynamic-support/types';
+import type { FrozenBodyRecord } from './failure-continuation/types';
 
 export interface SchedulerState {
 	readonly input: SimulationInput;
@@ -36,4 +39,7 @@ export interface SchedulerState {
 	readonly dynamicSupportDiagnostics: DynamicSupportDiagnostic[];
 	readonly releasedDynamicPairs: Set<string>;
 	readonly rejectedBodyIds: Set<string>;
+	readonly frozenBodies: Map<string, FrozenBodyRecord>;
+	readonly failureContinuations: FailureContinuationDiagnostic[];
+	physicalAuthority: PhysicalAuthority;
 }

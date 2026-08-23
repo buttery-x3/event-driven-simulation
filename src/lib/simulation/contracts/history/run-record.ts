@@ -9,7 +9,13 @@ import type {
 	PhysicalEvent,
 	ReleaseEvent
 } from './events';
-import type { BodyRunState, RunOutcome, RunTerminalReason, RunValidity } from './outcomes';
+import type {
+	BodyRunState,
+	PhysicalAuthority,
+	RunOutcome,
+	RunTerminalReason,
+	RunValidity
+} from './outcomes';
 
 export interface SimulationRunRecord {
 	readonly contractVersion: 7;
@@ -17,6 +23,8 @@ export interface SimulationRunRecord {
 	readonly validity: RunValidity;
 	readonly outcome: RunOutcome;
 	readonly terminalReason: RunTerminalReason;
+	/** Omitted means the retained prefix is wholly physically certified. */
+	readonly physicalAuthority?: PhysicalAuthority;
 	readonly bodyStates: readonly BodyRunState[];
 	readonly trajectories: readonly BodyTrajectory[];
 	readonly events: readonly PhysicalEvent[];

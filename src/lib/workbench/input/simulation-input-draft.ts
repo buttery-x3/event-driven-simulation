@@ -25,6 +25,7 @@ export interface SimulationInputDraft {
 	readonly restitution: string;
 	readonly maximumSimulationTime: string;
 	readonly maximumEvents: string;
+	readonly failureContinuation: 'strict' | 'freeze-and-continue';
 }
 
 export type SimulationInputField = string;
@@ -46,7 +47,8 @@ export function createSimulationInputDraft(input: SimulationInput): SimulationIn
 		gravityY: String(input.settings.gravity[1]),
 		restitution: String(input.settings.restitution),
 		maximumSimulationTime: String(input.settings.maximumSimulationTime),
-		maximumEvents: String(input.settings.maximumEvents)
+		maximumEvents: String(input.settings.maximumEvents),
+		failureContinuation: input.settings.failureContinuation ?? 'strict'
 	};
 }
 
@@ -158,6 +160,7 @@ export function prepareSimulationInputSubmission(
 			restitution,
 			maximumEvents,
 			maximumSimulationTime,
+			failureContinuation: draft.failureContinuation,
 			tolerances: { ...baseInput.settings.tolerances }
 		}
 	};

@@ -3,6 +3,10 @@ import type { EntityId, Vec2 } from '../geometry';
 
 export type RunValidity = 'valid' | 'invalid';
 
+/** Physical certification of the retained prefix. Omitted on a record means `certified`. */
+export type PhysicalAuthority =
+	'certified' | { readonly type: 'approximate-after'; readonly time: number };
+
 export type WorldRunOutcome =
 	| 'exited'
 	| 'escaped'

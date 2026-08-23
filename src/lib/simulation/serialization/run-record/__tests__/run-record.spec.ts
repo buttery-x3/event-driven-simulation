@@ -121,4 +121,42 @@ describe('saved run fixtures', () => {
 		expect(restored.input.settings.contactCaptureDistance).toBe(historicalContactDistance);
 		expect(restored.input.settings).toHaveProperty('contactCaptureDistance');
 	});
+
+	it('round-trips structured freeze-and-continue evidence on a version 7 run', () => {
+		const source = parseSimulationRunFixture(canonicalFixtureJson);
+		const originalFailure = {
+			type: 'unsupported-body-body-response' as const,
+			time: source.diagnostics.simulatedUntilTime,
+			bodyIds: ['ball-primary', 'later'] as const,
+			contactId: 'body-contact:ball-primary:later:1',
+			detail: 'Retained dynamic contact requires a persistent body-body mode.'
+		};
+		const withFallback: SimulationRunRecord = {
+			...source,
+			physicalAuthority: { type: 'approximate-after', time: source.diagnostics.simulatedUntilTime },
+			diagnostics: {
+				...source.diagnostics,
+				failureContinuations: [
+					{
+						freezeTime: source.diagnostics.simulatedUntilTime,
+						originalFailure,
+						affectedBodyIds: ['ball-primary'],
+						positions: [{ bodyId: 'ball-primary', position: [0, 1] }],
+						velocitiesBeforeFreeze: [{ bodyId: 'ball-primary', velocity: [0.2, -0.1] }],
+						action: 'freeze-and-continue'
+					}
+				]
+			}
+		};
+
+		expect(parseSimulationRunFixture(JSON.stringify(withFallback))).toEqual(withFallback);
+	});
+
+	it('keeps omitted physical authority and failureContinuation valid', () => {
+		const restored = parseSimulationRunFixture(canonicalFixtureJson);
+
+		expect(restored.physicalAuthority).toBeUndefined();
+		expect(restored.input.settings.failureContinuation).toBeUndefined();
+		expect(restored.diagnostics.failureContinuations).toBeUndefined();
+	});
 });

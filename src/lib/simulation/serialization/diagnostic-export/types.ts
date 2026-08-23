@@ -4,6 +4,8 @@ import type {
 	ComponentLifecycleEvent,
 	ContactComponentRecord,
 	DynamicContactRecord,
+	FailureContinuationPolicy,
+	PhysicalAuthority,
 	PhysicalEvent,
 	ReleaseEvent,
 	RunDiagnostics,
@@ -51,11 +53,19 @@ export interface DiagnosticExportRunSummary {
 	readonly simulatedUntilTime: number;
 	readonly playableUntilTime: number;
 	readonly counts: DiagnosticExportCounts;
-	readonly runLimits: Pick<SimulationInput['settings'], 'maximumEvents' | 'maximumSimulationTime'>;
+	readonly runLimits: Pick<
+		SimulationInput['settings'],
+		'maximumEvents' | 'maximumSimulationTime'
+	> & {
+		readonly failureContinuation: FailureContinuationPolicy;
+	};
 	readonly numericalPolicy: Pick<
 		SimulationInput['settings'],
 		'gravity' | 'restitution' | 'tolerances'
 	>;
+	readonly physicalAuthority: PhysicalAuthority;
+	readonly firstFallbackTime: number | null;
+	readonly failureContinuationCount: number;
 	readonly validPrefix: {
 		readonly untilTime: number;
 		readonly trajectorySegmentCount: number;
@@ -79,9 +89,9 @@ export interface DiagnosticExportIndependentValidation {
 	}[];
 }
 
-export interface DiagnosticExportV2 {
+export interface DiagnosticExportV3 {
 	readonly kind: 'simulation-diagnostic-export';
-	readonly schemaVersion: 2;
+	readonly schemaVersion: 3;
 	readonly provenance: {
 		readonly exportedAt: string;
 		readonly runId: string | null;
@@ -99,6 +109,7 @@ export interface DiagnosticExportV2 {
 		readonly validity: RunValidity;
 		readonly outcome: RunOutcome;
 		readonly terminalReason: RunTerminalReason;
+		readonly physicalAuthority: PhysicalAuthority;
 		readonly bodyStates: readonly BodyRunState[];
 		readonly trajectories: readonly BodyTrajectory[];
 		readonly events: readonly PhysicalEvent[];
