@@ -2,9 +2,10 @@ import type { EntityId, StationaryMotionSegment } from '../../../contracts';
 import { evaluateMotionSegmentPosition } from '../../../motion';
 import { predictionSegments, type LocalBodyRuntime } from '../../single-ball/local-events';
 import { interruptDynamicSupports } from '../dynamic-support/interruption';
-import { invalidateLocalPrediction } from '../predictions';
+import { invalidateLocalPrediction, refreshBodyPrediction } from '../predictions';
 import { invalidatePairDiagnostics } from '../pairs/selection';
 import type { SchedulerState } from '../types';
+import { hasRepresentedContinuation } from './affected-component';
 import { toFailureContinuationDiagnostic, failureContinuationEntries } from './diagnostics';
 import { isFreezeAndContinue, isRecoverableFrontier } from './policy';
 import type { FreezeRequest, FrozenBodyRecord, RecoveryResult } from './types';
@@ -49,6 +50,18 @@ export function skipFrozenPair(
 
 export function unfreezeBodies(state: SchedulerState, bodyIds: readonly EntityId[]): void {
 	for (const bodyId of bodyIds) state.frozenBodies.delete(bodyId);
+}
+
+export function ensureRepresentedFutures(
+	state: SchedulerState,
+	bodyIds: readonly EntityId[]
+): void {
+	for (const bodyId of bodyIds) {
+		if (isFrozen(state, bodyId) || hasRepresentedContinuation(state, bodyId)) continue;
+		const runtime = state.runtimes.get(bodyId);
+		if (!runtime || state.predictions.has(bodyId)) continue;
+		refreshBodyPrediction(state, runtime);
+	}
 }
 
 export function frozenStationaryPath(
@@ -173,6 +186,7 @@ function interruptSupports(state: SchedulerState, request: FreezeRequest): void 
 }
 
 function alreadyFrozenAtTime(state: SchedulerState, request: FreezeRequest): boolean {
+	if (request.affectedBodyIds.length === 0) return false;
 	return request.affectedBodyIds.every((bodyId) => {
 		const frozen = state.frozenBodies.get(bodyId);
 		return frozen?.freezeTime === request.freezeTime;

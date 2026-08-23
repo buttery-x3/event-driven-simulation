@@ -72,6 +72,16 @@ describe('FLAME-107 freeze-and-continue recovery', () => {
 			run.releases.some(({ bodyId, status }) => bodyId === 'joining-03' && status === 'released')
 		).toBe(true);
 		expect(run.outcome).not.toBe('unresolved');
+
+		const joining03 = run.trajectories.find(({ bodyId }) => bodyId === 'joining-03')!;
+		const joining03State = run.bodyStates.find(({ bodyId }) => bodyId === 'joining-03')!;
+		expect(joining03.segments.at(-1)?.endTime).toBe(joining03State.recordedUntilTime);
+		expect(joining03State.recordedUntilTime).toBe(run.diagnostics.simulatedUntilTime);
+		expect(
+			continuation?.affectedBodyIds.includes('joining-03') ||
+				joining03.segments.at(-1)?.endTime === run.diagnostics.simulatedUntilTime
+		).toBe(true);
+		assertReplayableCoverage(run);
 	}, 20_000);
 
 	it('discovers a later collision against a previously frozen body', () => {
@@ -96,5 +106,15 @@ describe('FLAME-107 freeze-and-continue recovery', () => {
 		expect(firstFreeze).toBeDefined();
 		expect(run.releases.find(({ bodyId }) => bodyId === 'joining-03')?.status).toBe('released');
 		expect(laterContact || run.diagnostics.simulatedUntilTime > 5.5).toBeTruthy();
+		assertReplayableCoverage(run);
 	}, 20_000);
 });
+
+function assertReplayableCoverage(run: ReturnType<typeof constructSimulationRun>): void {
+	for (const state of run.bodyStates) {
+		if (state.lifecycle !== 'active' && state.lifecycle !== 'resting') continue;
+		if (state.recordedUntilTime === null) continue;
+		const last = run.trajectories.find(({ bodyId }) => bodyId === state.bodyId)?.segments.at(-1);
+		expect(last?.endTime).toBe(state.recordedUntilTime);
+	}
+}

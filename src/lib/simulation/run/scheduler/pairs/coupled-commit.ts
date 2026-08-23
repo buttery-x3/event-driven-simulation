@@ -59,7 +59,8 @@ export function commitCoupledImpact(
 				type: 'numerical-failure',
 				time: component.time,
 				detail: `Coupled impact failed closed: ${result.reason}`
-			}
+			},
+			invalidatedBodyIds: invalidatedBodyIds(component)
 		};
 	}
 	const ordinary = selectCoupledContactCapture(state, component, result.response, tolerance);
@@ -81,7 +82,8 @@ export function commitCoupledImpact(
 				type: 'numerical-failure',
 				time: component.time,
 				detail: `Low-speed constrained response failed closed: ${selected.reason}`
-			}
+			},
+			invalidatedBodyIds: invalidatedBodyIds(component)
 		};
 	}
 	const constrained = selected.type === 'constrained';
@@ -106,7 +108,8 @@ export function commitCoupledImpact(
 				type: 'numerical-failure',
 				time: component.time,
 				detail: 'The coupled response did not classify every exact-time contact.'
-			}
+			},
+			invalidatedBodyIds: []
 		};
 	}
 	const preservedBodyIds = new Set(
@@ -153,7 +156,12 @@ export function commitCoupledImpact(
 		dormantBodyIds,
 		admittedContactIds
 	);
-	if (unsupported) return { type: 'terminal', reason: unsupported };
+	if (unsupported)
+		return {
+			type: 'terminal',
+			reason: unsupported,
+			invalidatedBodyIds: invalidatedBodyIds(component, preservedBodyIds)
+		};
 	for (const body of component.bodies) {
 		if (preservedBodyIds.has(body.id)) continue;
 		const runtime = state.runtimes.get(body.id)!;
@@ -261,15 +269,20 @@ function persistentDynamicReason(
 	};
 }
 
+function invalidatedBodyIds(
+	component: ExactTimeComponent,
+	preservedBodyIds: ReadonlySet<string> = new Set()
+): readonly string[] {
+	return component.bodies.map(({ id }) => id).filter((id) => !preservedBodyIds.has(id));
+}
+
 function invalidateAffectedFutures(
 	state: SchedulerState,
 	component: ExactTimeComponent,
 	preservedBodyIds: ReadonlySet<string> = new Set()
 ): void {
 	const componentBodyIds = new Set(component.bodies.map(({ id }) => id));
-	const bodyIds = new Set(
-		component.bodies.flatMap(({ id }) => (preservedBodyIds.has(id) ? [] : [id]))
-	);
+	const bodyIds = new Set(invalidatedBodyIds(component, preservedBodyIds));
 	retainUnrelatedPairDiagnostics(state, componentBodyIds, state.worldTime);
 	for (const bodyId of bodyIds) {
 		invalidateLocalPrediction(

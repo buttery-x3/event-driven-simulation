@@ -1,10 +1,12 @@
 export {
 	coupledFreezeBodies,
 	expandAffectedBodies,
+	hasRepresentedContinuation,
 	localFailureBodies,
 	pairFailureBodies
 } from './affected-component';
 export {
+	ensureRepresentedFutures,
 	frozenStationaryPath,
 	isFrozen,
 	recoverOrTerminate,

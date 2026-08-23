@@ -1,4 +1,4 @@
-import type { EntityId, RunTerminalReason } from '../../../contracts';
+import type { EntityId } from '../../../contracts';
 import type { SchedulerState } from '../types';
 
 export function expandAffectedBodies(
@@ -39,11 +39,18 @@ export function expandAffectedBodies(
 
 export function coupledFreezeBodies(
 	state: SchedulerState,
-	seedBodyIds: readonly EntityId[],
-	reason: RunTerminalReason
+	invalidatedBodyIds: readonly EntityId[]
 ): readonly EntityId[] {
-	const seed = reason.type === 'unsupported-body-body-response' ? reason.bodyIds : seedBodyIds;
-	return expandAffectedBodies(state, seed);
+	return expandAffectedBodies(state, invalidatedBodyIds).filter(
+		(bodyId) => !hasRepresentedContinuation(state, bodyId)
+	);
+}
+
+export function hasRepresentedContinuation(state: SchedulerState, bodyId: EntityId): boolean {
+	const runtime = state.runtimes.get(bodyId);
+	if (!runtime) return false;
+	if (runtime.dormantComponentId) return true;
+	return [...state.dynamicSupports.values()].some(({ movingBodyId }) => movingBodyId === bodyId);
 }
 
 export function pairFailureBodies(

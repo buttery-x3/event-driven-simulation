@@ -19,6 +19,7 @@ import { promoteStationaryContactComponents, registerSingleBodyDormancy } from '
 import {
 	coupledFreezeBodies,
 	dynamicSupportEventIdentity,
+	ensureRepresentedFutures,
 	eventIdentityKey,
 	expandAffectedBodies,
 	localEventIdentity,
@@ -188,17 +189,14 @@ function commitSelectedEvent(
 				{
 					freezeTime: nextTime,
 					originalFailure: result.reason,
-					affectedBodyIds: coupledFreezeBodies(
-						state,
-						[nextPair.first.bodyId, nextPair.second.bodyId],
-						result.reason
-					),
+					affectedBodyIds: coupledFreezeBodies(state, result.invalidatedBodyIds),
 					triggeringPairOrContactId: nextPair.diagnosticId
 				},
 				true
 			);
 			if (recovered.type === 'terminal')
 				return { type: 'done', run: finishScheduledRun(state, 'valid', recovered.reason) };
+			ensureRepresentedFutures(state, result.invalidatedBodyIds);
 			seenIdentities.clear();
 			return { type: 'continue' };
 		}

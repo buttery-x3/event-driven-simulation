@@ -7,7 +7,11 @@ import type { PairSchedulerSelection } from './selection';
 
 export type PairCommitResult =
 	| { readonly type: 'continued' }
-	| { readonly type: 'terminal'; readonly reason: RunTerminalReason };
+	| {
+			readonly type: 'terminal';
+			readonly reason: RunTerminalReason;
+			readonly invalidatedBodyIds: readonly string[];
+	  };
 
 export function commitBodyPairEvent(
 	state: SchedulerState,
@@ -21,7 +25,8 @@ export function commitBodyPairEvent(
 				type: 'numerical-failure',
 				time: selection.time,
 				detail: 'The exact-time dynamic contact component could not be reconstructed.'
-			}
+			},
+			invalidatedBodyIds: []
 		};
 	}
 	unfreezeBodies(
