@@ -461,3 +461,9 @@ Tailwind and other component or CSS frameworks remain deferred. Reconsider them 
 implemented workbench demonstrates sustained repetition that scoped CSS and the existing token set
 cannot address clearly. Any future adoption should solve an observed maintenance problem rather
 than replace the current policy speculatively.
+
+## Production hosting
+
+The standalone HTTP transport in `server/` serves compiled public files only.
+It has no dependency on simulation or presentation modules. Build configuration,
+PM2 process ownership and deployment are documented in [deployment.md](deployment.md).

@@ -1,5 +1,5 @@
 import { defineConfig } from 'vitest/config';
-import adapter from '@sveltejs/adapter-auto';
+import adapter from '@sveltejs/adapter-static';
 import { sveltekit } from '@sveltejs/kit/vite';
 
 export default defineConfig({
@@ -9,7 +9,8 @@ export default defineConfig({
 				runes: ({ filename }) =>
 					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 			},
-			adapter: adapter()
+			adapter: adapter(),
+			paths: { base: (process.env.VITE_BASE_PATH ?? '') as '' | `/${string}` }
 		})
 	],
 	test: {

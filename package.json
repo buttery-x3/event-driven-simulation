@@ -4,7 +4,7 @@
 	"version": "0.0.1",
 	"type": "module",
 	"engines": {
-		"node": ">=20.19"
+		"node": ">=22"
 	},
 	"scripts": {
 		"dev": "vite dev --host 127.0.0.1 --port 8437 --strictPort",
@@ -23,7 +23,14 @@
 		"test:browser:headed": "playwright test --headed",
 		"test:browser:ui": "playwright test --ui",
 		"test:browser:install": "playwright install chromium",
-		"check": "npm run format:check && npm run lint && npm run check:architecture && npm run typecheck && npm run test && npm run build"
+		"check": "npm run format:check && npm run lint && npm run check:architecture && npm run typecheck && npm run test && npm run test:server && npm run build",
+		"start": "node server/static-server.mjs",
+		"test:server": "node --test server/*.test.mjs",
+		"check:production": "npm run typecheck && npm run test && npm run test:server && npm run build",
+		"deploy": "node scripts/deploy-remote.mjs",
+		"deploy:production": "bash scripts/deploy.sh",
+		"pm2:start": "pm2 start ecosystem.config.cjs",
+		"pm2:reload": "pm2 startOrReload ecosystem.config.cjs --update-env"
 	},
 	"dependencies": {
 		"three": "^0.185.0"
@@ -31,7 +38,6 @@
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
 		"@playwright/test": "^1.62.1",
-		"@sveltejs/adapter-auto": "^7.0.1",
 		"@sveltejs/kit": "^2.63.0",
 		"@sveltejs/vite-plugin-svelte": "^7.1.2",
 		"@types/node": "^24",
@@ -47,6 +53,7 @@
 		"typescript": "^6.0.3",
 		"typescript-eslint": "^8.60.1",
 		"vite": "^8.0.16",
-		"vitest": "^4.1.8"
+		"vitest": "^4.1.8",
+		"@sveltejs/adapter-static": "^3.0.10"
 	}
 }

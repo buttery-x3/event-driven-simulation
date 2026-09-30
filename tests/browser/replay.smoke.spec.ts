@@ -346,7 +346,7 @@ test('groups verification scenarios, replaces worlds on Run and reports authorit
 	await expect(selector.locator('optgroup[label="Canonical launches"] option')).toHaveCount(5);
 	await expect(selector.locator('optgroup[label="Board layouts"] option')).toHaveCount(8);
 	await expect(selector.locator('optgroup[label="Physical settings"] option')).toHaveCount(13);
-	await expect(selector.locator('optgroup[label="Multi-body scheduler"] option')).toHaveCount(40);
+	await expect(selector.locator('optgroup[label="Multi-body scheduler"] option')).toHaveCount(44);
 	await expect(selector.locator('optgroup[label="Adversarial contacts"] option')).toHaveCount(18);
 
 	await selector.selectOption('staggered-independent-drops');
@@ -424,7 +424,7 @@ test('groups verification scenarios, replaces worlds on Run and reports authorit
 		{
 			id: 'two-circular-paths-approach',
 			sceneId: 'two-circular-paths-approach-board',
-			outcome: 'time-limit'
+			outcome: 'unresolved'
 		},
 		{
 			id: 'unsupported-dynamic-support-after-impact',

@@ -622,3 +622,10 @@ The source-topology issue is complete when:
 
 Behavioural changes discovered during migration should become separate follow-up issues unless they
 are necessary to preserve the existing contract.
+
+## Production transport
+
+`server/app.mjs` owns compiled-file HTTP handling and `server/static-server.mjs`
+owns its listener lifecycle. Tests live beside the transport. `scripts/deploy.sh`
+and `scripts/deploy-remote.mjs` own release operations; they do not import `src/lib`.
+See [deployment.md](deployment.md) for build and proxy configuration.

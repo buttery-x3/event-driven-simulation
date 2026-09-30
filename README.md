@@ -172,3 +172,7 @@ the simulation-renderer boundary used by the scaffold.
 
 The canonical Milestone 2 Plinko board, coordinate conventions and named launch catalogue are
 documented in [the simulation guide](docs/simulation.md).
+
+## Production hosting
+
+See [Deployment](docs/deployment.md) for buttery.wtf hosting, PM2 and manual deployments.
